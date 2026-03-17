@@ -127,3 +127,97 @@ export function getDealHealthLabel(health: DealHealth): string {
     case 'red': return 'At risk — over 14 days since last activity'
   }
 }
+
+// ── Lead score ────────────────────────────────────────────────────────────────
+
+import type { Lead } from './types'
+
+export function calculateLeadScore(lead: Lead): number {
+  let score = 0
+
+  // Field completeness
+  if (lead.email) score += 20
+  if (lead.phone) score += 10
+  if (lead.company) score += 15
+
+  // Source bonus
+  const sourceScores: Record<string, number> = {
+    referral: 20,
+    website: 15,
+    ad: 10,
+    'cold-outreach': 5,
+    manual: 5,
+    import: 5,
+  }
+  score += sourceScores[lead.source] ?? 0
+
+  // Status bonus
+  const statusScores: Record<string, number> = {
+    contacted: 10,
+    qualified: 20,
+    unqualified: -10,
+    converted: 30,
+  }
+  score += statusScores[lead.status] ?? 0
+
+  return Math.max(0, Math.min(100, score))
+}
+
+// ── Tasks ─────────────────────────────────────────────────────────────────────
+
+import type { Task } from './types'
+
+export function isOverdue(task: Task): boolean {
+  if (task.status === 'completed') return false
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return new Date(task.dueDate).getTime() < today.getTime()
+}
+
+export function getTasksDueSoon(tasks: Task[], days: number): Task[] {
+  const now = new Date()
+  const targetDate = new Date(now)
+  targetDate.setDate(now.getDate() + days)
+  
+  return tasks.filter(t => 
+    t.status !== 'completed' && 
+    new Date(t.dueDate).getTime() <= targetDate.getTime()
+  )
+}
+
+export function priorityWeight(priority: Task['priority']): number {
+  switch (priority) {
+    case 'urgent': return 4
+    case 'high': return 3
+    case 'medium': return 2
+    case 'low': return 1
+    default: return 0
+  }
+}
+
+export function sortTasks(tasks: Task[]): Task[] {
+  return [...tasks].sort((a, b) => {
+    // 1. status != completed
+    if (a.status === 'completed' && b.status !== 'completed') return 1
+    if (a.status !== 'completed' && b.status === 'completed') return -1
+    // if both are completed, sort them by completion date descending
+    if (a.status === 'completed' && b.status === 'completed') {
+      return new Date(b.completedAt || b.updatedAt).getTime() - new Date(a.completedAt || a.updatedAt).getTime()
+    }
+
+    const aOverdue = isOverdue(a)
+    const bOverdue = isOverdue(b)
+
+    // 2. overdue tasks
+    if (aOverdue && !bOverdue) return -1
+    if (!aOverdue && bOverdue) return 1
+
+    // 3. priority desc
+    const pA = priorityWeight(a.priority)
+    const pB = priorityWeight(b.priority)
+    if (pA !== pB) return pB - pA
+
+    // 4. dueDate asc
+    return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+  })
+}

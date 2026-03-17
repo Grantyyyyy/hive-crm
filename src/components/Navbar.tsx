@@ -1,47 +1,34 @@
-import { Link, useLocation } from "wouter";
-import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
+import { Link } from "wouter";
+import { SignedOut } from "@clerk/clerk-react";
+import { BarChart3 } from "lucide-react";
 
 export function Navbar() {
-  const [location] = useLocation();
-
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
-        <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center space-x-2">
-            <span className="font-bold text-xl sm:inline-block">AuthApp</span>
+    <SignedOut>
+      <header className="sticky top-0 z-50 w-full border-b bg-white/70 backdrop-blur-md dark:bg-slate-950/70 border-slate-200 dark:border-slate-800">
+        <div className="container mx-auto flex h-16 items-center justify-between px-6">
+          <Link href="/" className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+              <BarChart3 className="w-5 h-5 text-white" />
+            </div>
+            <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">Enterprise CRM</span>
           </Link>
-          <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
-            <SignedIn>
-              <Link 
-                href="/dashboard" 
-                className={`transition-colors hover:text-foreground/80 ${location === '/dashboard' ? 'text-foreground' : 'text-foreground/60'}`}
-              >
-                Dashboard
-              </Link>
-            </SignedIn>
-          </nav>
-        </div>
-        <div className="flex items-center space-x-4">
-          <SignedOut>
+          <div className="flex items-center space-x-6">
             <Link
               href="/sign-in"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+              className="text-sm font-semibold text-slate-600 dark:text-slate-400 transition-colors hover:text-indigo-600 dark:hover:text-indigo-400"
             >
               Sign In
             </Link>
             <Link
               href="/sign-up"
-              className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90"
+              className="inline-flex h-10 items-center justify-center rounded-xl bg-indigo-600 px-5 py-2 text-sm font-bold text-white shadow-lg shadow-indigo-200 dark:shadow-none transition-all hover:bg-indigo-700 hover:scale-[1.02]"
             >
-              Sign Up
+              Get Started
             </Link>
-          </SignedOut>
-          <SignedIn>
-            <UserButton afterSignOutUrl="/" />
-          </SignedIn>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+    </SignedOut>
   );
 }

@@ -1,19 +1,22 @@
 import { Link, useLocation } from "wouter";
-import { UserButton } from "@clerk/clerk-react";
-import { 
-  LayoutDashboard, 
-  UserRound, 
-  Handshake, 
-  Activity, 
-  ChevronLeft, 
+import { UserButton, useUser } from "@clerk/clerk-react";
+import {
+  LayoutDashboard,
+  Users,
+  Handshake,
   ChevronRight,
-  Sun,
-  Moon,
   UserSearch,
-  CheckSquare
+  FileText,
+  ShoppingBag,
+  Package,
+  BarChart3,
+  Ticket,
+  Settings,
+  MoreVertical,
+  CheckSquare,
+  Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
 
 interface SidebarProps {
   mobileOpen: boolean;
@@ -24,43 +27,46 @@ interface SidebarProps {
 
 export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: SidebarProps) {
   const [location] = useLocation();
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const { user } = useUser();
 
-  useEffect(() => {
-    // Check initial theme
-    const stored = localStorage.getItem("crm_theme");
-    if (stored === "light") {
-      setTheme("light");
-      document.documentElement.classList.add("light");
-    } else {
-      setTheme("dark");
-      document.documentElement.classList.remove("light");
+  const groups = [
+    {
+      title: "Core CRM",
+      links: [
+        { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+        { href: "/tasks", label: "Tasks", icon: CheckSquare },
+        { href: "/leads", label: "Leads", icon: UserSearch },
+        { href: "/contacts", label: "Contacts", icon: Users },
+        { href: "/deals", label: "Deals", icon: Handshake },
+        { href: "/activities", label: "Activities", icon: Activity },
+      ]
+    },
+    {
+      title: "Sales Ops",
+      links: [
+        { href: "/quotes", label: "Quotes", icon: FileText },
+        { href: "/orders", label: "Orders", icon: ShoppingBag },
+      ]
+    },
+    {
+      title: "Logistics",
+      links: [
+        { href: "/inventory", label: "Inventory", icon: Package },
+        { href: "/in-progress", label: "Reports", icon: BarChart3 },
+      ]
+    },
+    {
+      title: "Support",
+      links: [
+        { href: "/in-progress", label: "Tickets", icon: Ticket },
+        { href: "/in-progress", label: "Settings", icon: Settings },
+      ]
     }
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === "dark" ? "light" : "dark";
-    setTheme(newTheme);
-    localStorage.setItem("crm_theme", newTheme);
-    if (newTheme === "light") {
-      document.documentElement.classList.add("light");
-    } else {
-      document.documentElement.classList.remove("light");
-    }
-  };
-
-  const links = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/tasks", label: "Tasks", icon: CheckSquare },
-    { href: "/leads", label: "Leads", icon: UserSearch },
-    { href: "/contacts", label: "Contacts", icon: UserRound },
-    { href: "/deals", label: "Deals", icon: Handshake },
-    { href: "/activities", label: "Activities", icon: Activity },
   ];
 
   const sidebarClass = cn(
-    "fixed inset-y-0 left-0 z-50 flex flex-col bg-[var(--bg-surface)] border-r border-[var(--border)] transition-[width] duration-180 ease-in-out",
-    collapsed ? "w-[56px]" : "w-[220px]",
+    "fixed inset-y-0 left-0 z-50 flex flex-col bg-white border-r border-slate-200 transition-[width] duration-300 ease-in-out dark:bg-slate-950 dark:border-slate-800",
+    collapsed ? "w-[72px]" : "w-[260px]",
     mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
   );
 
@@ -68,96 +74,127 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
     <>
       {/* Mobile Backdrop */}
       {mobileOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-black/50 md:hidden" 
-          onClick={() => setMobileOpen(false)} 
+        <div
+          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm md:hidden"
+          onClick={() => setMobileOpen(false)}
         />
       )}
-      
+
       <aside className={sidebarClass}>
-        {/* Top Section */}
-        <div className="flex h-14 shrink-0 items-center border-b border-[var(--border-subtle)] px-4">
-          <div className="flex items-center gap-3 w-full" style={{ justifyContent: collapsed ? "center" : "flex-start" }}>
-            {/* App Icon (Diamond) */}
-            <div className="w-3 h-3 bg-[var(--accent)] rotate-45 shrink-0" />
-            
+        {/* Top Section / Logo */}
+        <div className="flex h-20 shrink-0 items-center px-6">
+          <div className="flex items-center gap-3 w-full overflow-hidden">
+            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-indigo-200 dark:shadow-none">
+              <BarChart3 className="w-6 h-6 text-white" />
+            </div>
             {!collapsed && (
-              <span className="text-[12px] uppercase tracking-[0.2em] text-[var(--text-primary)] font-mono">
-                CRMO
-              </span>
+              <div className="flex flex-col min-w-0">
+                <span className="text-[15px] font-bold text-slate-900 dark:text-white truncate leading-tight">
+                  CRM & Inventory
+                </span>
+                <span className="text-[11px] text-slate-500 font-medium truncate uppercase tracking-wider">
+                  Enterprise Suite
+                </span>
+              </div>
             )}
           </div>
         </div>
 
         {/* Nav Links */}
-        <nav className="flex-1 py-4 flex flex-col w-full overflow-y-auto">
-          {links.map((link) => {
-            const isActive = location === link.href || (link.href !== "/dashboard" && location.startsWith(link.href) && link.href.length > 1);
-            
-            return (
-              <Link key={link.href} href={link.href} onClick={() => setMobileOpen(false)}>
-                <div
-                  className={cn(
-                    "flex items-center h-[36px] px-4 transition-colors relative group cursor-pointer duration-120",
-                    isActive 
-                      ? "bg-[var(--bg-highlight)] text-[var(--text-primary)] border-l-2 border-[var(--accent)]" 
-                      : "text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)] border-l-2 border-transparent"
-                  )}
-                  style={isActive ? {} : { borderLeftColor: "transparent" }}
-                >
-                  <div className="flex items-center gap-3 w-full" style={{ justifyContent: collapsed ? "center" : "flex-start" }}>
-                    <link.icon 
-                      className={cn(
-                        "w-4 h-4 shrink-0 transition-colors duration-120", 
-                        isActive ? "text-[var(--text-primary)]" : "text-[var(--text-muted)] group-hover:text-[var(--text-primary)]"
-                      )} 
-                    />
-                    {!collapsed && <span className="text-[12px] tracking-wide truncate">{link.label}</span>}
-                  </div>
-                  
-                  {/* Tooltip for collapsed state */}
-                  {collapsed && (
-                    <div className="absolute left-[calc(100%+8px)] hidden border border-[var(--border)] bg-[var(--bg-elevated)] px-2 py-1 text-[11px] uppercase tracking-widest text-[var(--text-primary)] group-hover:block z-50 whitespace-nowrap shadow-none">
-                      {link.label}
-                    </div>
-                  )}
-                </div>
-              </Link>
-            );
-          })}
+        <nav className="flex-1 py-4 flex flex-col w-full overflow-y-auto px-3 scrollbar-hide">
+          {groups.map((group, groupIdx) => (
+            <div key={group.title} className={cn("mb-6", groupIdx === 0 && "mt-2")}>
+              {!collapsed && (
+                <h3 className="px-4 mb-2 text-[10px] uppercase tracking-[0.15em] font-bold text-slate-400 dark:text-slate-500">
+                  {group.title}
+                </h3>
+              )}
+              <div className="space-y-1">
+                {group.links.map((link) => {
+                  const isActive = location === link.href || (link.href !== "/dashboard" && location.startsWith(link.href) && link.href.length > 1);
+
+                  return (
+                    <Link key={link.href} href={link.href} onClick={() => setMobileOpen(false)}>
+                      <div
+                        className={cn(
+                          "flex items-center h-11 px-4 rounded-xl transition-all relative group cursor-pointer",
+                          isActive
+                            ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400 font-semibold shadow-sm shadow-indigo-100 dark:shadow-none"
+                            : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-200"
+                        )}
+                      >
+                        <div className="flex items-center gap-3 w-full" style={{ justifyContent: collapsed ? "center" : "flex-start" }}>
+                          <link.icon
+                            className={cn(
+                              "w-[18px] h-[18px] shrink-0 transition-colors",
+                              isActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300"
+                            )}
+                          />
+                          {!collapsed && <span className="text-[13px] tracking-wide truncate">{link.label}</span>}
+                        </div>
+
+                        {/* Tooltip for collapsed state */}
+                        {collapsed && (
+                          <div className="absolute left-[calc(100%+12px)] hidden bg-slate-900 text-white px-3 py-1.5 rounded-lg text-xs font-medium group-hover:block z-50 whitespace-nowrap shadow-xl animate-in fade-in slide-in-from-left-2">
+                            {link.label}
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
-        {/* Bottom Section */}
-        <div className="border-t border-[var(--border-subtle)] p-3 shrink-0 flex flex-col gap-3">
-          
-          <div className={cn("flex items-center", collapsed ? "flex-col justify-center gap-4" : "justify-between px-1")}>
-            
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className="w-8 h-8 flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-opacity duration-100 hover:opacity-85 focus:outline-none shrink-0"
-              title="Toggle Theme"
-            >
-              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-            
-            {/* UserButton */}
-            <div className="shrink-0 flex items-center justify-center">
-              <UserButton afterSignOutUrl="/" />
+        {/* Bottom Section - User Profile */}
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 shrink-0">
+          {!collapsed ? (
+            <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
+              <div className="w-9 h-9 shrink-0">
+                <UserButton
+                  appearance={{
+                    elements: {
+                      userButtonAvatarBox: "w-9 h-9 rounded-lg"
+                    }
+                  }}
+                  afterSignOutUrl="/"
+                />
+              </div>
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">
+                  {user?.fullName || user?.username || "Guest User"}
+                </span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate uppercase tracking-tight">
+                  {user?.publicMetadata?.role as string || "Admin"}
+                </span>
+              </div>
+              <button
+                onClick={() => setCollapsed(true)}
+                className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 transition-colors"
+              >
+                <MoreVertical className="w-4 h-4" />
+              </button>
             </div>
-
-            {/* Collapse Toggle */}
-            <button
-              onClick={() => {
-                const newVal = !collapsed;
-                setCollapsed(newVal);
-                localStorage.setItem("crm_sidebar_collapsed", String(newVal));
-              }}
-              className="w-8 h-8 hidden md:flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-opacity duration-100 hover:opacity-85 focus:outline-none shrink-0"
-            >
-              {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-            </button>
-          </div>
+          ) : (
+            <div className="flex flex-col items-center gap-4 py-2">
+              <UserButton
+                appearance={{
+                  elements: {
+                    userButtonAvatarBox: "w-9 h-9 rounded-lg"
+                  }
+                }}
+                afterSignOutUrl="/"
+              />
+              <button
+                onClick={() => setCollapsed(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       </aside>
     </>

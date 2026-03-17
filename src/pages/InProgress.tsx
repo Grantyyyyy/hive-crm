@@ -1,0 +1,47 @@
+import { Link } from "wouter"
+import { Construction, ArrowLeft, Terminal } from "lucide-react"
+import { Button } from "@/components/ui/button"
+
+export function InProgress() {
+  return (
+    <div className="flex-1 bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-6 min-h-screen animate-fade-in font-outfit">
+      <div className="max-w-md w-full text-center space-y-8">
+        {/* Icon / Illustration */}
+        <div className="relative inline-flex mb-4">
+          <div className="w-24 h-24 bg-indigo-100 dark:bg-indigo-900/30 rounded-[2rem] flex items-center justify-center relative z-10">
+            <Construction className="w-10 h-10 text-indigo-600 dark:text-indigo-400 animate-pulse" />
+          </div>
+          <div className="absolute -top-2 -right-2 w-10 h-10 bg-white dark:bg-slate-900 rounded-2xl shadow-lg flex items-center justify-center z-20 border border-slate-100 dark:border-slate-800">
+            <Terminal className="w-5 h-5 text-slate-400" />
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white uppercase">Feature in progress</h1>
+          <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+            We're currently building out this section of the Enterprise Suite. 
+            Check back soon for advanced sales analytics and automation tools.
+          </p>
+        </div>
+
+        {/* Progress Decorative Element */}
+        <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+          <div className="h-full bg-indigo-600 rounded-full w-[65%] shadow-[0_0_20px_rgba(79,70,229,0.5)]"></div>
+        </div>
+
+        <div className="pt-4">
+          <Link href="/">
+            <Button className="h-12 px-8 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm uppercase tracking-wider shadow-xl shadow-indigo-200 dark:shadow-none transition-all hover:scale-[1.02] flex items-center gap-3 mx-auto">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Dashboard
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Background Decorative Elements */}
+      <div className="fixed -bottom-24 -right-24 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="fixed -top-24 -left-24 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+    </div>
+  )
+}

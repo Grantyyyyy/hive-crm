@@ -209,15 +209,17 @@ export function ConvertLeadModal({ open, onOpenChange, lead, userId, onConverted
           <div className="flex gap-3">
             <Button
               type="button"
+              variant="outlineNeutral"
               onClick={() => onOpenChange(false)}
-              className="flex-1 rounded-none border border-[var(--border)] bg-transparent text-[var(--text-secondary)] h-10 text-[12px] uppercase tracking-[0.08em] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)] transition-all font-mono shadow-none"
+              className="flex-1"
             >
               Cancel
             </Button>
             <Button
               type="button"
+              variant="default"
               onClick={handleConvert}
-              className="flex-1 rounded-none border-none bg-[var(--accent)] text-white h-10 text-[12px] uppercase tracking-[0.08em] hover:opacity-85 transition-opacity font-mono shadow-none"
+              className="flex-1"
             >
               Convert
             </Button>

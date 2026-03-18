@@ -146,7 +146,7 @@ export function LeadDetail() {
       <div className="flex-1 flex flex-col items-center justify-center gap-4 bg-[var(--bg-base)]">
         <h2 className="text-[14px] font-mono text-[var(--text-primary)]">Lead not found</h2>
         <Link href="/leads">
-          <Button className="bg-[var(--bg-surface)] border border-[var(--border)] text-[var(--text-secondary)] rounded-none h-8 text-[12px] uppercase hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]">
+          <Button variant="outlineNeutral">
             <ArrowLeft className="h-4 w-4 mr-2" /> Back to Leads
           </Button>
         </Link>
@@ -230,18 +230,24 @@ export function LeadDetail() {
               <div className="flex gap-2 shrink-0">
                 {!isConverted && (
                   <>
+                  <>
                     <Button
+                      variant="outlineNeutral"
+                      size="sm"
                       onClick={() => setShowEditModal(true)}
-                      className="bg-transparent border border-[var(--border)] text-[var(--text-secondary)] rounded-none h-8 px-3 text-[12px] uppercase tracking-[0.08em] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)] transition-all duration-100"
+                      className="px-3"
                     >
                       <Pencil className="h-3 w-3 mr-2" /> Edit
                     </Button>
                     <Button
+                      variant="default"
+                      size="sm"
                       onClick={() => setShowConvertModal(true)}
-                      className="bg-[var(--accent)] text-white border-none rounded-none h-8 px-3 text-[12px] uppercase tracking-[0.08em] hover:opacity-85 transition-opacity duration-100"
+                      className="px-3"
                     >
                       Convert Lead
                     </Button>
+                  </>
                   </>
                 )}
                 {isConverted && (
@@ -275,8 +281,10 @@ export function LeadDetail() {
                   <h2 className="text-[13px] uppercase tracking-[0.12em] text-[var(--text-muted)]">Activity Timeline</h2>
                   {!isConverted && (
                     <Button
+                      variant="outlineNeutral"
+                      size="sm"
                       onClick={() => setShowActivityModal(true)}
-                      className="bg-transparent border border-[var(--border)] text-[var(--text-secondary)] rounded-none h-7 px-2 text-[11px] uppercase tracking-[0.08em] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)] transition-all duration-100"
+                      className="h-7 px-2"
                     >
                       <Plus className="h-3 w-3 mr-1" /> Log
                     </Button>

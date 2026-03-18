@@ -15,8 +15,12 @@ import {
   MoreVertical,
   CheckSquare,
   Activity,
+  ScrollText,
+  Layers,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
 
 interface SidebarProps {
   mobileOpen: boolean;
@@ -52,9 +56,12 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
       title: "Logistics",
       links: [
         { href: "/inventory", label: "Inventory", icon: Package },
-        { href: "/in-progress", label: "Reports", icon: BarChart3 },
+        { href: "/purchase-orders", label: "P. Orders", icon: ScrollText },
+        { href: "/purchase-requests", label: "P. Requests", icon: Layers },
+        { href: "/reports", label: "Reports", icon: BarChart3 },
       ]
     },
+
     {
       title: "Support",
       links: [
@@ -170,12 +177,14 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
                   {user?.publicMetadata?.role as string || "Admin"}
                 </span>
               </div>
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setCollapsed(true)}
-                className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 transition-colors"
+                className="p-1.5 h-8 w-8 text-slate-400"
               >
                 <MoreVertical className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-4 py-2">
@@ -187,12 +196,14 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
                 }}
                 afterSignOutUrl="/"
               />
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setCollapsed(false)}
-                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
+                className="p-1.5 h-8 w-8 text-slate-400"
               >
                 <ChevronRight className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
           )}
         </div>

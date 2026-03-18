@@ -1,4 +1,5 @@
 import { Search, Bell, HelpCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useUser } from "@clerk/clerk-react";
 
 export function Header() {
@@ -21,13 +22,13 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-2">
-        <button className="p-2.5 rounded-xl hover:bg-slate-100 text-slate-500 relative transition-colors dark:hover:bg-slate-900">
+        <Button variant="ghost" size="icon" className="relative">
           <Bell className="w-5 h-5" />
           <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 border-2 border-white rounded-full dark:border-slate-950"></span>
-        </button>
-        <button className="p-2.5 rounded-xl hover:bg-slate-100 text-slate-500 transition-colors dark:hover:bg-slate-900">
+        </Button>
+        <Button variant="ghost" size="icon">
           <HelpCircle className="w-5 h-5" />
-        </button>
+        </Button>
         <div className="h-8 w-[1px] bg-slate-200 mx-2 dark:bg-slate-800"></div>
         <div className="flex items-center gap-3 pl-2">
           <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs dark:bg-indigo-900/20 dark:border-indigo-500/20 dark:text-indigo-400">

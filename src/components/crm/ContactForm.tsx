@@ -152,21 +152,22 @@ export function ContactForm({ onSave, onCancel, initialData }: ContactFormProps)
       <div className="sticky bottom-0 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md px-8 py-6 border-t border-slate-100 dark:border-slate-900/50 flex items-center gap-3 z-10 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.05)]">
         <Button 
           type="button" 
-          variant="outline" 
+          variant="outlineNeutral" 
           onClick={onCancel}
-          className="flex-1 h-12 rounded-xl border-slate-200 dark:border-slate-800 font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all font-sans"
+          className="flex-1"
         >
           Cancel
         </Button>
         <Button 
           type="submit" 
-          className="flex-[1.5] h-12 rounded-xl bg-[#F05623] hover:bg-[#D9481B] text-white font-bold shadow-lg shadow-orange-100 dark:shadow-none transition-all flex items-center justify-center gap-2 font-sans active:scale-[0.98]"
+          variant="default"
+          className="flex-[1.5]"
         >
           {initialData?.id ? (
              <>Save Changes</>
           ) : (
             <>
-              <UserPlus className="w-4 h-4" />
+              <UserPlus className="w-4 h-4 mr-2" />
               Create Contact
             </>
           )}

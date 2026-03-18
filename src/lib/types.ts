@@ -189,3 +189,52 @@ export interface InventoryItem {
   createdAt: string
   updatedAt: string
 }
+
+export type PurchaseOrderStatus = 'draft' | 'pending' | 'sent' | 'received' | 'cancelled'
+
+export interface PurchaseOrder {
+  id: string
+  poNumber: string
+  vendorId: string
+  vendorName: string
+  amount: number
+  status: PurchaseOrderStatus
+  date: string
+  expectedDelivery?: string
+  items: Array<{
+    id: string
+    name: string
+    quantity: number
+    price: number
+  }>
+  referenceId?: string
+  shippingInfo?: string
+  internalNotes?: string
+  vendorInstructions?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type PurchaseRequestStatus = 'pending_review' | 'approved' | 'rejected' | 'ordered'
+
+export interface PurchaseRequest {
+  id: string
+  requestNumber: string
+  requesterId: string
+  requesterName: string
+  amount: number
+  status: PurchaseRequestStatus
+  date: string
+  department: string
+  items: Array<{
+    id: string
+    name: string
+    quantity: number
+    estimatedPrice: number
+  }>
+  purpose?: string
+  priority: 'low' | 'medium' | 'high' | 'urgent'
+  createdAt: string
+  updatedAt: string
+}
+

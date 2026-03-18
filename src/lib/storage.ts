@@ -1,4 +1,4 @@
-import type { Contact, Deal, Activity, Lead, Task, SalesOrder, Quote } from './types'
+import type { Contact, Deal, Activity, Lead, Task, SalesOrder, Quote, InventoryItem, PurchaseOrder, PurchaseRequest } from './types'
 
 function getKey(userId: string, resource: string): string {
   return `crm_${userId}_${resource}`
@@ -184,3 +184,48 @@ export function createQuote(userId: string, quote: Quote): Quote {
   saveQuotes(userId, quotes)
   return quote
 }
+
+// ── Inventory ────────────────────────────────────────────────────────────────
+
+export function getInventory(userId: string): InventoryItem[] {
+  return safeGetItem(getKey(userId, 'inventory'), [])
+}
+
+export function saveInventory(userId: string, inventory: InventoryItem[]): void {
+  safeSetItem(getKey(userId, 'inventory'), inventory)
+}
+
+// ── Purchase Orders ──────────────────────────────────────────────────────────
+
+export function getPurchaseOrders(userId: string): PurchaseOrder[] {
+  return safeGetItem(getKey(userId, 'purchase_orders'), [])
+}
+
+export function savePurchaseOrders(userId: string, orders: PurchaseOrder[]): void {
+  safeSetItem(getKey(userId, 'purchase_orders'), orders)
+}
+
+export function createPurchaseOrder(userId: string, order: PurchaseOrder): PurchaseOrder {
+  const orders = getPurchaseOrders(userId)
+  orders.push(order)
+  savePurchaseOrders(userId, orders)
+  return order
+}
+
+// ── Purchase Requests ─────────────────────────────────────────────────────────
+
+export function getPurchaseRequests(userId: string): PurchaseRequest[] {
+  return safeGetItem(getKey(userId, 'purchase_requests'), [])
+}
+
+export function savePurchaseRequests(userId: string, requests: PurchaseRequest[]): void {
+  safeSetItem(getKey(userId, 'purchase_requests'), requests)
+}
+
+export function createPurchaseRequest(userId: string, request: PurchaseRequest): PurchaseRequest {
+  const requests = getPurchaseRequests(userId)
+  requests.push(request)
+  savePurchaseRequests(userId, requests)
+  return request
+}
+

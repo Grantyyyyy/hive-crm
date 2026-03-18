@@ -138,13 +138,15 @@ export function QuoteForm({ onSave, onCancel, contacts, initialData }: QuoteForm
               <Package className="w-4 h-4 text-slate-400" />
               <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Items & Products</h3>
             </div>
-            <button 
+            <Button 
               type="button"
+              variant="link"
+              size="sm"
               onClick={addItem}
-              className="text-indigo-600 dark:text-indigo-400 text-xs font-bold flex items-center gap-1.5 hover:underline"
+              className="h-auto p-0 font-bold text-indigo-600 dark:text-indigo-400"
             >
-              <Plus className="w-4 h-4" /> Add Item
-            </button>
+              <Plus className="w-4 h-4 mr-1.5" /> Add Item
+            </Button>
           </div>
 
           <div className="rounded-[1.5rem] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
@@ -193,12 +195,14 @@ export function QuoteForm({ onSave, onCancel, contacts, initialData }: QuoteForm
                       ${(item.quantity * item.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </td>
                     <td className="px-5 py-4 text-right">
-                      <button 
+                      <Button 
+                        variant="ghost"
+                        size="icon"
                         onClick={() => removeItem(item.id)}
-                        className="text-slate-300 hover:text-red-500 transition-colors"
+                        className="h-8 w-8 text-slate-300 hover:text-red-500"
                       >
                         <Trash2 className="w-4 h-4" />
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -241,9 +245,8 @@ export function QuoteForm({ onSave, onCancel, contacts, initialData }: QuoteForm
       {/* Footer Actions */}
       <div className="px-8 py-6 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
         <Button 
-          variant="outline"
+          variant="outlineNeutral"
           onClick={() => handleSave('draft')}
-          className="rounded-xl border-slate-200 dark:border-slate-800 h-12 px-6 font-bold text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all shadow-none"
         >
           Save as Draft
         </Button>
@@ -251,13 +254,13 @@ export function QuoteForm({ onSave, onCancel, contacts, initialData }: QuoteForm
           <Button 
             variant="ghost"
             onClick={onCancel}
-            className="rounded-xl h-12 px-6 font-bold text-[10px] uppercase tracking-widest text-slate-500 hover:bg-slate-100 transition-all"
           >
             Cancel
           </Button>
           <Button 
+            variant="default"
             onClick={() => handleSave('sent')}
-            className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white h-12 px-8 font-bold text-[10px] uppercase tracking-widest shadow-lg shadow-indigo-100 dark:shadow-none transition-all"
+            className="px-8"
           >
             Generate & Send
           </Button>

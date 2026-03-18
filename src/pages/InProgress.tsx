@@ -31,7 +31,7 @@ export function InProgress() {
 
         <div className="pt-4">
           <Link href="/">
-            <Button className="h-12 px-8 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm uppercase tracking-wider shadow-xl shadow-indigo-200 dark:shadow-none transition-all hover:scale-[1.02] flex items-center gap-3 mx-auto">
+            <Button variant="default" className="h-12 px-8 flex items-center gap-3 mx-auto">
               <ArrowLeft className="w-4 h-4" />
               Back to Dashboard
             </Button>

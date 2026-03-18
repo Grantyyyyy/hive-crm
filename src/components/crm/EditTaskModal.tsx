@@ -59,9 +59,9 @@ export function EditTaskModal({ task, open, onOpenChange, onSuccess }: EditTaskM
               Edit Task
             </SheetTitle>
             <Button
-              variant="ghost"
+              variant="destructiveOutline"
+              size="sm"
               onClick={handleDelete}
-              className="h-auto p-0 text-[11px] text-[var(--red)] uppercase tracking-widest hover:bg-transparent hover:text-[var(--red)] hover:opacity-80 transition-opacity font-bold"
             >
               Delete
             </Button>

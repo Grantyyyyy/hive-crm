@@ -225,7 +225,8 @@ export function TaskForm({ onSave, contacts, deals, leads, initialData, fixedEnt
 
       <Button 
         type="submit" 
-        className="w-full rounded-none border-none bg-[var(--accent)] text-white h-10 text-[12px] uppercase tracking-[0.08em] hover:opacity-85 transition-opacity mt-4 font-mono shadow-none"
+        variant="default"
+        className="w-full mt-4"
       >
         {initialData?.id ? "Update Task" : "Create Task"}
       </Button>

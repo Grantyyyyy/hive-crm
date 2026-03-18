@@ -57,18 +57,16 @@ export function ActivityForm({ contactId, deals, contacts, onSave }: ActivityFor
         <Label className="text-[11px] uppercase tracking-widest text-[var(--text-muted)]">Type</Label>
         <div className="flex gap-2 flex-wrap">
           {ACTIVITY_TYPES.map((t) => (
-            <button
+            <Button
               key={t}
               type="button"
+              variant={type === t ? "default" : "outlineNeutral"}
+              size="sm"
               onClick={() => setType(t)}
-              className={`px-3 py-1 rounded-full text-[11px] uppercase tracking-widest font-mono transition-colors border ${
-                type === t
-                  ? "bg-[var(--accent)] text-white border-[var(--accent)]"
-                  : "bg-transparent border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-muted)]"
-              }`}
+              className="rounded-full px-3 h-7"
             >
               {TYPE_LABELS[t]}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -127,7 +125,8 @@ export function ActivityForm({ contactId, deals, contacts, onSave }: ActivityFor
       </div>
       <Button 
         type="submit" 
-        className="w-full rounded-none border-none bg-[var(--accent)] text-white h-10 text-[12px] uppercase tracking-[0.08em] hover:opacity-85 transition-opacity mt-4 font-mono shadow-none"
+        variant="default"
+        className="w-full mt-4"
       >
         Log Activity
       </Button>

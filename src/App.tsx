@@ -3,22 +3,26 @@ import { Router, Route, Switch } from "wouter";
 import { LandingPage } from "@/pages/LandingPage";
 import { SignInPage } from "@/pages/SignInPage";
 import { SignUpPage } from "@/pages/SignUpPage";
-import { Dashboard } from "@/pages/Dashboard";
-import { Contacts } from "@/pages/Contacts";
-import { ContactDetail } from "@/pages/ContactDetail";
-import { Deals } from "@/pages/Deals";
-import { Activities } from "@/pages/Activities";
-import { Leads } from "@/pages/Leads";
+import { Dashboard } from "@/pages/core/Dashboard";
+import { Contacts } from "@/pages/core/Contacts";
+import { ContactDetail } from "@/pages/core/ContactDetail";
+import { Deals } from "@/pages/core/Deals";
+import { Activities } from "@/pages/core/Activities";
+import { Leads } from "@/pages/core/Leads";
 import { LeadDetail } from "@/pages/LeadDetail";
-import { Tasks } from "@/pages/Tasks";
-import { SalesOrders } from "@/pages/SalesOrders";
-import { Quotes } from "@/pages/Quotes";
+import { Tasks } from "@/pages/core/Tasks";
+import { SalesOrders } from "@/pages/sales/SalesOrders";
+import { Quotes } from "@/pages/sales/Quotes";
+import { PurchaseOrders } from "@/pages/logistics/PurchaseOrders";
+import { PurchaseRequests } from "@/pages/logistics/PurchaseRequests";
 // import { TaskDetail } from "@/pages/TaskDetail";
 import { Navbar } from "@/components/Navbar";
+
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { InProgress } from "@/pages/InProgress";
-import { Inventory } from "@/pages/Inventory";
+import { Inventory } from "@/pages/logistics/Inventory";
+import { Reports } from "@/pages/logistics/Reports";
 import React from "react";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -58,6 +62,13 @@ function App() {
               <Route path="/quotes">
                 {() => <Protected component={Quotes} />}
               </Route>
+              <Route path="/purchase-orders">
+                {() => <Protected component={PurchaseOrders} />}
+              </Route>
+              <Route path="/purchase-requests">
+                {() => <Protected component={PurchaseRequests} />}
+              </Route>
+
 
               <Route path="/leads">
                 {() => <Protected component={Leads} />}
@@ -79,6 +90,9 @@ function App() {
               </Route>
               <Route path="/inventory">
                 {() => <Protected component={Inventory} />}
+              </Route>
+              <Route path="/reports">
+                {() => <Protected component={Reports} />}
               </Route>
               <Route path="/in-progress">
                 {() => <Protected component={InProgress} />}

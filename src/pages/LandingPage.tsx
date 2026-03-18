@@ -24,12 +24,12 @@ export function LandingPage() {
               <SignedOut>
                 <div className="flex flex-col sm:flex-row justify-center gap-4">
                   <Link href="/sign-in">
-                    <Button size="lg" className="w-full sm:w-auto h-12 px-8 text-base shadow-lg hover:shadow-primary/25 transition-all">
+                    <Button variant="default" size="lg" className="w-full sm:w-auto">
                       Sign In
                     </Button>
                   </Link>
                   <Link href="/sign-up">
-                    <Button variant="outline" size="lg" className="w-full sm:w-auto h-12 px-8 text-base">
+                    <Button variant="outline" size="lg" className="w-full sm:w-auto">
                       Create an Account
                     </Button>
                   </Link>
@@ -39,7 +39,7 @@ export function LandingPage() {
               <SignedIn>
                 <div className="flex justify-center">
                   <Link href="/dashboard">
-                    <Button size="lg" className="h-12 px-8 text-base shadow-lg hover:shadow-primary/25 transition-all">
+                    <Button variant="default" size="lg">
                       Go to Dashboard
                     </Button>
                   </Link>

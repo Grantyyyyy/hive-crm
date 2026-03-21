@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { UserButton, useUser } from "@clerk/clerk-react";
+import { UserButton, useUser, useOrganization, OrganizationSwitcher } from "@clerk/clerk-react";
 import {
   LayoutDashboard,
   Users,
@@ -10,13 +10,13 @@ import {
   ShoppingBag,
   Package,
   BarChart3,
-  Ticket,
-  Settings,
   MoreVertical,
   CheckSquare,
   Activity,
   ScrollText,
   Layers,
+  Shield,
+  UserCog,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -32,6 +32,7 @@ interface SidebarProps {
 export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: SidebarProps) {
   const [location] = useLocation();
   const { user } = useUser();
+  const { organization } = useOrganization();
 
   const groups = [
     {
@@ -61,12 +62,11 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
         { href: "/reports", label: "Reports", icon: BarChart3 },
       ]
     },
-
     {
-      title: "Support",
+      title: "Settings",
       links: [
-        { href: "/in-progress", label: "Tickets", icon: Ticket },
-        { href: "/in-progress", label: "Settings", icon: Settings },
+        { href: "/settings/users", label: "Users", icon: UserCog },
+        { href: "/settings/roles", label: "Roles", icon: Shield },
       ]
     }
   ];
@@ -155,8 +155,20 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
           ))}
         </nav>
 
-        {/* Bottom Section - User Profile */}
-        <div className="p-4 border-t border-slate-100 dark:border-slate-800 shrink-0">
+        {/* Bottom Section - User Profile & Org Switcher */}
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 shrink-0 space-y-2">
+          {!collapsed && (
+            <div className="flex items-center">
+              <OrganizationSwitcher 
+                appearance={{
+                  elements: {
+                    rootBox: "w-full",
+                    organizationSwitcherTrigger: "w-full justify-start px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors",
+                  }
+                }}
+              />
+            </div>
+          )}
           {!collapsed ? (
             <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
               <div className="w-9 h-9 shrink-0">
@@ -174,7 +186,7 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
                   {user?.fullName || user?.username || "Guest User"}
                 </span>
                 <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate uppercase tracking-tight">
-                  {user?.publicMetadata?.role as string || "Admin"}
+                  {organization?.name || user?.publicMetadata?.role as string || "Admin"}
                 </span>
               </div>
               <Button

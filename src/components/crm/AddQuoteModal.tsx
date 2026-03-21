@@ -7,7 +7,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { QuoteForm } from "./QuoteForm"
-import { getContacts, createQuote } from "@/lib/storage"
+import { contactsApi, quotesApi } from "@/lib/api"
 import type { Contact, Quote } from "@/lib/types"
 import { FileText } from "lucide-react"
 
@@ -24,15 +24,31 @@ export function AddQuoteModal({ open, onOpenChange, onSuccess }: AddQuoteModalPr
   const [contacts, setContacts] = useState<Contact[]>([])
 
   useEffect(() => {
-    if (open && userId) {
-      setContacts(getContacts(userId))
+    async function fetchData() {
+      if (open && userId) {
+        try {
+          const contactsRes = await contactsApi.list({ limit: 100 })
+          if (contactsRes.success && contactsRes.data) {
+            setContacts(contactsRes.data)
+          }
+        } catch (error) {
+          console.error('Error fetching contacts:', error)
+        }
+      }
     }
+    fetchData()
   }, [open, userId])
 
-  const handleSave = (quote: Quote) => {
-    createQuote(userId, quote)
-    onOpenChange(false)
-    if (onSuccess) onSuccess(quote)
+  const handleSave = async (quote: Partial<Quote>) => {
+    try {
+      const response = await quotesApi.create(quote as any)
+      if (response.success && response.data) {
+        onOpenChange(false)
+        if (onSuccess) onSuccess(response.data)
+      }
+    } catch (error) {
+      console.error('Error creating quote:', error)
+    }
   }
 
   return (

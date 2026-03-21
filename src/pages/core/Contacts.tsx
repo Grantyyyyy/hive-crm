@@ -20,19 +20,20 @@ import {
 } from "@/components/ui/sheet"
 import { ContactForm } from "@/components/crm/ContactForm"
 import { useCRMResource } from "@/lib/hooks"
-import type { Contact } from "@/lib/types"
+import type { Contact, CreateContactInput } from "@/lib/types"
 
 export function Contacts() {
   const [, navigate] = useLocation()
   const { 
     data: contacts, 
-    search, 
-    setSearch, 
-    isLoaded,
+    loading,
+    error,
     addItems,
-    deleteItem 
+    deleteItem,
+    refresh,
   } = useCRMResource<Contact>('contacts')
 
+  const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
@@ -43,10 +44,10 @@ export function Contacts() {
       .filter(
         (c) =>
           c.name.toLowerCase().includes(q) ||
-          c.email.toLowerCase().includes(q) ||
+          (c.email?.toLowerCase().includes(q) ?? false) ||
           (c.company?.toLowerCase().includes(q) ?? false)
       )
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
   }, [contacts, search])
 
   const totalItems = filtered.length
@@ -56,7 +57,7 @@ export function Contacts() {
     currentPage * itemsPerPage
   )
 
-  if (!isLoaded) {
+  if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-r-transparent" />
@@ -64,8 +65,19 @@ export function Contacts() {
     )
   }
 
-  function handleAddContact(contact: Contact) {
-    addItems([contact])
+  if (error) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <Button onClick={() => refresh()}>Retry</Button>
+        </div>
+      </div>
+    )
+  }
+
+  async function handleAddContact(contact: CreateContactInput) {
+    await addItems([contact as unknown as Contact])
     setShowModal(false)
   }
 
@@ -167,7 +179,7 @@ export function Contacts() {
                         </td>
                         <td className="px-4 py-2.5">
                           <p className="text-[13px] text-slate-600 dark:text-slate-400">
-                            {new Date(c.createdAt).toLocaleDateString()}
+                            {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '—'}
                           </p>
                         </td>
                         <td className="px-4 py-2.5 text-right">

@@ -1,32 +1,46 @@
 export interface Contact {
   id: string
   name: string
-  email: string
+  email?: string
   phone?: string
   company?: string
   source: ContactSource
-  createdAt: string
+  status?: 'lead' | 'prospect' | 'customer' | 'churned'
+  notes?: string
+  ownerId?: string
+  createdAt?: string
+  updatedAt?: string
 }
+
+export type CreateContactInput = Omit<Contact, 'id' | 'ownerId' | 'createdAt' | 'updatedAt'>
 
 export interface Deal {
   id: string
   title: string
   contactId: string
+  contact?: Contact
   value: number
   stage: DealStage
-  expectedCloseDate: string
+  expectedCloseDate?: string
   lostReason?: string
-  createdAt: string
-  updatedAt: string
+  ownerId?: string
+  createdAt?: string
+  updatedAt?: string
 }
+
+export type CreateDealInput = Omit<Deal, 'id' | 'ownerId' | 'createdAt' | 'updatedAt' | 'contact'>
 
 export interface Activity {
   id: string
-  contactId: string
+  contactId?: string
+  contact?: Contact
   dealId?: string
+  deal?: Deal
   leadId?: string
+  lead?: Lead
   type: ActivityType
   content: string
+  ownerId?: string
   createdAt: string
 }
 
@@ -59,15 +73,18 @@ export interface Task {
   id: string
   title: string
   description?: string
-  dueDate: string           // ISO date string
+  dueDate: string
   remindAt?: string
   priority: 'low' | 'medium' | 'high' | 'urgent'
   status: 'open' | 'in-progress' | 'completed'
-  ownerId: string           // Clerk userId
-  createdBy: string         // Clerk userId
+  ownerId: string
+  createdBy: string
   entityType?: 'contact' | 'deal' | 'lead'
-  entityId?: string         // id of the linked entity
-  completedAt?: string      // ISO timestamp
+  entityId?: string
+  contactId?: string
+  dealId?: string
+  leadId?: string
+  completedAt?: string
   createdAt: string
   updatedAt: string
 }

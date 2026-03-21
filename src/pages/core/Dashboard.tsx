@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useState, useMemo } from "react"
 import { Link } from "wouter"
 import {
   Activity,
@@ -8,18 +8,21 @@ import {
   AlertTriangle,
   Ticket,
   ChevronDown,
-  MoreHorizontal
+  MoreHorizontal,
+  Database
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/helpers"
 import type { Deal, Activity as ActivityT } from "@/lib/types"
 import { useCRMResource } from "@/lib/hooks"
+import { seedApi } from "@/lib/api"
 
 export function Dashboard() {
-  const { isLoaded: contactsLoaded } = useCRMResource('contacts')
-  const { data: deals, isLoaded: dealsLoaded } = useCRMResource<Deal>('deals')
-  const { data: activities, isLoaded: activitiesLoaded } = useCRMResource<ActivityT>('activities')
+  const { isLoaded: contactsLoaded, refresh: refreshContacts } = useCRMResource('contacts')
+  const { data: deals, isLoaded: dealsLoaded, refresh: refreshDeals } = useCRMResource<Deal>('deals')
+  const { data: activities, isLoaded: activitiesLoaded, refresh: refreshActivities } = useCRMResource<ActivityT>('activities')
+  const [seeding, setSeeding] = useState(false)
 
   const openDeals = useMemo(
     () => deals.filter((d) => !["won", "lost"].includes(d.stage)),
@@ -39,10 +42,51 @@ export function Dashboard() {
     [activities]
   )
 
+  const hasData = deals.length > 0 || activities.length > 0
+
+  const handleLoadDemoData = async () => {
+    setSeeding(true)
+    try {
+      await seedApi.seed()
+      await Promise.all([refreshContacts(), refreshDeals(), refreshActivities()])
+      alert('Demo data loaded successfully!')
+    } catch (error) {
+      console.error('Error loading demo data:', error)
+      alert('Failed to load demo data')
+    } finally {
+      setSeeding(false)
+    }
+  }
+
   if (!contactsLoaded || !dealsLoaded || !activitiesLoaded) {
     return (
       <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-r-transparent" />
+      </div>
+    )
+  }
+
+  if (!hasData) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <div className="text-center max-w-md">
+          <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Database className="w-8 h-8 text-slate-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+            Welcome to your CRM
+          </h2>
+          <p className="text-slate-500 dark:text-slate-400 mb-6">
+            Get started by loading some demo data to explore the features.
+          </p>
+          <Button 
+            onClick={handleLoadDemoData} 
+            disabled={seeding}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+          >
+            {seeding ? 'Loading...' : 'Load Demo Data'}
+          </Button>
+        </div>
       </div>
     )
   }

@@ -1,4 +1,3 @@
-import { useUser } from "@clerk/clerk-react"
 import {
   Sheet,
   SheetContent,
@@ -6,7 +5,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { PurchaseOrderForm } from "./PurchaseOrderForm"
-import { createPurchaseOrder } from "@/lib/storage"
+import { purchaseOrdersApi } from "@/lib/api"
 import type { PurchaseOrder } from "@/lib/types"
 import { ScrollText } from "lucide-react"
 
@@ -17,13 +16,16 @@ interface AddPurchaseOrderModalProps {
 }
 
 export function AddPurchaseOrderModal({ open, onOpenChange, onSuccess }: AddPurchaseOrderModalProps) {
-  const { user } = useUser()
-  const userId = user?.id ?? ""
-  
-  const handleSave = (order: PurchaseOrder) => {
-    createPurchaseOrder(userId, order)
-    onOpenChange(false)
-    if (onSuccess) onSuccess(order)
+  const handleSave = async (order: Partial<PurchaseOrder>) => {
+    try {
+      const response = await purchaseOrdersApi.create(order as any)
+      if (response.success && response.data) {
+        onOpenChange(false)
+        if (onSuccess) onSuccess(response.data)
+      }
+    } catch (error) {
+      console.error('Error creating purchase order:', error)
+    }
   }
 
   return (

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { useUser } from "@clerk/clerk-react"
+import { toast } from "sonner"
 import {
   Sheet,
   SheetContent,
@@ -7,9 +8,10 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { TaskForm } from "./TaskForm"
-import { getContacts, getDeals, getLeads, updateTask, deleteTask } from "@/lib/storage"
+import { contactsApi, dealsApi, leadsApi } from "@/lib/api"
 import type { Contact, Deal, Lead, Task } from "@/lib/types"
 import { Button } from "@/components/ui/button"
+import { useUpdateTask, useDeleteTask } from "@/lib/hooks"
 
 interface EditTaskModalProps {
   task: Task | null
@@ -26,27 +28,65 @@ export function EditTaskModal({ task, open, onOpenChange, onSuccess }: EditTaskM
   const [deals, setDeals] = useState<Deal[]>([])
   const [leads, setLeads] = useState<Lead[]>([])
 
+  const updateTask = useUpdateTask()
+  const deleteTask = useDeleteTask()
+
   useEffect(() => {
-    if (open && userId) {
-      setContacts(getContacts(userId))
-      setDeals(getDeals(userId))
-      setLeads(getLeads(userId))
+    async function fetchData() {
+      if (open && userId) {
+        try {
+          const [contactsRes, dealsRes, leadsRes] = await Promise.all([
+            contactsApi.list({ limit: 100 }),
+            dealsApi.list({ limit: 100 }),
+            leadsApi.list({ limit: 100 }),
+          ])
+          
+          if (contactsRes.success && contactsRes.data) {
+            setContacts(contactsRes.data)
+          }
+          if (dealsRes.success && dealsRes.data) {
+            setDeals(dealsRes.data.map((d: any) => ({ ...d, stage: d.stage?.toLowerCase() })))
+          }
+          if (leadsRes.success && leadsRes.data) {
+            setLeads(leadsRes.data.map((l: any) => ({ ...l, status: l.status?.toLowerCase(), source: l.source?.toLowerCase() })))
+          }
+        } catch (error) {
+          console.error('Error fetching data:', error)
+        }
+      }
     }
+    fetchData()
   }, [open, userId])
 
   if (!task) return null
 
-  const handleSave = (updated: Task) => {
-    updateTask(userId, task.id, updated)
-    onOpenChange(false)
-    if (onSuccess) onSuccess()
+  const handleSave = async (updated: Partial<Task>) => {
+    toast.promise(
+      updateTask.mutateAsync({ id: task.id, data: updated }).then(() => {
+        onOpenChange(false)
+        if (onSuccess) onSuccess()
+      }),
+      {
+        loading: 'Updating task...',
+        success: 'Task updated successfully!',
+        error: 'Failed to update task'
+      }
+    )
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (window.confirm("Delete this task?")) {
-      deleteTask(userId, task.id)
-      onOpenChange(false)
-      if (onSuccess) onSuccess()
+      toast.promise(
+        deleteTask.mutateAsync(task.id).then(() => {
+          onOpenChange(false)
+          if (onSuccess) onSuccess()
+        }),
+        {
+          loading: 'Deleting task...',
+          success: 'Task deleted successfully!',
+          error: 'Failed to delete task'
+        }
+      )
     }
   }
 

@@ -1,6 +1,6 @@
 import { Search, Bell, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useUser } from "@clerk/clerk-react";
+import { useUser, OrganizationSwitcher } from "@clerk/clerk-react";
 
 export function Header() {
   const { user } = useUser();
@@ -31,6 +31,13 @@ export function Header() {
         </Button>
         <div className="h-8 w-[1px] bg-slate-200 mx-2 dark:bg-slate-800"></div>
         <div className="flex items-center gap-3 pl-2">
+          <OrganizationSwitcher 
+            appearance={{
+              elements: {
+                organizationSwitcherTrigger: "h-9 rounded-xl border-slate-200 dark:border-slate-800",
+              }
+            }}
+          />
           <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs dark:bg-indigo-900/20 dark:border-indigo-500/20 dark:text-indigo-400">
             {initials}
           </div>

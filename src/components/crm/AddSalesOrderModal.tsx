@@ -7,7 +7,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { SalesOrderForm } from "./SalesOrderForm"
-import { getContacts, createOrder } from "@/lib/storage"
+import { contactsApi, salesOrdersApi } from "@/lib/api"
 import type { Contact, SalesOrder } from "@/lib/types"
 import { ShoppingBag } from "lucide-react"
 
@@ -24,15 +24,31 @@ export function AddSalesOrderModal({ open, onOpenChange, onSuccess }: AddSalesOr
   const [contacts, setContacts] = useState<Contact[]>([])
 
   useEffect(() => {
-    if (open && userId) {
-      setContacts(getContacts(userId))
+    async function fetchData() {
+      if (open && userId) {
+        try {
+          const contactsRes = await contactsApi.list({ limit: 100 })
+          if (contactsRes.success && contactsRes.data) {
+            setContacts(contactsRes.data)
+          }
+        } catch (error) {
+          console.error('Error fetching contacts:', error)
+        }
+      }
     }
+    fetchData()
   }, [open, userId])
 
-  const handleSave = (order: SalesOrder) => {
-    createOrder(userId, order)
-    onOpenChange(false)
-    if (onSuccess) onSuccess(order)
+  const handleSave = async (order: Partial<SalesOrder>) => {
+    try {
+      const response = await salesOrdersApi.create(order as any)
+      if (response.success && response.data) {
+        onOpenChange(false)
+        if (onSuccess) onSuccess(response.data)
+      }
+    } catch (error) {
+      console.error('Error creating order:', error)
+    }
   }
 
   return (

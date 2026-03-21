@@ -9,27 +9,18 @@ import {
 } from "@/components/ui/dialog"
 import type { Lead, ContactSource, DealStage } from "@/lib/types"
 import { SOURCE_LABELS, STAGE_LABELS } from "@/lib/types"
-import { generateId, formatCurrency } from "@/lib/helpers"
-import {
-  getContacts,
-  saveContacts,
-  getDeals,
-  saveDeals,
-  updateLead,
-} from "@/lib/storage"
-import { calculateLeadScore } from "@/lib/helpers"
+import { formatCurrency } from "@/lib/helpers"
+import { leadsApi } from "@/lib/api"
 import { Check } from "lucide-react"
 
 interface ConvertLeadModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   lead: Lead
-  userId: string
   onConverted: (contactId: string) => void
 }
 
-export function ConvertLeadModal({ open, onOpenChange, lead, userId, onConverted }: ConvertLeadModalProps) {
-  // Contact fields (pre-filled)
+export function ConvertLeadModal({ open, onOpenChange, lead, onConverted }: ConvertLeadModalProps) {
   const [name, setName] = useState(lead.name)
   const [email, setEmail] = useState(lead.email)
   const [phone, setPhone] = useState(lead.phone ?? "")
@@ -40,61 +31,35 @@ export function ConvertLeadModal({ open, onOpenChange, lead, userId, onConverted
       : "manual"
   )
 
-  // Deal fields
   const [createDeal, setCreateDeal] = useState(false)
   const [dealTitle, setDealTitle] = useState(`Deal - ${lead.company || lead.name}`)
   const [dealValue, setDealValue] = useState("")
   const [dealStage, setDealStage] = useState<DealStage>("discovery")
   const [dealCloseDate, setDealCloseDate] = useState("")
 
-  function handleConvert() {
-    const now = new Date().toISOString()
-    const contactId = generateId()
-
-    // 1. Create Contact
-    const contacts = getContacts(userId)
-    contacts.push({
-      id: contactId,
-      name: name.trim(),
-      email: email.trim(),
-      phone: phone.trim() || undefined,
-      company: company.trim() || undefined,
-      source,
-      createdAt: now,
-    })
-    saveContacts(userId, contacts)
-
-    // 2. Optionally create Deal
-    let dealId: string | undefined
-    if (createDeal && dealValue && dealCloseDate) {
-      dealId = generateId()
-      const deals = getDeals(userId)
-      deals.push({
-        id: dealId,
-        title: dealTitle.trim(),
-        contactId,
-        value: Number(dealValue),
-        stage: dealStage,
-        expectedCloseDate: new Date(dealCloseDate).toISOString(),
-        createdAt: now,
-        updatedAt: now,
+  async function handleConvert() {
+    try {
+      const response = await leadsApi.convert(lead.id, {
+        contactData: {
+          name: name.trim(),
+          email: email.trim(),
+          phone: phone.trim() || undefined,
+          company: company.trim() || undefined,
+          source: source.toUpperCase(),
+        },
+        dealData: createDeal && dealValue && dealCloseDate ? {
+          title: dealTitle.trim(),
+          value: Number(dealValue),
+        } : undefined,
       })
-      saveDeals(userId, deals)
+      
+      if (response.success && response.data?.contact?.id) {
+        onOpenChange(false)
+        onConverted(response.data.contact.id)
+      }
+    } catch (error) {
+      console.error('Error converting lead:', error)
     }
-
-    // 3. Update Lead
-    const updatedLead = updateLead(userId, lead.id, {
-      status: "converted",
-      convertedAt: now,
-      convertedToContactId: contactId,
-      convertedToDealId: dealId,
-    })
-    // 4. Recalculate score
-    updateLead(userId, lead.id, { score: calculateLeadScore({ ...updatedLead, status: "converted" }) })
-
-    // 5. Close and navigate
-    onOpenChange(false)
-    onConverted(contactId)
   }
 
   return (

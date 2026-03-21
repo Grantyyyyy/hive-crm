@@ -509,7 +509,6 @@ export function LeadDetail() {
           open={showConvertModal}
           onOpenChange={setShowConvertModal}
           lead={lead}
-          userId={userId}
           onConverted={handleConverted}
         />
       )}

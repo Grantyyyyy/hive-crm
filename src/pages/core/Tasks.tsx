@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react"
+import { toast } from "sonner"
 import { 
   Filter,
   ChevronDown,
@@ -60,10 +61,19 @@ export function Tasks() {
   const handleToggleComplete = (e: React.MouseEvent, task: Task) => {
     e.stopPropagation()
     const newStatus = task.status === 'completed' ? 'open' : 'completed'
-    updateItem(task.id, { 
-      status: newStatus,
-      completedAt: newStatus === 'completed' ? new Date().toISOString() : undefined
-    })
+    const statusText = newStatus === 'completed' ? 'completed' : 're-opened'
+    
+    toast.promise(
+      updateItem(task.id, { 
+        status: newStatus,
+        completedAt: newStatus === 'completed' ? new Date().toISOString() : undefined
+      }),
+      {
+        loading: 'Updating task status...',
+        success: `Task marked as ${statusText}`,
+        error: 'Failed to update task status'
+      }
+    )
   }
 
   const getEntityName = (task: Task) => {

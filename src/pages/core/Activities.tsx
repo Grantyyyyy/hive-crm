@@ -255,11 +255,17 @@ export function Activities() {
                                     </div>
                                     <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 max-w-[100px] truncate">{user?.firstName || "Me"}</span>
                                     <span className="text-slate-300 dark:text-slate-700 text-[10px]">•</span>
-                                    <Link href={`/contacts/${activity.contactId}`}>
-                                      <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 truncate max-w-[100px] cursor-pointer">
-                                        {contactMap.get(activity.contactId) || "Contact"}
+                                    {activity.contactId ? (
+                                      <Link href={`/contacts/${activity.contactId}`}>
+                                        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 truncate max-w-[100px] cursor-pointer">
+                                          {contactMap.get(activity.contactId) || "Contact"}
+                                        </span>
+                                      </Link>
+                                    ) : (
+                                      <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate max-w-[100px]">
+                                        {"Contact"}
                                       </span>
-                                    </Link>
+                                    )}
                                   </div>
                                   
                                   <span className="px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-[9px] uppercase font-black tracking-widest hidden sm:inline-block">

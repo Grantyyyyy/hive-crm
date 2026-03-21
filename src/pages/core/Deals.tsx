@@ -169,7 +169,7 @@ export function Deals() {
           d.title.toLowerCase().includes(q) ||
           (contactMap.get(d.contactId)?.toLowerCase().includes(q) ?? false)
       )
-      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+      .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))
   }, [deals, search, contactMap])
 
   const totalDeals = filtered.length
@@ -366,7 +366,7 @@ export function Deals() {
                             <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                               <Calendar className="w-3.5 h-3.5" />
                               <p className="text-[11px] font-bold tracking-tight">
-                                {new Date(d.expectedCloseDate).toLocaleDateString()}
+                                {d.expectedCloseDate ? new Date(d.expectedCloseDate).toLocaleDateString() : '—'}
                               </p>
                             </div>
                           </td>

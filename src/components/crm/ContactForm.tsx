@@ -9,13 +9,12 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import type { Contact, ContactSource } from "@/lib/types"
+import type { Contact, ContactSource, CreateContactInput } from "@/lib/types"
 import { SOURCE_LABELS } from "@/lib/types"
-import { generateId } from "@/lib/helpers"
 import { cn } from "@/lib/utils"
 
 interface ContactFormProps {
-  onSave: (contact: Contact) => void
+  onSave: (contact: CreateContactInput) => void
   onCancel: () => void
   initialData?: Partial<Contact>
 }
@@ -46,13 +45,12 @@ export function ContactForm({ onSave, onCancel, initialData }: ContactFormProps)
     e.preventDefault()
     if (!validate()) return
     onSave({
-      id: initialData?.id ?? generateId(),
+      ...(initialData?.id && { id: initialData.id }),
       name: `${firstName.trim()} ${lastName.trim()}`.trim(),
       email: email.trim(),
       phone: phone.trim() || undefined,
       company: company.trim() || undefined,
       source,
-      createdAt: initialData?.createdAt ?? new Date().toISOString(),
     })
   }
 

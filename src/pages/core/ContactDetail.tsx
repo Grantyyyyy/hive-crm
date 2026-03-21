@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react"
+import { useState, useMemo, useCallback, useEffect } from "react"
 import { useUser } from "@clerk/clerk-react"
 import { useRoute, Link } from "wouter"
 import {
@@ -23,16 +23,11 @@ import {
 import { ContactForm } from "@/components/crm/ContactForm"
 import { ActivityForm } from "@/components/crm/ActivityForm"
 import {
-  getContacts,
-  saveContacts,
-  getDeals,
-  getActivities,
-  saveActivities,
-  getDismissedFollowUps,
-  saveDismissedFollowUps,
-  getTasksForEntity,
-  updateTask,
-} from "@/lib/storage"
+  contactsApi,
+  dealsApi,
+  activitiesApi,
+  tasksApi,
+} from "@/lib/api"
 import {
   relativeTime,
   daysSince,
@@ -56,29 +51,49 @@ export function ContactDetail() {
   const [, params] = useRoute("/contacts/:id")
   const contactId = params?.id ?? ""
 
-  const [contacts, setContacts] = useState<Contact[]>(() =>
-    getContacts(userId)
-  )
-  const [activities, setActivities] = useState<Activity[]>(() =>
-    getActivities(userId)
-  )
-  const [dismissed, setDismissed] = useState<string[]>(() =>
-    getDismissedFollowUps(userId)
-  )
+  const [contact, setContact] = useState<Contact | null>(null)
+  const [activities, setActivities] = useState<Activity[]>([])
+  const [deals, setDeals] = useState<Deal[]>([])
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [dismissed, setDismissed] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showActivityModal, setShowActivityModal] = useState(false)
   const [showAddTaskModal, setShowAddTaskModal] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
-  const [tasks, setTasks] = useState<Task[]>(() =>
-    userId ? getTasksForEntity(userId, 'contact', contactId) : []
-  )
 
-  const contact = useMemo(
-    () => contacts.find((c) => c.id === contactId),
-    [contacts, contactId]
-  )
-
-  const deals = useMemo(() => getDeals(userId), [userId])
+  useEffect(() => {
+    async function fetchData() {
+      if (!userId || !contactId) return
+      setLoading(true)
+      try {
+        const [contactRes, dealsRes, activitiesRes, tasksRes] = await Promise.all([
+          contactsApi.getOne(contactId),
+          dealsApi.list({ contactId }),
+          activitiesApi.list({ contactId }),
+          tasksApi.list({ entityType: 'contact', entityId: contactId }),
+        ])
+        
+        if (contactRes.success && contactRes.data) {
+          setContact(contactRes.data)
+        }
+        if (dealsRes.success && dealsRes.data) {
+          setDeals(dealsRes.data.map((d: any) => ({ ...d, stage: d.stage?.toLowerCase() })))
+        }
+        if (activitiesRes.success && activitiesRes.data) {
+          setActivities(activitiesRes.data.map((a: any) => ({ ...a, type: a.type?.toLowerCase() })))
+        }
+        if (tasksRes.success && tasksRes.data) {
+          setTasks(tasksRes.data.map((t: any) => ({ ...t, status: t.status?.replace('_', '-')?.toLowerCase(), priority: t.priority?.toLowerCase() })))
+        }
+      } catch (error) {
+        console.error('Error fetching contact data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [userId, contactId])
 
   const contactDeals = useMemo(
     () => deals.filter((d) => d.contactId === contactId),
@@ -118,42 +133,42 @@ export function ContactDetail() {
   const relLabel = getRelationshipLabel(relScore)
 
   const handleDismissFollowUp = useCallback(() => {
-    const updated = [...dismissed, contactId]
-    setDismissed(updated)
-    saveDismissedFollowUps(userId, updated)
-  }, [dismissed, contactId, userId])
+    setDismissed(prev => [...prev, contactId])
+  }, [contactId])
 
-  const handleEditContact = useCallback(
-    (updated: Contact) => {
-      const newContacts = contacts.map((c) =>
-        c.id === updated.id ? updated : c
-      )
-      saveContacts(userId, newContacts)
-      setContacts(newContacts)
-      setShowEditModal(false)
-    },
-    [contacts, userId]
-  )
+  const handleEditContact = useCallback(async (updated: Partial<Contact>) => {
+    try {
+      if (updated.id) {
+        await contactsApi.update(updated.id, updated)
+        setContact(prev => prev ? { ...prev, ...updated } : null)
+        setShowEditModal(false)
+      }
+    } catch (error) {
+      console.error('Error updating contact:', error)
+    }
+  }, [])
 
-  const handleAddActivity = useCallback(
-    (activity: Activity) => {
-      const updated = [...activities, activity]
-      saveActivities(userId, updated)
-      setActivities(updated)
-      setShowActivityModal(false)
-    },
-    [activities, userId]
-  )
+  const handleAddActivity = useCallback(async (activity: Omit<Activity, 'id'>) => {
+    try {
+      const response = await activitiesApi.create(activity)
+      if (response.success && response.data) {
+        setActivities(prev => [{ ...response.data, type: response.data.type?.toLowerCase() }, ...prev])
+        setShowActivityModal(false)
+      }
+    } catch (error) {
+      console.error('Error creating activity:', error)
+    }
+  }, [])
 
-  const handleToggleTask = useCallback((e: React.MouseEvent, task: Task) => {
+  const handleToggleTask = useCallback(async (e: React.MouseEvent, task: Task) => {
     e.stopPropagation()
-    const newStatus = task.status === 'completed' ? 'open' : 'completed'
-    updateTask(userId, task.id, {
-      status: newStatus,
-      completedAt: newStatus === 'completed' ? new Date().toISOString() : undefined
-    })
-    setTasks(getTasksForEntity(userId, 'contact', contactId))
-  }, [userId, contactId])
+    try {
+      await tasksApi.update(task.id, { status: 'COMPLETED' })
+      setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: 'completed' } : t))
+    } catch (error) {
+      console.error('Error updating task:', error)
+    }
+  }, [])
 
   const sortedTasks = useMemo(() => sortTasks(tasks), [tasks])
   const topTasks = useMemo(() => sortedTasks.slice(0, 5), [sortedTasks])
@@ -197,6 +212,14 @@ export function ContactDetail() {
     contacted: "transparent",
     proposal: "transparent",
     negotiation: "transparent"
+  }
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-[var(--bg-base)]">
+        <p className="text-[14px] font-mono text-[var(--text-muted)]">Loading...</p>
+      </div>
+    )
   }
 
   if (!contact) {
@@ -251,7 +274,7 @@ export function ContactDetail() {
                 <div className="flex items-center gap-4">
                   <h1 className="text-[28px] font-serif font-normal leading-none">{contact.name}</h1>
                   <span className="inline-flex items-center justify-center bg-[var(--bg-elevated)] text-[var(--text-secondary)] text-[11px] uppercase tracking-widest px-2 py-0.5 rounded-full whitespace-nowrap">
-                    {SOURCE_LABELS[contact.source]}
+                    {SOURCE_LABELS[contact.source as keyof typeof SOURCE_LABELS] || contact.source}
                   </span>
                 </div>
 
@@ -395,7 +418,7 @@ export function ContactDetail() {
                             {formatCurrency(d.value)}
                           </p>
                           <p className="text-[11px] uppercase tracking-wider text-[var(--text-muted)]">
-                            {STAGE_LABELS[d.stage]}
+                            {STAGE_LABELS[d.stage as keyof typeof STAGE_LABELS] || d.stage}
                           </p>
                         </div>
                       </div>
@@ -522,14 +545,26 @@ export function ContactDetail() {
         open={showAddTaskModal}
         onOpenChange={setShowAddTaskModal}
         fixedEntity={{ type: 'contact', id: contactId, name: contact.name }}
-        onSuccess={() => setTasks(getTasksForEntity(userId, 'contact', contactId))}
+        onSuccess={() => {
+          tasksApi.list({ entityType: 'contact', entityId: contactId }).then(res => {
+            if (res.success && res.data) {
+              setTasks(res.data.map((t: any) => ({ ...t, status: t.status?.replace('_', '-')?.toLowerCase(), priority: t.priority?.toLowerCase() })))
+            }
+          })
+        }}
       />
 
       <EditTaskModal
         task={editingTask}
         open={!!editingTask}
         onOpenChange={(o) => !o && setEditingTask(null)}
-        onSuccess={() => setTasks(getTasksForEntity(userId, 'contact', contactId))}
+        onSuccess={() => {
+          tasksApi.list({ entityType: 'contact', entityId: contactId }).then(res => {
+            if (res.success && res.data) {
+              setTasks(res.data.map((t: any) => ({ ...t, status: t.status?.replace('_', '-')?.toLowerCase(), priority: t.priority?.toLowerCase() })))
+            }
+          })
+        }}
       />
     </div>
   )

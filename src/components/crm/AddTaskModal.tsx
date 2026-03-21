@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { useUser } from "@clerk/clerk-react"
+import { toast } from "sonner"
 import {
   Sheet,
   SheetContent,
@@ -7,8 +8,9 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { TaskForm } from "./TaskForm"
-import { getContacts, getDeals, getLeads, createTask } from "@/lib/storage"
+import { contactsApi, dealsApi, leadsApi } from "@/lib/api"
 import type { Contact, Deal, Lead, Task } from "@/lib/types"
+import { useCreateTask } from "@/lib/hooks"
 
 interface AddTaskModalProps {
   open: boolean
@@ -25,18 +27,56 @@ export function AddTaskModal({ open, onOpenChange, onSuccess, fixedEntity }: Add
   const [deals, setDeals] = useState<Deal[]>([])
   const [leads, setLeads] = useState<Lead[]>([])
 
+  const createTask = useCreateTask()
+
   useEffect(() => {
-    if (open && userId) {
-      setContacts(getContacts(userId))
-      setDeals(getDeals(userId))
-      setLeads(getLeads(userId))
+    async function fetchData() {
+      if (open && userId) {
+        try {
+          const [contactsRes, dealsRes, leadsRes] = await Promise.all([
+            contactsApi.list({ limit: 100 }),
+            dealsApi.list({ limit: 100 }),
+            leadsApi.list({ limit: 100 }),
+          ])
+          
+          if (contactsRes.success && contactsRes.data) {
+            setContacts(contactsRes.data)
+          }
+          if (dealsRes.success && dealsRes.data) {
+            setDeals(dealsRes.data.map((d: any) => ({ ...d, stage: d.stage?.toLowerCase() })))
+          }
+          if (leadsRes.success && leadsRes.data) {
+            setLeads(leadsRes.data.map((l: any) => ({ ...l, status: l.status?.toLowerCase(), source: l.source?.toLowerCase() })))
+          }
+        } catch (error) {
+          console.error('Error fetching data:', error)
+        }
+      }
     }
+    fetchData()
   }, [open, userId])
 
-  const handleSave = (task: Task) => {
-    createTask(userId, task)
-    onOpenChange(false)
-    if (onSuccess) onSuccess(task)
+  const handleSave = async (task: Partial<Task>) => {
+    toast.promise(
+      createTask.mutateAsync(task).then(response => {
+        if (response.success && response.data) {
+          const newTask = { 
+            ...response.data, 
+            status: response.data.status?.replace('_', '-')?.toLowerCase(), 
+            priority: response.data.priority?.toLowerCase() 
+          }
+          onOpenChange(false)
+          if (onSuccess) onSuccess(newTask)
+          return response
+        }
+        throw new Error("Failed response")
+      }),
+      {
+        loading: 'Creating task...',
+        success: 'Task created successfully!',
+        error: 'Failed to create task'
+      }
+    )
   }
 
   return (

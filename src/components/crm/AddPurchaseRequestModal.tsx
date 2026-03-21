@@ -1,4 +1,3 @@
-import { useUser } from "@clerk/clerk-react"
 import {
   Sheet,
   SheetContent,
@@ -6,7 +5,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { PurchaseRequestForm } from "./PurchaseRequestForm"
-import { createPurchaseRequest } from "@/lib/storage"
+import { purchaseRequestsApi } from "@/lib/api"
 import type { PurchaseRequest } from "@/lib/types"
 import { Layers } from "lucide-react"
 
@@ -17,13 +16,16 @@ interface AddPurchaseRequestModalProps {
 }
 
 export function AddPurchaseRequestModal({ open, onOpenChange, onSuccess }: AddPurchaseRequestModalProps) {
-  const { user } = useUser()
-  const userId = user?.id ?? ""
-  
-  const handleSave = (request: PurchaseRequest) => {
-    createPurchaseRequest(userId, request)
-    onOpenChange(false)
-    if (onSuccess) onSuccess(request)
+  const handleSave = async (request: Partial<PurchaseRequest>) => {
+    try {
+      const response = await purchaseRequestsApi.create(request as any)
+      if (response.success && response.data) {
+        onOpenChange(false)
+        if (onSuccess) onSuccess(response.data)
+      }
+    } catch (error) {
+      console.error('Error creating purchase request:', error)
+    }
   }
 
   return (

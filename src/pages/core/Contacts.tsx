@@ -1,12 +1,12 @@
 import { useState, useMemo } from "react"
 import { Pagination } from "@/components/ui/Pagination"
 import { useLocation } from "wouter"
-import { 
-  UserRound, 
-  Search, 
-  Plus, 
-  Download, 
-  Filter, 
+import {
+  UserRound,
+  Search,
+  Plus,
+  Download,
+  Filter,
   MoreVertical
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -21,16 +21,17 @@ import {
 import { ContactForm } from "@/components/crm/ContactForm"
 import { useCRMResource } from "@/lib/hooks"
 import type { Contact } from "@/lib/types"
+import { PageSkeleton } from "@/components/ui/page-skeleton"
 
 export function Contacts() {
   const [, navigate] = useLocation()
-  const { 
-    data: contacts, 
-    search, 
-    setSearch, 
+  const {
+    data: contacts,
+    search,
+    setSearch,
     isLoaded,
     addItems,
-    deleteItem 
+    deleteItem
   } = useCRMResource<Contact>('contacts')
 
   const [showModal, setShowModal] = useState(false)
@@ -57,11 +58,7 @@ export function Contacts() {
   )
 
   if (!isLoaded) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-r-transparent" />
-      </div>
-    )
+    return <PageSkeleton />
   }
 
   function handleAddContact(contact: Contact) {
@@ -72,7 +69,7 @@ export function Contacts() {
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen">
       <div className="mx-auto p-4 md:p-8 max-w-[1600px] animate-fade-in">
-        
+
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8">
           <div>
@@ -88,7 +85,7 @@ export function Contacts() {
               <Filter className="w-4 h-4 mr-2" />
               Filter
             </Button>
-            <Button 
+            <Button
               variant="default"
               onClick={() => setShowModal(true)}
               className="ml-2"
@@ -138,8 +135,8 @@ export function Contacts() {
                   paginatedContacts.map((c: Contact) => {
                     const initials = c.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
                     return (
-                      <tr 
-                        key={c.id} 
+                      <tr
+                        key={c.id}
                         className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors cursor-pointer group"
                         onClick={() => navigate(`/contacts/${c.id}`)}
                       >
@@ -171,7 +168,7 @@ export function Contacts() {
                           </p>
                         </td>
                         <td className="px-4 py-2.5 text-right">
-                          <Button 
+                          <Button
                             variant="ghost"
                             size="sm"
                             className="text-slate-400 hover:text-slate-600 transition-colors h-6 px-2"
@@ -193,15 +190,15 @@ export function Contacts() {
             </table>
           </div>
 
-            {/* Pagination */}
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              totalItems={totalItems}
-              itemsPerPage={itemsPerPage}
-              itemLabel="contacts"
-            />
+          {/* Pagination */}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            itemLabel="contacts"
+          />
         </div>
       </div>
 

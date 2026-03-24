@@ -14,6 +14,7 @@ import { AddTaskModal } from "@/components/crm/AddTaskModal"
 import { EditTaskModal } from "@/components/crm/EditTaskModal"
 import { useCRMResource } from "@/lib/hooks"
 import { useUser } from "@clerk/clerk-react"
+import { PageSkeleton } from "@/components/ui/page-skeleton"
 
 export function Tasks() {
   const { user, isLoaded: clerkLoaded } = useUser()
@@ -98,11 +99,7 @@ export function Tasks() {
   }
 
   if (!isLoaded) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-[#F8FAFC]">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-r-transparent" />
-      </div>
-    )
+    return <PageSkeleton />
   }
 
   return (

@@ -42,6 +42,7 @@ import {
 import { DealForm } from "@/components/crm/DealForm"
 import { formatCurrency } from "@/lib/helpers"
 import { useCRMResource } from "@/lib/hooks"
+import { PageSkeleton } from "@/components/ui/page-skeleton"
 import type { Deal, DealStage, Contact } from "@/lib/types"
 import { STAGE_LABELS, DEAL_STAGES } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -228,11 +229,7 @@ export function Deals() {
   }, [deals, updateItem])
 
   if (!isLoaded) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-r-transparent" />
-      </div>
-    )
+    return <PageSkeleton />
   }
 
   function handleAddDeal(deal: Deal) {

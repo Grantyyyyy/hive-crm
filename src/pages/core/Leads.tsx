@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/sheet"
 import { LeadForm } from "@/components/crm/LeadForm"
 import { useCRMResource } from "@/lib/hooks"
+import { PageSkeleton } from "@/components/ui/page-skeleton"
 import type { Lead, LeadStatus, LeadSource } from "@/lib/types"
 import { LEAD_STATUSES, LEAD_STATUS_LABELS } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -84,11 +85,7 @@ export function Leads() {
   )
 
   if (!isLoaded) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-r-transparent" />
-      </div>
-    )
+    return <PageSkeleton />
   }
 
   function handleSaveLead(lead: Lead) {

@@ -105,15 +105,15 @@ export function Tasks() {
   }
 
   return (
-    <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen">
+    <div className="flex-1 bg-bg-base text-text-primary min-h-screen">
       <div className="mx-auto p-4 md:p-8 max-w-[1600px] animate-fade-in space-y-8">
         
         {/* Header Area */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 mb-1">Work Management</p>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Tasks</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">Manage, prioritize and track your team's workload.</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted mb-1">Work Management</p>
+            <h1 className="text-3xl font-bold tracking-tight text-text-primary">Tasks</h1>
+            <p className="text-text-muted mt-1 font-medium">Manage, prioritize and track your team's workload.</p>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outlineNeutral">
@@ -127,88 +127,88 @@ export function Tasks() {
 
         {/* Search Bar */}
         <div className="relative">
-          <Filter className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+          <Filter className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-text-muted" />
           <input
             placeholder="Search tasks by title or description..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-slate-400 outline-none transition-all"
+            className="w-full pl-12 h-14 bg-bg-surface border-border rounded-2xl shadow-sm text-sm font-medium focus:ring-2 focus:ring-accent/20 focus:border-accent/50 placeholder:text-text-muted outline-none transition-all"
           />
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center gap-8 border-b border-slate-200 dark:border-slate-800">
+        <div className="flex items-center gap-8 border-b border-border">
           <button 
             onClick={() => setActiveTab('my')}
             className={cn(
               "pb-4 font-bold text-sm tracking-wide transition-colors relative flex items-center gap-2",
-              activeTab === 'my' ? "text-indigo-600" : "text-slate-500 hover:text-slate-700"
+              activeTab === 'my' ? "text-accent" : "text-text-secondary hover:text-text-primary"
             )}
           >
             My Tasks
             <span className={cn(
                "px-2 py-0.5 rounded-full text-xs font-semibold",
-               activeTab === 'my' ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+               activeTab === 'my' ? "bg-accent-dim text-accent" : "bg-bg-elevated text-text-muted"
             )}>
               {tasks.length}
             </span>
-            {activeTab === 'my' && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-indigo-600 rounded-t-full" />}
+            {activeTab === 'my' && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-accent rounded-t-full" />}
           </button>
           <button 
             onClick={() => setActiveTab('team')}
             className={cn(
               "pb-4 font-bold text-sm tracking-wide transition-colors relative",
-              activeTab === 'team' ? "text-indigo-600" : "text-slate-500 hover:text-slate-700"
+              activeTab === 'team' ? "text-accent" : "text-text-secondary hover:text-text-primary"
             )}
           >
             Team Tasks
-            {activeTab === 'team' && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-indigo-600 rounded-t-full" />}
+            {activeTab === 'team' && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-accent rounded-t-full" />}
           </button>
           <button 
             onClick={() => setActiveTab('upcoming')}
             className={cn(
               "pb-4 font-bold text-sm tracking-wide transition-colors relative",
-              activeTab === 'upcoming' ? "text-indigo-600" : "text-slate-500 hover:text-slate-700"
+              activeTab === 'upcoming' ? "text-accent" : "text-text-secondary hover:text-text-primary"
             )}
           >
             Upcoming
-            {activeTab === 'upcoming' && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-indigo-600 rounded-t-full" />}
+            {activeTab === 'upcoming' && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-accent rounded-t-full" />}
           </button>
         </div>
 
         {/* Inline Filters */}
         <div className="flex items-center gap-6 mt-6">
           <div className="flex items-center gap-2 cursor-pointer group">
-            <span className="text-sm font-semibold text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white">Status: All</span>
-            <ChevronDown className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300" />
+            <span className="text-sm font-semibold text-text-secondary group-hover:text-text-primary">Status: All</span>
+            <ChevronDown className="w-4 h-4 text-text-muted group-hover:text-text-secondary" />
           </div>
           <div className="flex items-center gap-2 cursor-pointer group">
-            <span className="text-sm font-semibold text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white">Priority: All</span>
-            <ChevronDown className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300" />
+            <span className="text-sm font-semibold text-text-secondary group-hover:text-text-primary">Priority: All</span>
+            <ChevronDown className="w-4 h-4 text-text-muted group-hover:text-text-secondary" />
           </div>
           <div className="flex items-center gap-2 cursor-pointer group">
-            <span className="text-sm font-semibold text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white">Due: This Week</span>
-            <ChevronDown className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300" />
+            <span className="text-sm font-semibold text-text-secondary group-hover:text-text-primary">Due: This Week</span>
+            <ChevronDown className="w-4 h-4 text-text-muted group-hover:text-text-secondary" />
           </div>
         </div>
 
         {/* Main Table Container */}
-        <div className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div className="bg-bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
           {/* Header Row */}
-          <div className="grid grid-cols-[auto_1fr_120px_140px_160px_120px_40px] items-center gap-4 px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+          <div className="grid grid-cols-[auto_1fr_120px_140px_160px_120px_40px] items-center gap-4 px-4 py-2.5 border-b border-border bg-bg-elevated/50">
             <div className="w-6"></div> {/* Checkbox placeholder */}
-            <div className="text-[11px] font-bold text-slate-500 uppercase tracking-tight">Task Name</div>
-            <div className="text-[11px] font-bold text-slate-500 uppercase tracking-tight">Priority</div>
-            <div className="text-[11px] font-bold text-slate-500 uppercase tracking-tight">Status</div>
-            <div className="text-[11px] font-bold text-slate-500 uppercase tracking-tight">Assigned To</div>
-            <div className="text-[11px] font-bold text-slate-500 uppercase tracking-tight">Due Date</div>
-            <div className="text-[11px] font-bold text-slate-500 uppercase tracking-tight text-right">Actions</div>
+            <div className="text-[11px] font-bold text-text-muted uppercase tracking-tight">Task Name</div>
+            <div className="text-[11px] font-bold text-text-muted uppercase tracking-tight">Priority</div>
+            <div className="text-[11px] font-bold text-text-muted uppercase tracking-tight">Status</div>
+            <div className="text-[11px] font-bold text-text-muted uppercase tracking-tight">Assigned To</div>
+            <div className="text-[11px] font-bold text-text-muted uppercase tracking-tight">Due Date</div>
+            <div className="text-[11px] font-bold text-text-muted uppercase tracking-tight text-right">Actions</div>
           </div>
 
           {/* Task Rows */}
-          <div className="divide-y divide-slate-200 dark:divide-slate-800">
+          <div className="divide-y border-border">
             {paginatedTasks.length === 0 ? (
-              <div className="p-8 text-center text-slate-500 font-medium">No tasks found.</div>
+              <div className="p-8 text-center text-text-muted font-medium">No tasks found.</div>
             ) : (
               paginatedTasks.map((task) => {
                 const isComp = task.status === 'completed'
@@ -220,7 +220,7 @@ export function Tasks() {
                 return (
                   <div 
                     key={task.id} 
-                    className="grid grid-cols-[auto_1fr_120px_140px_160px_120px_40px] items-center gap-4 px-4 py-2.5 hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors group cursor-pointer"
+                    className="grid grid-cols-[auto_1fr_120px_140px_160px_120px_40px] items-center gap-4 px-4 py-2.5 hover:bg-bg-elevated/50 transition-colors group cursor-pointer"
                     onClick={() => setEditingTask(task)}
                   >
                     {/* Checkbox */}
@@ -228,10 +228,10 @@ export function Tasks() {
                       <button 
                         onClick={(e) => handleToggleComplete(e, task)}
                         className={cn(
-                          "w-5 h-5 rounded flex items-center justify-center transition-all",
+                          "w-5 h-5 rounded flex items-center justify-center transition-all shadow-sm",
                           isComp 
-                            ? "bg-emerald-500 border-emerald-500 text-white" 
-                            : "border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 shadow-sm"
+                            ? "bg-green border-green text-white" 
+                            : "border border-border bg-bg-surface hover:border-accent"
                         )}
                       >
                         {isComp && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -242,12 +242,12 @@ export function Tasks() {
                     <div className="flex flex-col pr-4 min-w-0">
                       <span className={cn(
                         "text-[13px] font-bold truncate transition-colors",
-                        isComp ? "text-slate-400 dark:text-slate-500 line-through" : "text-slate-900 dark:text-slate-100"
+                        isComp ? "text-text-muted line-through" : "text-text-primary"
                       )}>
                         {task.title}
                       </span>
                       {entityName && !isComp && (
-                        <span className="text-[11px] text-slate-500 truncate mt-0.5">
+                        <span className="text-[11px] text-text-muted truncate mt-0.5">
                           {task.entityType}: {entityName}
                         </span>
                       )}
@@ -256,13 +256,14 @@ export function Tasks() {
                     {/* Priority */}
                     <div>
                       <span className={cn(
-                        "inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] uppercase font-black tracking-widest bg-slate-100 dark:bg-slate-800/50",
-                        pConf.bg,
-                        pConf.bg.includes('red') ? 'text-rose-600 dark:text-rose-400' : 
-                        pConf.bg.includes('yellow') ? 'text-amber-600 dark:text-amber-400' : 
-                        pConf.bg.includes('green') ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-400'
+                        "inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] uppercase font-black tracking-widest bg-bg-elevated/50",
+                        pConf.bg && (
+                          pConf.bg.includes('red') ? 'text-red' : 
+                          pConf.bg.includes('yellow') ? 'text-amber' : 
+                          pConf.bg.includes('green') ? 'text-green' : 'text-text-secondary'
+                        )
                       )}>
-                        <span className={cn("w-1.5 h-1.5 rounded-full", pConf.dot, pConf.bg.includes('yellow') ? 'bg-amber-500' : pConf.bg.includes('red') ? 'bg-rose-500' : pConf.bg.includes('green') ? 'bg-emerald-500' : 'bg-slate-400')} />
+                        <span className={cn("w-1.5 h-1.5 rounded-full", pConf.dot && (pConf.bg.includes('yellow') ? 'bg-amber' : pConf.bg.includes('red') ? 'bg-red' : pConf.bg.includes('green') ? 'bg-green' : 'bg-text-muted'))} />
                         {pConf.label}
                       </span>
                     </div>
@@ -271,9 +272,10 @@ export function Tasks() {
                     <div>
                       <span className={cn(
                         "inline-flex px-2 py-1 rounded text-[10px] uppercase font-black tracking-widest",
-                        sConf.bg,
-                        sConf.bg.includes('green') ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' :
-                        sConf.bg.includes('blue') ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400' : 'bg-slate-100 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400'
+                        sConf.bg && (
+                          sConf.bg.includes('green') ? 'bg-green/10 text-green' :
+                          sConf.bg.includes('blue') ? 'bg-accent/10 text-accent' : 'bg-bg-elevated text-text-secondary'
+                        )
                       )}>
                         {sConf.label}
                       </span>
@@ -281,14 +283,14 @@ export function Tasks() {
 
                     {/* Assigned To */}
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center ring-1 ring-white dark:ring-slate-950 shrink-0 overflow-hidden shadow-sm">
+                      <div className="w-6 h-6 rounded bg-amber/10 flex items-center justify-center ring-1 ring-bg-surface shrink-0 overflow-hidden shadow-sm">
                         {user?.imageUrl ? (
                           <img src={user.imageUrl} alt="Avatar" className="w-full h-full object-cover" />
                         ) : (
-                          <span className="text-[8px] font-black text-orange-700">ME</span>
+                          <span className="text-[8px] font-black text-amber">ME</span>
                         )}
                       </div>
-                      <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-300 truncate">
+                      <span className="text-[13px] font-semibold text-text-secondary truncate">
                         {user?.firstName || "Me"}
                       </span>
                     </div>
@@ -296,7 +298,7 @@ export function Tasks() {
                     {/* Due Date */}
                     <div className={cn(
                       "text-[13px] font-medium truncate",
-                      isComp ? "text-slate-400 dark:text-slate-500 italic" : (isOverdueTask ? "text-rose-600 dark:text-rose-400 font-bold" : "text-slate-600 dark:text-slate-400")
+                      isComp ? "text-text-muted italic" : (isOverdueTask ? "text-red font-bold" : "text-text-muted")
                     )}>
                       {isComp ? "Completed" : new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </div>
@@ -306,7 +308,7 @@ export function Tasks() {
                       <Button 
                         variant="ghost" 
                         size="icon"
-                        className="h-8 w-8 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-all"
+                        className="h-8 w-8 opacity-0 group-hover:opacity-100 text-text-muted hover:text-red transition-all"
                         onClick={(e) => {
                           e.stopPropagation()
                           setPendingDelete(task)
@@ -356,7 +358,7 @@ export function Tasks() {
         description={
           <>
             Are you sure you want to delete{" "}
-            <strong className="text-slate-900 dark:text-slate-100 font-bold">{pendingDelete?.title}</strong>?
+            <strong className="text-text-primary font-bold">{pendingDelete?.title}</strong>?
             {" "}This action cannot be undone.
           </>
         }

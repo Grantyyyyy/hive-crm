@@ -7,15 +7,15 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-indigo-600 text-white hover:brightness-110 shadow-lg shadow-indigo-200 dark:shadow-none",
-        outline: "border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-600/5 bg-transparent",
-        outlineNeutral: "border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800 bg-transparent",
-        ghost: "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 bg-transparent",
-        ghostPrimary: "text-indigo-600 hover:bg-indigo-600/10 bg-transparent",
-        destructive: "bg-red-500 text-white hover:brightness-110 shadow-lg shadow-red-200 dark:shadow-none",
-        destructiveOutline: "border-2 border-red-500 text-red-500 hover:bg-red-500/5 bg-transparent",
-        secondary: "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700",
-        link: "text-indigo-600 underline-offset-4 hover:underline",
+        default: "bg-accent text-white hover:brightness-110 shadow-lg shadow-accent/20",
+        outline: "border-2 border-accent text-accent hover:bg-accent/5 bg-transparent",
+        outlineNeutral: "border border-border text-text-primary hover:bg-bg-elevated bg-transparent",
+        ghost: "text-text-secondary hover:bg-bg-elevated bg-transparent",
+        ghostPrimary: "text-accent hover:bg-accent/10 bg-transparent",
+        destructive: "bg-red text-white hover:brightness-110 shadow-lg shadow-red/20",
+        destructiveOutline: "border-2 border-red text-red hover:bg-red/5 bg-transparent",
+        secondary: "bg-bg-elevated text-text-secondary hover:bg-bg-highlight",
+        link: "text-accent underline-offset-4 hover:underline",
       },
       size: {
         default: "h-11 px-5 text-xs uppercase tracking-wider rounded-xl", 

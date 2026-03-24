@@ -45,15 +45,15 @@ export function Dashboard() {
   }
 
   return (
-    <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen">
+    <div className="flex-1 bg-bg-base text-text-primary min-h-screen">
       <div className="mx-auto p-4 md:p-8 max-w-[1600px] animate-fade-in">
         
         {/* Title Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="text-3xl font-bold tracking-tight text-text-primary">
             System Overview
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">
+          <p className="text-text-muted mt-1 font-medium">
             Welcome back. Here's what's happening today.
           </p>
         </div>
@@ -61,52 +61,52 @@ export function Dashboard() {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* Revenue Card */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none transition-all hover:shadow-md">
+          <div className="bg-bg-surface p-6 rounded-3xl border border-border shadow-sm shadow-bg-elevated/50 transition-all hover:shadow-md">
             <div className="flex items-center justify-between mb-6">
-              <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center">
-                <CreditCard className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+              <div className="w-12 h-12 bg-green/10 rounded-2xl flex items-center justify-center">
+                <CreditCard className="w-6 h-6 text-green" />
               </div>
-              <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 dark:bg-emerald-900/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold rounded-lg leading-none">
+              <div className="flex items-center gap-1.5 px-2 py-1 bg-green/5 text-green text-xs font-bold rounded-lg leading-none">
                 <TrendingUp className="w-3.5 h-3.5" />
                 +12.5%
               </div>
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Total Revenue</p>
+              <p className="text-sm font-semibold text-text-muted">Total Revenue</p>
               <h3 className="text-3xl font-bold tracking-tight">{formatCurrency(totalDealValue || 128430)}</h3>
             </div>
           </div>
 
           {/* Active Deals Card */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none transition-all hover:shadow-md">
+          <div className="bg-bg-surface p-6 rounded-3xl border border-border shadow-sm shadow-bg-elevated/50 transition-all hover:shadow-md">
             <div className="flex items-center justify-between mb-6">
-              <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/20 rounded-2xl flex items-center justify-center">
-                <Briefcase className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+              <div className="w-12 h-12 bg-accent/10 rounded-2xl flex items-center justify-center">
+                <Briefcase className="w-6 h-6 text-accent" />
               </div>
-              <div className="flex items-center gap-1.5 px-2 py-1 bg-indigo-50 dark:bg-indigo-900/10 text-indigo-600 dark:text-indigo-400 text-xs font-bold rounded-lg leading-none">
+              <div className="flex items-center gap-1.5 px-2 py-1 bg-accent/5 text-accent text-xs font-bold rounded-lg leading-none">
                 <TrendingUp className="w-3.5 h-3.5" />
                 +5.2%
               </div>
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Active Deals</p>
+              <p className="text-sm font-semibold text-text-muted">Active Deals</p>
               <h3 className="text-3xl font-bold tracking-tight">{openDeals.length || 42}</h3>
             </div>
           </div>
 
           {/* Alerts Card */}
           <Link href="/in-progress" className="block transform transition-all active:scale-95 group">
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none transition-all hover:shadow-md hover:border-indigo-100 dark:hover:border-indigo-900">
+            <div className="bg-bg-surface p-6 rounded-3xl border border-border shadow-sm shadow-bg-elevated/50 transition-all hover:shadow-md hover:border-accent/20">
               <div className="flex items-center justify-between mb-6">
-                <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-2xl flex items-center justify-center">
-                  <AlertTriangle className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                <div className="w-12 h-12 bg-amber/10 rounded-2xl flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-amber" />
                 </div>
-                <div className="flex items-center gap-1.5 px-3 py-1 bg-orange-50 dark:bg-orange-900/10 text-orange-700 dark:text-orange-400 text-[10px] uppercase tracking-wider font-bold rounded-lg leading-none">
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-amber/5 text-amber text-[10px] uppercase tracking-wider font-bold rounded-lg leading-none">
                   Requires Action
                 </div>
               </div>
               <div className="space-y-1">
-                <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Low Stock Alerts</p>
+                <p className="text-sm font-semibold text-text-muted">Low Stock Alerts</p>
                 <h3 className="text-3xl font-bold tracking-tight">12</h3>
               </div>
             </div>
@@ -114,17 +114,17 @@ export function Dashboard() {
 
           {/* Tickets Card */}
           <Link href="/in-progress" className="block transform transition-all active:scale-95 group">
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none transition-all hover:shadow-md hover:border-indigo-100 dark:hover:border-indigo-900">
+            <div className="bg-bg-surface p-6 rounded-3xl border border-border shadow-sm shadow-bg-elevated/50 transition-all hover:shadow-md hover:border-accent/20">
               <div className="flex items-center justify-between mb-6">
-                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-2xl flex items-center justify-center">
-                  <Ticket className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                <div className="w-12 h-12 bg-accent/10 rounded-2xl flex items-center justify-center">
+                  <Ticket className="w-6 h-6 text-accent" />
                 </div>
-                <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs font-bold rounded-lg leading-none">
+                <div className="flex items-center gap-1.5 px-2 py-1 bg-bg-elevated text-text-muted text-xs font-bold rounded-lg leading-none">
                   -2 today
                 </div>
               </div>
               <div className="space-y-1">
-                <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Open Support Tickets</p>
+                <p className="text-sm font-semibold text-text-muted">Open Support Tickets</p>
                 <h3 className="text-3xl font-bold tracking-tight">8</h3>
               </div>
             </div>
@@ -134,7 +134,7 @@ export function Dashboard() {
         {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Monthly Sales Trend */}
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none">
+          <div className="bg-bg-surface p-8 rounded-3xl border border-border shadow-sm shadow-bg-elevated/50">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-lg font-bold">Monthly Sales Trend</h2>
               <Link href="/in-progress">
@@ -154,7 +154,7 @@ export function Dashboard() {
                 </defs>
                 {/* Horizontal Grid Lines */}
                 {[0, 60, 120, 180, 240].map((y) => (
-                  <line key={y} x1="0" y1={y} x2="100%" y2={y} stroke="currentColor" className="text-slate-100 dark:text-slate-800/50" strokeWidth="1" />
+                  <line key={y} x1="0" y1={y} x2="100%" y2={y} stroke="currentColor" className="text-border" strokeWidth="1" />
                 ))}
                 {/* The Area Path */}
                 <path 
@@ -165,17 +165,17 @@ export function Dashboard() {
                 <path 
                   d="M0,200 C100,190 150,150 200,160 S300,200 400,180 S500,80 600,60 S750,150 800,100" 
                   fill="none" 
-                  stroke="#4F46E5" 
+                  stroke="var(--accent)" 
                   strokeWidth="3" 
                   strokeLinecap="round" 
                   strokeLinejoin="round" 
                 />
                 {/* Activity Dots */}
-                <circle cx="200" cy="160" r="4" fill="white" stroke="#4F46E5" strokeWidth="2" />
-                <circle cx="400" cy="180" r="4" fill="white" stroke="#4F46E5" strokeWidth="2" />
-                <circle cx="600" cy="60" r="4" fill="white" stroke="#4F46E5" strokeWidth="2" />
+                <circle cx="200" cy="160" r="4" fill="var(--bg-surface)" stroke="var(--accent)" strokeWidth="2" />
+                <circle cx="400" cy="180" r="4" fill="var(--bg-surface)" stroke="var(--accent)" strokeWidth="2" />
+                <circle cx="600" cy="60" r="4" fill="var(--bg-surface)" stroke="var(--accent)" strokeWidth="2" />
               </svg>
-              <div className="flex justify-between mt-4 px-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              <div className="flex justify-between mt-4 px-2 text-[10px] font-bold text-text-muted uppercase tracking-widest">
                 <span>Jan</span>
                 <span>Feb</span>
                 <span>Mar</span>
@@ -187,7 +187,7 @@ export function Dashboard() {
           </div>
 
           {/* Deals by Stage */}
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none">
+          <div className="bg-bg-surface p-8 rounded-3xl border border-border shadow-sm shadow-bg-elevated/50">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-lg font-bold">Deals by Stage</h2>
               <Link href="/in-progress">
@@ -207,15 +207,15 @@ export function Dashboard() {
                 ].map((stage, i) => (
                   <div key={stage.label} className="flex flex-col items-center gap-4 w-12 group">
                     <div 
-                      className="w-full bg-slate-100 dark:bg-slate-800 rounded-xl transition-all group-hover:bg-indigo-600/10" 
+                      className="w-full bg-bg-elevated rounded-xl transition-all group-hover:bg-accent/10" 
                       style={{ height: stage.height }}
                     >
                       <div 
-                        className="w-full bg-indigo-500 rounded-xl transition-all duration-500 opacity-20 group-hover:opacity-100 shadow-lg shadow-indigo-500/20" 
+                        className="w-full bg-accent rounded-xl transition-all duration-500 opacity-20 group-hover:opacity-100 shadow-lg shadow-accent/20" 
                         style={{ height: '0%', animation: `grow ${1 + i*0.1}s forwards ease-out`, animationDelay: `${i*0.1}s` }}
                       />
                     </div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{stage.label}</span>
+                    <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">{stage.label}</span>
                   </div>
                 ))}
               </div>
@@ -232,33 +232,33 @@ export function Dashboard() {
         {/* Bottom Widgets */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Recent Activity */}
-          <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none overflow-hidden">
-            <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div className="lg:col-span-2 bg-bg-surface rounded-3xl border border-border shadow-sm shadow-bg-elevated/50 overflow-hidden">
+            <div className="px-8 py-6 border-b border-border flex items-center justify-between">
               <h2 className="text-lg font-bold">Recent Activity</h2>
               <Link href="/in-progress">
-                <Button variant="link" className="p-0 h-auto text-indigo-600 dark:text-indigo-400 text-xs font-bold">View All</Button>
+                <Button variant="link" className="p-0 h-auto text-accent text-xs font-bold">View All</Button>
               </Link>
             </div>
             <div className="p-2">
               {recentActivities.length === 0 ? (
-                <div className="p-12 text-center text-slate-500">No recent activity.</div>
+                <div className="p-12 text-center text-text-muted">No recent activity.</div>
               ) : (
                 recentActivities.map((activity) => (
                   <div key={activity.id} className={cn(
-                    "flex items-center gap-4 px-6 py-4 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors",
+                    "flex items-center gap-4 px-6 py-4 rounded-2xl hover:bg-bg-elevated transition-colors",
                   )}>
-                    <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center shrink-0">
-                      <Activity className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                    <div className="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center shrink-0">
+                      <Activity className="w-5 h-5 text-accent" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
+                      <p className="text-sm font-semibold text-text-primary truncate">
                         {activity.content}
                       </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      <p className="text-xs text-text-muted mt-0.5">
                         {new Date(activity.createdAt).toLocaleDateString()} at {new Date(activity.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">
+                    <div className="text-[10px] font-bold text-text-muted uppercase tracking-widest bg-bg-elevated px-2 py-1 rounded-md">
                       {activity.type}
                     </div>
                   </div>
@@ -268,8 +268,8 @@ export function Dashboard() {
           </div>
 
           {/* Low Stock Items */}
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none overflow-hidden flex flex-col">
-            <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800">
+          <div className="bg-bg-surface rounded-3xl border border-border shadow-sm shadow-bg-elevated/50 overflow-hidden flex flex-col">
+            <div className="px-8 py-6 border-b border-border">
               <h2 className="text-lg font-bold">Low Stock Items</h2>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
@@ -279,15 +279,15 @@ export function Dashboard() {
                 { name: "Office Chair v2", sku: "CHV2-BL", stock: 1 },
                 { name: "Monitor 24\" IPS", sku: "MON24-IPS", stock: 3 },
               ].map((item) => (
-                <div key={item.sku} className="flex items-center justify-between p-4 rounded-2xl border border-slate-50 dark:border-slate-800/50 hover:border-indigo-100 dark:hover:border-indigo-900 transition-colors">
+                <div key={item.sku} className="flex items-center justify-between p-4 rounded-2xl border border-border hover:border-accent/20 transition-colors">
                   <div className="min-w-0">
                     <p className="text-sm font-semibold truncate">{item.name}</p>
-                    <p className="text-[10px] text-slate-500 uppercase tracking-tight">{item.sku}</p>
+                    <p className="text-[10px] text-text-muted uppercase tracking-tight">{item.sku}</p>
                   </div>
                   <div className="text-right">
                     <p className={cn(
                       "text-sm font-bold",
-                      item.stock < 3 ? "text-red-600 dark:text-red-400" : "text-orange-600 dark:text-orange-400"
+                      item.stock < 3 ? "text-red" : "text-amber"
                     )}>
                       {item.stock} left
                     </p>

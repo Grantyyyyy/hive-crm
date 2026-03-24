@@ -1,5 +1,6 @@
 import { ClerkProvider } from "@clerk/clerk-react";
 import { Router, Route, Switch } from "wouter";
+import { ThemeProvider } from "@/lib/ThemeProvider";
 import { LandingPage } from "@/pages/LandingPage";
 import { SignInPage } from "@/pages/SignInPage";
 import { SignUpPage } from "@/pages/SignUpPage";
@@ -44,7 +45,8 @@ function Protected({ component: Component }: { component: React.ComponentType })
 function App() {
   return (
     <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-      <CRMProvider>
+      <ThemeProvider>
+        <CRMProvider>
         <Router>
         <div className="min-h-screen flex flex-col bg-background font-sans antialiased text-foreground">
           <Navbar />
@@ -132,7 +134,8 @@ function App() {
           }}
         />
         </Router>
-      </CRMProvider>
+        </CRMProvider>
+      </ThemeProvider>
     </ClerkProvider>
   );
 }

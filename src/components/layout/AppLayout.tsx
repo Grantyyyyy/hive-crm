@@ -17,7 +17,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   }, []);
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
+    <div className="flex min-h-screen bg-bg-base text-text-primary font-sans">
       <Sidebar 
         mobileOpen={mobileOpen} 
         setMobileOpen={setMobileOpen} 

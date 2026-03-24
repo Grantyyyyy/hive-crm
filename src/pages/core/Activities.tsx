@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react"
+import { PageSkeleton } from "@/components/ui/page-skeleton"
 import { Link } from "wouter"
-import { 
+import {
   Activity as ActivityIcon,
   Download,
   Plus,
@@ -35,15 +36,15 @@ const TYPE_META: Record<
 
 export function Activities() {
   const { user } = useUser()
-  const { 
-    data: activities, 
+  const {
+    data: activities,
     addItems: addActivities,
-    isLoaded: activitiesLoaded 
+    isLoaded: activitiesLoaded
   } = useCRMResource<Activity>('activities')
 
-  const { 
-    data: contacts, 
-    isLoaded: contactsLoaded 
+  const {
+    data: contacts,
+    isLoaded: contactsLoaded
   } = useCRMResource<Contact>('contacts')
 
   const [search, setSearch] = useState("")
@@ -65,13 +66,12 @@ export function Activities() {
       return matchesFilter && matchesSearch
     })
     const sorted = [...list].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    
+
     const groups: { dateLabel: string, items: Activity[] }[] = []
-    
+
     sorted.forEach(a => {
       const d = new Date(a.createdAt)
       const isToday = new Date().toDateString() === d.toDateString()
-      // Format like "TODAY, OCT 24" or "OCT 23"
       const datePart = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase()
       const dateLabel = isToday ? `TODAY, ${datePart}` : datePart
 
@@ -92,17 +92,13 @@ export function Activities() {
   }
 
   if (!activitiesLoaded || !contactsLoaded) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-[#F8FAFC]">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-r-transparent" />
-      </div>
-    )
+    return <PageSkeleton />
   }
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen">
       <div className="mx-auto p-4 md:p-8 max-w-[1600px] animate-fade-in space-y-8">
-        
+
         {/* Header Region */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div>
@@ -162,7 +158,7 @@ export function Activities() {
               })}
             </div>
           </div>
-          
+
           <div className="flex flex-wrap items-center gap-4 px-3 w-full md:w-auto mt-2 md:mt-0 pb-2 md:pb-0">
             <div className="flex flex-col">
               <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">Team Member</span>
@@ -189,61 +185,51 @@ export function Activities() {
             </div>
           ) : (
             <div className="relative max-w-4xl mx-auto pl-4 md:pl-0">
-              {/* Central vertical dashed/solid line, hidden on mobile */}
               <div className="hidden md:block absolute left-1/2 top-4 bottom-0 w-px bg-slate-200 dark:bg-slate-800 transform -translate-x-1/2" />
-              {/* Mobile vertical line */}
               <div className="md:hidden absolute left-[15px] top-4 bottom-0 w-px bg-slate-200 dark:bg-slate-800" />
 
               <div className="space-y-8">
                 {groupedActivities.map((group, groupIdx) => (
                   <div key={groupIdx}>
-                    {/* Date Badge */}
                     <div className="flex justify-start md:justify-center mb-6 relative">
                       <span className="inline-block bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded shadow-sm z-10 border border-slate-200 dark:border-slate-700">
                         {group.dateLabel}
                       </span>
                     </div>
 
-                    {/* Group Items */}
                     <div className="space-y-6">
                       {group.items.map((activity, index) => {
                         const Icon = TYPE_META[activity.type].icon
                         const isEven = index % 2 === 0
                         const timeString = new Date(activity.createdAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-                        
+
                         return (
                           <div key={activity.id} className="relative flex md:justify-between items-center w-full group">
-                            
-                            {/* Icon Circle (Center on Desktop, Left on Mobile) */}
+
                             <div className="absolute left-[-15px] md:left-1/2 md:transform md:-translate-x-1/2 w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-950 z-10 flex items-center justify-center">
                               <div className={cn("w-6 h-6 rounded-full flex items-center justify-center border", TYPE_META[activity.type].bg, TYPE_META[activity.type].bg.replace('bg-', 'dark:bg-').concat('/20'), TYPE_META[activity.type].iconBorder, TYPE_META[activity.type].iconBorder.replace('border-', 'dark:border-'))}>
                                 <Icon className={cn("w-3 h-3", TYPE_META[activity.type].color)} />
                               </div>
                             </div>
 
-                            {/* Card Content container - changes side on desktop */}
                             <div className={cn(
-                              "w-full ml-8 md:ml-0 md:w-[calc(50%-2rem)]", 
-                              !isEven && "md:ml-auto" 
+                              "w-full ml-8 md:ml-0 md:w-[calc(50%-2rem)]",
+                              !isEven && "md:ml-auto"
                             )}>
                               <div className="bg-white dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow group-hover:border-indigo-200 dark:group-hover:border-indigo-800/50">
-                                
-                                {/* Card Header */}
                                 <div className="flex items-center justify-between mb-2">
                                   <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded">{timeString}</span>
-                                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{TYPE_META[activity.type].label.slice(0,-1)}</span>
+                                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{TYPE_META[activity.type].label.slice(0, -1)}</span>
                                 </div>
 
-                                {/* Title - generated from content or a default title based on type */}
                                 <h4 className="text-[13px] font-bold text-slate-900 dark:text-slate-100 mb-1.5 truncate">
-                                  {activity.content.split('\n')[0].length < 40 ? activity.content.split('\n')[0] : `${TYPE_META[activity.type].label.slice(0,-1)} with Contact`}
+                                  {activity.content.split('\n')[0].length < 40 ? activity.content.split('\n')[0] : `${TYPE_META[activity.type].label.slice(0, -1)} with Contact`}
                                 </h4>
-                                
+
                                 <p className="text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed mb-3 line-clamp-2">
                                   {activity.content}
                                 </p>
 
-                                {/* Card Footer */}
                                 <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
                                   <div className="flex items-center gap-2">
                                     <div className="w-5 h-5 rounded-full bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center ring-1 ring-white dark:ring-slate-950 overflow-hidden shrink-0 shadow-sm">
@@ -261,7 +247,7 @@ export function Activities() {
                                       </span>
                                     </Link>
                                   </div>
-                                  
+
                                   <span className="px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-[9px] uppercase font-black tracking-widest hidden sm:inline-block">
                                     COMPLETED
                                   </span>
@@ -298,4 +284,3 @@ export function Activities() {
     </div>
   )
 }
-

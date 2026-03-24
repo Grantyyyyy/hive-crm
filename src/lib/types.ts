@@ -144,6 +144,7 @@ export interface SalesOrder {
   items: Array<{
     id: string
     name: string
+    description?: string
     quantity: number
     price: number
   }>
@@ -165,6 +166,7 @@ export interface Quote {
   items: Array<{
     id: string
     name: string
+    description?: string
     quantity: number
     price: number
   }>
@@ -179,6 +181,7 @@ export type StockLevel = 'in_stock' | 'low_stock' | 'out_of_stock'
 export interface InventoryItem {
   id: string
   name: string
+  description?: string
   sku: string
   category: string
   price: number
@@ -204,6 +207,7 @@ export interface PurchaseOrder {
   items: Array<{
     id: string
     name: string
+    description?: string
     quantity: number
     price: number
   }>
@@ -229,6 +233,7 @@ export interface PurchaseRequest {
   items: Array<{
     id: string
     name: string
+    description?: string
     quantity: number
     estimatedPrice: number
   }>
@@ -237,4 +242,3 @@ export interface PurchaseRequest {
   createdAt: string
   updatedAt: string
 }
-

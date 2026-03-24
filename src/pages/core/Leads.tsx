@@ -5,7 +5,7 @@ import {
   UserSearch, 
   Search, 
   Plus, 
-  MoreVertical, 
+  Trash2,
   Download, 
   Filter,
   Globe,
@@ -25,6 +25,7 @@ import {
 import { LeadForm } from "@/components/crm/LeadForm"
 import { useCRMResource } from "@/lib/hooks"
 import { PageSkeleton } from "@/components/ui/page-skeleton"
+import { DeleteModal } from "@/components/ui/delete-modal"
 import type { Lead, LeadStatus, LeadSource } from "@/lib/types"
 import { LEAD_STATUSES, LEAD_STATUS_LABELS } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -63,6 +64,7 @@ export function Leads() {
   const [statusFilter, setStatusFilter] = useState<LeadStatus | "all">("all")
   const [showModal, setShowModal] = useState(false)
   const [editingLead, setEditingLead] = useState<Lead | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<Lead | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
@@ -244,16 +246,14 @@ export function Leads() {
                           <td className="px-4 py-2.5 text-right">
                             <Button 
                               variant="ghost"
-                              size="sm"
-                              className="text-slate-400 hover:text-slate-600 transition-colors h-6 px-2"
+                              size="icon"
+                              className="h-8 w-8 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-all"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                if (window.confirm("Delete this lead?")) {
-                                  deleteItem(lead.id)
-                                }
+                                setPendingDelete(lead)
                               }}
                             >
-                              <MoreVertical className="w-4 h-4" />
+                              <Trash2 className="w-4 h-4" />
                             </Button>
                           </td>
                         </tr>
@@ -295,6 +295,25 @@ export function Leads() {
           />
         </SheetContent>
       </Sheet>
+
+      <DeleteModal
+        open={!!pendingDelete}
+        onOpenChange={(open) => { if (!open) setPendingDelete(null) }}
+        title="Delete Lead"
+        description={
+          <>
+            Are you sure you want to delete{" "}
+            <strong className="text-slate-900 dark:text-slate-100 font-bold">{pendingDelete?.name}</strong>?
+            {" "}This action cannot be undone.
+          </>
+        }
+        onDelete={() => {
+          if (pendingDelete) deleteItem(pendingDelete.id)
+          setPendingDelete(null)
+        }}
+        cancelText="Cancel"
+        deleteText="Delete Lead"
+      />
     </div>
   )
 }

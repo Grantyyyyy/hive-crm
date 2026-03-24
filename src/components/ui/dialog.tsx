@@ -5,9 +5,10 @@ interface DialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   children: React.ReactNode
+  className?: string
 }
 
-function Dialog({ open, onOpenChange, children }: DialogProps) {
+function Dialog({ open, onOpenChange, children, className }: DialogProps) {
   React.useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden"
@@ -27,7 +28,10 @@ function Dialog({ open, onOpenChange, children }: DialogProps) {
         className="fixed inset-0 bg-black/80 animate-in fade-in-0"
         onClick={() => onOpenChange(false)}
       />
-      <div className="relative z-50 w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-none border border-[var(--border)] bg-[var(--bg-surface)] p-0 shadow-2xl animate-in fade-in-0 zoom-in-95 mx-4 font-mono text-[var(--text-primary)]">
+      <div className={cn(
+        "relative z-50 w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-0 shadow-2xl animate-in fade-in-0 zoom-in-95 mx-4",
+        className
+      )}>
         {children}
       </div>
     </div>
@@ -56,7 +60,7 @@ function DialogTitle({
   return (
     <h2
       className={cn(
-        "text-[14px] font-serif font-normal uppercase tracking-widest text-[var(--text-muted)]",
+        "flex items-center gap-3 text-[14px] font-normal uppercase tracking-widest text-[var(--text-muted)]",
         className
       )}
       {...props}
@@ -70,10 +74,37 @@ function DialogDescription({
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
     <p
-      className={cn("text-sm text-muted-foreground", className)}
+      className={cn("text-sm text-slate-500", className)}
       {...props}
     />
   )
 }
 
-export { Dialog, DialogHeader, DialogTitle, DialogDescription }
+function DialogFooter({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      className={cn(
+        "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function DialogContent({
+  className,
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div className={cn("w-full h-full", className)} {...props}>
+      {children}
+    </div>
+  )
+}
+
+export { Dialog, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogContent }

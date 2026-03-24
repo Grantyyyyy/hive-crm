@@ -2,9 +2,10 @@ import { useState, useMemo } from "react"
 import { 
   Filter,
   ChevronDown,
-  MoreVertical,
+  Trash2,
   Check
 } from "lucide-react"
+import { DeleteModal } from "@/components/ui/delete-modal"
 import { Button } from "@/components/ui/button"
 import { Pagination } from "@/components/ui/Pagination"
 import { cn } from "@/lib/utils"
@@ -40,6 +41,7 @@ export function Tasks() {
   
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<Task | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 6
 
@@ -303,16 +305,14 @@ export function Tasks() {
                     <div className="flex justify-end pr-2">
                       <Button 
                         variant="ghost" 
-                        size="sm" 
-                        className="hidden group-hover:inline-flex text-slate-400 hover:text-slate-600 transition-colors h-6 px-2"
+                        size="icon"
+                        className="h-8 w-8 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-all"
                         onClick={(e) => {
                           e.stopPropagation()
-                          if (window.confirm("Delete this task?")) {
-                            deleteItem(task.id)
-                          }
+                          setPendingDelete(task)
                         }}
                       >
-                        <MoreVertical className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
@@ -347,6 +347,25 @@ export function Tasks() {
         onUpdate={updateItem}
         onDelete={deleteItem}
         userId={user?.id ?? ""}
+      />
+
+      <DeleteModal
+        open={!!pendingDelete}
+        onOpenChange={(open) => { if (!open) setPendingDelete(null) }}
+        title="Delete Task"
+        description={
+          <>
+            Are you sure you want to delete{" "}
+            <strong className="text-slate-900 dark:text-slate-100 font-bold">{pendingDelete?.title}</strong>?
+            {" "}This action cannot be undone.
+          </>
+        }
+        onDelete={() => {
+          if (pendingDelete) deleteItem(pendingDelete.id)
+          setPendingDelete(null)
+        }}
+        cancelText="Cancel"
+        deleteText="Delete Task"
       />
     </div>
   )

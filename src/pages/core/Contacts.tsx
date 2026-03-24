@@ -7,8 +7,9 @@ import {
   Plus,
   Download,
   Filter,
-  MoreVertical
+  Trash2
 } from "lucide-react"
+import { DeleteModal } from "@/components/ui/delete-modal"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -35,6 +36,7 @@ export function Contacts() {
   } = useCRMResource<Contact>('contacts')
 
   const [showModal, setShowModal] = useState(false)
+  const [pendingDelete, setPendingDelete] = useState<Contact | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
@@ -170,16 +172,14 @@ export function Contacts() {
                         <td className="px-4 py-2.5 text-right">
                           <Button
                             variant="ghost"
-                            size="sm"
-                            className="text-slate-400 hover:text-slate-600 transition-colors h-6 px-2"
+                            size="icon"
+                            className="h-8 w-8 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-all"
                             onClick={(e) => {
                               e.stopPropagation()
-                              if (window.confirm("Delete this contact?")) {
-                                deleteItem(c.id)
-                              }
+                              setPendingDelete(c)
                             }}
                           >
-                            <MoreVertical className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </td>
                       </tr>
@@ -213,6 +213,25 @@ export function Contacts() {
           <ContactForm onSave={handleAddContact} onCancel={() => setShowModal(false)} />
         </SheetContent>
       </Sheet>
+
+      <DeleteModal
+        open={!!pendingDelete}
+        onOpenChange={(open) => { if (!open) setPendingDelete(null) }}
+        title="Delete Contact"
+        description={
+          <>
+            Are you sure you want to delete{" "}
+            <strong className="text-slate-900 dark:text-slate-100 font-bold">{pendingDelete?.name}</strong>?
+            {" "}This action cannot be undone.
+          </>
+        }
+        onDelete={() => {
+          if (pendingDelete) deleteItem(pendingDelete.id)
+          setPendingDelete(null)
+        }}
+        cancelText="Cancel"
+        deleteText="Delete Contact"
+      />
     </div>
   )
 }

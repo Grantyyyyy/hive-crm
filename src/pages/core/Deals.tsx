@@ -6,7 +6,7 @@ import {
   Search, 
   Plus, 
   Download, 
-  MoreVertical,
+  Trash2,
   DollarSign,
   Calendar,
   LayoutGrid,
@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   AlertCircle
 } from "lucide-react"
+import { DeleteModal } from "@/components/ui/delete-modal"
 import {
   DndContext,
   DragOverlay,
@@ -106,9 +107,6 @@ function SortableDealCard({ deal, contactName, onClick }: SortableDealCardProps)
         )}>
           {tag}
         </span>
-        <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
-          <MoreVertical className="w-3.5 h-3.5" />
-        </Button>
       </div>
 
       <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1 truncate">{deal.title}</h4>
@@ -141,7 +139,8 @@ export function Deals() {
     setSearch, 
     isLoaded,
     addItems,
-    updateItem 
+    updateItem,
+    deleteItem
   } = useCRMResource<Deal>('deals')
 
   const { data: contacts } = useCRMResource<Contact>('contacts')
@@ -149,6 +148,7 @@ export function Deals() {
   const [showModal, setShowModal] = useState(false)
   const [viewMode, setViewMode] = useState<"board" | "list">("board")
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<Deal | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
@@ -370,13 +370,14 @@ export function Deals() {
                           <td className="px-4 py-2.5 text-right">
                             <Button 
                               variant="ghost" 
-                              size="sm"
-                              className="text-slate-400 hover:text-slate-600 transition-colors h-6 px-2"
+                              size="icon"
+                              className="h-8 w-8 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-all"
                               onClick={(e) => {
                                 e.stopPropagation()
+                                setPendingDelete(d)
                               }}
                             >
-                              <MoreVertical className="w-4 h-4" />
+                              <Trash2 className="w-4 h-4" />
                             </Button>
                           </td>
                         </tr>
@@ -484,6 +485,25 @@ export function Deals() {
           <DealForm onSave={handleAddDeal} onCancel={() => setShowModal(false)} contacts={contacts} />
         </SheetContent>
       </Sheet>
+
+      <DeleteModal
+        open={!!pendingDelete}
+        onOpenChange={(open) => { if (!open) setPendingDelete(null) }}
+        title="Delete Deal"
+        description={
+          <>
+            Are you sure you want to delete{" "}
+            <strong className="text-slate-900 dark:text-slate-100 font-bold">{pendingDelete?.title}</strong>?
+            {" "}This action cannot be undone.
+          </>
+        }
+        onDelete={() => {
+          if (pendingDelete) deleteItem(pendingDelete.id)
+          setPendingDelete(null)
+        }}
+        cancelText="Cancel"
+        deleteText="Delete Deal"
+      />
     </div>
   )
 }

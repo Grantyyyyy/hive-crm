@@ -17,13 +17,13 @@ import { PurchaseOrders } from "@/pages/logistics/PurchaseOrders";
 import { PurchaseRequests } from "@/pages/logistics/PurchaseRequests";
 // import { TaskDetail } from "@/pages/TaskDetail";
 import { Navbar } from "@/components/Navbar";
-
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { InProgress } from "@/pages/InProgress";
 import { Inventory } from "@/pages/logistics/Inventory";
 import { Reports } from "@/pages/logistics/Reports";
 import { Toaster } from "sonner";
+import { CRMProvider } from "@/lib/CRMContext";
 import React from "react";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -43,7 +43,8 @@ function Protected({ component: Component }: { component: React.ComponentType })
 function App() {
   return (
     <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-      <Router>
+      <CRMProvider>
+        <Router>
         <div className="min-h-screen flex flex-col bg-background font-sans antialiased text-foreground">
           <Navbar />
           <main className="flex-[1_0_auto] flex flex-col">
@@ -108,8 +109,26 @@ function App() {
             </Switch>
           </main>
         </div>
-        <Toaster position="top-center" richColors closeButton />
-      </Router>
+        <Toaster 
+          position="top-center" 
+          className="font-sans"
+          toastOptions={{
+            classNames: {
+              toast: "w-full flex items-center gap-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none rounded-2xl p-4 font-sans text-sm font-medium text-slate-900 dark:text-slate-100",
+              title: "font-bold",
+              description: "text-slate-500 dark:text-slate-400 text-xs mt-0.5",
+              actionButton: "bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-colors ml-auto",
+              cancelButton: "bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors",
+              icon: "w-5 h-5",
+              success: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/40",
+              error: "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/40",
+              warning: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/40",
+              info: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900/40",
+            }
+          }}
+        />
+        </Router>
+      </CRMProvider>
     </ClerkProvider>
   );
 }

@@ -23,6 +23,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { InProgress } from "@/pages/InProgress";
 import { Inventory } from "@/pages/logistics/Inventory";
 import { Reports } from "@/pages/logistics/Reports";
+import { Toaster } from "sonner";
 import React from "react";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -107,6 +108,7 @@ function App() {
             </Switch>
           </main>
         </div>
+        <Toaster position="top-center" richColors closeButton />
       </Router>
     </ClerkProvider>
   );

@@ -7,6 +7,7 @@ import { Dashboard } from "@/pages/core/Dashboard";
 import { Contacts } from "@/pages/core/Contacts";
 import { ContactDetail } from "@/pages/core/ContactDetail";
 import { Deals } from "@/pages/core/Deals";
+import { DealDetail } from "@/pages/core/DealDetail";
 import { Activities } from "@/pages/core/Activities";
 import { Leads } from "@/pages/core/Leads";
 import { LeadDetail } from "@/pages/LeadDetail";
@@ -86,6 +87,9 @@ function App() {
               </Route>
               <Route path="/deals">
                 {() => <Protected component={Deals} />}
+              </Route>
+              <Route path="/deals/:id">
+                {() => <Protected component={DealDetail} />}
               </Route>
               <Route path="/activities">
                 {() => <Protected component={Activities} />}

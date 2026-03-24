@@ -182,8 +182,8 @@ export function LeadDetail() {
         </div>
       )}
 
-      <div className="mx-auto p-4 md:p-8 max-w-[1600px]">
-        <div className="space-y-6 animate-fade-in">
+      <div className="mx-auto p-3 md:p-5 max-w-[1400px]">
+        <div className="space-y-4 animate-fade-in">
           
           {/* Back button */}
           <Link
@@ -194,7 +194,7 @@ export function LeadDetail() {
           </Link>
 
           {/* Lead Header */}
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-6 md:p-8">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-4 md:p-6">
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
               <div className="space-y-4">
                 <div className="flex items-center gap-4 flex-wrap">
@@ -228,7 +228,7 @@ export function LeadDetail() {
                 </div>
 
                 {/* Score */}
-                <div className="flex items-center gap-5 mt-4">
+                <div className="flex items-center gap-5 mt-3">
                   <div className={cn("text-4xl font-bold tracking-tight", scoreColor(lead.score))}>
                     {lead.score}
                   </div>
@@ -277,12 +277,12 @@ export function LeadDetail() {
             </div>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid gap-4 lg:grid-cols-3">
             {/* Left column */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-4">
               {/* Notes */}
-              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-6 md:p-8">
-                <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 border-b border-slate-100 dark:border-slate-800 pb-4 mb-4">Notes</h2>
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-4 md:p-6">
+                <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 border-b border-slate-100 dark:border-slate-800 pb-3 mb-3">Notes</h2>
                 <Textarea
                   defaultValue={lead.notes ?? ""}
                   onBlur={(e) => handleNotesBlur(e.target.value)}
@@ -294,8 +294,8 @@ export function LeadDetail() {
               </div>
 
               {/* Activity Timeline */}
-              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-6 md:p-8">
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4 mb-4">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-4 md:p-6">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-3">
                   <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500">Activity Timeline</h2>
                   {!isConverted && (
                     <Button
@@ -318,13 +318,13 @@ export function LeadDetail() {
                 ) : (
                   <div className="relative pt-2 pl-[42px]">
                     <div className="absolute top-4 bottom-0 left-[20px] w-px bg-slate-200 dark:bg-slate-800" />
-                    <div className="space-y-8">
+                    <div className="space-y-6">
                       {leadActivities.map((a) => (
                         <div key={a.id} className="relative flex items-start group">
                           <div 
                             className={cn("absolute left-[-26px] top-1 w-3 h-3 rounded-full ring-4 ring-white dark:bg-slate-900 dark:ring-slate-900 z-10", activityColorMap[a.type] || "bg-slate-400")} 
                           />
-                          <div className="w-full bg-slate-50 dark:bg-slate-950 rounded-2xl p-4 border border-slate-100 dark:border-slate-800/50">
+                          <div className="w-full bg-slate-50 dark:bg-slate-950 rounded-xl p-3 border border-slate-100 dark:border-slate-800/50">
                             <div className="flex justify-between items-start mb-2">
                               <span className="inline-flex bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md">
                                 {a.type}
@@ -344,11 +344,11 @@ export function LeadDetail() {
             </div>
 
             {/* Right column */}
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Conversion result */}
               {isConverted && (
-                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-6 md:p-8">
-                  <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 border-b border-slate-100 dark:border-slate-800 pb-4 mb-4">Conversion</h2>
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-4 md:p-6">
+                  <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 border-b border-slate-100 dark:border-slate-800 pb-3 mb-3">Conversion</h2>
                   <div className="space-y-4">
                     {lead.convertedToContactId && (
                       <div className="bg-slate-50 dark:bg-slate-950 rounded-2xl p-4 border border-slate-100 dark:border-slate-800">
@@ -383,9 +383,9 @@ export function LeadDetail() {
               )}
 
               {/* Lead Info */}
-              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-6 md:p-8">
-                <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 border-b border-slate-100 dark:border-slate-800 pb-4 mb-4">Lead Info</h2>
-                <div className="space-y-6">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-4 md:p-6">
+                <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 border-b border-slate-100 dark:border-slate-800 pb-3 mb-3">Lead Info</h2>
+                <div className="space-y-4">
                   <div>
                     <div className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-1">Source</div>
                     <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{LEAD_SOURCE_LABELS[lead.source]}</p>
@@ -406,8 +406,8 @@ export function LeadDetail() {
               </div>
 
               {/* Tasks Section */}
-              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-6 md:p-8">
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4 mb-4">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-4 md:p-6">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-3">
                   <div className="flex items-center gap-2">
                     <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500">Tasks</h2>
                     <span className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-bold px-2 py-0.5 rounded-md">

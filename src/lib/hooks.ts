@@ -20,11 +20,24 @@ const TABLE_MAP: Record<string, string> = {
 type SnakeObject = Record<string, any>
 type CamelObject = Record<string, any>
 
+const UUID_FIELDS = [
+  'contact_id', 'deal_id', 'lead_id', 'entity_id', 
+  'converted_to_contact_id', 'converted_to_deal_id', 
+  'customer_id', 'vendor_id'
+]
+
 function toSnake(obj: CamelObject): SnakeObject {
   const result: SnakeObject = {}
   for (const key in obj) {
     const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)
-    result[snakeKey] = obj[key]
+    let value = obj[key]
+    
+    // Handle empty UUID strings -> null
+    if (UUID_FIELDS.includes(snakeKey) && value === "") {
+      value = null
+    }
+    
+    result[snakeKey] = value
   }
   return result
 }

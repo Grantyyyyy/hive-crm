@@ -30,8 +30,6 @@ import {
   saveActivities,
   getDismissedFollowUps,
   saveDismissedFollowUps,
-  getTasksForEntity,
-  updateTask,
 } from "@/lib/storage"
 import {
   relativeTime,
@@ -49,6 +47,7 @@ import {
 } from "@/lib/types"
 import { AddTaskModal } from "@/components/crm/AddTaskModal"
 import { EditTaskModal } from "@/components/crm/EditTaskModal"
+import { useCRMResource } from "@/lib/hooks"
 
 export function ContactDetail() {
   const { user } = useUser()
@@ -69,13 +68,22 @@ export function ContactDetail() {
   const [showActivityModal, setShowActivityModal] = useState(false)
   const [showAddTaskModal, setShowAddTaskModal] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
-  const [tasks, setTasks] = useState<Task[]>(() =>
-    userId ? getTasksForEntity(userId, 'contact', contactId) : []
-  )
+
+  const { 
+    data: allTasks, 
+    addItems: addTaskItems, 
+    updateItem: updateTaskItem, 
+    deleteItem: deleteTaskItem 
+  } = useCRMResource<Task>('tasks')
 
   const contact = useMemo(
     () => contacts.find((c) => c.id === contactId),
     [contacts, contactId]
+  )
+
+  const tasks = useMemo(() => 
+    allTasks.filter(t => t.entityType === 'contact' && t.entityId === contactId),
+    [allTasks, contactId]
   )
 
   const deals = useMemo(() => getDeals(userId), [userId])
@@ -148,12 +156,11 @@ export function ContactDetail() {
   const handleToggleTask = useCallback((e: React.MouseEvent, task: Task) => {
     e.stopPropagation()
     const newStatus = task.status === 'completed' ? 'open' : 'completed'
-    updateTask(userId, task.id, {
+    updateTaskItem(task.id, {
       status: newStatus,
       completedAt: newStatus === 'completed' ? new Date().toISOString() : undefined
     })
-    setTasks(getTasksForEntity(userId, 'contact', contactId))
-  }, [userId, contactId])
+  }, [updateTaskItem])
 
   const sortedTasks = useMemo(() => sortTasks(tasks), [tasks])
   const topTasks = useMemo(() => sortedTasks.slice(0, 5), [sortedTasks])
@@ -283,7 +290,6 @@ export function ContactDetail() {
               </div>
 
               <div className="flex gap-2 shrink-0">
-              <div className="flex gap-2 shrink-0">
                 <Button
                   variant="outlineNeutral"
                   size="sm"
@@ -300,7 +306,6 @@ export function ContactDetail() {
                 >
                   <Plus className="h-3 w-3 mr-2" /> Log Activity
                 </Button>
-              </div>
               </div>
             </div>
           </div>
@@ -522,14 +527,17 @@ export function ContactDetail() {
         open={showAddTaskModal}
         onOpenChange={setShowAddTaskModal}
         fixedEntity={{ type: 'contact', id: contactId, name: contact.name }}
-        onSuccess={() => setTasks(getTasksForEntity(userId, 'contact', contactId))}
+        onSave={(task) => addTaskItems([task])}
+        userId={userId}
       />
 
       <EditTaskModal
         task={editingTask}
         open={!!editingTask}
         onOpenChange={(o) => !o && setEditingTask(null)}
-        onSuccess={() => setTasks(getTasksForEntity(userId, 'contact', contactId))}
+        onUpdate={updateTaskItem}
+        onDelete={deleteTaskItem}
+        userId={userId}
       />
     </div>
   )

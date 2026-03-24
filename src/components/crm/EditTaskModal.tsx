@@ -1,13 +1,12 @@
-import { useState, useEffect } from "react"
-import { useUser } from "@clerk/clerk-react"
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
 } from "@/components/ui/sheet"
 import { TaskForm } from "./TaskForm"
-import { getContacts, getDeals, getLeads, updateTask, deleteTask } from "@/lib/storage"
+import { useCRMResource } from "@/lib/hooks"
 import type { Contact, Deal, Lead, Task } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 
@@ -15,49 +14,42 @@ interface EditTaskModalProps {
   task: Task | null
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSuccess?: () => void
+  onUpdate: (id: string, updates: Partial<Task>) => void
+  onDelete: (id: string) => void
+  userId: string
 }
 
-export function EditTaskModal({ task, open, onOpenChange, onSuccess }: EditTaskModalProps) {
-  const { user } = useUser()
-  const userId = user?.id ?? ""
-  
-  const [contacts, setContacts] = useState<Contact[]>([])
-  const [deals, setDeals] = useState<Deal[]>([])
-  const [leads, setLeads] = useState<Lead[]>([])
-
-  useEffect(() => {
-    if (open && userId) {
-      setContacts(getContacts(userId))
-      setDeals(getDeals(userId))
-      setLeads(getLeads(userId))
-    }
-  }, [open, userId])
+export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, userId }: EditTaskModalProps) {
+  // Use hooks to get live data from Supabase for the form dropdowns
+  const { data: contacts } = useCRMResource<Contact>('contacts')
+  const { data: deals } = useCRMResource<Deal>('deals')
+  const { data: leads } = useCRMResource<Lead>('leads')
 
   if (!task) return null
 
   const handleSave = (updated: Task) => {
-    updateTask(userId, task.id, updated)
+    onUpdate(task.id, updated)
     onOpenChange(false)
-    if (onSuccess) onSuccess()
   }
 
   const handleDelete = () => {
     if (window.confirm("Delete this task?")) {
-      deleteTask(userId, task.id)
+      onDelete(task.id)
       onOpenChange(false)
-      if (onSuccess) onSuccess()
     }
   }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-xl p-0 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex flex-col h-full">
-        <SheetHeader className="px-8 py-10 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800 shrink-0">
-          <div className="flex items-center justify-between">
-            <SheetTitle className="text-2xl font-bold text-slate-900 dark:text-white">
-              Edit Task
-            </SheetTitle>
+      <SheetContent className="sm:max-w-xl p-0 flex flex-col h-full">
+        <SheetHeader>
+          <div className="flex items-center justify-between pr-8">
+            <div className="space-y-1">
+              <SheetTitle>Edit Task</SheetTitle>
+              <SheetDescription>
+                Update the details of this task or remove it if no longer needed.
+              </SheetDescription>
+            </div>
             <Button
               variant="destructiveOutline"
               size="sm"
@@ -70,6 +62,7 @@ export function EditTaskModal({ task, open, onOpenChange, onSuccess }: EditTaskM
         <div className="flex-1 overflow-y-auto">
           <TaskForm 
             onSave={handleSave}
+            onCancel={() => onOpenChange(false)}
             initialData={task}
             contacts={contacts}
             deals={deals}

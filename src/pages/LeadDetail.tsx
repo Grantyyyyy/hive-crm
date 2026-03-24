@@ -64,7 +64,9 @@ export function LeadDetail() {
 
   const {
     data: allTasks,
+    addItems: addTaskItems,
     updateItem: updateTaskItem,
+    deleteItem: deleteTaskItem,
     isLoaded: tasksLoaded
   } = useCRMResource<Task>('tasks')
 
@@ -230,7 +232,6 @@ export function LeadDetail() {
               <div className="flex gap-2 shrink-0">
                 {!isConverted && (
                   <>
-                  <>
                     <Button
                       variant="outlineNeutral"
                       size="sm"
@@ -247,7 +248,6 @@ export function LeadDetail() {
                     >
                       Convert Lead
                     </Button>
-                  </>
                   </>
                 )}
                 {isConverted && (
@@ -482,11 +482,11 @@ export function LeadDetail() {
           <DialogHeader className="px-6 pt-6 pb-2">
             <DialogTitle className="text-[14px] font-serif font-normal uppercase tracking-widest text-[var(--text-muted)]">Edit Lead</DialogTitle>
           </DialogHeader>
-          <LeadForm
+          <LeadForm 
             userId={userId}
-            initialData={lead}
             onSave={handleEditLead}
             onCancel={() => setShowEditModal(false)}
+            initialData={lead}
           />
         </div>
       </Dialog>
@@ -518,12 +518,17 @@ export function LeadDetail() {
         open={showAddTaskModal} 
         onOpenChange={setShowAddTaskModal}
         fixedEntity={{ type: 'lead', id: leadId, name: lead.name }}
+        onSave={(task) => addTaskItems([task])}
+        userId={userId || ""}
       />
 
       <EditTaskModal 
         task={editingTask}
         open={!!editingTask}
         onOpenChange={(o) => !o && setEditingTask(null)}
+        onUpdate={updateTaskItem}
+        onDelete={deleteTaskItem}
+        userId={userId || ""}
       />
     </div>
   )

@@ -71,7 +71,7 @@ export function LeadForm({ userId, onSave, onCancel, initialData }: LeadFormProp
     onSave(lead)
   }
 
-  const inputClass = "h-12 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 font-medium text-sm transition-all"
+  const inputClass = "h-12 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 font-medium text-sm transition-all shadow-sm text-slate-900 dark:text-white"
   const labelClass = "text-[12px] font-bold text-slate-700 dark:text-slate-300 mb-2 block"
 
   return (
@@ -187,7 +187,7 @@ export function LeadForm({ userId, onSave, onCancel, initialData }: LeadFormProp
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Add any background information or specific requirements..."
             rows={4}
-            className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 font-medium text-sm transition-all resize-none p-4 min-h-[120px]"
+            className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 font-medium text-sm transition-all shadow-sm text-slate-900 dark:text-white resize-none p-4 min-h-[120px]"
           />
         </div>
       </div>
@@ -198,14 +198,14 @@ export function LeadForm({ userId, onSave, onCancel, initialData }: LeadFormProp
           type="button" 
           variant="outlineNeutral" 
           onClick={onCancel}
-          className="flex-1"
+          className="flex-1 h-12"
         >
           Cancel
         </Button>
         <Button 
           type="submit" 
           variant="default"
-          className="flex-[1.5]"
+          className="flex-[1.5] h-12"
         >
           {initialData?.id ? (
              <>Save Changes</>

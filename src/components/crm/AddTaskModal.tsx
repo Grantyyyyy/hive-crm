@@ -1,55 +1,46 @@
-import { useState, useEffect } from "react"
-import { useUser } from "@clerk/clerk-react"
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
 } from "@/components/ui/sheet"
 import { TaskForm } from "./TaskForm"
-import { getContacts, getDeals, getLeads, createTask } from "@/lib/storage"
+import { useCRMResource } from "@/lib/hooks"
 import type { Contact, Deal, Lead, Task } from "@/lib/types"
 
 interface AddTaskModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSuccess?: (task: Task) => void
+  onSave: (task: Task) => void
+  userId: string
   fixedEntity?: { type: 'contact' | 'deal' | 'lead'; id: string; name: string }
 }
 
-export function AddTaskModal({ open, onOpenChange, onSuccess, fixedEntity }: AddTaskModalProps) {
-  const { user } = useUser()
-  const userId = user?.id ?? ""
-  
-  const [contacts, setContacts] = useState<Contact[]>([])
-  const [deals, setDeals] = useState<Deal[]>([])
-  const [leads, setLeads] = useState<Lead[]>([])
-
-  useEffect(() => {
-    if (open && userId) {
-      setContacts(getContacts(userId))
-      setDeals(getDeals(userId))
-      setLeads(getLeads(userId))
-    }
-  }, [open, userId])
+export function AddTaskModal({ open, onOpenChange, onSave, userId, fixedEntity }: AddTaskModalProps) {
+  // Use hooks to get live data from Supabase for the form dropdowns
+  const { data: contacts } = useCRMResource<Contact>('contacts')
+  const { data: deals } = useCRMResource<Deal>('deals')
+  const { data: leads } = useCRMResource<Lead>('leads')
 
   const handleSave = (task: Task) => {
-    createTask(userId, task)
+    onSave(task)
     onOpenChange(false)
-    if (onSuccess) onSuccess(task)
   }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-xl p-0 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex flex-col h-full">
-        <SheetHeader className="px-8 py-10 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800 shrink-0">
-          <SheetTitle className="text-2xl font-bold text-slate-900 dark:text-white">
-            New Task
-          </SheetTitle>
+      <SheetContent className="sm:max-w-xl p-0 flex flex-col h-full">
+        <SheetHeader>
+          <SheetTitle>New Task</SheetTitle>
+          <SheetDescription>
+            Create a new task to track your work and follow up with entities.
+          </SheetDescription>
         </SheetHeader>
         <div className="flex-1 overflow-y-auto">
           <TaskForm 
             onSave={handleSave}
+            onCancel={() => onOpenChange(false)}
             contacts={contacts}
             deals={deals}
             leads={leads}

@@ -290,15 +290,14 @@ export function Leads() {
           </SheetDescription>
         </SheetHeader>
         <SheetContent>
-          <LeadForm
+          <LeadForm 
             userId={userId}
-            initialData={editingLead ?? undefined}
             onSave={handleSaveLead}
             onCancel={() => setShowModal(false)}
+            initialData={editingLead ?? undefined}
           />
         </SheetContent>
       </Sheet>
     </div>
   )
 }
-

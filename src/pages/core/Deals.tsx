@@ -484,7 +484,7 @@ export function Deals() {
           </SheetDescription>
         </SheetHeader>
         <SheetContent>
-          <DealForm contacts={contacts} onSave={handleAddDeal} onCancel={() => setShowModal(false)} />
+          <DealForm onSave={handleAddDeal} onCancel={() => setShowModal(false)} contacts={contacts} />
         </SheetContent>
       </Sheet>
     </div>

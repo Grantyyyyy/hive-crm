@@ -16,17 +16,21 @@ import { useCRMResource } from "@/lib/hooks"
 import { useUser } from "@clerk/clerk-react"
 
 export function Tasks() {
-  const { user } = useUser()
+  const { user, isLoaded: clerkLoaded } = useUser()
   const { 
     data: tasks, 
-    isLoaded,
+    isLoaded: tasksLoaded,
+    addItems,
     updateItem,
+    deleteItem,
   } = useCRMResource<Task>('tasks')
 
   const { data: contacts } = useCRMResource<Contact>('contacts')
   const { data: deals } = useCRMResource<Deal>('deals')
   const { data: leads } = useCRMResource<Lead>('leads')
   
+  const isLoaded = clerkLoaded && tasksLoaded
+
   // UI State
   const [search, setSearch] = useState("")
   const [activeTab, setActiveTab] = useState<'my' | 'team' | 'upcoming'>('my')
@@ -180,7 +184,7 @@ export function Tasks() {
             <ChevronDown className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300" />
           </div>
           <div className="flex items-center gap-2 cursor-pointer group">
-            <span className="text-sm font-semibold text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white">Priority: High</span>
+            <span className="text-sm font-semibold text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white">Priority: All</span>
             <ChevronDown className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300" />
           </div>
           <div className="flex items-center gap-2 cursor-pointer group">
@@ -300,7 +304,17 @@ export function Tasks() {
 
                     {/* Actions */}
                     <div className="flex justify-end pr-2">
-                      <Button variant="ghost" size="sm" className="hidden group-hover:inline-flex text-slate-400 hover:text-slate-600 transition-colors h-6 px-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="hidden group-hover:inline-flex text-slate-400 hover:text-slate-600 transition-colors h-6 px-2"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (window.confirm("Delete this task?")) {
+                            deleteItem(task.id)
+                          }
+                        }}
+                      >
                         <MoreVertical className="w-4 h-4" />
                       </Button>
                     </div>
@@ -325,15 +339,18 @@ export function Tasks() {
       <AddTaskModal 
         open={showAddModal} 
         onOpenChange={setShowAddModal} 
+        onSave={(task) => addItems([task])}
+        userId={user?.id ?? ""}
       />
 
       <EditTaskModal 
         task={editingTask} 
         open={!!editingTask} 
         onOpenChange={(open) => !open && setEditingTask(null)} 
+        onUpdate={updateItem}
+        onDelete={deleteItem}
+        userId={user?.id ?? ""}
       />
     </div>
   )
 }
-
-

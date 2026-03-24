@@ -1,6 +1,5 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import { X } from "lucide-react"
 
 interface DialogProps {
   open: boolean
@@ -29,12 +28,6 @@ function Dialog({ open, onOpenChange, children }: DialogProps) {
         onClick={() => onOpenChange(false)}
       />
       <div className="relative z-50 w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-none border border-[var(--border)] bg-[var(--bg-surface)] p-0 shadow-2xl animate-in fade-in-0 zoom-in-95 mx-4 font-mono text-[var(--text-primary)]">
-        <button
-          onClick={() => onOpenChange(false)}
-          className="absolute right-4 top-4 rounded-none opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:border focus:border-[var(--accent)] z-10"
-        >
-          <X className="h-4 w-4" />
-        </button>
         {children}
       </div>
     </div>

@@ -133,26 +133,37 @@ export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
 
 export type SalesOrderStatus = 'pending' | 'shipped' | 'delivered' | 'cancelled'
 
+export interface OrderItem {
+  id: string
+  name: string
+  quantity: number
+  price: number
+}
+
 export interface SalesOrder {
   id: string
   orderNumber: string
+  quoteId?: string
   customerId: string
   customerName: string
   totalValue: number
+  currency: string
   status: SalesOrderStatus
   orderDate: string
-  items: Array<{
-    id: string
-    name: string
-    description?: string
-    quantity: number
-    price: number
-  }>
+  items: OrderItem[]
   createdAt: string
   updatedAt: string
 }
 
 export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'expired'
+
+export interface QuoteItem {
+  id: string
+  name: string
+  description: string
+  quantity: number
+  price: number
+}
 
 export interface Quote {
   id: string
@@ -160,17 +171,13 @@ export interface Quote {
   customerId: string
   customerName: string
   amount: number
+  currency: string
   status: QuoteStatus
   date: string
   validUntil?: string
-  items: Array<{
-    id: string
-    name: string
-    description?: string
-    quantity: number
-    price: number
-  }>
+  items: QuoteItem[]
   terms?: string
+  reminderSent?: boolean
   createdAt: string
   updatedAt: string
 }

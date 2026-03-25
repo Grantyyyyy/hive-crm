@@ -7,6 +7,7 @@ import { SalesOrderForm } from "./SalesOrderForm"
 import { useCRMContext, insertRows } from "@/lib/CRMContext"
 import { useCRMResource } from "@/lib/hooks"
 import type { Contact, SalesOrder, InventoryItem } from "@/lib/types"
+import { generateOrderNumber } from "@/lib/quoteOrderAutomation"
 import { ShoppingBag, X } from "lucide-react"
 
 interface AddSalesOrderModalProps {
@@ -20,9 +21,11 @@ export function AddSalesOrderModal({ open, onOpenChange, onSuccess }: AddSalesOr
   const ctx = useCRMContext()
   const { data: contacts } = useCRMResource<Contact>('contacts')
   const { data: inventory } = useCRMResource<InventoryItem>('inventory')
+  const { data: orders } = useCRMResource<SalesOrder>('orders')
 
   const handleSave = async (order: SalesOrder) => {
     try {
+      order.orderNumber = generateOrderNumber(orders)
       await insertRows(ctx, 'orders', [order])
       onOpenChange(false)
       if (onSuccess) onSuccess(order)

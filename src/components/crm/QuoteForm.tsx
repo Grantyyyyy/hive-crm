@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react"
-import { Plus, Trash2, Info, Package, Gavel, Calendar, FileText, ChevronDown } from "lucide-react"
+import { Trash2, Calendar, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -23,6 +23,7 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
   const [validUntil, setValidUntil] = useState(initialData?.validUntil ? new Date(initialData.validUntil).toISOString().split('T')[0] : "")
   const [items, setItems] = useState<any[]>(initialData?.items ?? [])
   const [terms, setTerms] = useState(initialData?.terms ?? "")
+  const [currency, setCurrency] = useState(initialData?.currency ?? "USD")
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showInventory, setShowInventory] = useState(false)
   const lastItemRef = useRef<HTMLInputElement>(null)
@@ -36,6 +37,14 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
   const subtotal = useMemo(() => {
     return items.reduce((sum, item) => sum + (item.quantity * item.price), 0)
   }, [items])
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency || 'USD',
+      minimumFractionDigits: 2
+    }).format(amount)
+  }
 
   const addItem = () => {
     setItems([...items, { id: generateId(), name: "", description: "", quantity: 1, price: 0 }])
@@ -80,6 +89,7 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
       customerId,
       customerName: selectedContact?.name ?? "Unknown Customer",
       amount: subtotal,
+      currency,
       status,
       date: new Date(date).toISOString(),
       validUntil: validUntil ? new Date(validUntil).toISOString() : undefined,
@@ -135,9 +145,12 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
           <div className="space-y-1.5">
             <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Currency</Label>
             <div className="relative">
-              <select className="w-full h-10 pl-3 pr-8 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium outline-none appearance-none dark:text-slate-200">
-                <option>USD ($)</option>
-                <option>EUR (€)</option>
+              <select 
+                value={currency} 
+                onChange={(e) => setCurrency(e.target.value)}
+                className="w-full h-10 pl-3 pr-8 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium outline-none appearance-none dark:text-slate-200">
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
             </div>
@@ -169,7 +182,7 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
                           className="w-full text-left p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors rounded-lg group"
                         >
                           <div className="text-[12px] font-bold text-slate-900 dark:text-white group-hover:text-indigo-600">{item.name}</div>
-                          <div className="text-[10px] text-slate-500 mt-0.5">${item.price} • SKU: {item.sku}</div>
+                          <div className="text-[10px] text-slate-500 mt-0.5">{formatCurrency(item.price)} • SKU: {item.sku}</div>
                         </button>
                       ))}
                     </div>
@@ -236,7 +249,7 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
                       />
                     </td>
                     <td className="px-4 py-3 align-top text-right text-[13px] font-black text-slate-900 dark:text-slate-100">
-                      ${(item.quantity * item.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      {formatCurrency(item.quantity * item.price)}
                     </td>
                     <td className="px-4 py-3 align-top text-right">
                       <button
@@ -254,7 +267,7 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
           <div className="flex justify-end pr-4">
             <div className="text-right">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Subtotal</span>
-              <span className="text-xl font-black text-slate-900 dark:text-white">${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+              <span className="text-xl font-black text-slate-900 dark:text-white">{formatCurrency(subtotal)}</span>
             </div>
           </div>
         </div>

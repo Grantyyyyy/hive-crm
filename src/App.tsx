@@ -14,7 +14,9 @@ import { Leads } from "@/pages/core/Leads";
 import { LeadDetail } from "@/pages/LeadDetail";
 import { Tasks } from "@/pages/core/Tasks";
 import { SalesOrders } from "@/pages/sales/SalesOrders";
+import { SalesOrderDetail } from "@/pages/sales/SalesOrderDetail";
 import { Quotes } from "@/pages/sales/Quotes";
+import { QuoteDetail } from "@/pages/sales/QuoteDetail";
 import { PurchaseOrders } from "@/pages/logistics/PurchaseOrders";
 import { PurchaseRequests } from "@/pages/logistics/PurchaseRequests";
 // import { TaskDetail } from "@/pages/TaskDetail";
@@ -25,8 +27,11 @@ import { InProgress } from "@/pages/InProgress";
 import { Inventory } from "@/pages/logistics/Inventory";
 import { Reports } from "@/pages/logistics/Reports";
 import { Toaster } from "sonner";
-import { CRMProvider } from "@/lib/CRMContext";
-import React from "react";
+import { CRMProvider, useCRMContext, updateRow } from "@/lib/CRMContext";
+import { useCRMResource } from "@/lib/hooks";
+import type { Quote } from "@/lib/types";
+import { runScheduledJobs } from "@/lib/quoteOrderAutomation";
+import React, { useEffect, useRef } from "react";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -42,12 +47,30 @@ function Protected({ component: Component }: { component: React.ComponentType })
   );
 }
 
+function AutomationRunner() {
+  const ctx = useCRMContext()
+  const { data: quotes, isLoaded } = useCRMResource<Quote>('quotes')
+  const runOnce = useRef(false)
+  
+  useEffect(() => {
+    if (isLoaded && !runOnce.current) {
+      runOnce.current = true
+      runScheduledJobs(quotes, (id, updates) => {
+        updateRow<Quote>(ctx, 'quotes', id, updates).catch(console.error)
+      })
+    }
+  }, [isLoaded, quotes, ctx])
+
+  return null
+}
+
 function App() {
   return (
     <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
       <ThemeProvider>
         <CRMProvider>
         <Router>
+        <AutomationRunner />
         <div className="min-h-screen flex flex-col bg-background font-sans antialiased text-foreground">
           <Navbar />
           <main className="flex-[1_0_auto] flex flex-col">
@@ -64,8 +87,14 @@ function App() {
               <Route path="/orders">
                 {() => <Protected component={SalesOrders} />}
               </Route>
+              <Route path="/orders/:id">
+                {() => <Protected component={SalesOrderDetail} />}
+              </Route>
               <Route path="/quotes">
                 {() => <Protected component={Quotes} />}
+              </Route>
+              <Route path="/quotes/:id">
+                {() => <Protected component={QuoteDetail} />}
               </Route>
               <Route path="/purchase-orders">
                 {() => <Protected component={PurchaseOrders} />}

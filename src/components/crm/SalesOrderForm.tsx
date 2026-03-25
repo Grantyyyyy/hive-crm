@@ -35,12 +35,12 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
   }, [items])
 
   const addItem = () => {
-    setItems([...items, { id: generateId(), name: "", description: "", quantity: 1, price: 0 }])
+    setItems([...items, { id: generateId(), name: "", quantity: 1, price: 0 }])
     setShowInventory(false)
   }
 
   const addFromInventory = (item: InventoryItem) => {
-    setItems([...items, { id: generateId(), name: item.name, description: item.description || "", quantity: 1, price: item.price }])
+    setItems([...items, { id: generateId(), name: item.name, quantity: 1, price: item.price }])
     setShowInventory(false)
   }
 
@@ -76,6 +76,7 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
       customerId,
       customerName: selectedContact?.name ?? "Unknown Customer",
       totalValue: totalValue,
+      currency: "USD",
       status,
       orderDate: new Date(orderDate).toISOString(),
       items,
@@ -205,12 +206,6 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
                           placeholder="Product name..."
                           value={item.name}
                           onChange={(e) => updateItem(item.id, { name: e.target.value })}
-                        />
-                        <input
-                          className="w-full bg-transparent border-none focus:ring-0 p-0 text-[10px] text-slate-500 dark:text-slate-400 placeholder:text-slate-300 font-medium"
-                          placeholder="Add details..."
-                          value={item.description || ""}
-                          onChange={(e) => updateItem(item.id, { description: e.target.value })}
                         />
                       </div>
                     </td>

@@ -52,9 +52,9 @@ export function ActivityForm({ contactId, deals, contacts, onSave }: ActivityFor
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 font-mono">
+    <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-6 font-sans">
       <div className="space-y-3">
-        <Label className="text-[11px] uppercase tracking-widest text-[var(--text-muted)]">Type</Label>
+        <Label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Activity Type</Label>
         <div className="flex gap-2 flex-wrap">
           {ACTIVITY_TYPES.map((t) => (
             <Button
@@ -63,21 +63,22 @@ export function ActivityForm({ contactId, deals, contacts, onSave }: ActivityFor
               variant={type === t ? "default" : "outlineNeutral"}
               size="sm"
               onClick={() => setType(t)}
-              className="rounded-full px-3 h-7"
+              className="rounded-xl px-4 h-8 text-[10px]"
             >
               {TYPE_LABELS[t]}
             </Button>
           ))}
         </div>
       </div>
+      
       {contacts && contacts.length > 0 && !contactId && (
         <div className="space-y-2">
-          <Label htmlFor="activity-contact" className="text-[11px] uppercase tracking-widest text-[var(--text-muted)]">Related Contact *</Label>
+          <Label htmlFor="activity-contact" className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Related Contact *</Label>
           <select
             id="activity-contact"
             value={selectedContactId}
             onChange={(e) => setSelectedContactId(e.target.value)}
-            className="flex h-10 w-full rounded-none border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2 text-[13px] text-[var(--text-primary)] shadow-none focus-visible:outline-none focus-visible:border-[var(--accent)] hover:border-[var(--border-subtle)] transition-colors"
+            className="flex h-12 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-2 text-sm text-slate-900 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all appearance-none"
           >
             <option value="">Select a contact</option>
             {contacts.map((c) => (
@@ -87,18 +88,19 @@ export function ActivityForm({ contactId, deals, contacts, onSave }: ActivityFor
             ))}
           </select>
           {errors.contact && (
-            <p className="text-[11px] text-[var(--red)] uppercase tracking-wider mt-1">{errors.contact}</p>
+            <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider mt-1">{errors.contact}</p>
           )}
         </div>
       )}
+
       {deals && deals.length > 0 && (
         <div className="space-y-2">
-          <Label htmlFor="activity-deal" className="text-[11px] uppercase tracking-widest text-[var(--text-muted)]">Related Deal (optional)</Label>
+          <Label htmlFor="activity-deal" className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Related Deal (optional)</Label>
           <select
             id="activity-deal"
             value={dealId}
             onChange={(e) => setDealId(e.target.value)}
-            className="flex h-10 w-full rounded-none border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-2 text-[13px] text-[var(--text-primary)] shadow-none focus-visible:outline-none focus-visible:border-[var(--accent)] hover:border-[var(--border-subtle)] transition-colors"
+            className="flex h-12 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-2 text-sm text-slate-900 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all appearance-none"
           >
             <option value="">None</option>
             {deals.map((d) => (
@@ -109,27 +111,31 @@ export function ActivityForm({ contactId, deals, contacts, onSave }: ActivityFor
           </select>
         </div>
       )}
+
       <div className="space-y-2">
-        <Label htmlFor="activity-content" className="text-[11px] uppercase tracking-widest text-[var(--text-muted)]">Content *</Label>
+        <Label htmlFor="activity-content" className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Content *</Label>
         <Textarea
           id="activity-content"
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="What happened?"
           rows={3}
-          className="rounded-none border-[var(--border)] focus-visible:border-[var(--accent)] focus-visible:ring-0 shadow-none bg-[var(--bg-elevated)] text-[13px] text-[var(--text-primary)] font-mono resize-y min-h-[80px]"
+          className="rounded-xl border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-indigo-500/20 shadow-sm bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-white min-h-[100px] resize-none"
         />
         {errors.content && (
-          <p className="text-[11px] text-[var(--red)] uppercase tracking-wider mt-1">{errors.content}</p>
+          <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider mt-1">{errors.content}</p>
         )}
       </div>
-      <Button 
-        type="submit" 
-        variant="default"
-        className="w-full mt-4"
-      >
-        Log Activity
-      </Button>
+
+      <div className="pt-2">
+        <Button 
+          type="submit" 
+          variant="default"
+          className="w-full h-12 rounded-xl text-xs uppercase tracking-widest font-black"
+        >
+          Log Activity
+        </Button>
+      </div>
     </form>
   )
 }

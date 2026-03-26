@@ -1,44 +1,57 @@
-import { useState, useMemo } from "react"
-import { Plus, Trash2, Info, Package, Gavel } from "lucide-react"
+import { useState, useMemo, useRef, useEffect } from "react"
+import { Plus, Trash2, Info, Package, Gavel, Calendar, FileText, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
-import type { Quote, QuoteStatus, Contact } from "@/lib/types"
+import type { Quote, QuoteStatus, Contact, InventoryItem } from "@/lib/types"
 import { generateId } from "@/lib/helpers"
 
 interface QuoteFormProps {
   onSave: (quote: Quote) => void
   onCancel: () => void
   contacts: Contact[]
+  inventory?: InventoryItem[]
   initialData?: Partial<Quote>
+  className?: string
 }
 
-export function QuoteForm({ onSave, onCancel, contacts, initialData }: QuoteFormProps) {
+export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, className }: QuoteFormProps) {
   const [customerId, setCustomerId] = useState(initialData?.customerId ?? "")
   const [date] = useState(initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0])
   const [validUntil, setValidUntil] = useState(initialData?.validUntil ? new Date(initialData.validUntil).toISOString().split('T')[0] : "")
-  const [items, setItems] = useState(initialData?.items ?? [
-    { id: generateId(), name: "Enterprise SaaS License", quantity: 1, price: 2500 },
-    { id: generateId(), name: "Onboarding Support", quantity: 5, price: 150 }
-  ])
-  const [terms, setTerms] = useState(initialData?.terms ?? "Payment is due within 30 days. Standard service level agreements apply as per our master services contract.")
+  const [items, setItems] = useState<any[]>(initialData?.items ?? [])
+  const [terms, setTerms] = useState(initialData?.terms ?? "")
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [showInventory, setShowInventory] = useState(false)
+  const lastItemRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (items.length > 0 && !items[items.length - 1].name) {
+      lastItemRef.current?.focus()
+    }
+  }, [items.length])
 
   const subtotal = useMemo(() => {
     return items.reduce((sum, item) => sum + (item.quantity * item.price), 0)
   }, [items])
 
   const addItem = () => {
-    setItems([...items, { id: generateId(), name: "", quantity: 1, price: 0 }])
+    setItems([...items, { id: generateId(), name: "", description: "", quantity: 1, price: 0 }])
+    setShowInventory(false)
+  }
+
+  const addFromInventory = (item: InventoryItem) => {
+    setItems([...items, { id: generateId(), name: item.name, description: item.description || "", quantity: 1, price: item.price }])
+    setShowInventory(false)
   }
 
   const removeItem = (id: string) => {
     setItems(items.filter(i => i.id !== id))
   }
 
-  const updateItem = (id: string, updates: Partial<{ name: string, quantity: number, price: number }>) => {
+  const updateItem = (id: string, updates: any) => {
     setItems(items.map(item => item.id === id ? { ...item, ...updates } : item))
   }
 
@@ -47,7 +60,7 @@ export function QuoteForm({ onSave, onCancel, contacts, initialData }: QuoteForm
     if (!customerId) newErrors.customerId = "Customer is required"
     if (!date) newErrors.date = "Date is required"
     if (items.length === 0) newErrors.items = "At least one item is required"
-    
+
     items.forEach((item, index) => {
       if (!item.name.trim()) newErrors[`item_${index}_name`] = "Name required"
     })
@@ -60,7 +73,7 @@ export function QuoteForm({ onSave, onCancel, contacts, initialData }: QuoteForm
     if (!validate()) return
 
     const selectedContact = contacts.find(c => c.id === customerId)
-    
+
     const quote: Quote = {
       id: initialData?.id ?? generateId(),
       quoteNumber: initialData?.quoteNumber ?? `QT-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -80,25 +93,19 @@ export function QuoteForm({ onSave, onCancel, contacts, initialData }: QuoteForm
   }
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950">
-      {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto px-8 py-10 space-y-12">
-        
-        {/* Section: Basic Information */}
-        <section className="space-y-6">
-          <div className="flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
-            <Info className="w-4 h-4 text-slate-400" />
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Basic Information</h3>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="md:col-span-2 space-y-2">
-              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">Customer</Label>
-              <select 
+    <div className={cn("flex flex-col h-full bg-white dark:bg-slate-950", className)}>
+      <div className="flex-1 overflow-y-auto px-6 md:px-8 py-6 space-y-6">
+
+        {/* Basic Info Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Customer</Label>
+            <div className="relative">
+              <select
                 value={customerId}
                 onChange={(e) => setCustomerId(e.target.value)}
                 className={cn(
-                  "w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-indigo-500 transition-all outline-none",
+                  "w-full h-10 pl-3 pr-8 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium focus:ring-1 focus:ring-indigo-500 outline-none appearance-none dark:text-slate-200",
                   errors.customerId && "border-red-500"
                 )}
               >
@@ -107,162 +114,188 @@ export function QuoteForm({ onSave, onCancel, contacts, initialData }: QuoteForm
                   <option key={c.id} value={c.id}>{c.name} ({c.company})</option>
                 ))}
               </select>
-              {errors.customerId && <p className="text-[10px] font-bold text-red-500 uppercase tracking-wider">{errors.customerId}</p>}
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
             </div>
+            {errors.customerId && <p className="text-[9px] font-medium text-red-500">{errors.customerId}</p>}
+          </div>
 
-            <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">Expiration Date</Label>
-              <Input 
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Valid Until</Label>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+              <Input
                 type="date"
                 value={validUntil}
                 onChange={(e) => setValidUntil(e.target.value)}
-                className="h-12 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
+                className="h-10 pl-9 rounded-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-1 focus:ring-indigo-500 text-xs font-medium dark:text-slate-200"
               />
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">Currency</Label>
-              <select className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm outline-none">
-                <option>USD - US Dollar</option>
-                <option>EUR - Euro</option>
-                <option>GBP - British Pound</option>
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Currency</Label>
+            <div className="relative">
+              <select className="w-full h-10 pl-3 pr-8 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium outline-none appearance-none dark:text-slate-200">
+                <option>USD ($)</option>
+                <option>EUR (€)</option>
               </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
             </div>
           </div>
-        </section>
+        </div>
 
-        {/* Section: Items/Products */}
-        <section className="space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-            <div className="flex items-center gap-3">
-              <Package className="w-4 h-4 text-slate-400" />
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Items & Products</h3>
+        {/* Items Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Items & Products</h3>
+            <div className="flex items-center gap-2">
+              {inventory && inventory.length > 0 && (
+                <div className="relative">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowInventory(!showInventory)}
+                    className="h-8 text-[11px] font-bold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 px-3"
+                  >
+                    Quick Add
+                  </Button>
+                  {showInventory && (
+                    <div className="absolute right-0 top-full mt-1 w-64 max-h-60 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl z-50 p-1 divide-y divide-slate-50 dark:divide-slate-800">
+                      {inventory.map(item => (
+                        <button
+                          key={item.id}
+                          onClick={() => addFromInventory(item)}
+                          className="w-full text-left p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors rounded-lg group"
+                        >
+                          <div className="text-[12px] font-bold text-slate-900 dark:text-white group-hover:text-indigo-600">{item.name}</div>
+                          <div className="text-[10px] text-slate-500 mt-0.5">${item.price} • SKU: {item.sku}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              <Button
+                type="button"
+                variant="outlineNeutral"
+                size="sm"
+                onClick={addItem}
+                className="h-8 text-[11px] font-bold rounded-lg px-3 border-slate-200 dark:border-slate-800"
+              >
+                + Custom
+              </Button>
             </div>
-            <Button 
-              type="button"
-              variant="link"
-              size="sm"
-              onClick={addItem}
-              className="h-auto p-0 font-bold text-indigo-600 dark:text-indigo-400"
-            >
-              <Plus className="w-4 h-4 mr-1.5" /> Add Item
-            </Button>
           </div>
 
-          <div className="rounded-[1.5rem] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
-            <table className="w-full text-left text-sm">
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm overflow-x-auto">
+            <table className="w-full text-left text-xs border-separate border-spacing-0 min-w-[700px]">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/50 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200 dark:border-slate-800">
-                  <th className="px-5 py-4">Product Name</th>
-                  <th className="px-5 py-4 w-24">Qty</th>
-                  <th className="px-5 py-4 w-32">Price</th>
-                  <th className="px-5 py-4 w-32 text-right">Total</th>
-                  <th className="px-5 py-4 w-12"></th>
+                <tr className="bg-slate-50/50 dark:bg-slate-800/50 text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                  <th className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">Description</th>
+                  <th className="px-4 py-3 w-20 border-b border-slate-100 dark:border-slate-800 text-center">Qty</th>
+                  <th className="px-4 py-3 w-32 border-b border-slate-100 dark:border-slate-800 text-right">Price</th>
+                  <th className="px-4 py-3 w-32 border-b border-slate-100 dark:border-slate-800 text-right">Total</th>
+                  <th className="px-4 py-3 w-12 border-b border-slate-100 dark:border-slate-800 text-right"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
                 {items.map((item, index) => (
-                  <tr key={item.id} className="group transition-colors">
-                    <td className="px-5 py-4">
-                      <input 
-                        className="w-full bg-transparent border-none focus:ring-0 p-0 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 text-sm font-medium"
-                        placeholder="Item name..."
-                        value={item.name}
-                        onChange={(e) => updateItem(item.id, { name: e.target.value })}
-                      />
-                      {errors[`item_${index}_name`] && <p className="text-[8px] font-bold text-red-500 uppercase mt-1">{errors[`item_${index}_name`]}</p>}
+                  <tr key={item.id} className="group hover:bg-slate-50/30 dark:hover:bg-slate-800/10 transition-colors">
+                    <td className="px-4 py-3 align-top">
+                      <div className="space-y-1">
+                        <input
+                          ref={index === items.length - 1 ? lastItemRef : null}
+                          className="w-full bg-transparent border-none focus:ring-0 p-0 text-[13px] font-bold text-slate-900 dark:text-slate-100 placeholder:text-slate-300"
+                          placeholder="Item name..."
+                          value={item.name}
+                          onChange={(e) => updateItem(item.id, { name: e.target.value })}
+                        />
+                        <input
+                          className="w-full bg-transparent border-none focus:ring-0 p-0 text-[10px] text-slate-500 dark:text-slate-400 placeholder:text-slate-300 font-medium"
+                          placeholder="Add description..."
+                          value={item.description || ""}
+                          onChange={(e) => updateItem(item.id, { description: e.target.value })}
+                        />
+                      </div>
                     </td>
-                    <td className="px-5 py-4">
-                      <input 
+                    <td className="px-4 py-3 align-top">
+                      <input
                         type="number"
-                        className="w-full bg-transparent border-none focus:ring-0 p-0 text-slate-900 dark:text-slate-100 text-sm font-medium"
+                        className="w-full bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-md focus:ring-0 p-1 text-[12px] font-bold text-slate-900 dark:text-slate-100 text-center transition-all"
                         value={item.quantity}
                         onChange={(e) => updateItem(item.id, { quantity: parseInt(e.target.value) || 0 })}
                       />
                     </td>
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-1">
-                        <span className="text-slate-400">$</span>
-                        <input 
-                          type="number"
-                          className="w-full bg-transparent border-none focus:ring-0 p-0 text-slate-900 dark:text-slate-100 text-sm font-medium"
-                          value={item.price}
-                          onChange={(e) => updateItem(item.id, { price: parseFloat(e.target.value) || 0 })}
-                        />
-                      </div>
+                    <td className="px-4 py-3 align-top">
+                      <input
+                        type="number"
+                        className="w-full bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-md focus:ring-0 p-1 text-[12px] font-bold text-slate-900 dark:text-slate-100 text-right transition-all"
+                        value={item.price}
+                        onChange={(e) => updateItem(item.id, { price: parseFloat(e.target.value) || 0 })}
+                      />
                     </td>
-                    <td className="px-5 py-4 text-right font-bold text-slate-900 dark:text-white">
+                    <td className="px-4 py-3 align-top text-right text-[13px] font-black text-slate-900 dark:text-slate-100">
                       ${(item.quantity * item.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="px-5 py-4 text-right">
-                      <Button 
-                        variant="ghost"
-                        size="icon"
+                    <td className="px-4 py-3 align-top text-right">
+                      <button
                         onClick={() => removeItem(item.id)}
-                        className="h-8 w-8 text-slate-300 hover:text-red-500"
+                        className="text-slate-300 hover:text-red-500 transition-colors p-1"
                       >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
-              <tfoot>
-                <tr className="bg-slate-50/50 dark:bg-slate-800/30">
-                  <td colSpan={3} className="px-5 py-5 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400">Subtotal</td>
-                  <td className="px-5 py-5 text-right text-lg font-black text-slate-900 dark:text-white">
-                    ${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                  </td>
-                  <td></td>
-                </tr>
-              </tfoot>
             </table>
           </div>
-          {errors.items && <p className="text-[10px] font-bold text-red-500 uppercase tracking-wider">{errors.items}</p>}
-        </section>
-
-        {/* Section: Terms & Conditions */}
-        <section className="space-y-6 pb-10">
-          <div className="flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
-            <Gavel className="w-4 h-4 text-slate-400" />
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Terms & Conditions</h3>
+          <div className="flex justify-end pr-4">
+            <div className="text-right">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Subtotal</span>
+              <span className="text-xl font-black text-slate-900 dark:text-white">${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+            </div>
           </div>
-          <Textarea 
+        </div>
+
+        {/* Additional Info Section */}
+        <div className="pt-2">
+          <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">Terms & Notes</Label>
+          <Textarea
             value={terms}
             onChange={(e) => setTerms(e.target.value)}
-            placeholder="Enter specific terms, payment conditions, or legal notes here..."
-            className="rounded-[1.5rem] border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[120px] p-5 focus:ring-indigo-500 shadow-sm"
+            placeholder="Payment terms, delivery info, etc..."
+            className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[80px] text-xs p-4 focus:ring-indigo-500 shadow-sm dark:text-slate-200"
           />
-          <div className="p-5 rounded-2xl bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/30 flex items-start gap-4">
-            <Info className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-indigo-800 dark:text-indigo-300 font-medium leading-relaxed">
-              This quote will be sent as a secure link. Customer signature will be required for acceptance if generated through the primary workflow.
-            </p>
-          </div>
-        </section>
+        </div>
       </div>
 
-      {/* Footer Actions */}
-      <div className="px-8 py-6 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
-        <Button 
-          variant="outlineNeutral"
+      <div className="px-8 py-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => handleSave('draft')}
+          className="h-9 px-4 font-bold text-[11px] text-slate-500"
         >
-          Save as Draft
+          Save Draft
         </Button>
-        <div className="flex gap-3">
-          <Button 
+        <div className="flex items-center gap-3">
+          <Button
             variant="ghost"
+            size="sm"
             onClick={onCancel}
+            className="h-9 px-4 font-bold text-[11px]"
           >
             Cancel
           </Button>
-          <Button 
+          <Button
             variant="default"
+            size="sm"
             onClick={() => handleSave('sent')}
-            className="px-8"
+            className="h-9 px-6 font-black bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] rounded-lg shadow-sm"
           >
-            Generate & Send
+            Send Quote
           </Button>
         </div>
       </div>

@@ -1,8 +1,8 @@
-import { useState, useMemo, useEffect } from "react"
-import { 
-  FileText, 
-  Search, 
-  Filter, 
+import { useState, useMemo } from "react"
+import {
+  FileText,
+  Search,
+  Filter,
   Download,
   PlusCircle
 } from "lucide-react"
@@ -11,15 +11,15 @@ import { Pagination } from "@/components/ui/Pagination"
 import { useCRMResource } from "@/lib/hooks"
 import { cn } from "@/lib/utils"
 import type { Quote, QuoteStatus } from "@/lib/types"
-import { generateId } from "@/lib/helpers"
 import { AddQuoteModal } from "@/components/crm/AddQuoteModal"
+import { PageSkeleton } from "@/components/ui/page-skeleton"
+import { toast } from "sonner"
 
 export function Quotes() {
-  const { 
-    data: quotes, 
-    addItems: addQuotes, 
+  const {
+    data: quotes,
     refresh,
-    isLoaded 
+    isLoaded
   } = useCRMResource<Quote>('quotes')
 
   const [search, setSearch] = useState("")
@@ -28,70 +28,13 @@ export function Quotes() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const itemsPerPage = 8
 
-  // Seed dummy data if empty
-  useEffect(() => {
-    if (isLoaded && quotes.length === 0) {
-      const dummyQuotes: Quote[] = [
-        {
-          id: generateId(),
-          quoteNumber: "QT-8821",
-          customerId: "c1",
-          customerName: "Acme Corp",
-          amount: 1200.00,
-          status: 'sent',
-          date: "2023-10-24T10:00:00Z",
-          items: [],
-          createdAt: "2023-10-24T10:00:00Z",
-          updatedAt: "2023-10-24T10:00:00Z"
-        },
-        {
-          id: generateId(),
-          quoteNumber: "QT-8822",
-          customerId: "c2",
-          customerName: "Global Industries",
-          amount: 4550.00,
-          status: 'accepted',
-          date: "2023-10-22T14:30:00Z",
-          items: [],
-          createdAt: "2023-10-22T14:30:00Z",
-          updatedAt: "2023-10-22T14:30:00Z"
-        },
-        {
-          id: generateId(),
-          quoteNumber: "QT-8823",
-          customerId: "c3",
-          customerName: "Tech Solutions",
-          amount: 890.00,
-          status: 'draft',
-          date: "2023-10-21T09:15:00Z",
-          items: [],
-          createdAt: "2023-10-21T09:15:00Z",
-          updatedAt: "2023-10-21T09:15:00Z"
-        },
-        {
-          id: generateId(),
-          quoteNumber: "QT-8824",
-          customerId: "c4",
-          customerName: "Starlight Co",
-          amount: 2100.00,
-          status: 'expired',
-          date: "2023-10-15T16:45:00Z",
-          items: [],
-          createdAt: "2023-10-15T16:45:00Z",
-          updatedAt: "2023-10-15T16:45:00Z"
-        }
-      ]
-      addQuotes(dummyQuotes)
-    }
-  }, [isLoaded, quotes.length, addQuotes])
-
   // Filter logic
   const filteredQuotes = useMemo(() => {
     let result = quotes.filter(quote => {
       const matchesStatus = statusFilter === 'all' || quote.status === statusFilter
       const q = search.toLowerCase()
-      const matchesSearch = !q || 
-        quote.quoteNumber.toLowerCase().includes(q) || 
+      const matchesSearch = !q ||
+        quote.quoteNumber.toLowerCase().includes(q) ||
         quote.customerName.toLowerCase().includes(q)
       return matchesStatus && matchesSearch
     })
@@ -106,18 +49,21 @@ export function Quotes() {
     currentPage * itemsPerPage
   )
 
+  const handleCreateSuccess = (quote: Quote) => {
+    refresh()
+    toast.success("Quote Created Successfully", {
+      description: `Quote #${quote.quoteNumber} for ${quote.customerName} has been saved.`
+    })
+  }
+
   if (!isLoaded) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-r-transparent" />
-      </div>
-    )
+    return <PageSkeleton />
   }
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen font-sans">
       <div className="mx-auto p-4 md:p-8 max-w-[1600px] animate-fade-in space-y-8">
-        
+
         {/* Header Region */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
           <div>
@@ -129,7 +75,7 @@ export function Quotes() {
             <Button variant="outlineNeutral">
               <Download className="w-4 h-4 mr-2" /> Export
             </Button>
-            <Button 
+            <Button
               variant="default"
               onClick={() => setIsAddModalOpen(true)}
             >
@@ -198,7 +144,7 @@ export function Quotes() {
                   </tr>
                 ) : (
                   paginatedQuotes.map((quote) => (
-                    <tr 
+                    <tr
                       key={quote.id}
                       className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors cursor-pointer group"
                     >
@@ -238,7 +184,6 @@ export function Quotes() {
             </table>
           </div>
 
-          {/* Pagination */}
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
@@ -249,11 +194,11 @@ export function Quotes() {
           />
         </div>
       </div>
-      
-      <AddQuoteModal 
-        open={isAddModalOpen} 
-        onOpenChange={setIsAddModalOpen} 
-        onSuccess={refresh}
+
+      <AddQuoteModal
+        open={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        onSuccess={handleCreateSuccess}
       />
     </div>
   )

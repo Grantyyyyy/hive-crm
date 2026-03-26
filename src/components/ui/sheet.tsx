@@ -1,6 +1,5 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import { X } from "lucide-react"
 
 interface SheetProps {
   open: boolean
@@ -29,12 +28,6 @@ function Sheet({ open, onOpenChange, children }: SheetProps) {
         onClick={() => onOpenChange(false)}
       />
       <div className="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white dark:bg-slate-950 shadow-2xl animate-sheet-in overflow-hidden flex flex-col font-sans border-l border-slate-200 dark:border-slate-800">
-        <button
-          onClick={() => onOpenChange(false)}
-          className="absolute right-6 top-6 p-2 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-900 transition-all z-20"
-        >
-          <X className="h-5 w-5" />
-        </button>
         {children}
       </div>
     </div>

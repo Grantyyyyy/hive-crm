@@ -1,70 +1,82 @@
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useUser } from '@clerk/clerk-react'
-import * as api from './api'
-import type { Contact } from './types'
+import { useCallback, useState } from "react"
+import { toast } from "sonner"
+import {
+  useCRMContext,
+  insertRows,
+  updateRow,
+  deleteRow,
+  TABLE_MAP,
+} from "./CRMContext"
 
-type ResourceName = 'contacts' | 'deals' | 'leads' | 'tasks' | 'activities' | 'orders' | 'quotes' | 'inventory' | 'purchase_orders' | 'purchase_requests'
+/**
+ * useCRMResource — same public API as before, but now backed by the shared
+ * CRMContext cache. Data is fetched once per session (in CRMProvider) and
+ * reused across every page. No more re-fetches on navigation.
+ */
+export function useCRMResource<T extends { id: string }>(
+  resourceName: keyof typeof TABLE_MAP,
+  initialSearch: string = ""
+) {
+  const ctx = useCRMContext()
+  const { data, isLoaded } = ctx.getResource<T>(String(resourceName))
+  const [search, setSearch] = useState(initialSearch)
 
-const apiMap: Record<ResourceName, any> = {
-  contacts: api.contactsApi,
-  deals: api.dealsApi,
-  leads: api.leadsApi,
-  tasks: api.tasksApi,
-  activities: api.activitiesApi,
-  orders: api.salesOrdersApi,
-  quotes: api.quotesApi,
-  inventory: api.inventoryApi,
-  purchase_orders: api.purchaseOrdersApi,
-  purchase_requests: api.purchaseRequestsApi,
-}
+  const addItems = useCallback(
+    async (newItems: T[]) => {
+      const promise = insertRows<T>(ctx, String(resourceName), newItems)
+      toast.promise(promise, {
+        loading: `Saving ${resourceName}...`,
+        success: `Successfully added to ${resourceName}`,
+        error: `Failed to add to ${resourceName}`,
+      })
+      return promise
+    },
+    [ctx, resourceName]
+  )
 
-const queryKeyMap: Record<ResourceName, string> = {
-  contacts: 'contacts',
-  deals: 'deals',
-  leads: 'leads',
-  tasks: 'tasks',
-  activities: 'activities',
-  orders: 'sales-orders',
-  quotes: 'quotes',
-  inventory: 'inventory',
-  purchase_orders: 'purchase-orders',
-  purchase_requests: 'purchase-requests',
-}
+  const updateItem = useCallback(
+    async (id: string, updates: Partial<T>) => {
+      // Optimistic update — apply to cache immediately, then persist
+      ctx.setResourceData<T>(String(resourceName), (prev) =>
+        prev.map((item) => (item.id === id ? { ...item, ...updates } : item))
+      )
+      const promise = updateRow<T>(ctx, String(resourceName), id, updates)
+      toast.promise(promise, {
+        loading: `Updating ${resourceName}...`,
+        success: `Successfully updated ${resourceName}`,
+        error: `Failed to update ${resourceName}`,
+      })
+      return promise
+    },
+    [ctx, resourceName]
+  )
 
-function transformData(data: any, resourceName: ResourceName): any {
-  switch (resourceName) {
-    case 'contacts':
-      return {
-        ...data,
-        source: (data.source || 'manual').toLowerCase(),
-        status: data.status ? data.status.toLowerCase() : undefined,
-      };
-    case 'deals':
-      return {
-        ...data,
-        stage: (data.stage || 'discovery').toLowerCase(),
-      };
-    case 'leads':
-      return {
-        ...data,
-        source: (data.source || 'manual').toLowerCase(),
-        status: (data.status || 'new').toLowerCase(),
-      };
-    case 'tasks':
-      return {
-        ...data,
-        priority: (data.priority || 'medium').toLowerCase(),
-        status: (data.status || 'open').toLowerCase().replace('_', '-'),
-        entityType: data.entityType?.toLowerCase(),
-      };
-    case 'activities':
-      return {
-        ...data,
-        type: (data.type || 'note').toLowerCase(),
-      };
-    default:
-      return data;
+  const deleteItem = useCallback(
+    async (id: string) => {
+      const promise = deleteRow<T>(ctx, String(resourceName), id)
+      toast.promise(promise, {
+        loading: `Deleting from ${resourceName}...`,
+        success: `Successfully removed from ${resourceName}`,
+        error: `Failed to delete from ${resourceName}`,
+      })
+      return promise
+    },
+    [ctx, resourceName]
+  )
+
+  return {
+    data,
+    setData: (updater: (prev: T[]) => T[]) =>
+      ctx.setResourceData<T>(String(resourceName), updater),
+    search,
+    setSearch,
+    userId: ctx.userId,
+    isLoaded,
+    error: null,
+    addItems,
+    updateItem,
+    deleteItem,
+    refresh: () => { }, // no-op — data is managed by the provider
   }
 }
 
@@ -114,7 +126,7 @@ export function useCRMResource<T extends { id: string }>(
   const { user, isLoaded } = useUser()
   const queryClient = useQueryClient()
   const [search, setSearch] = useState(options?.search || '')
-  
+
   const queryKey = [queryKeyMap[resourceName], { ...options, search }]
 
   const query = useQuery({
@@ -218,7 +230,7 @@ export function useSingleContact(id: string) {
 
 export function useCreateContact() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: async (data: any) => {
       const response = await api.contactsApi.create(transformCreate(data, 'contacts'))
@@ -232,7 +244,7 @@ export function useCreateContact() {
 
 export function useUpdateContact() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
       const response = await api.contactsApi.update(id, transformCreate(data, 'contacts'))
@@ -246,7 +258,7 @@ export function useUpdateContact() {
 
 export function useCreateActivity() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: async (data: any) => {
       const response = await api.activitiesApi.create(transformCreate(data, 'activities'))
@@ -260,7 +272,7 @@ export function useCreateActivity() {
 
 export function useCreateTask() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: async (data: any) => {
       const response = await api.tasksApi.create(transformCreate(data, 'tasks'))
@@ -274,7 +286,7 @@ export function useCreateTask() {
 
 export function useUpdateTask() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
       const response = await api.tasksApi.update(id, transformCreate(data, 'tasks'))
@@ -288,7 +300,7 @@ export function useUpdateTask() {
 
 export function useDeleteTask() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await api.tasksApi.delete(id)
@@ -302,7 +314,7 @@ export function useDeleteTask() {
 
 export function useConvertLead() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
       const response = await api.leadsApi.convert(id, data)

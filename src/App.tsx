@@ -27,11 +27,12 @@ import { InProgress } from "@/pages/InProgress";
 import { Inventory } from "@/pages/logistics/Inventory";
 import { Reports } from "@/pages/logistics/Reports";
 import { Toaster } from "sonner";
-import { CRMProvider, useCRMContext, updateRow } from "@/lib/CRMContext";
+import { CRMProvider, useCRMContext, updateRow, insertRows } from "@/lib/CRMContext";
 import { useCRMResource } from "@/lib/hooks";
-import type { Quote } from "@/lib/types";
-import { runScheduledJobs } from "@/lib/quoteOrderAutomation";
-import React, { useEffect, useRef } from "react";
+import type { Quote, SalesOrder, InventoryItem, PurchaseRequest, PurchaseOrder } from "@/lib/types";
+import { runScheduledJobs } from "@/services/scheduledJobs";
+import type { JobAdapter } from "@/services/types";
+import React, { useEffect, useRef, useMemo } from "react";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -49,17 +50,42 @@ function Protected({ component: Component }: { component: React.ComponentType })
 
 function AutomationRunner() {
   const ctx = useCRMContext()
-  const { data: quotes, isLoaded } = useCRMResource<Quote>('quotes')
+  const { isLoaded: quotesLoaded } = useCRMResource('quotes')
+  const { isLoaded: ordersLoaded } = useCRMResource('orders')
+  const { isLoaded: inventoryLoaded } = useCRMResource('inventory')
+  const { isLoaded: prLoaded } = useCRMResource('purchase_requests')
+  const { isLoaded: poLoaded } = useCRMResource('purchase_orders')
+  
+  const dataReady = quotesLoaded && ordersLoaded && inventoryLoaded && prLoaded && poLoaded
   const runOnce = useRef(false)
+
+  const adapter = useMemo<JobAdapter>(() => ({
+    getQuotes: () => ctx.getResource<Quote>('quotes').data,
+    updateQuote: (id, patch) => updateRow<Quote>(ctx, 'quotes', id, patch),
+    insertQuote: (q) => insertRows<Quote>(ctx, 'quotes', [q as any]).then(() => {}),
+
+    getSalesOrders: () => ctx.getResource<SalesOrder>('orders').data,
+    updateSalesOrder: (id, patch) => updateRow<SalesOrder>(ctx, 'orders', id, patch),
+    insertSalesOrder: (o) => insertRows<SalesOrder>(ctx, 'orders', [o as any]).then(() => {}),
+
+    getInventoryItems: () => ctx.getResource<InventoryItem>('inventory').data,
+    updateInventoryItem: (id, patch) => updateRow<InventoryItem>(ctx, 'inventory', id, patch),
+
+    getPurchaseRequests: () => ctx.getResource<PurchaseRequest>('purchase_requests').data,
+    updatePurchaseRequest: (id, patch) => updateRow<PurchaseRequest>(ctx, 'purchase_requests', id, patch),
+    insertPurchaseRequest: (pr) => insertRows<PurchaseRequest>(ctx, 'purchase_requests', [pr as any]).then(() => {}),
+
+    getPurchaseOrders: () => ctx.getResource<PurchaseOrder>('purchase_orders').data,
+    updatePurchaseOrder: (id, patch) => updateRow<PurchaseOrder>(ctx, 'purchase_orders', id, patch),
+    insertPurchaseOrder: (po) => insertRows<PurchaseOrder>(ctx, 'purchase_orders', [po as any]).then(() => {}),
+  }), [ctx])
   
   useEffect(() => {
-    if (isLoaded && !runOnce.current) {
+    if (dataReady && !runOnce.current) {
       runOnce.current = true
-      runScheduledJobs(quotes, (id, updates) => {
-        updateRow<Quote>(ctx, 'quotes', id, updates).catch(console.error)
-      })
+      runScheduledJobs(adapter).catch(console.error)
     }
-  }, [isLoaded, quotes, ctx])
+  }, [dataReady, adapter])
 
   return null
 }

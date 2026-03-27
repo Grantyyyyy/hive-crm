@@ -52,7 +52,14 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
   }
 
   const addFromInventory = (item: InventoryItem) => {
-    setItems([...items, { id: generateId(), name: item.name, description: item.description || "", quantity: 1, price: item.price }])
+    setItems([...items, { 
+      id: generateId(), 
+      name: item.name, 
+      description: item.description || "", 
+      quantity: 1, 
+      price: item.price,
+      inventoryItemId: item.id 
+    }])
     setShowInventory(false)
   }
 

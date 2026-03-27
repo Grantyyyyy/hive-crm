@@ -12,12 +12,12 @@ import { useCRMResource } from "@/lib/hooks"
 import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
 import { useLocation } from "wouter"
 import { cn } from "@/lib/utils"
-import type { Quote, QuoteStatus, SalesOrder } from "@/lib/types"
+import type { Quote, QuoteStatus, SalesOrder, InventoryItem, PurchaseRequest, PurchaseOrder } from "@/lib/types"
 import { AddQuoteModal } from "@/components/crm/AddQuoteModal"
 import { PageSkeleton } from "@/components/ui/page-skeleton"
 import { toast } from "sonner"
-import { sendQuoteEmail, convertQuoteToSalesOrder } from "@/lib/quoteOrderAutomation"
-import { generateId } from "@/lib/helpers"
+import { sendQuoteEmail, acceptQuote } from "@/services/quoteService"
+import type { JobAdapter } from "@/services/types"
 
 export function Quotes() {
   const ctx = useCRMContext()
@@ -74,15 +74,30 @@ export function Quotes() {
     }
   }
 
+  const adapter = useMemo<JobAdapter>(() => ({
+    getQuotes: () => quotes,
+    updateQuote: (id, patch) => updateRow<Quote>(ctx, 'quotes', id, patch),
+    insertQuote: (q) => insertRows<Quote>(ctx, 'quotes', [q as any]).then(rows => rows[0]),
+    getSalesOrders: () => orders,
+    updateSalesOrder: (id, patch) => updateRow<SalesOrder>(ctx, 'orders', id, patch),
+    insertSalesOrder: (o) => insertRows<SalesOrder>(ctx, 'orders', [o as any]).then(rows => rows[0]),
+    getInventoryItems: () => ctx.getResource<InventoryItem>('inventory').data,
+    updateInventoryItem: (id, patch) => updateRow<InventoryItem>(ctx, 'inventory', id, patch),
+    getPurchaseRequests: () => ctx.getResource<PurchaseRequest>('purchase_requests').data,
+    updatePurchaseRequest: (id, patch) => updateRow<PurchaseRequest>(ctx, 'purchase_requests', id, patch),
+    insertPurchaseRequest: (pr) => insertRows<PurchaseRequest>(ctx, 'purchase_requests', [pr as any]).then(rows => rows[0]),
+    getPurchaseOrders: () => ctx.getResource<PurchaseOrder>('purchase_orders').data,
+    updatePurchaseOrder: (id, patch) => updateRow<PurchaseOrder>(ctx, 'purchase_orders', id, patch),
+    insertPurchaseOrder: (po) => insertRows<PurchaseOrder>(ctx, 'purchase_orders', [po as any]).then(rows => rows[0]),
+  }), [ctx, quotes, orders])
+
   const handleAccept = async (quote: Quote) => {
     try {
-      const newOrder = convertQuoteToSalesOrder(quote, orders, generateId)
-      await insertRows<SalesOrder>(ctx, 'orders', [newOrder])
-      await updateRow<Quote>(ctx, 'quotes', quote.id, { status: 'accepted' })
+      const newOrder = await acceptQuote(quote.id, adapter)
       refresh()
       toast.success("Quote Accepted", { description: `Sales Order ${newOrder.orderNumber} created.` })
-    } catch (e) {
-      toast.error("Error converting quote")
+    } catch (e: any) {
+      toast.error("Error converting quote", { description: e.message })
     }
   }
 

@@ -14,6 +14,11 @@ import { cn } from "@/lib/utils"
 import type { PurchaseRequest, PurchaseRequestStatus } from "@/lib/types"
 import { generateId } from "@/lib/helpers"
 import { AddPurchaseRequestModal } from "@/components/crm/AddPurchaseRequestModal"
+import { approvePurchaseRequest } from "@/services/procurementService"
+import type { JobAdapter } from "@/services/types"
+import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
+import { toast } from "sonner"
+import type { Quote, SalesOrder, InventoryItem, PurchaseOrder } from "@/lib/types"
 
 export function PurchaseRequests() {
   const { 
@@ -22,6 +27,34 @@ export function PurchaseRequests() {
     refresh,
     isLoaded 
   } = useCRMResource<PurchaseRequest>('purchase_requests')
+  const ctx = useCRMContext()
+
+  const adapter = useMemo<JobAdapter>(() => ({
+    getQuotes: () => ctx.getResource<Quote>('quotes').data,
+    updateQuote: (id, patch) => updateRow<Quote>(ctx, 'quotes', id, patch),
+    insertQuote: (q) => insertRows<Quote>(ctx, 'quotes', [q as any]).then(rows => rows[0]),
+    getSalesOrders: () => ctx.getResource<SalesOrder>('orders').data,
+    updateSalesOrder: (id, patch) => updateRow<SalesOrder>(ctx, 'orders', id, patch),
+    insertSalesOrder: (o) => insertRows<SalesOrder>(ctx, 'orders', [o as any]).then(rows => rows[0]),
+    getInventoryItems: () => ctx.getResource<InventoryItem>('inventory').data,
+    updateInventoryItem: (id, patch) => updateRow<InventoryItem>(ctx, 'inventory', id, patch),
+    getPurchaseRequests: () => requests,
+    updatePurchaseRequest: (id, patch) => updateRow<PurchaseRequest>(ctx, 'purchase_requests', id, patch),
+    insertPurchaseRequest: (pr) => insertRows<PurchaseRequest>(ctx, 'purchase_requests', [pr as any]).then(rows => rows[0]),
+    getPurchaseOrders: () => ctx.getResource<PurchaseOrder>('purchase_orders').data,
+    updatePurchaseOrder: (id, patch) => updateRow<PurchaseOrder>(ctx, 'purchase_orders', id, patch),
+    insertPurchaseOrder: (po) => insertRows<PurchaseOrder>(ctx, 'purchase_orders', [po as any]).then(rows => rows[0]),
+  }), [ctx, requests])
+
+  const handleApprove = async (prId: string) => {
+    try {
+      await approvePurchaseRequest(prId, adapter)
+      refresh()
+      toast.success("Request Approved", { description: "Purchase Order has been created." })
+    } catch (e: any) {
+      toast.error("Failed to approve request", { description: e.message })
+    }
+  }
 
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<PurchaseRequestStatus | 'all'>('all')
@@ -44,6 +77,12 @@ export function PurchaseRequests() {
           department: "Marketing",
           items: [],
           priority: 'high',
+          inventoryItemId: 'inv-1',
+          inventoryItemName: 'Premium Widget',
+          requestedQuantity: 100,
+          estimatedPrice: 15.00,
+          justification: 'Stock replenishment',
+          urgent: false,
           createdAt: "2023-10-25T10:00:00Z",
           updatedAt: "2023-10-25T10:00:00Z"
         },
@@ -58,6 +97,12 @@ export function PurchaseRequests() {
           department: "IT",
           items: [],
           priority: 'medium',
+          inventoryItemId: 'inv-2',
+          inventoryItemName: 'Cloud Server',
+          requestedQuantity: 1,
+          estimatedPrice: 850.50,
+          justification: 'Annual renewal',
+          urgent: false,
           createdAt: "2023-10-22T14:30:00Z",
           updatedAt: "2023-10-22T14:30:00Z"
         },
@@ -72,6 +117,12 @@ export function PurchaseRequests() {
           department: "Ops",
           items: [],
           priority: 'urgent',
+          inventoryItemId: 'inv-3',
+          inventoryItemName: 'Industrial Drill',
+          requestedQuantity: 2,
+          estimatedPrice: 6000.00,
+          justification: 'Replace broken units',
+          urgent: true,
           createdAt: "2023-10-20T09:15:00Z",
           updatedAt: "2023-10-20T09:15:00Z"
         }
@@ -164,7 +215,7 @@ export function PurchaseRequests() {
             </div>
 
             <div className="bg-white dark:bg-slate-900 p-1 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center shadow-sm overflow-x-auto max-w-full">
-                {([['all', 'All'], ['pending_review', 'Review'], ['approved', 'Approved'], ['rejected', 'Rejected']] as const).map(([s, label]) => (
+                {([['all', 'All'], ['draft', 'Draft'], ['pending_review', 'Review'], ['approved', 'Approved'], ['rejected', 'Rejected'], ['ordered', 'Ordered']] as const).map(([s, label]) => (
                 <button
                     key={s}
                     onClick={() => setStatusFilter(s as any)}
@@ -242,8 +293,18 @@ export function PurchaseRequests() {
                       <td className="px-4 py-2.5 text-center">
                         <StatusBadge status={request.status} />
                       </td>
-                      <td className="px-4 py-2.5 text-right">
-                        <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 inline-flex text-slate-400 hover:text-slate-600 text-[11px] h-6 px-2 items-center gap-1 transition-all">
+                      <td className="px-4 py-2.5 text-right flex justify-end gap-2">
+                        {request.status === 'pending_review' && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={(e) => { e.stopPropagation(); handleApprove(request.id) }}
+                            className="text-[11px] h-7 px-3 font-bold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                          >
+                            Approve
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 inline-flex text-slate-400 hover:text-slate-600 text-[11px] h-7 px-2 items-center gap-1 transition-all">
                           Review <ArrowRight className="w-3 h-3" />
                         </Button>
                       </td>
@@ -291,6 +352,7 @@ function PriorityBadge({ priority }: { priority: PurchaseRequest['priority'] }) 
 function StatusBadge({ status }: { status: PurchaseRequestStatus }) {
   const styles: Record<PurchaseRequestStatus, string> = {
     pending_review: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400",
+    draft: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400",
     approved: "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400",
     rejected: "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400",
     ordered: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400",
@@ -298,6 +360,7 @@ function StatusBadge({ status }: { status: PurchaseRequestStatus }) {
 
   const labels: Record<PurchaseRequestStatus, string> = {
     pending_review: "Review",
+    draft: "Draft",
     approved: "Approved",
     rejected: "Rejected",
     ordered: "Ordered",

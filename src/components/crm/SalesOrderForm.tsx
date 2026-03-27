@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react"
-import { Plus, Trash2, Info, Package, Truck, Calendar, FileText, ChevronDown } from "lucide-react"
+import { Trash2, Info, Calendar, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -40,7 +40,13 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
   }
 
   const addFromInventory = (item: InventoryItem) => {
-    setItems([...items, { id: generateId(), name: item.name, quantity: 1, price: item.price }])
+    setItems([...items, { 
+      id: generateId(), 
+      name: item.name, 
+      quantity: 1, 
+      price: item.price,
+      inventoryItemId: item.id
+    }])
     setShowInventory(false)
   }
 

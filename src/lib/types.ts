@@ -138,6 +138,7 @@ export interface OrderItem {
   name: string
   quantity: number
   price: number
+  inventoryItemId?: string    // link to InventoryItem.id for stock deduction
 }
 
 export interface SalesOrder {
@@ -151,6 +152,7 @@ export interface SalesOrder {
   status: SalesOrderStatus
   orderDate: string
   items: OrderItem[]
+  stockDeducted?: boolean      // guards against double-deduction on re-ship
   createdAt: string
   updatedAt: string
 }
@@ -163,6 +165,7 @@ export interface QuoteItem {
   description: string
   quantity: number
   price: number
+  inventoryItemId?: string    // link to InventoryItem.id if sourced from catalog
 }
 
 export interface Quote {
@@ -217,7 +220,9 @@ export interface PurchaseOrder {
     description?: string
     quantity: number
     price: number
+    inventoryItemId: string
   }>
+  purchaseRequestId?: string  // reference back to source PurchaseRequest
   referenceId?: string
   shippingInfo?: string
   internalNotes?: string
@@ -226,7 +231,7 @@ export interface PurchaseOrder {
   updatedAt: string
 }
 
-export type PurchaseRequestStatus = 'pending_review' | 'approved' | 'rejected' | 'ordered'
+export type PurchaseRequestStatus = 'draft' | 'pending_review' | 'approved' | 'rejected' | 'ordered'
 
 export interface PurchaseRequest {
   id: string
@@ -243,7 +248,14 @@ export interface PurchaseRequest {
     description?: string
     quantity: number
     estimatedPrice: number
+    inventoryItemId: string
   }>
+  inventoryItemId: string
+  inventoryItemName: string
+  requestedQuantity: number
+  estimatedPrice: number
+  justification: string
+  urgent: boolean             // true when triggered by out_of_stock
   purpose?: string
   priority: 'low' | 'medium' | 'high' | 'urgent'
   createdAt: string

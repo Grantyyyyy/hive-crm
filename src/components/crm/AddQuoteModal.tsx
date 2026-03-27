@@ -7,7 +7,8 @@ import { QuoteForm } from "./QuoteForm"
 import { useCRMContext, insertRows } from "@/lib/CRMContext"
 import { useCRMResource } from "@/lib/hooks"
 import type { Contact, Quote, InventoryItem } from "@/lib/types"
-import { generateQuoteNumber, sendQuoteEmail } from "@/lib/quoteOrderAutomation"
+import { sendQuoteEmail } from "@/services/quoteService"
+import { generateNumber } from "@/services/types"
 import { FileText, X } from "lucide-react"
 
 interface AddQuoteModalProps {
@@ -24,7 +25,8 @@ export function AddQuoteModal({ open, onOpenChange, onSuccess }: AddQuoteModalPr
 
   const handleSave = async (quote: Quote) => {
     try {
-      quote.quoteNumber = generateQuoteNumber(quotes)
+      const existingNumbers = quotes.map(q => q.quoteNumber)
+      quote.quoteNumber = generateNumber('QT', existingNumbers)
       if (quote.status === 'sent') {
          sendQuoteEmail(quote)
       }

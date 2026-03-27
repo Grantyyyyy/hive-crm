@@ -22,10 +22,10 @@ import { PageSkeleton } from "@/components/ui/page-skeleton"
 import { DeleteModal } from "@/components/ui/delete-modal"
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
-import { useCRMContext, updateRow, deleteRow, insertRows } from "@/lib/CRMContext"
-import type { Quote, QuoteStatus, SalesOrder } from "@/lib/types"
-import { sendQuoteEmail, convertQuoteToSalesOrder, sendFollowUpReminder } from "@/lib/quoteOrderAutomation"
-import { generateId } from "@/lib/helpers"
+import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
+import type { Quote, QuoteStatus, SalesOrder, InventoryItem, PurchaseRequest, PurchaseOrder } from "@/lib/types"
+import { acceptQuote, sendQuoteEmail, sendFollowUpReminder } from "@/services/quoteService"
+import type { JobAdapter } from "@/services/types"
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -58,11 +58,28 @@ export function QuoteDetail() {
   const quoteId = params?.id ?? ""
   const ctx = useCRMContext()
 
-  const { data: quotes, refresh, isLoaded } = useCRMResource<Quote>("quotes")
+  const { data: quotes, isLoaded, deleteItem } = useCRMResource<Quote>("quotes")
   const { data: orders } = useCRMResource<SalesOrder>("orders")
 
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
+
+  const adapter = useMemo<JobAdapter>(() => ({
+    getQuotes: () => quotes,
+    updateQuote: (id, patch) => updateRow<Quote>(ctx, "quotes", id, patch),
+    insertQuote: (q) => insertRows<Quote>(ctx, "quotes", [q as any]).then(rows => rows[0]),
+    getSalesOrders: () => orders,
+    updateSalesOrder: (id, patch) => updateRow<SalesOrder>(ctx, "orders", id, patch),
+    insertSalesOrder: (o) => insertRows<SalesOrder>(ctx, "orders", [o as any]).then(rows => rows[0]),
+    getInventoryItems: () => ctx.getResource<InventoryItem>("inventory").data,
+    updateInventoryItem: (id, patch) => updateRow<InventoryItem>(ctx, "inventory", id, patch),
+    getPurchaseRequests: () => ctx.getResource<PurchaseRequest>("purchase_requests").data,
+    updatePurchaseRequest: (id, patch) => updateRow<PurchaseRequest>(ctx, "purchase_requests", id, patch),
+    insertPurchaseRequest: (pr) => insertRows<PurchaseRequest>(ctx, "purchase_requests", [pr as any]).then(rows => rows[0]),
+    getPurchaseOrders: () => ctx.getResource<PurchaseOrder>("purchase_orders").data,
+    updatePurchaseOrder: (id, patch) => updateRow<PurchaseOrder>(ctx, "purchase_orders", id, patch),
+    insertPurchaseOrder: (po) => insertRows<PurchaseOrder>(ctx, "purchase_orders", [po as any]).then(rows => rows[0]),
+  }), [ctx, quotes, orders])
 
   const quote = useMemo(() => quotes.find(q => q.id === quoteId), [quotes, quoteId])
 
@@ -71,7 +88,6 @@ export function QuoteDetail() {
     try {
       sendQuoteEmail(quote)
       await updateRow<Quote>(ctx, "quotes", quote.id, { status: "sent" })
-      refresh()
       toast.success("Quote Sent", { description: "Email dispatched to customer." })
     } catch {
       toast.error("Failed to update quote.")
@@ -81,16 +97,13 @@ export function QuoteDetail() {
   const handleAccept = async () => {
     if (!quote) return
     try {
-      const newOrder = convertQuoteToSalesOrder(quote, orders, generateId)
-      await insertRows<SalesOrder>(ctx, "orders", [newOrder])
-      await updateRow<Quote>(ctx, "quotes", quote.id, { status: "accepted" })
-      refresh()
+      const order = await acceptQuote(quote.id, adapter)
       toast.success("Quote Accepted", {
-        description: `Sales Order #${newOrder.orderNumber} has been created.`,
-        action: { label: "View Order", onClick: () => navigate(`/orders/${newOrder.id}`) },
+        description: `Sales Order #${order.orderNumber} has been created.`,
+        action: { label: "View Order", onClick: () => navigate(`/orders/${order.id}`) },
       })
-    } catch {
-      toast.error("Failed to accept quote.")
+    } catch (e: any) {
+      toast.error("Failed to accept quote", { description: e.message })
     }
   }
 
@@ -108,7 +121,6 @@ export function QuoteDetail() {
     if (!quote) return
     try {
       await updateRow<Quote>(ctx, "quotes", quote.id, { status: "expired" })
-      refresh()
       toast.success("Quote marked as expired.")
     } catch {
       toast.error("Failed to expire quote.")
@@ -118,11 +130,10 @@ export function QuoteDetail() {
   const handleDelete = async () => {
     if (!quote) return
     try {
-      await deleteRow<Quote>(ctx, "quotes", quote.id)
-      toast.success("Quote deleted.")
+      await deleteItem(quote.id)
       navigate("/quotes")
-    } catch {
-      toast.error("Failed to delete quote.")
+    } catch (e: any) {
+      toast.error("Failed to delete quote", { description: e.message })
     }
   }
 

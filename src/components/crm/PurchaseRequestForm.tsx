@@ -70,6 +70,10 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData }: PurchaseR
       items,
       purpose,
       priority,
+      requestedQuantity: items.reduce((sum, i) => sum + i.quantity, 0),
+      estimatedPrice: totalEstimate,
+      justification: purpose || "Standard request",
+      urgent: priority === 'urgent',
       createdAt: initialData?.createdAt ?? new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }

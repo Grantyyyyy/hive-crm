@@ -170,6 +170,7 @@ export interface SalesOrder {
   orderDate: string
   items: OrderItem[]
   stockDeducted?: boolean      // guards against double-deduction on re-ship
+  stockReserved?: boolean      // indicates if this order is holding a reservation
   createdAt: string
   updatedAt: string
 }
@@ -198,6 +199,7 @@ export interface Quote {
   items: QuoteItem[]
   terms?: string
   reminderSent?: boolean
+  stockReserved?: boolean      // indicates if this quote is holding a reservation
   createdAt: string
   updatedAt: string
 }
@@ -213,6 +215,7 @@ export interface InventoryItem {
   category: string
   price: number
   stockQuantity: number
+  reservedQuantity: number
   stockLevel: StockLevel
   status: InventoryStatus
   imageUrl?: string
@@ -237,7 +240,7 @@ export interface PurchaseOrder {
     description?: string
     quantity: number
     price: number
-    inventoryItemId: string
+    inventoryItemId?: string
   }>
   purchaseRequestId?: string  // reference back to source PurchaseRequest
   referenceId?: string
@@ -265,10 +268,10 @@ export interface PurchaseRequest {
     description?: string
     quantity: number
     estimatedPrice: number
-    inventoryItemId: string
+    inventoryItemId?: string
   }>
-  inventoryItemId: string
-  inventoryItemName: string
+  inventoryItemId?: string
+  inventoryItemName?: string
   requestedQuantity: number
   estimatedPrice: number
   justification: string

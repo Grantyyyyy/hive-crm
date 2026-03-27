@@ -7,7 +7,8 @@ import {
   Plus,
   Download,
   Filter,
-  Trash2
+  Trash2,
+  X
 } from "lucide-react"
 import { DeleteModal } from "@/components/ui/delete-modal"
 import { Button } from "@/components/ui/button"
@@ -28,11 +29,11 @@ export function Contacts() {
   const [, navigate] = useLocation()
   const {
     data: contacts,
-    search,
-    setSearch,
     isLoaded,
     addItems,
-    deleteItem
+    deleteItem,
+    error,
+    refresh
   } = useCRMResource<Contact>('contacts')
 
   const [search, setSearch] = useState('')
@@ -75,8 +76,8 @@ export function Contacts() {
     )
   }
 
-  async function handleAddContact(contact: CreateContactInput) {
-    await addItems([contact as unknown as Contact])
+  async function handleAddContact(contact: any) {
+    await addItems([contact as Contact])
     setShowModal(false)
   }
 
@@ -178,7 +179,7 @@ export function Contacts() {
                         </td>
                         <td className="px-4 py-2.5">
                           <p className="text-[13px] text-text-secondary">
-                            {new Date(c.createdAt).toLocaleDateString()}
+                            {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '—'}
                           </p>
                         </td>
                         <td className="px-4 py-2.5 text-right">
@@ -247,4 +248,3 @@ export function Contacts() {
     </div>
   )
 }
-

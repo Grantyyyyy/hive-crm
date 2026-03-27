@@ -1,73 +1,157 @@
-import type { SalesOrder } from "../lib/types";
-import type { JobAdapter } from "./types";
-import { checkAndAlertLowStock, recalculateStockLevel } from "./inventoryService";
+import type { SalesOrder, InventoryItem } from "../lib/types";
+import { recalculateStockLevel } from "./inventoryService";
+import type { CRMContextValue, AtomicOp } from "../lib/CRMContext";
 
 /**
- * Deducts stock from inventory for a shipped Sales Order.
+ * Atomically deducts physical stock and releases the reservation for a shipped order.
+ * Throws error if physical stock is insufficient (Hard-stop).
  */
-export async function deductStock(order: SalesOrder, adapter: JobAdapter): Promise<void> {
+export async function fulfillOrderStock(
+  order: SalesOrder, 
+  ctx: CRMContextValue
+): Promise<void> {
   if (order.stockDeducted) return;
 
-  const inventory = adapter.getInventoryItems();
+  const inventory = ctx.getResource<InventoryItem>('inventory').data;
+  const updates: AtomicOp[] = [];
 
   for (const item of order.items) {
-    let invItem = null;
-    if (item.inventoryItemId) {
-      invItem = inventory.find(i => i.id === item.inventoryItemId);
-    } else {
-      // Fallback: match by name for legacy data or loose items
-      invItem = inventory.find(i => i.name === item.name);
-    }
-
+    if (!item.inventoryItemId) continue;
+    const invItem = inventory.find(i => i.id === item.inventoryItemId);
+    
     if (invItem) {
-      const newQty = Math.max(0, invItem.stockQuantity - item.quantity);
-      const newLevel = recalculateStockLevel(newQty);
-      
-      await adapter.updateInventoryItem(invItem.id, {
-        stockQuantity: newQty,
-        stockLevel: newLevel
+      // Hard stop: Cannot ship what you don't have
+      if (invItem.stockQuantity < item.quantity) {
+        throw new Error(`Execution Blocked: Insufficient physical stock for ${invItem.name}.`);
+      }
+
+      const newPhysical = invItem.stockQuantity - item.quantity;
+      const currentReserved = (invItem.reservedQuantity || 0);
+      if (order.stockReserved && currentReserved < item.quantity) {
+        throw new Error(`Inventory Inconsistency: Release of ${item.quantity} for ${invItem.name} results in negative reservation. (Current: ${currentReserved})`);
+      }
+      const newReserved = order.stockReserved 
+        ? currentReserved - item.quantity
+        : currentReserved;
+
+      updates.push({
+        resource: 'inventory',
+        id: invItem.id,
+        patch: { 
+          stockQuantity: newPhysical, 
+          reservedQuantity: newReserved,
+          stockLevel: recalculateStockLevel(newPhysical, newReserved)
+        }
       });
-      
-      console.log(`[orderService] Stock deducted for ${invItem.name}: -${item.quantity} units → new qty: ${newQty}`);
-    } else {
-      console.warn(`[orderService] Could not find inventory item for "${item.name}" (ID: ${item.inventoryItemId})`);
     }
   }
 
-  await adapter.updateSalesOrder(order.id, { stockDeducted: true });
-  await checkAndAlertLowStock(adapter);
+  updates.push({
+    resource: 'orders',
+    id: order.id,
+    patch: { 
+      stockDeducted: true, 
+      stockReserved: false, 
+      status: 'shipped' 
+    }
+  });
+
+  await ctx.runAtomicUpdate(updates);
 }
 
 /**
- * Restores stock to inventory for a cancelled Sales Order.
+ * Releases reserved stock if an order is cancelled before fulfillment.
  */
-export async function restoreStock(order: SalesOrder, adapter: JobAdapter): Promise<void> {
-  if (!order.stockDeducted) return;
+export async function releaseOrderStock(order: SalesOrder, ctx: CRMContextValue): Promise<void> {
+  if (order.status === 'cancelled' || order.stockDeducted) return;
 
-  const inventory = adapter.getInventoryItems();
+  const inventory = ctx.getResource<InventoryItem>('inventory').data;
+  const updates: AtomicOp[] = [];
 
   for (const item of order.items) {
-    let invItem = null;
-    if (item.inventoryItemId) {
-      invItem = inventory.find(i => i.id === item.inventoryItemId);
-    } else {
-      invItem = inventory.find(i => i.name === item.name);
-    }
-
-    if (invItem) {
-      const newQty = invItem.stockQuantity + item.quantity;
-      const newLevel = recalculateStockLevel(newQty);
-
-      await adapter.updateInventoryItem(invItem.id, {
-        stockQuantity: newQty,
-        stockLevel: newLevel
+    if (!item.inventoryItemId) continue;
+    const invItem = inventory.find(i => i.id === item.inventoryItemId);
+    
+    if (invItem && order.stockReserved) {
+      const currentReserved = (invItem.reservedQuantity || 0);
+      if (currentReserved < item.quantity) {
+        throw new Error(`Inventory Inconsistency: Cancellation release of ${item.quantity} for ${invItem.name} exceeds reservation. (Current: ${currentReserved})`);
+      }
+      const newReserved = currentReserved - item.quantity;
+      updates.push({
+        resource: 'inventory',
+        id: invItem.id,
+        patch: { 
+          reservedQuantity: newReserved,
+          stockLevel: recalculateStockLevel(invItem.stockQuantity, newReserved)
+        }
       });
-      
-      console.log(`[orderService] Stock restored for ${invItem.name}: +${item.quantity} units → new qty: ${newQty}`);
     }
   }
 
-  await adapter.updateSalesOrder(order.id, { stockDeducted: false });
+  updates.push({
+    resource: 'orders',
+    id: order.id,
+    patch: { 
+      stockReserved: false, 
+      status: 'cancelled' 
+    }
+  });
+
+  await ctx.runAtomicUpdate(updates);
+}
+
+/**
+ * Atomically creates a direct order with ATP check and reservation.
+ */
+export async function createOrderWithReservation(
+  order: Omit<SalesOrder, 'id' | 'createdAt' | 'updatedAt'>, 
+  ctx: CRMContextValue
+): Promise<SalesOrder> {
+  const inventory = (ctx.getResource<InventoryItem>('inventory').data);
+  const ops: AtomicOp[] = [];
+  const pendingTally: Record<string, number> = {};
+
+  // 1. Availability Check (ATP)
+  for (const item of order.items) {
+    if (!item.inventoryItemId) continue;
+    const invItem = inventory.find(i => i.id === item.inventoryItemId);
+    const requested = (pendingTally[item.inventoryItemId] || 0) + item.quantity;
+    
+    if (invItem) {
+      const available = invItem.stockQuantity - (invItem.reservedQuantity || 0);
+      if (requested > available) {
+        throw new Error(`Availability Error: ${invItem.name} is out of stock. Required: ${requested}, Available: ${available}`);
+      }
+      pendingTally[item.inventoryItemId] = requested;
+    }
+  }
+
+  // 2. Build Inventory Reservation Updates
+  Object.keys(pendingTally).forEach(itemId => {
+    const invItem = inventory.find(i => i.id === itemId)!;
+    const newReserved = (invItem.reservedQuantity || 0) + pendingTally[itemId];
+    ops.push({
+      resource: 'inventory',
+      id: itemId,
+      patch: { 
+        reservedQuantity: newReserved,
+        stockLevel: recalculateStockLevel(invItem.stockQuantity, newReserved)
+      }
+    });
+  });
+
+  // 3. Insert and Mark as Reserved
+  ops.push({
+    resource: 'orders',
+    action: 'insert',
+    patch: { ...order, stockReserved: true }
+  });
+
+  const results = await ctx.runAtomicUpdate(ops);
+  const created = results.find(r => r.resource === 'orders' && r.action === 'insert');
+  if (!created) throw new Error("Failed to create order — insert result missing.");
+  return created.patch as unknown as SalesOrder;
 }
 
 /**

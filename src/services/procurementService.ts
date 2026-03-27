@@ -26,7 +26,7 @@ export async function approvePurchaseRequest(
     items: [{
       id: 'po-item-1',
       inventoryItemId: request.inventoryItemId,
-      name: request.inventoryItemName,
+      name: request.inventoryItemName || 'Unknown Item',
       quantity: request.requestedQuantity,
       price: request.estimatedPrice
     }],

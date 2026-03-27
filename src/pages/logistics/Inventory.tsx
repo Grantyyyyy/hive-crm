@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react"
+import { useLocation } from "wouter"
 import { 
   Package, 
   Search, 
@@ -16,6 +17,7 @@ import type { InventoryItem, StockLevel, InventoryStatus } from "@/lib/types"
 import { generateId } from "@/lib/helpers"
 
 export function Inventory() {
+  const [, navigate] = useLocation()
   const { 
     data: items, 
     addItems, 
@@ -38,6 +40,7 @@ export function Inventory() {
           category: "Furniture",
           price: 499.00,
           stockQuantity: 124,
+          reservedQuantity: 14,
           stockLevel: 'in_stock',
           status: 'active',
           createdAt: new Date().toISOString(),
@@ -50,6 +53,7 @@ export function Inventory() {
           category: "Electronics",
           price: 129.99,
           stockQuantity: 12,
+          reservedQuantity: 8,
           stockLevel: 'low_stock',
           status: 'active',
           createdAt: new Date().toISOString(),
@@ -62,6 +66,7 @@ export function Inventory() {
           category: "Furniture",
           price: 349.50,
           stockQuantity: 0,
+          reservedQuantity: 0,
           stockLevel: 'out_of_stock',
           status: 'active',
           createdAt: new Date().toISOString(),
@@ -74,6 +79,7 @@ export function Inventory() {
           category: "Accessories",
           price: 189.99,
           stockQuantity: 45,
+          reservedQuantity: 0,
           stockLevel: 'in_stock',
           status: 'draft',
           createdAt: new Date().toISOString(),
@@ -211,6 +217,7 @@ export function Inventory() {
                   paginatedItems.map((item) => (
                     <tr 
                       key={item.id}
+                      onClick={() => navigate(`/inventory/${item.id}`)}
                       className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors cursor-pointer group"
                     >
                       <td className="px-4 py-2.5">
@@ -237,7 +244,7 @@ export function Inventory() {
                         </span>
                       </td>
                       <td className="px-4 py-2.5">
-                        <StockBadge level={item.stockLevel} quantity={item.stockQuantity} />
+                        <StockBadge level={item.stockLevel} quantity={item.stockQuantity} reserved={item.reservedQuantity} />
                       </td>
                       <td className="px-4 py-2.5">
                         <ItemStatusBadge status={item.status} />
@@ -273,30 +280,23 @@ export function Inventory() {
   )
 }
 
-function StockBadge({ level, quantity }: { level: StockLevel, quantity: number }) {
-  if (level === 'in_stock') {
-    return (
-      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold border border-emerald-100 dark:border-emerald-800/30">
-        <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-        {quantity} In Stock
-      </span>
-    )
-  }
+function StockBadge({ level, quantity, reserved = 0 }: { level: StockLevel, quantity: number, reserved?: number }) {
+  const available = quantity - reserved;
   
-  if (level === 'low_stock') {
-    return (
-      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-xs font-bold border border-amber-100 dark:border-amber-800/30">
-        <span className="size-1.5 rounded-full bg-amber-500"></span>
-        Only {quantity} Left
-      </span>
-    )
-  }
-
   return (
-    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 text-xs font-bold border border-rose-100 dark:border-rose-800/30">
-      <span className="size-1.5 rounded-full bg-rose-500"></span>
-      Out of Stock
-    </span>
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-1.5">
+        <span className={cn(
+          "size-1.5 rounded-full shrink-0",
+          level === 'in_stock' ? "bg-emerald-500 animate-pulse" :
+          level === 'low_stock' ? "bg-amber-500" : "bg-rose-500"
+        )} />
+        <span className="text-[13px] font-bold text-slate-900 dark:text-white">{available} ATP</span>
+      </div>
+      <p className="text-[10px] font-medium text-slate-400 pl-3">
+        {quantity} Physical / {reserved} Reserved
+      </p>
+    </div>
   )
 }
 

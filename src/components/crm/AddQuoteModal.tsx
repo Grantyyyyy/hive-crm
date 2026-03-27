@@ -7,9 +7,10 @@ import { QuoteForm } from "./QuoteForm"
 import { useCRMContext, insertRows } from "@/lib/CRMContext"
 import { useCRMResource } from "@/lib/hooks"
 import type { Contact, Quote, InventoryItem } from "@/lib/types"
-import { sendQuoteEmail } from "@/services/quoteService"
+import { sendQuoteEmail, reserveStockForQuote } from "@/services/quoteService"
 import { generateNumber } from "@/services/types"
 import { FileText, X } from "lucide-react"
+import { toast } from "sonner"
 
 interface AddQuoteModalProps {
   open: boolean
@@ -27,14 +28,20 @@ export function AddQuoteModal({ open, onOpenChange, onSuccess }: AddQuoteModalPr
     try {
       const existingNumbers = quotes.map(q => q.quoteNumber)
       quote.quoteNumber = generateNumber('QT', existingNumbers)
-      if (quote.status === 'sent') {
-         sendQuoteEmail(quote)
+      
+      // 1. Insert the quote
+      const [newQuote] = await insertRows<Quote>(ctx, 'quotes', [quote])
+      
+      // 2. If 'sent', trigger atomic reservation
+      if (newQuote.status === 'sent') {
+         sendQuoteEmail(newQuote)
+         await reserveStockForQuote(newQuote, ctx)
       }
-      await insertRows(ctx, 'quotes', [quote])
+      
       onOpenChange(false)
-      if (onSuccess) onSuccess(quote)
-    } catch (error) {
-      console.error("Failed to save quote:", error)
+      if (onSuccess) onSuccess(newQuote)
+    } catch (error: any) {
+      toast.error("Failed to create quote", { description: error.message })
     }
   }
 

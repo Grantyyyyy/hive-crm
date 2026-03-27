@@ -9,7 +9,6 @@ import { TaskForm } from "./TaskForm"
 import { useCRMResource } from "@/lib/hooks"
 import type { Contact, Deal, Lead, Task } from "@/lib/types"
 import { Button } from "@/components/ui/button"
-import { useUpdateTask, useDeleteTask } from "@/lib/hooks"
 
 interface EditTaskModalProps {
   task: Task | null

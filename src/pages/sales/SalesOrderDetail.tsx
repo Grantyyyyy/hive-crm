@@ -21,10 +21,14 @@ import { InvoiceModal } from "@/components/crm/InvoiceModal"
 import { DeleteModal } from "@/components/ui/delete-modal"
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
-import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
-import type { SalesOrder, SalesOrderStatus, Quote, InventoryItem, PurchaseRequest, PurchaseOrder } from "@/lib/types"
-import { deductStock, restoreStock, sendShippingNotification, generateInvoice } from "@/services/orderService"
-import type { JobAdapter } from "@/services/types"
+import { useCRMContext, updateRow } from "@/lib/CRMContext"
+import type { SalesOrder, SalesOrderStatus } from "@/lib/types"
+import { 
+  fulfillOrderStock, 
+  releaseOrderStock, 
+  sendShippingNotification, 
+  generateInvoice 
+} from "@/services/orderService"
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -63,34 +67,16 @@ export function SalesOrderDetail() {
   const [invoiceOpen, setInvoiceOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
 
-  const adapter = useMemo<JobAdapter>(() => ({
-    getQuotes: () => ctx.getResource<Quote>('quotes').data,
-    updateQuote: (id, patch) => updateRow<Quote>(ctx, 'quotes', id, patch),
-    insertQuote: (q) => insertRows<Quote>(ctx, 'quotes', [q as any]).then(rows => rows[0]),
-    getSalesOrders: () => orders,
-    updateSalesOrder: (id, patch) => updateRow<SalesOrder>(ctx, 'orders', id, patch),
-    insertSalesOrder: (o) => insertRows<SalesOrder>(ctx, 'orders', [o as any]).then(rows => rows[0]),
-    getInventoryItems: () => ctx.getResource<InventoryItem>('inventory').data,
-    updateInventoryItem: (id, patch) => updateRow<InventoryItem>(ctx, 'inventory', id, patch),
-    getPurchaseRequests: () => ctx.getResource<PurchaseRequest>('purchase_requests').data,
-    updatePurchaseRequest: (id, patch) => updateRow<PurchaseRequest>(ctx, 'purchase_requests', id, patch),
-    insertPurchaseRequest: (pr) => insertRows<PurchaseRequest>(ctx, 'purchase_requests', [pr as any]).then(rows => rows[0]),
-    getPurchaseOrders: () => ctx.getResource<PurchaseOrder>('purchase_orders').data,
-    updatePurchaseOrder: (id, patch) => updateRow<PurchaseOrder>(ctx, 'purchase_orders', id, patch),
-    insertPurchaseOrder: (po) => insertRows<PurchaseOrder>(ctx, 'purchase_orders', [po as any]).then(rows => rows[0]),
-  }), [ctx, orders])
-
   const order = useMemo(() => orders.find(o => o.id === orderId), [orders, orderId])
 
   const handleShip = async () => {
     if (!order) return
     try {
-      await deductStock(order, adapter)
-      await updateRow<SalesOrder>(ctx, "orders", order.id, { status: "shipped" })
+      await fulfillOrderStock(order, ctx)
       sendShippingNotification(order)
-      toast.success("Order Marked as Shipped", { description: `#${order.orderNumber} — stock deducted and notification sent.` })
-    } catch (e: any) {
-      toast.error("Failed to ship order", { description: e.message })
+      toast.success("Order Marked as Shipped", { description: `#${order.orderNumber} — stock physical/reserved updated.` })
+    } catch (e: unknown) {
+      toast.error("Failed to ship order", { description: (e as Error).message })
     }
   }
 
@@ -109,11 +95,10 @@ export function SalesOrderDetail() {
   const handleCancel = async () => {
     if (!order) return
     try {
-      await restoreStock(order, adapter)
-      await updateRow<SalesOrder>(ctx, "orders", order.id, { status: "cancelled" })
-      toast.success("Order Cancelled", { description: `#${order.orderNumber} — stock restored (if previously deducted).` })
-    } catch (e: any) {
-      toast.error("Failed to cancel order", { description: e.message })
+      await releaseOrderStock(order, ctx)
+      toast.success("Order Cancelled", { description: `#${order.orderNumber} — stock reservation released.` })
+    } catch (e: unknown) {
+      toast.error("Failed to cancel order", { description: (e as Error).message })
     }
   }
 

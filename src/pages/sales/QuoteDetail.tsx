@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo, useRef } from "react"
 import { useRoute, useLocation, Link } from "wouter"
 import {
   ArrowLeft,
@@ -22,10 +22,15 @@ import { PageSkeleton } from "@/components/ui/page-skeleton"
 import { DeleteModal } from "@/components/ui/delete-modal"
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
-import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
-import type { Quote, QuoteStatus, SalesOrder, InventoryItem, PurchaseRequest, PurchaseOrder } from "@/lib/types"
-import { acceptQuote, sendQuoteEmail, sendFollowUpReminder } from "@/services/quoteService"
-import type { JobAdapter } from "@/services/types"
+import { useCRMContext } from "@/lib/CRMContext"
+import type { Quote, QuoteStatus } from "@/lib/types"
+import {
+  acceptQuote,
+  sendQuoteEmail,
+  sendFollowUpReminder,
+  reserveStockForQuote,
+  releaseQuoteStock,
+} from "@/services/quoteService"
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -59,51 +64,40 @@ export function QuoteDetail() {
   const ctx = useCRMContext()
 
   const { data: quotes, isLoaded, deleteItem } = useCRMResource<Quote>("quotes")
-  const { data: orders } = useCRMResource<SalesOrder>("orders")
 
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
 
-  const adapter = useMemo<JobAdapter>(() => ({
-    getQuotes: () => quotes,
-    updateQuote: (id, patch) => updateRow<Quote>(ctx, "quotes", id, patch),
-    insertQuote: (q) => insertRows<Quote>(ctx, "quotes", [q as any]).then(rows => rows[0]),
-    getSalesOrders: () => orders,
-    updateSalesOrder: (id, patch) => updateRow<SalesOrder>(ctx, "orders", id, patch),
-    insertSalesOrder: (o) => insertRows<SalesOrder>(ctx, "orders", [o as any]).then(rows => rows[0]),
-    getInventoryItems: () => ctx.getResource<InventoryItem>("inventory").data,
-    updateInventoryItem: (id, patch) => updateRow<InventoryItem>(ctx, "inventory", id, patch),
-    getPurchaseRequests: () => ctx.getResource<PurchaseRequest>("purchase_requests").data,
-    updatePurchaseRequest: (id, patch) => updateRow<PurchaseRequest>(ctx, "purchase_requests", id, patch),
-    insertPurchaseRequest: (pr) => insertRows<PurchaseRequest>(ctx, "purchase_requests", [pr as any]).then(rows => rows[0]),
-    getPurchaseOrders: () => ctx.getResource<PurchaseOrder>("purchase_orders").data,
-    updatePurchaseOrder: (id, patch) => updateRow<PurchaseOrder>(ctx, "purchase_orders", id, patch),
-    insertPurchaseOrder: (po) => insertRows<PurchaseOrder>(ctx, "purchase_orders", [po as any]).then(rows => rows[0]),
-  }), [ctx, quotes, orders])
-
   const quote = useMemo(() => quotes.find(q => q.id === quoteId), [quotes, quoteId])
+
+  const nowRef = useRef(Date.now())
+  const daysUntilExpiry = useMemo(() => {
+    const validUntil = quote?.validUntil
+    if (!validUntil) return null
+    return Math.ceil((new Date(validUntil).getTime() - nowRef.current) / 86400000)
+  }, [quote?.validUntil])
 
   const handleMarkSent = async () => {
     if (!quote) return
     try {
+      await reserveStockForQuote(quote, ctx)
       sendQuoteEmail(quote)
-      await updateRow<Quote>(ctx, "quotes", quote.id, { status: "sent" })
-      toast.success("Quote Sent", { description: "Email dispatched to customer." })
-    } catch {
-      toast.error("Failed to update quote.")
+      toast.success("Quote Sent & Stock Reserved", { description: "Email dispatched. Inventory items are now 'Soft Reserved'." })
+    } catch (e: unknown) {
+      toast.error("Failed to send quote", { description: (e as Error).message })
     }
   }
 
   const handleAccept = async () => {
     if (!quote) return
     try {
-      const order = await acceptQuote(quote.id, adapter)
+      const order = await acceptQuote(quote, ctx)
       toast.success("Quote Accepted", {
-        description: `Sales Order #${order.orderNumber} has been created.`,
+        description: `Sales Order #${order.orderNumber} created. Reservation transferred.`,
         action: { label: "View Order", onClick: () => navigate(`/orders/${order.id}`) },
       })
-    } catch (e: any) {
-      toast.error("Failed to accept quote", { description: e.message })
+    } catch (e: unknown) {
+      toast.error("Failed to accept quote", { description: (e as Error).message })
     }
   }
 
@@ -120,10 +114,10 @@ export function QuoteDetail() {
   const handleExpire = async () => {
     if (!quote) return
     try {
-      await updateRow<Quote>(ctx, "quotes", quote.id, { status: "expired" })
-      toast.success("Quote marked as expired.")
-    } catch {
-      toast.error("Failed to expire quote.")
+      await releaseQuoteStock(quote, ctx)
+      toast.success("Quote Expired", { description: "Reservation released back to available stock." })
+    } catch (e: unknown) {
+      toast.error("Failed to expire quote", { description: (e as Error).message })
     }
   }
 
@@ -132,8 +126,8 @@ export function QuoteDetail() {
     try {
       await deleteItem(quote.id)
       navigate("/quotes")
-    } catch (e: any) {
-      toast.error("Failed to delete quote", { description: e.message })
+    } catch (e: unknown) {
+      toast.error("Failed to delete quote", { description: (e as Error).message })
     }
   }
 
@@ -165,9 +159,7 @@ export function QuoteDetail() {
   const isExpired = quote.status === "expired"
   const initials = quote.customerName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
 
-  const daysUntilExpiry = quote.validUntil
-    ? Math.ceil((new Date(quote.validUntil).getTime() - Date.now()) / 86400000)
-    : null
+
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 font-sans min-h-screen text-slate-900 dark:text-slate-100">

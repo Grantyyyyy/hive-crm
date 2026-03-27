@@ -8,7 +8,6 @@ import {
 import { TaskForm } from "./TaskForm"
 import { useCRMResource } from "@/lib/hooks"
 import type { Contact, Deal, Lead, Task } from "@/lib/types"
-import { useCreateTask } from "@/lib/hooks"
 
 interface AddTaskModalProps {
   open: boolean

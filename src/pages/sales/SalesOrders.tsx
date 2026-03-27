@@ -15,16 +15,20 @@ import {
 import { Button } from "@/components/ui/button"
 import { Pagination } from "@/components/ui/Pagination"
 import { useCRMResource } from "@/lib/hooks"
-import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
+import { useCRMContext, updateRow } from "@/lib/CRMContext"
 import { useLocation } from "wouter"
 import { cn } from "@/lib/utils"
-import type { SalesOrder, SalesOrderStatus, Quote, InventoryItem, PurchaseRequest, PurchaseOrder } from "@/lib/types"
+import type { SalesOrder, SalesOrderStatus } from "@/lib/types"
 import { AddSalesOrderModal } from "@/components/crm/AddSalesOrderModal"
 import { InvoiceModal } from "@/components/crm/InvoiceModal"
 import { PageSkeleton } from "@/components/ui/page-skeleton"
 import { toast } from "sonner"
-import { sendShippingNotification, generateInvoice, deductStock, restoreStock } from "@/services/orderService"
-import type { JobAdapter } from "@/services/types"
+import { 
+  fulfillOrderStock, 
+  releaseOrderStock, 
+  sendShippingNotification, 
+  generateInvoice 
+} from "@/services/orderService"
 
 // ── Actions dropdown ──────────────────────────────────────────────────────────
 
@@ -143,22 +147,6 @@ export function SalesOrders() {
     isLoaded
   } = useCRMResource<SalesOrder>('orders')
 
-  const adapter = useMemo<JobAdapter>(() => ({
-    getQuotes: () => ctx.getResource<Quote>('quotes').data,
-    updateQuote: (id, patch) => updateRow<Quote>(ctx, 'quotes', id, patch),
-    insertQuote: (q) => insertRows<Quote>(ctx, 'quotes', [q as any]).then(rows => rows[0]),
-    getSalesOrders: () => orders,
-    updateSalesOrder: (id, patch) => updateRow<SalesOrder>(ctx, 'orders', id, patch),
-    insertSalesOrder: (o) => insertRows<SalesOrder>(ctx, 'orders', [o as any]).then(rows => rows[0]),
-    getInventoryItems: () => ctx.getResource<InventoryItem>('inventory').data,
-    updateInventoryItem: (id, patch) => updateRow<InventoryItem>(ctx, 'inventory', id, patch),
-    getPurchaseRequests: () => ctx.getResource<PurchaseRequest>('purchase_requests').data,
-    updatePurchaseRequest: (id, patch) => updateRow<PurchaseRequest>(ctx, 'purchase_requests', id, patch),
-    insertPurchaseRequest: (pr) => insertRows<PurchaseRequest>(ctx, 'purchase_requests', [pr as any]).then(rows => rows[0]),
-    getPurchaseOrders: () => ctx.getResource<PurchaseOrder>('purchase_orders').data,
-    updatePurchaseOrder: (id, patch) => updateRow<PurchaseOrder>(ctx, 'purchase_orders', id, patch),
-    insertPurchaseOrder: (po) => insertRows<PurchaseOrder>(ctx, 'purchase_orders', [po as any]).then(rows => rows[0]),
-  }), [ctx, orders])
 
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<SalesOrderStatus | 'all'>('all')
@@ -170,7 +158,7 @@ export function SalesOrders() {
 
   // Filter logic
   const filteredOrders = useMemo(() => {
-    let result = orders.filter(order => {
+    const result = orders.filter(order => {
       const matchesStatus = statusFilter === 'all' || order.status === statusFilter
       const q = search.toLowerCase()
       const matchesSearch = !q ||
@@ -198,13 +186,12 @@ export function SalesOrders() {
 
   const handleShipOrder = async (order: SalesOrder) => {
     try {
-      await deductStock(order, adapter)
-      await updateRow<SalesOrder>(ctx, 'orders', order.id, { status: 'shipped' })
+      await fulfillOrderStock(order, ctx)
       sendShippingNotification(order)
       refresh()
-      toast.success("Order Marked as Shipped", { description: `#${order.orderNumber} — stock deducted and notification sent.` })
-    } catch (e: any) {
-      toast.error("Failed to ship order", { description: e.message })
+      toast.success("Order Marked as Shipped", { description: `#${order.orderNumber} — stock physical/reserved updated.` })
+    } catch (e: unknown) {
+      toast.error("Failed to ship order", { description: (e as Error).message })
     }
   }
 
@@ -222,12 +209,11 @@ export function SalesOrders() {
 
   const handleCancelOrder = async (order: SalesOrder) => {
     try {
-      await restoreStock(order, adapter)
-      await updateRow<SalesOrder>(ctx, 'orders', order.id, { status: 'cancelled' })
+      await releaseOrderStock(order, ctx)
       refresh()
-      toast.success("Order Cancelled", { description: `#${order.orderNumber} — stock restored (if previously deducted).` })
-    } catch (e: any) {
-      toast.error("Failed to cancel order", { description: e.message })
+      toast.success("Order Cancelled", { description: `#${order.orderNumber} — stock reservation released.` })
+    } catch (e: unknown) {
+      toast.error("Failed to cancel order", { description: (e as Error).message })
     }
   }
 

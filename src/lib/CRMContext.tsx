@@ -66,11 +66,20 @@ interface ResourceState<T> {
 
 // ── Context value ────────────────────────────────────────────────────────────
 
-interface CRMContextValue {
+export interface AtomicOp {
+  resource: string
+  action?: "insert" | "update"
+  id?: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  patch: Record<string, any>
+}
+
+export interface CRMContextValue {
   userId: string
   getResource: <T>(name: string) => ResourceState<T>
   setResourceData: <T>(name: string, updater: (prev: T[]) => T[]) => void
   getClient: () => Promise<ReturnType<typeof createClerkSupabaseClient> | null>
+  runAtomicUpdate: (ops: AtomicOp[]) => Promise<AtomicOp[]>
 }
 
 const CRMContext = createContext<CRMContextValue | null>(null)
@@ -167,7 +176,6 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     },
     [store, fetchResource, userId, session]
   )
-
   const setResourceData = useCallback(
     <T,>(name: string, updater: (prev: T[]) => T[]) => {
       setStore((prev) => ({
@@ -181,8 +189,63 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     []
   )
 
+  const runAtomicUpdate = useCallback(
+    async (ops: AtomicOp[]) => {
+      const client = await getClient()
+      if (!client) throw new Error("Not authenticated")
+
+      const errors: Array<{ resource: string; id?: string; error: unknown }> = []
+      const successes: Array<AtomicOp & { action: "insert" | "update" }> = []
+
+      // 1. Database Phase
+      for (const op of ops) {
+        const action = op.action ?? "update"
+        const tableName = TABLE_MAP[op.resource]
+        if (!tableName) {
+          errors.push({ resource: op.resource, error: new Error(`Unknown resource: ${op.resource}`) })
+          continue
+        }
+
+        const snakePatch = toSnake(op.patch)
+        if (action === "update") {
+          const { error } = await client.from(tableName).update(snakePatch).eq("id", op.id)
+          if (error) errors.push({ resource: op.resource, id: op.id, error })
+          else successes.push({ ...op, action })
+        } else if (action === "insert") {
+          snakePatch.user_id = userId
+          const { data, error } = await client.from(tableName).insert(snakePatch).select()
+          if (error) errors.push({ resource: op.resource, error })
+          else {
+            const created = toCamel(data?.[0] || {})
+            successes.push({ ...op, action, patch: created })
+          }
+        }
+      }
+
+      if (errors.length > 0) {
+        console.error("[CRMContext] Atomic update failed:", errors)
+        throw new Error(`Atomic update failed with ${errors.length} errors. Local state not committed.`)
+      }
+
+      // 2. React state Phase: Only runs if all DB calls succeeded
+      successes.forEach((op) => {
+        if (op.action === "update") {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          setResourceData(op.resource, (prev: any[]) =>
+            prev.map((item) => (item.id === op.id ? { ...item, ...op.patch } : item))
+          )
+        } else {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          setResourceData(op.resource, (prev: any[]) => [op.patch, ...prev])
+        }
+      })
+      return successes
+    },
+    [getClient, setResourceData, userId]
+  )
+
   return (
-    <CRMContext.Provider value={{ userId, getResource, setResourceData, getClient }}>
+    <CRMContext.Provider value={{ userId, getResource, setResourceData, getClient, runAtomicUpdate }}>
       {children}
     </CRMContext.Provider>
   )

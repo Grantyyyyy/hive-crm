@@ -1,51 +1,100 @@
-import type { Quote, SalesOrder, QuoteItem, OrderItem } from "../lib/types";
-import type { JobAdapter } from "./types";
+import type { Quote, SalesOrder, OrderItem, InventoryItem } from "../lib/types";
 import { generateNumber } from "./types";
+import { recalculateStockLevel } from "./inventoryService";
+import type { CRMContextValue, AtomicOp } from "../lib/CRMContext";
 
 /**
- * Generates the next Quote number (QT-YYYY-XXXX).
+ * Atomically reserves stock for a quote with duplicate item protection.
  */
-export function getNextQuoteNumber(adapter: JobAdapter): string {
-  const existing = adapter.getQuotes().map(q => q.quoteNumber);
-  return generateNumber('QT', existing);
-}
+export async function reserveStockForQuote(quote: Quote, ctx: CRMContextValue): Promise<void> {
+  if (quote.stockReserved || quote.status === 'accepted') return;
 
-/**
- * Checks for out-of-stock items in a list of quote/order items.
- * returns names of out-of-stock items.
- */
-export function blockOutOfStockItems(items: (QuoteItem | OrderItem)[], adapter: JobAdapter): string[] {
-  const inventory = adapter.getInventoryItems();
-  const outOfStock: string[] = [];
+  const inventory = ctx.getResource<InventoryItem>('inventory').data;
+  const updates: AtomicOp[] = [];
+  const pendingTally: Record<string, number> = {};
 
-  for (const item of items) {
-    if (item.inventoryItemId) {
-      const invItem = inventory.find(i => i.id === item.inventoryItemId);
-      if (invItem && invItem.stockLevel === 'out_of_stock') {
-        outOfStock.push(item.name);
+  // 1. Tally requirements and check availability
+  for (const item of quote.items) {
+    if (!item.inventoryItemId) continue;
+    const invItem = inventory.find(i => i.id === item.inventoryItemId);
+    const currentRequested = (pendingTally[item.inventoryItemId] || 0) + item.quantity;
+    
+    if (invItem) {
+      const available = invItem.stockQuantity - (invItem.reservedQuantity || 0);
+      if (currentRequested > available) {
+        throw new Error(`Insufficient Available Stock for ${invItem.name}. Available: ${available}, Total in Quote: ${currentRequested}`);
       }
+      pendingTally[item.inventoryItemId] = currentRequested;
     }
   }
 
-  return outOfStock;
+  // 2. Build Atomic Updates
+  Object.keys(pendingTally).forEach(itemId => {
+    const invItem = inventory.find(i => i.id === itemId)!;
+    const newReserved = (invItem.reservedQuantity || 0) + pendingTally[itemId];
+    updates.push({
+      resource: 'inventory',
+      id: itemId,
+      patch: { 
+        reservedQuantity: newReserved,
+        stockLevel: recalculateStockLevel(invItem.stockQuantity, newReserved)
+      }
+    });
+  });
+
+  updates.push({
+    resource: 'quotes',
+    id: quote.id,
+    patch: { stockReserved: true, status: 'sent' }
+  });
+
+  await ctx.runAtomicUpdate(updates);
 }
 
 /**
- * Converts a Quote to a Sales Order if all items are in stock.
+ * Releases reserved stock if a quote is rejected or expired.
  */
-export async function acceptQuote(quoteId: string, adapter: JobAdapter): Promise<SalesOrder> {
-  const quotes = adapter.getQuotes();
-  const quote = quotes.find(q => q.id === quoteId);
-  if (!quote) throw new Error("Quote not found");
+export async function releaseQuoteStock(quote: Quote, ctx: CRMContextValue): Promise<void> {
+  if (!quote.stockReserved || quote.status === 'accepted') return;
 
-  const outOfStock = blockOutOfStockItems(quote.items, adapter);
-  if (outOfStock.length > 0) {
-    throw new Error(`The following items are out of stock: ${outOfStock.join(', ')}. Remove them before proceeding.`);
+  const inventory = ctx.getResource<InventoryItem>('inventory').data;
+  const updates: AtomicOp[] = [];
+
+  for (const item of quote.items) {
+    if (!item.inventoryItemId) continue;
+    const invItem = inventory.find(i => i.id === item.inventoryItemId);
+    if (invItem) {
+      const currentReserved = (invItem.reservedQuantity || 0);
+      if (currentReserved < item.quantity) {
+        throw new Error(`Inventory Inconsistency: Cannot release ${item.quantity} units for ${invItem.name}. Only ${currentReserved} units reserved.`);
+      }
+      const newReserved = currentReserved - item.quantity;
+      updates.push({
+        resource: 'inventory',
+        id: invItem.id,
+        patch: { 
+          reservedQuantity: newReserved,
+          stockLevel: recalculateStockLevel(invItem.stockQuantity, newReserved)
+        }
+      });
+    }
   }
 
-  // Generate SO Number
-  const existingOrders = adapter.getSalesOrders().map(o => o.orderNumber);
-  const orderNumber = generateNumber('SO', existingOrders);
+  updates.push({
+    resource: 'quotes',
+    id: quote.id,
+    patch: { stockReserved: false, status: quote.status === 'expired' ? 'expired' : 'rejected' }
+  });
+
+  await ctx.runAtomicUpdate(updates);
+}
+
+/**
+ * Converts a Quote to a Sales Order. The reservation transfers from Quote to Order.
+ */
+export async function acceptQuote(quote: Quote, ctx: CRMContextValue): Promise<SalesOrder> {
+  const existingOrders = ctx.getResource<SalesOrder>('orders').data;
+  const orderNumber = generateNumber('SO', existingOrders.map(o => o.orderNumber));
 
   const orderItems: OrderItem[] = quote.items.map(qi => ({
     id: qi.id,
@@ -65,12 +114,28 @@ export async function acceptQuote(quoteId: string, adapter: JobAdapter): Promise
     status: 'pending',
     orderDate: new Date().toISOString(),
     items: orderItems,
-    stockDeducted: false
+    stockDeducted: false,
+    stockReserved: quote.stockReserved // Handoff the reservation
   };
 
-  await adapter.updateQuote(quote.id, { status: 'accepted' });
-  
-  return await adapter.insertSalesOrder(newOrder);
+  // Atomic Phase: Update Quote and Insert Order in one UI-committed batch
+  const ops = [
+    { 
+      resource: 'quotes', 
+      id: quote.id, 
+      patch: { status: 'accepted', stockReserved: false } 
+    },
+    { 
+      resource: 'orders', 
+      action: 'insert' as const, 
+      patch: newOrder 
+    }
+  ];
+
+  const results = await ctx.runAtomicUpdate(ops);
+  const created = results.find(r => r.resource === 'orders' && r.action === 'insert');
+  if (!created) throw new Error("Failed to create order — insert result missing.");
+  return created.patch as unknown as SalesOrder;
 }
 
 /**

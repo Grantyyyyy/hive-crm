@@ -1,25 +1,34 @@
 import type { StockLevel, PurchaseRequest } from "../lib/types";
 import type { JobAdapter } from "./types";
 import { STOCK_THRESHOLDS, generateNumber } from "./types";
+import type { CRMContextValue } from "../lib/CRMContext";
+import { insertRows } from "../lib/CRMContext";
 
 /**
- * Calculates stock level based on quantity and thresholds.
+ * Calculates stock level based on Available-to-Promise (ATP) units.
+ * ATP = Total Physical Stock - Reserved Units
  */
-export function recalculateStockLevel(quantity: number): StockLevel {
-  if (quantity <= STOCK_THRESHOLDS.out) return 'out_of_stock';
-  if (quantity <= STOCK_THRESHOLDS.low) return 'low_stock';
+export function recalculateStockLevel(physicalQuantity: number, reservedQuantity: number = 0): StockLevel {
+  const available = physicalQuantity - reservedQuantity;
+  if (available <= STOCK_THRESHOLDS.out) return 'out_of_stock';
+  if (available <= STOCK_THRESHOLDS.low) return 'low_stock';
   return 'in_stock';
 }
 
 /**
  * Scans inventory for low/out-of-stock items and auto-creates PRs.
+ * Uses ATP (Physical - Reserved) for calculation.
  */
-export async function checkAndAlertLowStock(adapter: JobAdapter): Promise<void> {
+export async function checkAndAlertLowStock(adapter: JobAdapter, ctx: CRMContextValue): Promise<void> {
   const inventory = adapter.getInventoryItems();
   const existingPRs = adapter.getPurchaseRequests();
 
   for (const item of inventory) {
-    if (item.stockLevel === 'low_stock' || item.stockLevel === 'out_of_stock') {
+    const available = item.stockQuantity - (item.reservedQuantity || 0);
+    const isOut = available <= STOCK_THRESHOLDS.out;
+    const isLow = available <= STOCK_THRESHOLDS.low;
+
+    if (isOut || isLow) {
       // Check for existing open PR for this item
       const hasOpenPR = existingPRs.some(pr => 
         pr.inventoryItemId === item.id && 
@@ -29,18 +38,19 @@ export async function checkAndAlertLowStock(adapter: JobAdapter): Promise<void> 
 
       if (!hasOpenPR) {
         const prNumber = generateNumber('PR', existingPRs.map(p => p.requestNumber));
-        
+        const restockQty = Math.max(50, (STOCK_THRESHOLDS.low + 20) - available);
+
         const newPR: Omit<PurchaseRequest, 'id' | 'createdAt' | 'updatedAt'> = {
           requestNumber: prNumber,
           inventoryItemId: item.id,
           inventoryItemName: item.name,
-          requestedQuantity: 50, // Configurable default
-          estimatedPrice: item.price * 0.7, // Estimate lower than selling price
-          amount: 50 * (item.price * 0.7),
-          justification: `Auto-generated: stock level is ${item.stockLevel}`,
-          urgent: item.stockLevel === 'out_of_stock',
+          requestedQuantity: restockQty,
+          estimatedPrice: item.price * 0.7,
+          amount: restockQty * (item.price * 0.7),
+          justification: `Auto-generated: ATP is ${available} units. (Physical: ${item.stockQuantity}, Reserved: ${item.reservedQuantity || 0})`,
+          urgent: isOut,
           status: 'draft',
-          priority: item.stockLevel === 'out_of_stock' ? 'urgent' : 'medium',
+          priority: isOut ? 'urgent' : 'medium',
           date: new Date().toISOString(),
           requesterId: 'SYSTEM',
           requesterName: 'Automation Engine',
@@ -48,14 +58,14 @@ export async function checkAndAlertLowStock(adapter: JobAdapter): Promise<void> 
           items: [{
             id: 'item-1',
             name: item.name,
-            quantity: 50,
+            quantity: restockQty,
             estimatedPrice: item.price * 0.7,
             inventoryItemId: item.id
           }]
         };
 
-        await adapter.insertPurchaseRequest(newPR);
-        console.log(`[inventoryService] PurchaseRequest ${prNumber} auto-created for ${item.name} (${item.stockLevel})`);
+        await insertRows<PurchaseRequest>(ctx, 'purchase_requests', [newPR as any]);
+        console.log(`[inventoryService] PurchaseRequest ${prNumber} auto-created for ${item.name} (ATP: ${available})`);
       }
     }
   }

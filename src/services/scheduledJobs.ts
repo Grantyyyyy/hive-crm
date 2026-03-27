@@ -1,20 +1,22 @@
 import type { JobAdapter } from "./types";
-import { sendFollowUpReminder } from "./quoteService";
+import { sendFollowUpReminder, releaseQuoteStock } from "./quoteService";
 import { checkAndAlertLowStock } from "./inventoryService";
+import type { CRMContextValue } from "../lib/CRMContext";
+import type { Quote } from "../lib/types";
 
 /**
  * Automatically expires quotes that have passed their validUntil date.
  */
-export async function autoExpireQuotes(adapter: JobAdapter): Promise<void> {
-  const quotes = adapter.getQuotes();
+export async function autoExpireQuotes(ctx: CRMContextValue): Promise<void> {
+  const quotes = ctx.getResource<Quote>('quotes').data;
   const now = new Date();
 
   for (const quote of quotes) {
     if (quote.status === 'sent' && quote.validUntil) {
       const validUntil = new Date(quote.validUntil);
       if (now > validUntil) {
-        await adapter.updateQuote(quote.id, { status: 'expired' });
-        console.log(`[scheduledJobs] Quote ${quote.quoteNumber} expired.`);
+        await releaseQuoteStock(quote, ctx);
+        console.log(`[scheduledJobs] Quote ${quote.quoteNumber} expired and stock released.`);
       }
     }
   }
@@ -47,10 +49,10 @@ export async function sendFollowUpReminders(adapter: JobAdapter): Promise<void> 
 /**
  * Master orchestrator for all scheduled tasks.
  */
-export async function runScheduledJobs(adapter: JobAdapter): Promise<void> {
+export async function runScheduledJobs(adapter: JobAdapter, ctx: CRMContextValue): Promise<void> {
   console.log("[scheduledJobs] Starting automation checks...");
-  await autoExpireQuotes(adapter);
+  await autoExpireQuotes(ctx);
   await sendFollowUpReminders(adapter);
-  await checkAndAlertLowStock(adapter);
+  await checkAndAlertLowStock(adapter, ctx);
   console.log("[scheduledJobs] Automation checks complete.");
 }

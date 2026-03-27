@@ -4,10 +4,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { SalesOrderForm } from "./SalesOrderForm"
-import { useCRMContext, insertRows } from "@/lib/CRMContext"
+import { useCRMContext } from "@/lib/CRMContext"
 import { useCRMResource } from "@/lib/hooks"
 import type { Contact, SalesOrder, InventoryItem } from "@/lib/types"
 import { generateNumber } from "@/services/types"
+import { createOrderWithReservation } from "@/services/orderService"
+import { toast } from "sonner"
 import { ShoppingBag, X } from "lucide-react"
 
 interface AddSalesOrderModalProps {
@@ -25,13 +27,17 @@ export function AddSalesOrderModal({ open, onOpenChange, onSuccess }: AddSalesOr
 
   const handleSave = async (order: SalesOrder) => {
     try {
-      const existingNumbers = orders.map(o => o.orderNumber)
+      const existingNumbers = orders.map(v => v.orderNumber)
       order.orderNumber = generateNumber('SO', existingNumbers)
-      await insertRows(ctx, 'orders', [order])
+      
+      await createOrderWithReservation(order, ctx)
+      
       onOpenChange(false)
       if (onSuccess) onSuccess(order)
-    } catch (error) {
-      console.error("Failed to save order:", error)
+    } catch (error: any) {
+      toast.error("Failed to create order", { 
+        description: error.message || "An unexpected error occurred." 
+      })
     }
   }
 

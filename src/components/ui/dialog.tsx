@@ -1,5 +1,6 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import { X } from "lucide-react"
 
 interface DialogProps {
   open?: boolean
@@ -46,21 +47,24 @@ function DialogTrigger({ children, asChild }: { children: React.ReactNode; asChi
 }
 
 function DialogContent({
-  children,
   className,
+  children,
+  onClose,
   ...props
 }: React.HTMLAttributes<HTMLDivElement> & { onClose?: () => void }) {
   return (
-    <div className={cn("p-6", className)} {...props}>
-      <button
-        onClick={props.onClose}
-        className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none"
-      >
-        <X className="h-4 w-4" />
-      </button>
+    <div className={cn("p-6 relative", className)} {...props}>
+      {onClose && (
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
       {children}
     </div>
-  );
+  )
 }
 
 function DialogHeader({
@@ -117,16 +121,4 @@ function DialogFooter({
   )
 }
 
-function DialogContent({
-  className,
-  children,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div className={cn("w-full h-full", className)} {...props}>
-      {children}
-    </div>
-  )
-}
-
-export { Dialog, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogContent }
+export { Dialog, DialogHeader, DialogTrigger, DialogTitle, DialogDescription, DialogFooter, DialogContent }

@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { SignedIn, SignedOut } from "@clerk/clerk-react";
-import { ArrowUpRight, MoveRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 
 /* ── Fonts ──────────────────────────────────────────────────────────── */
 const _fc = document.createElement("link");

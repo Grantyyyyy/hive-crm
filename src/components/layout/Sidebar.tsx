@@ -17,6 +17,7 @@ import {
   Layers,
   PanelLeftClose,
   PanelLeftOpen,
+  Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -59,6 +60,7 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
         { href: "/inventory", label: "Inventory", icon: Package },
         { href: "/purchase-orders", label: "P. Orders", icon: ScrollText },
         { href: "/purchase-requests", label: "P. Requests", icon: Layers },
+        { href: "/vendors", label: "Vendors", icon: Building2 },
         { href: "/reports", label: "Reports", icon: BarChart3 },
       ]
     },

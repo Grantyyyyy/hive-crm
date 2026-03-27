@@ -156,6 +156,15 @@
   background: var(--text-muted);
 }
 
+/* Scrollbar Hide Utility */
+.scrollbar-none {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari and Opera */
+}
+
 ::selection {
   background: var(--accent);
   color: white;

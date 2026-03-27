@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Package, Hash, Tag, DollarSign, Database, Activity, Info, XCircle } from "lucide-react"
+import { Package, Hash, Tag, DollarSign, Database, Activity, Info, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -24,6 +24,13 @@ export function InventoryItemForm({ initialData, onSave, onCancel }: InventoryIt
   const [status, setStatus] = useState<InventoryStatus>(initialData?.status ?? "active")
 
   const [errors, setErrors] = useState<Record<string, string>>({})
+  
+  const generateSKU = () => {
+    const prefix = category ? category.substring(0, 3).toUpperCase() : "INV"
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase()
+    const timestamp = Date.now().toString().slice(-4)
+    setSku(`${prefix}-${random}-${timestamp}`)
+  }
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
@@ -94,17 +101,25 @@ export function InventoryItemForm({ initialData, onSave, onCancel }: InventoryIt
 
             <div className="space-y-2">
               <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">SKU / Item Code</Label>
-              <div className="relative group">
+              <div className="relative group flex items-center">
                 <Hash className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                 <Input
                   placeholder="SKU-XXXX-X"
                   value={sku}
                   onChange={(e) => setSku(e.target.value)}
                   className={cn(
-                    "h-12 pl-12 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all",
+                    "h-12 pl-12 pr-28 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all",
                     errors.sku && "border-red-500"
                   )}
                 />
+                <button
+                  type="button"
+                  onClick={generateSKU}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 text-[10px] font-bold uppercase tracking-wider hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-all flex items-center gap-1.5 border border-indigo-200/50 dark:border-indigo-800/50"
+                >
+                  <Zap className="size-3" />
+                  Generate
+                </button>
               </div>
             </div>
 

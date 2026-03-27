@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo } from "react"
 import { useLocation } from "wouter"
 import {
   Package,
@@ -15,13 +15,11 @@ import { AddInventoryModal } from "@/components/crm/AddInventoryModal"
 import { useCRMResource } from "@/lib/hooks"
 import { cn } from "@/lib/utils"
 import type { InventoryItem, StockLevel, InventoryStatus } from "@/lib/types"
-import { generateId } from "@/lib/helpers"
 
 export function Inventory() {
   const [, navigate] = useLocation()
   const {
     data: items,
-    addItems,
     isLoaded
   } = useCRMResource<InventoryItem>('inventory')
 

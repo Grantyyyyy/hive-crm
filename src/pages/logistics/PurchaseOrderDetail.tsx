@@ -12,7 +12,10 @@ import {
   FileText,
   User,
   Calendar,
-  MoreVertical
+  MoreVertical,
+  AlertTriangle,
+  Building2,
+  Search
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -21,8 +24,10 @@ import { DeleteModal } from "@/components/ui/delete-modal"
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
 import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
-import type { PurchaseOrder, PurchaseOrderStatus, Quote, SalesOrder, InventoryItem, PurchaseRequest, InventoryTransaction } from "@/lib/types"
-import { restockFromPO } from "@/services/procurementService"
+import type { PurchaseOrder, PurchaseOrderStatus, Quote, SalesOrder, InventoryItem, PurchaseRequest, InventoryTransaction, Vendor } from "@/lib/types"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { restockFromPO, sendPOToVendor } from "@/services/procurementService"
 import { useUser } from "@clerk/clerk-react"
 import type { JobAdapter } from "@/services/types"
 
@@ -45,13 +50,14 @@ const STATUS_CONFIG: Record<PurchaseOrderStatus, { label: string; badge: string;
   cancelled: { label: "Cancelled", badge: "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 ring-1 ring-rose-200 dark:ring-rose-800", dot: "bg-rose-400" },
 }
 
+const NIL_UUID = "00000000-0000-0000-0000-000000000000"
+
 const TIMELINE: { status: PurchaseOrderStatus; label: string; icon: React.ElementType }[] = [
   { status: "pending", label: "PO Created", icon: FileText },
   { status: "sent", label: "Sent to Vendor", icon: Truck },
   { status: "received", label: "Received & Restocked", icon: PackageCheck },
 ]
 
-const STATUS_ORDER: PurchaseOrderStatus[] = ["pending", "sent", "received"]
 
 export function PurchaseOrderDetail() {
   const [, params] = useRoute("/purchase-orders/:id")
@@ -60,13 +66,24 @@ export function PurchaseOrderDetail() {
   const ctx = useCRMContext()
   const { user } = useUser()
 
-  const { data: orders, isLoaded, deleteItem, refresh } = useCRMResource<PurchaseOrder>("purchase_orders")
+  const { data: orders, isLoaded, updateItem, deleteItem, refresh } = useCRMResource<PurchaseOrder>("purchase_orders")
   const { data: inventoryTransactions } = useCRMResource<InventoryTransaction>('inventory_transactions')
 
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
+  const [vendorSelectorOpen, setVendorSelectorOpen] = useState(false)
+  const [vendorSearch, setVendorSearch] = useState("")
+
+  const { data: vendors } = useCRMResource<Vendor>("vendors")
 
   const order = useMemo(() => orders.find(o => o.id === poId), [orders, poId])
+
+  const currentStepIdx = useMemo(() => {
+    if (!order) return 0
+    if (order.status === "received") return 2
+    if (order.status === "sent") return 1
+    return 0
+  }, [order])
 
   const adapter = useMemo<JobAdapter>(() => ({
     getQuotes: () => ctx.getResource<Quote>('quotes').data,
@@ -89,13 +106,22 @@ export function PurchaseOrderDetail() {
 
   const handleSend = async () => {
     if (!order) return
-    try {
-      await updateRow<PurchaseOrder>(ctx, 'purchase_orders', order.id, { status: 'sent' })
-      refresh()
-      toast.success("PO Sent to Vendor")
-    } catch (e: any) {
-      toast.error("Failed to send", { description: e.message })
+    const vendor = vendors.find(v => v.id === order.vendorId)
+    if (!vendor && order.vendorId !== NIL_UUID) {
+      toast.error("Vendor not found")
+      return
     }
+
+    const promise = sendPOToVendor(order, vendor || { id: NIL_UUID, name: order.vendorName } as any, adapter)
+    
+    toast.promise(promise, {
+      loading: `Transmitting PO ${order.poNumber} to ${order.vendorName}...`,
+      success: () => {
+        refresh()
+        return `PO Successfully Dispatched to ${order.vendorName}`
+      },
+      error: (e: any) => `Failed to send PO: ${e.message}`
+    })
   }
 
   const handleReceive = async () => {
@@ -131,6 +157,27 @@ export function PurchaseOrderDetail() {
     }
   }
 
+  const handleSelectVendor = async (vendor: Vendor) => {
+    if (!order) return
+    try {
+      await updateItem(order.id, {
+        vendorId: vendor.id,
+        vendorName: vendor.name,
+      })
+      setVendorSelectorOpen(false)
+      toast.success(`Vendor assigned: ${vendor.name}`)
+    } catch (e: any) {
+      toast.error("Failed to assign vendor", { description: e.message })
+    }
+  }
+
+  const filteredVendors = useMemo(() => {
+    return vendors.filter(v =>
+      v.name.toLowerCase().includes(vendorSearch.toLowerCase()) ||
+      v.category?.toLowerCase().includes(vendorSearch.toLowerCase())
+    )
+  }, [vendors, vendorSearch])
+
   if (!isLoaded) return <PageSkeleton />
 
   if (!order) {
@@ -147,6 +194,9 @@ export function PurchaseOrderDetail() {
     )
   }
 
+  const cfg = STATUS_CONFIG[order.status]
+  const initials = (order.vendorName || "Unknown").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
+
   const fmt = (n: number) =>
     new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(n)
 
@@ -154,9 +204,6 @@ export function PurchaseOrderDetail() {
   const tax = subtotal * 0.1
   const total = subtotal + tax
 
-  const currentStepIdx = STATUS_ORDER.indexOf(order.status)
-  const cfg = STATUS_CONFIG[order.status]
-  const initials = order.vendorName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 font-sans min-h-screen text-slate-900 dark:text-slate-100">
@@ -169,6 +216,29 @@ export function PurchaseOrderDetail() {
         >
           <ArrowLeft className="h-4 w-4 mr-2" /> Back to Purchase Orders
         </Link>
+
+        {/* Warning Banner for Unassigned Vendor */}
+        {order.vendorId === NIL_UUID && (
+          <div className="flex items-center justify-between gap-4 p-4 rounded-sm bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 shadow-sm animate-pulse">
+            <div className="flex items-center gap-3">
+              <div className="size-8 rounded-lg bg-amber-500 flex items-center justify-center text-white shrink-0">
+                <AlertTriangle className="size-4" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-amber-900 dark:text-amber-200">Vendor Unassigned</p>
+                <p className="text-xs font-medium text-amber-700/80 dark:text-amber-400">This Purchase Order was generated from a request. Select a vendor before sending.</p>
+              </div>
+            </div>
+            <Button 
+                size="sm" 
+                variant="default" 
+                onClick={() => setVendorSelectorOpen(true)}
+                className="bg-amber-600 hover:bg-amber-700 text-white shrink-0"
+              >
+              Select Vendor
+            </Button>
+          </div>
+        )}
 
         {/* Header Card */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 md:p-8">
@@ -195,8 +265,16 @@ export function PurchaseOrderDetail() {
 
             {/* Actions */}
             <div className="flex flex-wrap items-center gap-2 shrink-0">
-              {order.status === "pending" && (
-                <Button variant="default" onClick={handleSend} className="bg-blue-600 hover:bg-blue-700">
+              {(order.status === "pending" || order.status === "draft") && (
+                <Button
+                  variant="default"
+                  onClick={handleSend}
+                  disabled={order.vendorId === NIL_UUID}
+                  className={cn(
+                    "bg-blue-600 hover:bg-blue-700 transition-all shadow-lg active:scale-95",
+                    order.vendorId === NIL_UUID && "opacity-50 grayscale cursor-not-allowed shadow-none"
+                  )}
+                >
                   <Truck className="w-4 h-4 mr-2" /> Send to Vendor
                 </Button>
               )}
@@ -352,10 +430,20 @@ export function PurchaseOrderDetail() {
                     <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">{order.poNumber}</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-3 group">
                   <User className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Vendor</p>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Vendor</p>
+                      {order.status === 'pending' && (
+                        <button 
+                          onClick={() => setVendorSelectorOpen(true)}
+                          className="opacity-0 group-hover:opacity-100 text-[9px] font-black uppercase text-indigo-600 hover:text-indigo-700 transition-all underline underline-offset-2"
+                        >
+                          Change
+                        </button>
+                      )}
+                    </div>
                     <p className="text-sm font-semibold text-slate-900 dark:text-white">{order.vendorName}</p>
                   </div>
                 </div>
@@ -405,12 +493,17 @@ export function PurchaseOrderDetail() {
                   <PackageCheck className="w-4 h-4 mr-2" /> Mark Received
                 </Button>
               )}
-              {order.status === "pending" && (
+              {(order.status === "pending" || order.status === "draft") && (
                 <Button
-                  className="w-full mt-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-blue-100 dark:shadow-none"
+                  className={cn(
+                    "w-full mt-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-blue-100 dark:shadow-none transition-all active:scale-95",
+                    order.vendorId === NIL_UUID && "opacity-50 grayscale cursor-not-allowed shadow-none"
+                  )}
+                  disabled={order.vendorId === NIL_UUID}
                   onClick={handleSend}
                 >
-                  <Truck className="w-4 h-4 mr-2" /> Send to Vendor
+                  <Truck className="w-4 h-4 mr-2" />
+                  {order.vendorId === NIL_UUID ? "Assign Vendor First" : "Send to Vendor"}
                 </Button>
               )}
             </div>
@@ -434,6 +527,56 @@ export function PurchaseOrderDetail() {
         cancelText="Keep PO"
         deleteText="Delete PO"
       />
+
+      {/* Vendor Selector Modal */}
+      <Dialog open={vendorSelectorOpen} onOpenChange={setVendorSelectorOpen}>
+        <DialogContent className="max-w-md p-0 overflow-hidden rounded-3xl">
+          <DialogHeader className="px-6 py-5 border-b border-slate-100 dark:border-slate-800">
+            <DialogTitle>Select Vendor</DialogTitle>
+          </DialogHeader>
+          <div className="p-4 space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+              <Input
+                placeholder="Search vendors..."
+                value={vendorSearch}
+                onChange={(e) => setVendorSearch(e.target.value)}
+                className="pl-9 h-11 rounded-xl bg-slate-50 border-none"
+              />
+            </div>
+            <div className="max-h-[400px] overflow-y-auto space-y-1 pr-1">
+              {filteredVendors.length > 0 ? (
+                filteredVendors.map((vendor) => (
+                  <button
+                    key={vendor.id}
+                    onClick={() => handleSelectVendor(vendor)}
+                    className={cn(
+                      "w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 group",
+                      order.vendorId === vendor.id && "bg-indigo-50 dark:bg-indigo-900/20 ring-1 ring-indigo-100 dark:ring-indigo-800"
+                    )}
+                  >
+                    <div className="size-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center shrink-0 shadow-sm text-slate-400 group-hover:text-indigo-600">
+                      <Building2 className="size-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                        {vendor.name}
+                      </p>
+                      <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider truncate">
+                        {vendor.category || "General Vendor"} • {vendor.status}
+                      </p>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="py-12 text-center text-slate-400">
+                  <p className="text-sm font-medium">No vendors found.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

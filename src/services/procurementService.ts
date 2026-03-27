@@ -1,4 +1,4 @@
-import type { PurchaseRequest, PurchaseOrder } from "../lib/types";
+import type { PurchaseRequest, PurchaseOrder, Vendor } from "../lib/types";
 import type { JobAdapter } from "./types";
 import { generateNumber } from "./types";
 import { recalculateStockLevel } from "./inventoryService";
@@ -24,13 +24,22 @@ export async function approvePurchaseRequest(
     referenceId: request.id, // Using generic reference_id column to link to the source PR
     vendorId: '00000000-0000-0000-0000-000000000000', // NIL UUID to satisfy NOT NULL constraint for draft POs
     vendorName: 'UNASSIGNED VENDOR', // To be filled by procurement team
-    items: [{
-      id: 'po-item-1',
-      inventoryItemId: request.inventoryItemId,
-      name: request.inventoryItemName || 'Unknown Item',
-      quantity: request.requestedQuantity,
-      price: request.estimatedPrice
-    }],
+    items: (request.items && request.items.length > 0)
+      ? request.items.map((item, idx) => ({
+          id: `po-item-${idx + 1}-${Math.random().toString(36).substring(2, 5)}`,
+          name: item.name || 'Unknown Item',
+          description: item.description,
+          quantity: item.quantity,
+          price: item.estimatedPrice,
+          inventoryItemId: item.inventoryItemId
+        }))
+      : [{
+          id: 'po-item-1',
+          inventoryItemId: request.inventoryItemId,
+          name: request.inventoryItemName || 'Unknown Item',
+          quantity: request.requestedQuantity,
+          price: request.estimatedPrice
+        }],
     amount: request.amount, // Using current types.ts field 'amount'
     status: 'draft',
     date: new Date().toISOString()
@@ -98,4 +107,34 @@ export async function restockFromPO(
       console.log(`[procurementService] Inventory restocked: ${invItem.name} +${item.quantity} units → new qty: ${newQty}`);
     }
   }
+}
+
+/**
+ * Sends a Purchase Order to a vendor and handles notifications.
+ */
+export async function sendPOToVendor(
+  po: PurchaseOrder,
+  vendor: Vendor,
+  adapter: JobAdapter
+): Promise<void> {
+  if (po.status !== 'pending' && po.status !== 'draft') {
+    throw new Error(`Cannot send PO in ${po.status} status`);
+  }
+
+  // 1. Simulate external communication (Email, API, etc.)
+  console.log(`[procurementService] DISPATCHING PO ${po.poNumber} to ${vendor.name}`);
+  console.log(`[procurementService] RECIPIPIENT: ${vendor.email || 'system-default-procurement'}`);
+  
+  // 2. Update the PO status
+  await adapter.updatePurchaseOrder(po.id, { 
+    status: 'sent',
+    updatedAt: new Date().toISOString()
+  });
+
+  // 3. Optional: link back to PR if needed
+  if (po.purchaseRequestId) {
+    await adapter.updatePurchaseRequest(po.purchaseRequestId, { status: 'ordered' });
+  }
+
+  console.log(`[procurementService] PO ${po.poNumber} successfully transmitted.`);
 }

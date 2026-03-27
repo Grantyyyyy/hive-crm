@@ -1,12 +1,13 @@
 import { useState, useMemo } from "react"
-import { Plus, Trash2, Info, Package, Truck, MessageSquare } from "lucide-react"
+import { Plus, Trash2, Info, Package, Truck, MessageSquare, Building2, Search, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/ui/date-picker"
 import { cn } from "@/lib/utils"
-import type { PurchaseOrder, PurchaseOrderStatus, InventoryItem } from "@/lib/types"
+import type { PurchaseOrder, PurchaseOrderStatus, InventoryItem, Vendor } from "@/lib/types"
+import { useCRMResource } from "@/lib/hooks"
 import { generateId } from "@/lib/helpers"
 
 interface PurchaseOrderFormProps {
@@ -18,6 +19,10 @@ interface PurchaseOrderFormProps {
 
 export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItems = [] }: PurchaseOrderFormProps) {
   const [vendorName, setVendorName] = useState(initialData?.vendorName ?? "")
+  const [vendorId, setVendorId] = useState(initialData?.vendorId ?? "")
+  const [vendorSearch, setVendorSearch] = useState("")
+  const [showVendorSelector, setShowVendorSelector] = useState(false)
+  const { data: vendors } = useCRMResource<Vendor>("vendors")
   const [poNumber] = useState(initialData?.poNumber ?? `PO-${Math.floor(10000 + Math.random() * 90000)}`)
   const [referenceId, setReferenceId] = useState(initialData?.referenceId ?? "")
   const [date] = useState(initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0])
@@ -51,6 +56,19 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
     setShowInventory(false)
   }
 
+  const selectVendor = (vendor: Vendor) => {
+    setVendorId(vendor.id)
+    setVendorName(vendor.name)
+    setShowVendorSelector(false)
+  }
+
+  const filteredVendors = useMemo(() => {
+    return vendors.filter(v => 
+      v.name.toLowerCase().includes(vendorSearch.toLowerCase()) ||
+      v.category?.toLowerCase().includes(vendorSearch.toLowerCase())
+    )
+  }, [vendors, vendorSearch])
+
   const removeItem = (id: string) => {
     setItems(items.filter(i => i.id !== id))
   }
@@ -61,7 +79,7 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
-    if (!vendorName.trim()) newErrors.vendorName = "Vendor name is required"
+    if (!vendorId) newErrors.vendorName = "Please select a vendor"
     if (items.length === 0) newErrors.items = "At least one item is required"
 
     items.forEach((item, index) => {
@@ -79,7 +97,7 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
     const order: PurchaseOrder = {
       id: initialData?.id ?? generateId(),
       poNumber,
-      vendorId: initialData?.vendorId ?? generateId(), // Placeholder vendor ID
+      vendorId,
       vendorName,
       amount: totalAmount,
       status,
@@ -111,16 +129,69 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2 space-y-2">
-              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">Vendor Name</Label>
-              <Input
-                placeholder="Enter vendor name..."
-                value={vendorName}
-                onChange={(e) => setVendorName(e.target.value)}
-                className={cn(
-                  "h-12 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900",
-                  errors.vendorName && "border-red-500"
+              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-widest">Select Vendor</Label>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowVendorSelector(!showVendorSelector)}
+                  className={cn(
+                    "w-full h-12 flex items-center justify-between px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm transition-all",
+                    errors.vendorName ? "border-red-500 ring-1 ring-red-100" : "hover:border-indigo-300",
+                    !vendorName && "text-slate-400"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <Building2 className={cn("size-4", vendorName ? "text-indigo-600" : "text-slate-400")} />
+                    <span className="font-semibold">{vendorName || "Choose a vendor..."}</span>
+                  </div>
+                  <ChevronDown className={cn("size-4 text-slate-400 transition-transform", showVendorSelector && "rotate-180")} />
+                </button>
+
+                {showVendorSelector && (
+                  <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95 origin-top">
+                    <div className="p-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-slate-400" />
+                        <Input
+                          autoFocus
+                          placeholder="Search vendors..."
+                          value={vendorSearch}
+                          onChange={(e) => setVendorSearch(e.target.value)}
+                          className="pl-9 h-9 text-xs rounded-lg bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+                        />
+                      </div>
+                    </div>
+                    <div className="max-h-[300px] overflow-y-auto p-1.5 space-y-1">
+                      {filteredVendors.length > 0 ? (
+                        filteredVendors.map((vendor) => (
+                          <button
+                            key={vendor.id}
+                            type="button"
+                            onClick={() => selectVendor(vendor)}
+                            className={cn(
+                              "w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all hover:bg-indigo-50 dark:hover:bg-indigo-900/10 group",
+                              vendorId === vendor.id && "bg-indigo-50/50 dark:bg-indigo-900/5 ring-1 ring-inset ring-indigo-100 dark:ring-indigo-900/20"
+                            )}
+                          >
+                            <div className="flex-1 min-w-0">
+                              <p className={cn("text-xs font-bold truncate", vendorId === vendor.id ? "text-indigo-600" : "text-slate-900 dark:text-white group-hover:text-indigo-600")}>
+                                {vendor.name}
+                              </p>
+                              <p className="text-[10px] text-slate-500 font-medium truncate uppercase tracking-tight mt-0.5">
+                                {vendor.category || "General Vendor"} • {vendor.status}
+                              </p>
+                            </div>
+                          </button>
+                        ))
+                      ) : (
+                        <div className="py-8 text-center">
+                          <p className="text-xs font-medium text-slate-400">No vendors found.</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 )}
-              />
+              </div>
               {errors.vendorName && <p className="text-[10px] font-bold text-red-500 uppercase tracking-wider">{errors.vendorName}</p>}
             </div>
 

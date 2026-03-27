@@ -23,6 +23,7 @@ export const TABLE_MAP: Record<string, string> = {
   purchase_orders: "purchase_orders",
   purchase_requests: "purchase_requests",
   inventory_transactions: "inventory_transactions",
+  vendors: "vendors",
 }
 
 // ── Case converters ──────────────────────────────────────────────────────────

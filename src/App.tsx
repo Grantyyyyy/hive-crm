@@ -21,6 +21,7 @@ import { PurchaseOrders } from "@/pages/logistics/PurchaseOrders";
 import { PurchaseOrderDetail } from "@/pages/logistics/PurchaseOrderDetail";
 import { PurchaseRequests } from "@/pages/logistics/PurchaseRequests";
 import { PurchaseRequestDetail } from "@/pages/logistics/PurchaseRequestDetail";
+import { Vendors } from "@/pages/logistics/Vendors";
 import { Users } from "@/pages/settings/Users";
 import { Roles } from "@/pages/settings/Roles";
 import { Navbar } from "@/components/Navbar";
@@ -210,6 +211,9 @@ function AppContent() {
             </Route>
             <Route path="/reports">
               {() => <Protected component={Reports} />}
+            </Route>
+            <Route path="/vendors">
+              {() => <Protected component={Vendors} />}
             </Route>
             <Route path="/settings/users">
               {() => <Protected component={Users} />}

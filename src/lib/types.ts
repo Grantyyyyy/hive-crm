@@ -150,26 +150,40 @@ export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
 
 export type SalesOrderStatus = 'pending' | 'shipped' | 'delivered' | 'cancelled'
 
+export interface OrderItem {
+  id: string
+  name: string
+  quantity: number
+  price: number
+  inventoryItemId?: string    // link to InventoryItem.id for stock deduction
+}
+
 export interface SalesOrder {
   id: string
   orderNumber: string
+  quoteId?: string
   customerId: string
   customerName: string
   totalValue: number
+  currency: string
   status: SalesOrderStatus
   orderDate: string
-  items: Array<{
-    id: string
-    name: string
-    description?: string
-    quantity: number
-    price: number
-  }>
+  items: OrderItem[]
+  stockDeducted?: boolean      // guards against double-deduction on re-ship
   createdAt: string
   updatedAt: string
 }
 
 export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'expired'
+
+export interface QuoteItem {
+  id: string
+  name: string
+  description: string
+  quantity: number
+  price: number
+  inventoryItemId?: string    // link to InventoryItem.id if sourced from catalog
+}
 
 export interface Quote {
   id: string
@@ -177,17 +191,13 @@ export interface Quote {
   customerId: string
   customerName: string
   amount: number
+  currency: string
   status: QuoteStatus
   date: string
   validUntil?: string
-  items: Array<{
-    id: string
-    name: string
-    description?: string
-    quantity: number
-    price: number
-  }>
+  items: QuoteItem[]
   terms?: string
+  reminderSent?: boolean
   createdAt: string
   updatedAt: string
 }
@@ -227,7 +237,9 @@ export interface PurchaseOrder {
     description?: string
     quantity: number
     price: number
+    inventoryItemId: string
   }>
+  purchaseRequestId?: string  // reference back to source PurchaseRequest
   referenceId?: string
   shippingInfo?: string
   internalNotes?: string
@@ -236,7 +248,7 @@ export interface PurchaseOrder {
   updatedAt: string
 }
 
-export type PurchaseRequestStatus = 'pending_review' | 'approved' | 'rejected' | 'ordered'
+export type PurchaseRequestStatus = 'draft' | 'pending_review' | 'approved' | 'rejected' | 'ordered'
 
 export interface PurchaseRequest {
   id: string
@@ -253,7 +265,14 @@ export interface PurchaseRequest {
     description?: string
     quantity: number
     estimatedPrice: number
+    inventoryItemId: string
   }>
+  inventoryItemId: string
+  inventoryItemName: string
+  requestedQuantity: number
+  estimatedPrice: number
+  justification: string
+  urgent: boolean             // true when triggered by out_of_stock
   purpose?: string
   priority: 'low' | 'medium' | 'high' | 'urgent'
   createdAt: string

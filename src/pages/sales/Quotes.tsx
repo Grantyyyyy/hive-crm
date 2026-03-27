@@ -9,23 +9,30 @@ import {
 import { Button } from "@/components/ui/button"
 import { Pagination } from "@/components/ui/Pagination"
 import { useCRMResource } from "@/lib/hooks"
+import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
+import { useLocation } from "wouter"
 import { cn } from "@/lib/utils"
-import type { Quote, QuoteStatus } from "@/lib/types"
+import type { Quote, QuoteStatus, SalesOrder, InventoryItem, PurchaseRequest, PurchaseOrder } from "@/lib/types"
 import { AddQuoteModal } from "@/components/crm/AddQuoteModal"
 import { PageSkeleton } from "@/components/ui/page-skeleton"
 import { toast } from "sonner"
+import { sendQuoteEmail, acceptQuote } from "@/services/quoteService"
+import type { JobAdapter } from "@/services/types"
 
 export function Quotes() {
+  const ctx = useCRMContext()
   const {
     data: quotes,
     refresh,
     isLoaded
   } = useCRMResource<Quote>('quotes')
+  const { data: orders } = useCRMResource<SalesOrder>('orders')
 
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<QuoteStatus | 'all'>('all')
   const [currentPage, setCurrentPage] = useState(1)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [, navigate] = useLocation()
   const itemsPerPage = 8
 
   // Filter logic
@@ -54,6 +61,44 @@ export function Quotes() {
     toast.success("Quote Created Successfully", {
       description: `Quote #${quote.quoteNumber} for ${quote.customerName} has been saved.`
     })
+  }
+
+  const handleMarkSent = async (quote: Quote) => {
+    try {
+      sendQuoteEmail(quote)
+      await updateRow<Quote>(ctx, 'quotes', quote.id, { status: 'sent' })
+      refresh()
+      toast.success("Quote Sent", { description: "The quote email has been dispatched." })
+    } catch (e) {
+      toast.error("Error updating quote")
+    }
+  }
+
+  const adapter = useMemo<JobAdapter>(() => ({
+    getQuotes: () => quotes,
+    updateQuote: (id, patch) => updateRow<Quote>(ctx, 'quotes', id, patch),
+    insertQuote: (q) => insertRows<Quote>(ctx, 'quotes', [q as any]).then(rows => rows[0]),
+    getSalesOrders: () => orders,
+    updateSalesOrder: (id, patch) => updateRow<SalesOrder>(ctx, 'orders', id, patch),
+    insertSalesOrder: (o) => insertRows<SalesOrder>(ctx, 'orders', [o as any]).then(rows => rows[0]),
+    getInventoryItems: () => ctx.getResource<InventoryItem>('inventory').data,
+    updateInventoryItem: (id, patch) => updateRow<InventoryItem>(ctx, 'inventory', id, patch),
+    getPurchaseRequests: () => ctx.getResource<PurchaseRequest>('purchase_requests').data,
+    updatePurchaseRequest: (id, patch) => updateRow<PurchaseRequest>(ctx, 'purchase_requests', id, patch),
+    insertPurchaseRequest: (pr) => insertRows<PurchaseRequest>(ctx, 'purchase_requests', [pr as any]).then(rows => rows[0]),
+    getPurchaseOrders: () => ctx.getResource<PurchaseOrder>('purchase_orders').data,
+    updatePurchaseOrder: (id, patch) => updateRow<PurchaseOrder>(ctx, 'purchase_orders', id, patch),
+    insertPurchaseOrder: (po) => insertRows<PurchaseOrder>(ctx, 'purchase_orders', [po as any]).then(rows => rows[0]),
+  }), [ctx, quotes, orders])
+
+  const handleAccept = async (quote: Quote) => {
+    try {
+      const newOrder = await acceptQuote(quote.id, adapter)
+      refresh()
+      toast.success("Quote Accepted", { description: `Sales Order ${newOrder.orderNumber} created.` })
+    } catch (e: any) {
+      toast.error("Error converting quote", { description: e.message })
+    }
   }
 
   if (!isLoaded) {
@@ -146,6 +191,7 @@ export function Quotes() {
                   paginatedQuotes.map((quote) => (
                     <tr
                       key={quote.id}
+                      onClick={() => navigate(`/quotes/${quote.id}`)}
                       className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors cursor-pointer group"
                     >
                       <td className="px-4 py-2.5">
@@ -161,7 +207,7 @@ export function Quotes() {
                       </td>
                       <td className="px-4 py-2.5">
                         <span className="text-[13px] font-semibold text-slate-800 dark:text-slate-200">
-                          ${quote.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                          {new Intl.NumberFormat('en-US', { style: 'currency', currency: quote.currency || 'USD', minimumFractionDigits: 2 }).format(quote.amount)}
                         </span>
                       </td>
                       <td className="px-4 py-2.5">
@@ -173,9 +219,21 @@ export function Quotes() {
                         </span>
                       </td>
                       <td className="px-4 py-2.5 text-right">
-                        <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 inline-flex text-slate-400 hover:text-slate-600 text-[11px] h-6 px-2 items-center gap-1 transition-all">
-                          {quote.status === 'draft' ? 'Edit' : quote.status === 'expired' ? 'Renew' : 'View'}
-                        </Button>
+                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {quote.status === 'draft' && (
+                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleMarkSent(quote); }} className="text-[11px] h-7 px-2 font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+                              Mark Sent
+                            </Button>
+                          )}
+                          {quote.status === 'sent' && (
+                            <Button variant="default" size="sm" onClick={(e) => { e.stopPropagation(); handleAccept(quote); }} className="bg-indigo-600 hover:bg-indigo-700 text-[11px] h-7 px-2 font-bold shadow-sm">
+                              Accept
+                            </Button>
+                          )}
+                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); navigate(`/quotes/${quote.id}`) }} className="text-[11px] h-7 px-2 text-slate-500 font-bold hover:text-indigo-600">
+                            View
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))

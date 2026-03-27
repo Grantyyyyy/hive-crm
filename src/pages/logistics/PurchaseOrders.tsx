@@ -13,6 +13,11 @@ import { cn } from "@/lib/utils"
 import type { PurchaseOrder, PurchaseOrderStatus } from "@/lib/types"
 import { generateId } from "@/lib/helpers"
 import { AddPurchaseOrderModal } from "@/components/crm/AddPurchaseOrderModal"
+import { restockFromPO } from "@/services/procurementService"
+import type { JobAdapter } from "@/services/types"
+import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
+import { toast } from "sonner"
+import type { Quote, SalesOrder, InventoryItem, PurchaseRequest } from "@/lib/types"
 
 export function PurchaseOrders() {
   const { 
@@ -21,6 +26,35 @@ export function PurchaseOrders() {
     refresh,
     isLoaded 
   } = useCRMResource<PurchaseOrder>('purchase_orders')
+  const ctx = useCRMContext()
+
+  const adapter = useMemo<JobAdapter>(() => ({
+    getQuotes: () => ctx.getResource<Quote>('quotes').data,
+    updateQuote: (id, patch) => updateRow<Quote>(ctx, 'quotes', id, patch),
+    insertQuote: (q) => insertRows<Quote>(ctx, 'quotes', [q as any]).then(rows => rows[0]),
+    getSalesOrders: () => ctx.getResource<SalesOrder>('orders').data,
+    updateSalesOrder: (id, patch) => updateRow<SalesOrder>(ctx, 'orders', id, patch),
+    insertSalesOrder: (o) => insertRows<SalesOrder>(ctx, 'orders', [o as any]).then(rows => rows[0]),
+    getInventoryItems: () => ctx.getResource<InventoryItem>('inventory').data,
+    updateInventoryItem: (id, patch) => updateRow<InventoryItem>(ctx, 'inventory', id, patch),
+    getPurchaseRequests: () => ctx.getResource<PurchaseRequest>('purchase_requests').data,
+    updatePurchaseRequest: (id, patch) => updateRow<PurchaseRequest>(ctx, 'purchase_requests', id, patch),
+    insertPurchaseRequest: (pr) => insertRows<PurchaseRequest>(ctx, 'purchase_requests', [pr as any]).then(rows => rows[0]),
+    getPurchaseOrders: () => orders,
+    updatePurchaseOrder: (id, patch) => updateRow<PurchaseOrder>(ctx, 'purchase_orders', id, patch),
+    insertPurchaseOrder: (po) => insertRows<PurchaseOrder>(ctx, 'purchase_orders', [po as any]).then(rows => rows[0]),
+  }), [ctx, orders])
+
+  const handleReceive = async (order: PurchaseOrder) => {
+    try {
+      await updateRow<PurchaseOrder>(ctx, 'purchase_orders', order.id, { status: 'received' })
+      await restockFromPO({ ...order, status: 'received' }, adapter)
+      refresh()
+      toast.success("Order Received", { description: "Inventory has been restocked automatically." })
+    } catch (e: any) {
+      toast.error("Failed to receive order", { description: e.message })
+    }
+  }
 
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<PurchaseOrderStatus | 'all'>('all')
@@ -64,7 +98,13 @@ export function PurchaseOrders() {
           amount: 320.00,
           status: 'received',
           date: "2023-10-28T09:15:00Z",
-          items: [],
+          items: [{
+            id: 'po-item-1',
+            inventoryItemId: 'inv-1',
+            name: 'Paper Packs',
+            quantity: 20,
+            price: 16.00
+          }],
           createdAt: "2023-10-28T09:15:00Z",
           updatedAt: "2023-10-28T09:15:00Z"
         }
@@ -234,9 +274,21 @@ export function PurchaseOrders() {
                         </span>
                       </td>
                       <td className="px-4 py-2.5 text-right">
-                        <Button variant="ghost" size="sm" className="text-slate-400 hover:text-slate-600 transition-colors h-6 px-2">
-                           View
-                        </Button>
+                        <div className="flex justify-end gap-2 items-center">
+                          {order.status === 'sent' && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={(e) => { e.stopPropagation(); handleReceive(order) }}
+                              className="text-[11px] h-7 px-3 font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                            >
+                              Receive
+                            </Button>
+                          )}
+                          <Button variant="ghost" size="sm" className="text-slate-400 hover:text-slate-600 transition-colors h-7 px-2">
+                             View
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))

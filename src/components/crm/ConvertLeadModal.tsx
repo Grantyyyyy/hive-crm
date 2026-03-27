@@ -12,6 +12,7 @@ import { SOURCE_LABELS, STAGE_LABELS } from "@/lib/types"
 import { formatCurrency } from "@/lib/helpers"
 import { leadsApi } from "@/lib/api"
 import { Check } from "lucide-react"
+import { DatePicker } from "@/components/ui/date-picker"
 
 interface ConvertLeadModalProps {
   open: boolean
@@ -145,7 +146,11 @@ export function ConvertLeadModal({ open, onOpenChange, lead, onConverted }: Conv
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="conv-deal-close" className="text-[11px] uppercase tracking-widest text-[var(--text-muted)]">Expected Close Date</Label>
-                  <Input id="conv-deal-close" type="date" value={dealCloseDate} onChange={(e) => setDealCloseDate(e.target.value)} className="rounded-none border-[var(--border)] focus-visible:border-[var(--accent)] focus-visible:ring-0 shadow-none h-9 bg-[var(--bg-elevated)] text-[var(--text-secondary)]" />
+                  <DatePicker 
+                    value={dealCloseDate} 
+                    onChange={setDealCloseDate} 
+                    className="h-12 py-3 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900" 
+                  />
                 </div>
               </div>
             )}

@@ -5,7 +5,7 @@ import {
   Mail,
   Phone,
   Building,
-  Plus,
+  PlusCircle,
   Pencil,
   Lock,
   Activity as ActivityIcon,
@@ -163,7 +163,7 @@ export function LeadDetail() {
         <h2 className="text-sm font-medium text-slate-500">Lead not found</h2>
         <Link href="/leads">
           <Button variant="outlineNeutral">
-            <ArrowLeft className="h-4 w-4 mr-2" /> Back to Leads
+            <ArrowLeft className="h-4 w-4" /> Back to Leads
           </Button>
         </Link>
       </div>
@@ -182,7 +182,7 @@ export function LeadDetail() {
         </div>
       )}
 
-      <div className="mx-auto p-3 md:p-5 max-w-[1400px]">
+      <div className="mx-auto p-3 md:p-5 max-w-full">
         <div className="space-y-4 animate-fade-in">
           
           {/* Back button */}
@@ -190,7 +190,7 @@ export function LeadDetail() {
             href="/leads"
             className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" /> Back
+            <ArrowLeft className="h-4 w-4" /> Back
           </Link>
 
           {/* Lead Header */}
@@ -252,13 +252,13 @@ export function LeadDetail() {
                       variant="outlineNeutral"
                       onClick={() => setShowEditModal(true)}
                     >
-                      <Pencil className="h-4 w-4 mr-2" /> Edit
+                      <Pencil className="h-4 w-4" /> Edit
                     </Button>
                     <Button
                       variant="destructive"
                       onClick={() => setShowDeleteModal(true)}
                     >
-                      <Trash2 className="h-4 w-4 mr-2" /> Delete
+                      <Trash2 className="h-4 w-4" /> Delete
                     </Button>
                     <Button
                       variant="default"
@@ -303,7 +303,7 @@ export function LeadDetail() {
                       size="sm"
                       onClick={() => setShowActivityModal(true)}
                     >
-                      <Plus className="h-4 w-4 mr-2" /> Log Activity
+                      <PlusCircle className="h-4 w-4" /> Log Activity
                     </Button>
                   )}
                 </div>
@@ -421,7 +421,7 @@ export function LeadDetail() {
                       onClick={() => setShowAddTaskModal(true)}
                       className="h-8 w-8 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400"
                     >
-                      <Plus className="h-4 w-4" />
+                      <PlusCircle className="h-4 w-4" />
                     </Button>
                   )}
                 </div>

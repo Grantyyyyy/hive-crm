@@ -31,6 +31,7 @@ import {
   reserveStockForQuote,
   releaseQuoteStock,
 } from "@/services/quoteService"
+import { useUser } from "@clerk/clerk-react"
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -44,16 +45,16 @@ function relativeTime(iso: string): string {
 }
 
 const STATUS_CONFIG: Record<QuoteStatus, { label: string; badge: string; dot: string }> = {
-  draft:    { label: "Draft",    badge: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 ring-1 ring-slate-200 dark:ring-slate-700",       dot: "bg-slate-400" },
-  sent:     { label: "Sent",     badge: "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 ring-1 ring-blue-200 dark:ring-blue-800",         dot: "bg-blue-500" },
+  draft: { label: "Draft", badge: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 ring-1 ring-slate-200 dark:ring-slate-700", dot: "bg-slate-400" },
+  sent: { label: "Sent", badge: "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 ring-1 ring-blue-200 dark:ring-blue-800", dot: "bg-blue-500" },
   accepted: { label: "Accepted", badge: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200 dark:ring-emerald-800", dot: "bg-emerald-500" },
-  expired:  { label: "Expired",  badge: "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 ring-1 ring-rose-200 dark:ring-rose-800",         dot: "bg-rose-400" },
+  expired: { label: "Expired", badge: "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 ring-1 ring-rose-200 dark:ring-rose-800", dot: "bg-rose-400" },
 }
 
 const TIMELINE_STEPS: { status: QuoteStatus; label: string; icon: React.ElementType }[] = [
-  { status: "draft",    label: "Draft Created", icon: FileText },
-  { status: "sent",     label: "Sent",           icon: Send },
-  { status: "accepted", label: "Accepted",       icon: CheckCircle2 },
+  { status: "draft", label: "Draft Created", icon: FileText },
+  { status: "sent", label: "Sent", icon: Send },
+  { status: "accepted", label: "Accepted", icon: CheckCircle2 },
 ]
 const PROGRESS_ORDER: QuoteStatus[] = ["draft", "sent", "accepted"]
 
@@ -62,6 +63,7 @@ export function QuoteDetail() {
   const [, navigate] = useLocation()
   const quoteId = params?.id ?? ""
   const ctx = useCRMContext()
+  const { user } = useUser()
 
   const { data: quotes, isLoaded, deleteItem } = useCRMResource<Quote>("quotes")
 
@@ -80,7 +82,7 @@ export function QuoteDetail() {
   const handleMarkSent = async () => {
     if (!quote) return
     try {
-      await reserveStockForQuote(quote, ctx)
+      await reserveStockForQuote(quote, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
       sendQuoteEmail(quote)
       toast.success("Quote Sent & Stock Reserved", { description: "Email dispatched. Inventory items are now 'Soft Reserved'." })
     } catch (e: unknown) {
@@ -114,7 +116,7 @@ export function QuoteDetail() {
   const handleExpire = async () => {
     if (!quote) return
     try {
-      await releaseQuoteStock(quote, ctx)
+      await releaseQuoteStock(quote, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
       toast.success("Quote Expired", { description: "Reservation released back to available stock." })
     } catch (e: unknown) {
       toast.error("Failed to expire quote", { description: (e as Error).message })
@@ -163,7 +165,7 @@ export function QuoteDetail() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 font-sans min-h-screen text-slate-900 dark:text-slate-100">
-      <div className="mx-auto p-4 md:p-8 max-w-[1400px] space-y-6 animate-fade-in">
+      <div className="mx-auto p-4 md:p-8 max-w-full space-y-6 animate-fade-in">
 
         {/* Back */}
         <Link

@@ -4,15 +4,12 @@ import { useLocation } from "wouter"
 import {
   UserRound,
   Search,
-  Plus,
+  PlusCircle,
   Download,
-  Filter,
-  Trash2,
-  X
+  Trash2
 } from "lucide-react"
 import { DeleteModal } from "@/components/ui/delete-modal"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import {
   Sheet,
   SheetContent,
@@ -83,57 +80,69 @@ export function Contacts() {
 
   return (
     <div className="flex-1 bg-bg-base text-text-primary min-h-screen">
-      <div className="mx-auto p-4 md:p-8 max-w-[1600px] animate-fade-in">
+      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in">
 
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted mb-1">Relationship Management</p>
-            <h1 className="text-3xl font-bold tracking-tight text-text-primary">Customer Database</h1>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 pt-2 mb-4">
+          <div className="space-y-1">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600 mb-1">CUSTOMER DATABASE</p>
+            <h1 className="text-4xl font-extrabold tracking-tight text-text-primary">Contacts</h1>
+            <p className="text-sm font-semibold text-text-muted">Relationship management and contact details.</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <Button variant="outlineNeutral">
-              <Download className="w-4 h-4 mr-2" />
+              <Download className="w-4 h-4" />
               Export CSV
-            </Button>
-            <Button variant="outlineNeutral">
-              <Filter className="w-4 h-4 mr-2" />
-              Filter
             </Button>
             <Button
               variant="default"
               onClick={() => setShowModal(true)}
-              className="ml-2"
             >
-              <Plus className="w-5 h-5 mr-2" />
-              Add Contact
+              <PlusCircle className="w-4 h-4" /> Create Contact
             </Button>
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative mb-6">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-text-muted" />
-          <Input
-            placeholder="Search contacts by name, company, email or phone..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-12 h-14 bg-bg-surface border-border rounded-2xl shadow-sm text-sm font-medium focus:ring-accent focus:border-accent placeholder:text-text-muted"
-          />
+        {/* Unified Search & Tabs */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-border mb-8">
+          <div className="flex items-center gap-8 overflow-x-auto scrollbar-none">
+            <button className="pb-4 font-bold text-sm tracking-wide text-indigo-600 relative flex items-center gap-2 shrink-0">
+              All Contacts
+              <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-indigo-600 rounded-t-full" />
+            </button>
+            <button className="pb-4 font-bold text-sm tracking-wide text-text-secondary hover:text-text-primary transition-colors relative shrink-0">
+              Recent
+            </button>
+            <button className="pb-4 font-bold text-sm tracking-wide text-text-secondary hover:text-text-primary transition-colors relative shrink-0">
+              Favorites
+            </button>
+          </div>
+
+          <div className="flex-1 w-full lg:max-w-xl pb-4 lg:pb-3">
+            <div className="relative group/search">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted group-focus-within/search:text-indigo-600 transition-colors" />
+              <input
+                placeholder="Search by name, company, or email..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 h-10 bg-bg-surface border-border rounded-md shadow-sm text-sm font-semibold focus:ring-4 focus:ring-indigo-600/5 focus:border-indigo-600/50 placeholder:text-text-muted outline-none transition-all duration-300"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Data Table Card */}
-        <div className="bg-bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
+        <div className="bg-bg-surface rounded-md border border-border shadow-xl shadow-indigo-600/5 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left table-auto">
               <thead>
-                <tr className="bg-bg-elevated/50 border-b border-border">
-                  <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-tight text-text-muted">Contact Name</th>
-                  <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-tight text-text-muted">Associated Company</th>
-                  <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-tight text-text-muted">Email Address</th>
-                  <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-tight text-text-muted">Phone Number</th>
-                  <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-tight text-text-muted">Last Activity</th>
-                  <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-tight text-text-muted text-right">Actions</th>
+                <tr className="bg-bg-elevated/50 border-b border-border text-center">
+                  <th className="px-4 py-3 text-[11px] font-black uppercase tracking-widest text-text-muted">Contact Name</th>
+                  <th className="px-4 py-3 text-[11px] font-black uppercase tracking-widest text-text-muted">Associated Company</th>
+                  <th className="px-4 py-3 text-[11px] font-black uppercase tracking-widest text-text-muted">Email Address</th>
+                  <th className="px-4 py-3 text-[11px] font-black uppercase tracking-widest text-text-muted">Phone Number</th>
+                  <th className="px-4 py-3 text-[11px] font-black uppercase tracking-widest text-text-muted">Last Activity</th>
+                  <th className="px-4 py-3 text-[11px] font-black uppercase tracking-widest text-text-muted text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -152,7 +161,7 @@ export function Contacts() {
                     return (
                       <tr
                         key={c.id}
-                        className="hover:bg-bg-elevated/30 transition-colors cursor-pointer group"
+                        className="hover:bg-bg-surface transition-all cursor-pointer group border-l-4 border-transparent hover:border-indigo-600 hover:shadow-xl hover:shadow-indigo-600/5 relative z-0 hover:z-10"
                         onClick={() => navigate(`/contacts/${c.id}`)}
                       >
                         <td className="px-4 py-2.5">

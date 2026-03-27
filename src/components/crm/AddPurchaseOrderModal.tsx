@@ -1,13 +1,15 @@
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
+  Dialog,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { PurchaseOrderForm } from "./PurchaseOrderForm"
-import { purchaseOrdersApi } from "@/lib/api"
-import type { PurchaseOrder } from "@/lib/types"
-import { ScrollText } from "lucide-react"
+import { useCRMContext, insertRows } from "@/lib/CRMContext"
+import { useCRMResource } from "@/lib/hooks"
+import type { PurchaseOrder, InventoryItem } from "@/lib/types"
+import { ScrollText, X } from "lucide-react"
+import { toast } from "sonner"
+import { generateNumber } from "@/services/types"
 
 interface AddPurchaseOrderModalProps {
   open: boolean
@@ -16,44 +18,70 @@ interface AddPurchaseOrderModalProps {
 }
 
 export function AddPurchaseOrderModal({ open, onOpenChange, onSuccess }: AddPurchaseOrderModalProps) {
-  const handleSave = async (order: Partial<PurchaseOrder>) => {
+  const ctx = useCRMContext()
+  const { data: inventoryItems, isLoaded } = useCRMResource<InventoryItem>('inventory')
+  const { data: purchaseOrders } = useCRMResource<PurchaseOrder>('purchase_orders')
+
+  const handleSave = async (order: PurchaseOrder) => {
     try {
-      const response = await purchaseOrdersApi.create(order as any)
-      if (response.success && response.data) {
-        onOpenChange(false)
-        if (onSuccess) onSuccess(response.data)
-      }
-    } catch (error) {
-      console.error('Error creating purchase order:', error)
+      const existingNumbers = purchaseOrders.map(o => o.poNumber)
+      order.poNumber = generateNumber('PO', existingNumbers)
+
+      const [newOrder] = await insertRows<PurchaseOrder>(ctx, 'purchase_orders', [order])
+      
+      onOpenChange(false)
+      if (onSuccess) onSuccess(newOrder)
+      toast.success("Purchase Order Created Successfully", {
+        description: `Order ${newOrder.poNumber} has been saved.`
+      })
+    } catch (error: any) {
+      toast.error("Failed to create PO", { description: error.message })
     }
   }
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-4xl p-0 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex flex-col h-full overflow-hidden">
-        <SheetHeader className="px-8 py-8 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 shrink-0">
-          <div className="flex items-center gap-4">
-            <div className="size-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center shadow-lg shadow-indigo-100 dark:shadow-none">
-              <ScrollText className="size-6 text-indigo-600 dark:text-indigo-400" />
-            </div>
-            <div>
-              <SheetTitle className="text-2xl font-black text-slate-900 dark:text-white leading-tight">
-                New Purchase Order
-              </SheetTitle>
-              <p className="text-slate-500 dark:text-slate-400 text-xs mt-1 font-bold uppercase tracking-widest">
-                Procurement Management System
-              </p>
-            </div>
+    <Dialog 
+      open={open} 
+      onOpenChange={onOpenChange}
+      className="max-w-[1100px] w-[95vw] h-[85vh] max-h-[85vh] flex flex-col bg-white dark:bg-slate-950 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden p-0"
+    >
+      <button
+        onClick={() => onOpenChange(false)}
+        className="absolute right-6 top-8 z-50 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+      >
+        <X className="size-5" />
+      </button>
+
+      <DialogHeader className="px-8 py-5 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 shrink-0 mb-0">
+        <div className="flex items-center gap-4">
+          <div className="size-11 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center shrink-0 shadow-sm">
+            <ScrollText className="size-5 text-indigo-600 dark:text-indigo-400" />
           </div>
-        </SheetHeader>
-        
-        <div className="flex-1 overflow-hidden relative">
-          <PurchaseOrderForm 
+          <div>
+            <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white leading-tight uppercase tracking-normal">
+              New Purchase Order
+            </DialogTitle>
+            <p className="text-slate-500 dark:text-slate-400 text-[10px] mt-0.5 font-medium uppercase tracking-widest flex items-center gap-2">
+              <span className="w-1 h-1 rounded-full bg-indigo-500 animate-pulse" />
+              Inventory Procurement Management
+            </p>
+          </div>
+        </div>
+      </DialogHeader>
+
+      <div className="flex-1 overflow-hidden relative">
+        {isLoaded ? (
+          <PurchaseOrderForm
             onSave={handleSave}
             onCancel={() => onOpenChange(false)}
+            inventoryItems={inventoryItems}
           />
-        </div>
-      </SheetContent>
-    </Sheet>
+        ) : (
+          <div className="flex items-center justify-center h-full text-slate-400 font-bold animate-pulse">
+            INITIALIZING PROCUREMENT SYSTEM...
+          </div>
+        )}
+      </div>
+    </Dialog>
   )
 }

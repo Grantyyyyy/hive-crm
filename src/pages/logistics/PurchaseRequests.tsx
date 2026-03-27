@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from "react"
-import { 
-  Plus, 
-  Search, 
-  Filter, 
+import {
+  PlusCircle,
+  Search,
+  Filter,
   Download,
   Layers,
   ArrowRight
@@ -11,9 +11,10 @@ import { Button } from "@/components/ui/button"
 import { Pagination } from "@/components/ui/Pagination"
 import { useCRMResource } from "@/lib/hooks"
 import { cn } from "@/lib/utils"
-import type { PurchaseRequest, PurchaseRequestStatus } from "@/lib/types"
+import type { PurchaseRequest, PurchaseRequestStatus, InventoryTransaction } from "@/lib/types"
 import { generateId } from "@/lib/helpers"
 import { AddPurchaseRequestModal } from "@/components/crm/AddPurchaseRequestModal"
+import { PurchaseRequestReviewModal } from "@/components/crm/PurchaseRequestReviewModal"
 import { approvePurchaseRequest } from "@/services/procurementService"
 import type { JobAdapter } from "@/services/types"
 import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
@@ -21,12 +22,15 @@ import { toast } from "sonner"
 import type { Quote, SalesOrder, InventoryItem, PurchaseOrder } from "@/lib/types"
 
 export function PurchaseRequests() {
-  const { 
-    data: requests, 
-    addItems: addRequests, 
+  const {
+    data: requests,
+    addItems: addRequests,
     refresh,
-    isLoaded 
+    isLoaded
   } = useCRMResource<PurchaseRequest>('purchase_requests')
+  const {
+    data: inventoryTransactions
+  } = useCRMResource<InventoryTransaction>('inventory_transactions')
   const ctx = useCRMContext()
 
   const adapter = useMemo<JobAdapter>(() => ({
@@ -44,7 +48,19 @@ export function PurchaseRequests() {
     getPurchaseOrders: () => ctx.getResource<PurchaseOrder>('purchase_orders').data,
     updatePurchaseOrder: (id, patch) => updateRow<PurchaseOrder>(ctx, 'purchase_orders', id, patch),
     insertPurchaseOrder: (po) => insertRows<PurchaseOrder>(ctx, 'purchase_orders', [po as any]).then(rows => rows[0]),
-  }), [ctx, requests])
+    getInventoryTransactions: () => inventoryTransactions,
+    insertInventoryTransaction: (tx) => insertRows<InventoryTransaction>(ctx, 'inventory_transactions', [tx as any]).then(rows => rows[0]),
+  }), [ctx, requests, inventoryTransactions])
+
+  const [search, setSearch] = useState("")
+  const [statusFilter, setStatusFilter] = useState<PurchaseRequestStatus | 'all'>('all')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
+  const [selectedRequest, setSelectedRequest] = useState<PurchaseRequest | null>(null)
+  const itemsPerPage = 8
+
+  const { data: inventoryItems } = useCRMResource<InventoryItem>('inventory')
 
   const handleApprove = async (prId: string) => {
     try {
@@ -56,11 +72,28 @@ export function PurchaseRequests() {
     }
   }
 
-  const [search, setSearch] = useState("")
-  const [statusFilter, setStatusFilter] = useState<PurchaseRequestStatus | 'all'>('all')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-  const itemsPerPage = 8
+  const handleReview = (request: PurchaseRequest) => {
+    setSelectedRequest(request)
+    setIsReviewModalOpen(true)
+  }
+
+  const handleReviewApprove = async (request: PurchaseRequest) => {
+    try {
+      await handleApprove(request.id)
+    } catch (e: any) {
+      toast.error("Failed to approve request", { description: e.message })
+    }
+  }
+
+  const handleReviewReject = async (request: PurchaseRequest) => {
+    try {
+      await updateRow<PurchaseRequest>(ctx, 'purchase_requests', request.id, { status: 'rejected' })
+      refresh()
+      toast.success("Request Rejected", { description: `${request.requestNumber} has been rejected.` })
+    } catch (e: any) {
+      toast.error("Failed to reject request", { description: e.message })
+    }
+  }
 
   // Seed dummy data if empty
   useEffect(() => {
@@ -136,8 +169,8 @@ export function PurchaseRequests() {
     let result = requests.filter(request => {
       const matchesStatus = statusFilter === 'all' || request.status === statusFilter
       const q = search.toLowerCase()
-      const matchesSearch = !q || 
-        request.requestNumber.toLowerCase().includes(q) || 
+      const matchesSearch = !q ||
+        request.requestNumber.toLowerCase().includes(q) ||
         request.requesterName.toLowerCase().includes(q) ||
         request.department.toLowerCase().includes(q)
       return matchesStatus && matchesSearch
@@ -163,8 +196,8 @@ export function PurchaseRequests() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen font-sans">
-      <div className="mx-auto p-4 md:p-8 max-w-[1600px] animate-fade-in space-y-8">
-        
+      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
+
         {/* Header Region */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
           <div>
@@ -174,66 +207,65 @@ export function PurchaseRequests() {
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outlineNeutral" className="rounded-xl border-slate-200 dark:border-slate-800 font-bold text-xs uppercase tracking-widest h-11 px-6">
-              <Download className="w-4 h-4 mr-2" /> Export
+              <Download className="w-4 h-4" /> Export
             </Button>
-            <Button 
+            <Button
               variant="default"
               onClick={() => setIsAddModalOpen(true)}
-              className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-widest h-11 px-8 shadow-xl shadow-indigo-100 dark:shadow-none"
             >
-              <Plus className="w-4 h-4 mr-2" /> New Request
+              <PlusCircle className="w-4 h-4" /> Create Request
             </Button>
           </div>
         </div>
 
         {/* Highlight Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none transition-all hover:shadow-xl hover:shadow-slate-200/50">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Total Requested Value</p>
-                <h4 className="text-3xl font-black text-slate-900 dark:text-white">$425,800.00</h4>
-            </div>
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Pending Review</p>
-                <h4 className="text-3xl font-black text-amber-500">{requests.filter(r => r.status === 'pending_review').length}</h4>
-            </div>
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Approved This Month</p>
-                <h4 className="text-3xl font-black text-indigo-600">28</h4>
-            </div>
+          <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none transition-all hover:shadow-xl hover:shadow-slate-200/50">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Total Requested Value</p>
+            <h4 className="text-3xl font-black text-slate-900 dark:text-white">$425,800.00</h4>
+          </div>
+          <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Pending Review</p>
+            <h4 className="text-3xl font-black text-amber-500">{requests.filter(r => r.status === 'pending_review').length}</h4>
+          </div>
+          <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Approved This Month</p>
+            <h4 className="text-3xl font-black text-indigo-600">28</h4>
+          </div>
         </div>
 
         {/* Search & Tabs */}
         <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center">
-            <div className="relative flex-1 w-full lg:max-w-md">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-                <input
-                    placeholder="Search by ID, requester, department..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-bold focus:ring-2 focus:ring-indigo-500 placeholder:text-slate-400 outline-none transition-all"
-                />
-            </div>
+          <div className="relative flex-1 w-full lg:max-w-md">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+            <input
+              placeholder="Search by ID, requester, department..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-bold focus:ring-2 focus:ring-indigo-500 placeholder:text-slate-400 outline-none transition-all"
+            />
+          </div>
 
-            <div className="bg-white dark:bg-slate-900 p-1 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center shadow-sm overflow-x-auto max-w-full">
-                {([['all', 'All'], ['draft', 'Draft'], ['pending_review', 'Review'], ['approved', 'Approved'], ['rejected', 'Rejected'], ['ordered', 'Ordered']] as const).map(([s, label]) => (
-                <button
-                    key={s}
-                    onClick={() => setStatusFilter(s as any)}
-                    className={cn(
-                    "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
-                    statusFilter === s 
-                        ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100 dark:shadow-none" 
-                        : "text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
-                    )}
-                >
-                    {label}
-                </button>
-                ))}
-            </div>
-            
-            <Button variant="ghost" className="rounded-xl font-bold text-xs uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
-                <Filter className="w-4 h-4 mr-2" /> More Filters
-            </Button>
+          <div className="bg-white dark:bg-slate-900 p-1 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center shadow-sm overflow-x-auto max-w-full">
+            {([['all', 'All'], ['draft', 'Draft'], ['pending_review', 'Review'], ['approved', 'Approved'], ['rejected', 'Rejected'], ['ordered', 'Ordered']] as const).map(([s, label]) => (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(s as any)}
+                className={cn(
+                  "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
+                  statusFilter === s
+                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100 dark:shadow-none"
+                    : "text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <Button variant="ghost" className="rounded-xl font-bold text-xs uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+            <Filter className="w-4 h-4" /> More Filters
+          </Button>
         </div>
 
         {/* Table */}
@@ -263,8 +295,9 @@ export function PurchaseRequests() {
                   </tr>
                 ) : (
                   paginatedRequests.map((request) => (
-                    <tr 
+                    <tr
                       key={request.id}
+                      onClick={() => (window.location.href = `/purchase-requests/${request.id}`)}
                       className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors cursor-pointer group"
                     >
                       <td className="px-4 py-2.5">
@@ -293,20 +326,27 @@ export function PurchaseRequests() {
                       <td className="px-4 py-2.5 text-center">
                         <StatusBadge status={request.status} />
                       </td>
-                      <td className="px-4 py-2.5 text-right flex justify-end gap-2">
-                        {request.status === 'pending_review' && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={(e) => { e.stopPropagation(); handleApprove(request.id) }}
-                            className="text-[11px] h-7 px-3 font-bold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                      <td className="px-4 py-2.5 text-right">
+                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {request.status === 'pending_review' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => { e.stopPropagation(); handleReview(request) }}
+                              className="text-[11px] h-7 px-3 font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                            >
+                              Quick Approve
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => { e.stopPropagation(); window.location.href = `/purchase-requests/${request.id}` }}
+                            className="inline-flex text-slate-400 hover:text-slate-600 text-[11px] h-7 px-2 items-center gap-1 transition-all"
                           >
-                            Approve
+                            View <ArrowRight className="w-3 h-3" />
                           </Button>
-                        )}
-                        <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 inline-flex text-slate-400 hover:text-slate-600 text-[11px] h-7 px-2 items-center gap-1 transition-all">
-                          Review <ArrowRight className="w-3 h-3" />
-                        </Button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -325,28 +365,37 @@ export function PurchaseRequests() {
           />
         </div>
       </div>
-      
-      <AddPurchaseRequestModal 
-        open={isAddModalOpen} 
-        onOpenChange={setIsAddModalOpen} 
+
+      <AddPurchaseRequestModal
+        open={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
         onSuccess={refresh}
+      />
+
+      <PurchaseRequestReviewModal
+        open={isReviewModalOpen}
+        onOpenChange={setIsReviewModalOpen}
+        request={selectedRequest}
+        onApprove={handleReviewApprove}
+        onReject={handleReviewReject}
+        inventoryItems={inventoryItems}
       />
     </div>
   )
 }
 
 function PriorityBadge({ priority }: { priority: PurchaseRequest['priority'] }) {
-    const styles: Record<PurchaseRequest['priority'], string> = {
-        low: "text-slate-400",
-        medium: "text-amber-500",
-        high: "text-orange-600",
-        urgent: "text-rose-600 animate-pulse"
-    }
-    return (
-        <span className={cn("text-[9px] font-black uppercase tracking-widest", styles[priority])}>
-            {priority}
-        </span>
-    )
+  const styles: Record<PurchaseRequest['priority'], string> = {
+    low: "text-slate-400",
+    medium: "text-amber-500",
+    high: "text-orange-600",
+    urgent: "text-rose-600 animate-pulse"
+  }
+  return (
+    <span className={cn("text-[9px] font-black uppercase tracking-widest", styles[priority])}>
+      {priority}
+    </span>
+  )
 }
 
 function StatusBadge({ status }: { status: PurchaseRequestStatus }) {

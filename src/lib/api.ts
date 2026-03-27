@@ -37,18 +37,39 @@ let cachedOrgId: string | null = null;
 let cachedToken: string | null = null;
 let tokenResolveQueue: Array<() => void> = [];
 
+type AuthListener = (data: { token: string | null; orgId: string | null }) => void;
+let authListeners: AuthListener[] = [];
+
+const notifyAuthListeners = () => {
+  const data = { token: cachedToken, orgId: cachedOrgId };
+  authListeners.forEach(listener => listener(data));
+};
+
+export const subscribeAuth = (listener: AuthListener) => {
+  authListeners.push(listener);
+  // Initial notification for the new subscriber
+  listener({ token: cachedToken, orgId: cachedOrgId });
+  return () => {
+    authListeners = authListeners.filter(l => l !== listener);
+  };
+};
+
 export { cachedToken, cachedOrgId };
 
 export const setOrganizationId = (orgId: string | null) => {
+  if (cachedOrgId === orgId) return;
   cachedOrgId = orgId;
+  notifyAuthListeners();
 };
 
 export const setAuthToken = (token: string | null) => {
+  if (cachedToken === token) return;
   cachedToken = token;
   if (token) {
     tokenResolveQueue.forEach(resolve => resolve());
     tokenResolveQueue = [];
   }
+  notifyAuthListeners();
 };
 
 export const waitForToken = (): Promise<void> => {

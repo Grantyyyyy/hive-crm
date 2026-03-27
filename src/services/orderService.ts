@@ -1,14 +1,25 @@
-import type { SalesOrder, InventoryItem } from "../lib/types";
+import type { SalesOrder, InventoryItem, InventoryTransaction } from "../lib/types";
 import { recalculateStockLevel } from "./inventoryService";
 import type { CRMContextValue, AtomicOp } from "../lib/CRMContext";
+import { createShipmentTransaction, createReleaseTransaction } from "./inventoryTransactionService";
+
+/**
+ * Adapter for audit trail operations in order service
+ */
+interface OrderAuditAdapter {
+  getInventoryTransactions: () => InventoryTransaction[];
+  insertInventoryTransaction: (tx: Omit<InventoryTransaction, 'id' | 'createdAt'>) => Promise<InventoryTransaction>;
+}
 
 /**
  * Atomically deducts physical stock and releases the reservation for a shipped order.
  * Throws error if physical stock is insufficient (Hard-stop).
  */
 export async function fulfillOrderStock(
-  order: SalesOrder, 
-  ctx: CRMContextValue
+  order: SalesOrder,
+  ctx: CRMContextValue,
+  userId: string,
+  userName: string
 ): Promise<void> {
   if (order.stockDeducted) return;
 
@@ -18,7 +29,7 @@ export async function fulfillOrderStock(
   for (const item of order.items) {
     if (!item.inventoryItemId) continue;
     const invItem = inventory.find(i => i.id === item.inventoryItemId);
-    
+
     if (invItem) {
       // Hard stop: Cannot ship what you don't have
       if (invItem.stockQuantity < item.quantity) {
@@ -30,15 +41,15 @@ export async function fulfillOrderStock(
       if (order.stockReserved && currentReserved < item.quantity) {
         throw new Error(`Inventory Inconsistency: Release of ${item.quantity} for ${invItem.name} results in negative reservation. (Current: ${currentReserved})`);
       }
-      const newReserved = order.stockReserved 
+      const newReserved = order.stockReserved
         ? currentReserved - item.quantity
         : currentReserved;
 
       updates.push({
         resource: 'inventory',
         id: invItem.id,
-        patch: { 
-          stockQuantity: newPhysical, 
+        patch: {
+          stockQuantity: newPhysical,
           reservedQuantity: newReserved,
           stockLevel: recalculateStockLevel(newPhysical, newReserved)
         }
@@ -49,20 +60,53 @@ export async function fulfillOrderStock(
   updates.push({
     resource: 'orders',
     id: order.id,
-    patch: { 
-      stockDeducted: true, 
-      stockReserved: false, 
-      status: 'shipped' 
+    patch: {
+      stockDeducted: true,
+      stockReserved: false,
+      status: 'shipped'
     }
   });
 
   await ctx.runAtomicUpdate(updates);
+
+  // Create audit trail entries AFTER successful atomic update
+  const auditAdapter: OrderAuditAdapter = {
+    getInventoryTransactions: () => ctx.getResource<InventoryTransaction>('inventory_transactions').data,
+    insertInventoryTransaction: async (tx) => {
+      const { insertRows } = await import('../lib/CRMContext');
+      return insertRows<InventoryTransaction>(ctx, 'inventory_transactions', [tx as any]).then(rows => rows[0]);
+    }
+  };
+
+  for (const item of order.items) {
+    if (!item.inventoryItemId) continue;
+    const invItem = inventory.find(i => i.id === item.inventoryItemId);
+    if (invItem) {
+      await createShipmentTransaction({
+        inventoryItemId: invItem.id,
+        inventoryItemName: invItem.name,
+        quantityChange: -item.quantity,
+        quantityBefore: invItem.stockQuantity,
+        quantityAfter: invItem.stockQuantity - item.quantity,
+        referenceId: order.id,
+        referenceNumber: order.orderNumber,
+        reason: `Shipped for Order ${order.orderNumber}`,
+        userId,
+        userName
+      }, auditAdapter as any);
+    }
+  }
 }
 
 /**
  * Releases reserved stock if an order is cancelled before fulfillment.
  */
-export async function releaseOrderStock(order: SalesOrder, ctx: CRMContextValue): Promise<void> {
+export async function releaseOrderStock(
+  order: SalesOrder,
+  ctx: CRMContextValue,
+  userId: string,
+  userName: string
+): Promise<void> {
   if (order.status === 'cancelled' || order.stockDeducted) return;
 
   const inventory = ctx.getResource<InventoryItem>('inventory').data;
@@ -71,7 +115,7 @@ export async function releaseOrderStock(order: SalesOrder, ctx: CRMContextValue)
   for (const item of order.items) {
     if (!item.inventoryItemId) continue;
     const invItem = inventory.find(i => i.id === item.inventoryItemId);
-    
+
     if (invItem && order.stockReserved) {
       const currentReserved = (invItem.reservedQuantity || 0);
       if (currentReserved < item.quantity) {
@@ -81,7 +125,7 @@ export async function releaseOrderStock(order: SalesOrder, ctx: CRMContextValue)
       updates.push({
         resource: 'inventory',
         id: invItem.id,
-        patch: { 
+        patch: {
           reservedQuantity: newReserved,
           stockLevel: recalculateStockLevel(invItem.stockQuantity, newReserved)
         }
@@ -92,20 +136,48 @@ export async function releaseOrderStock(order: SalesOrder, ctx: CRMContextValue)
   updates.push({
     resource: 'orders',
     id: order.id,
-    patch: { 
-      stockReserved: false, 
-      status: 'cancelled' 
+    patch: {
+      stockReserved: false,
+      status: 'cancelled'
     }
   });
 
   await ctx.runAtomicUpdate(updates);
+
+  // Create audit trail entries
+  const auditAdapter: OrderAuditAdapter = {
+    getInventoryTransactions: () => ctx.getResource<InventoryTransaction>('inventory_transactions').data,
+    insertInventoryTransaction: async (tx) => {
+      const { insertRows } = await import('../lib/CRMContext');
+      return insertRows<InventoryTransaction>(ctx, 'inventory_transactions', [tx as any]).then(rows => rows[0]);
+    }
+  };
+
+  for (const item of order.items) {
+    if (!item.inventoryItemId) continue;
+    const invItem = inventory.find(i => i.id === item.inventoryItemId);
+    if (invItem && order.stockReserved) {
+      await createReleaseTransaction({
+        inventoryItemId: invItem.id,
+        inventoryItemName: invItem.name,
+        reservedChange: -item.quantity,
+        reservedBefore: invItem.reservedQuantity || 0,
+        reservedAfter: (invItem.reservedQuantity || 0) - item.quantity,
+        referenceId: order.id,
+        referenceNumber: order.orderNumber,
+        reason: `Order ${order.orderNumber} cancelled - releasing reservation`,
+        userId,
+        userName
+      }, auditAdapter as any);
+    }
+  }
 }
 
 /**
  * Atomically creates a direct order with ATP check and reservation.
  */
 export async function createOrderWithReservation(
-  order: Omit<SalesOrder, 'id' | 'createdAt' | 'updatedAt'>, 
+  order: Omit<SalesOrder, 'id' | 'createdAt' | 'updatedAt'>,
   ctx: CRMContextValue
 ): Promise<SalesOrder> {
   const inventory = (ctx.getResource<InventoryItem>('inventory').data);
@@ -117,7 +189,7 @@ export async function createOrderWithReservation(
     if (!item.inventoryItemId) continue;
     const invItem = inventory.find(i => i.id === item.inventoryItemId);
     const requested = (pendingTally[item.inventoryItemId] || 0) + item.quantity;
-    
+
     if (invItem) {
       const available = invItem.stockQuantity - (invItem.reservedQuantity || 0);
       if (requested > available) {
@@ -134,7 +206,7 @@ export async function createOrderWithReservation(
     ops.push({
       resource: 'inventory',
       id: itemId,
-      patch: { 
+      patch: {
         reservedQuantity: newReserved,
         stockLevel: recalculateStockLevel(invItem.stockQuantity, newReserved)
       }

@@ -1,10 +1,12 @@
 import { useState, useMemo } from "react"
 import { toast } from "sonner"
-import { 
+import {
   Filter,
   ChevronDown,
   Trash2,
-  Check
+  Check,
+  Search,
+  PlusCircle
 } from "lucide-react"
 import { DeleteModal } from "@/components/ui/delete-modal"
 import { Button } from "@/components/ui/button"
@@ -20,8 +22,8 @@ import { PageSkeleton } from "@/components/ui/page-skeleton"
 
 export function Tasks() {
   const { user, isLoaded: clerkLoaded } = useUser()
-  const { 
-    data: tasks, 
+  const {
+    data: tasks,
     isLoaded: tasksLoaded,
     addItems,
     updateItem,
@@ -31,7 +33,7 @@ export function Tasks() {
   const { data: contacts } = useCRMResource<Contact>('contacts')
   const { data: deals } = useCRMResource<Deal>('deals')
   const { data: leads } = useCRMResource<Lead>('leads')
-  
+
   const isLoaded = clerkLoaded && tasksLoaded
 
   // UI State
@@ -39,7 +41,7 @@ export function Tasks() {
   const [activeTab, setActiveTab] = useState<'my' | 'team' | 'upcoming'>('my')
   const [statusFilter] = useState<'all' | 'open' | 'in-progress' | 'completed'>('all')
   const [priorityFilter] = useState<'all' | 'urgent' | 'high' | 'medium' | 'low'>('all')
-  
+
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [pendingDelete, setPendingDelete] = useState<Task | null>(null)
@@ -69,12 +71,12 @@ export function Tasks() {
     e.stopPropagation()
     const newStatus = task.status === 'completed' ? 'open' : 'completed'
     const statusText = newStatus === 'completed' ? 'completed' : 're-opened'
-    
+
     toast.promise(
-      updateItem(task.id, { 
+      updateItem(task.id, {
         status: newStatus,
         completedAt: newStatus === 'completed' ? new Date().toISOString() : undefined
-      }),
+      }, true),
       {
         loading: 'Updating task status...',
         success: `Task marked as ${statusText}`,
@@ -116,8 +118,8 @@ export function Tasks() {
 
   return (
     <div className="flex-1 bg-bg-base text-text-primary min-h-screen">
-      <div className="mx-auto p-4 md:p-8 max-w-[1600px] animate-fade-in space-y-8">
-        
+      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
+
         {/* Header Area */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div>
@@ -127,63 +129,66 @@ export function Tasks() {
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outlineNeutral">
-              <Filter className="w-4 h-4 mr-2" /> Filter
+              <Filter className="w-4 h-4" /> Filter
             </Button>
             <Button variant="default" onClick={() => setShowAddModal(true)}>
-              New Task
+              <PlusCircle className="w-4 h-4" /> Create Task
             </Button>
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative">
-          <Filter className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-text-muted" />
-          <input
-            placeholder="Search tasks by title or description..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 h-14 bg-bg-surface border-border rounded-2xl shadow-sm text-sm font-medium focus:ring-2 focus:ring-accent/20 focus:border-accent/50 placeholder:text-text-muted outline-none transition-all"
-          />
-        </div>
+        {/* Unified Search & Tabs */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-border">
+          <div className="flex items-center gap-8 overflow-x-auto scrollbar-none">
+            <button
+              onClick={() => setActiveTab('my')}
+              className={cn(
+                "pb-4 font-bold text-sm tracking-wide transition-colors relative flex items-center gap-2 shrink-0",
+                activeTab === 'my' ? "text-accent" : "text-text-secondary hover:text-text-primary"
+              )}
+            >
+              My Tasks
+              <span className={cn(
+                "px-2 py-0.5 rounded-full text-xs font-semibold",
+                activeTab === 'my' ? "bg-accent-dim text-accent" : "bg-bg-elevated text-text-muted"
+              )}>
+                {tasks.length}
+              </span>
+              {activeTab === 'my' && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-accent rounded-t-full" />}
+            </button>
+            <button
+              onClick={() => setActiveTab('team')}
+              className={cn(
+                "pb-4 font-bold text-sm tracking-wide transition-colors relative shrink-0",
+                activeTab === 'team' ? "text-accent" : "text-text-secondary hover:text-text-primary"
+              )}
+            >
+              Team Tasks
+              {activeTab === 'team' && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-accent rounded-t-full" />}
+            </button>
+            <button
+              onClick={() => setActiveTab('upcoming')}
+              className={cn(
+                "pb-4 font-bold text-sm tracking-wide transition-colors relative shrink-0",
+                activeTab === 'upcoming' ? "text-accent" : "text-text-secondary hover:text-text-primary"
+              )}
+            >
+              Upcoming
+              {activeTab === 'upcoming' && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-accent rounded-t-full" />}
+            </button>
+          </div>
 
-        {/* Tabs */}
-        <div className="flex items-center gap-8 border-b border-border">
-          <button 
-            onClick={() => setActiveTab('my')}
-            className={cn(
-              "pb-4 font-bold text-sm tracking-wide transition-colors relative flex items-center gap-2",
-              activeTab === 'my' ? "text-accent" : "text-text-secondary hover:text-text-primary"
-            )}
-          >
-            My Tasks
-            <span className={cn(
-               "px-2 py-0.5 rounded-full text-xs font-semibold",
-               activeTab === 'my' ? "bg-accent-dim text-accent" : "bg-bg-elevated text-text-muted"
-            )}>
-              {tasks.length}
-            </span>
-            {activeTab === 'my' && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-accent rounded-t-full" />}
-          </button>
-          <button 
-            onClick={() => setActiveTab('team')}
-            className={cn(
-              "pb-4 font-bold text-sm tracking-wide transition-colors relative",
-              activeTab === 'team' ? "text-accent" : "text-text-secondary hover:text-text-primary"
-            )}
-          >
-            Team Tasks
-            {activeTab === 'team' && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-accent rounded-t-full" />}
-          </button>
-          <button 
-            onClick={() => setActiveTab('upcoming')}
-            className={cn(
-              "pb-4 font-bold text-sm tracking-wide transition-colors relative",
-              activeTab === 'upcoming' ? "text-accent" : "text-text-secondary hover:text-text-primary"
-            )}
-          >
-            Upcoming
-            {activeTab === 'upcoming' && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-accent rounded-t-full" />}
-          </button>
+          <div className="flex-1 w-full lg:max-w-xl pb-4 lg:pb-3">
+            <div className="relative group/search">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted group-focus-within/search:text-indigo-600 transition-colors" />
+              <input
+                placeholder="Search tasks, priorities, status..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 h-10 bg-bg-surface border-border rounded-md shadow-sm text-sm font-semibold focus:ring-4 focus:ring-indigo-600/5 focus:border-indigo-600/50 placeholder:text-text-muted outline-none transition-all duration-300"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Inline Filters */}
@@ -203,7 +208,7 @@ export function Tasks() {
         </div>
 
         {/* Main Table Container */}
-        <div className="bg-bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
+        <div className="bg-bg-surface rounded-md border border-border shadow-sm overflow-hidden">
           {/* Header Row */}
           <div className="grid grid-cols-[auto_1fr_120px_140px_160px_120px_40px] items-center gap-4 px-4 py-2.5 border-b border-border bg-bg-elevated/50">
             <div className="w-6"></div> {/* Checkbox placeholder */}
@@ -228,19 +233,19 @@ export function Tasks() {
                 const entityName = getEntityName(task)
 
                 return (
-                  <div 
-                    key={task.id} 
-                    className="grid grid-cols-[auto_1fr_120px_140px_160px_120px_40px] items-center gap-4 px-4 py-2.5 hover:bg-bg-elevated/50 transition-colors group cursor-pointer"
+                  <div
+                    key={task.id}
+                    className="grid grid-cols-[auto_1fr_120px_140px_160px_120px_40px] items-center gap-4 px-4 py-3 hover:bg-bg-surface transition-all group cursor-pointer border-l-4 border-transparent hover:border-indigo-600 hover:shadow-xl hover:shadow-indigo-600/5 relative z-0 hover:z-10"
                     onClick={() => setEditingTask(task)}
                   >
                     {/* Checkbox */}
                     <div className="w-6 py-1">
-                      <button 
+                      <button
                         onClick={(e) => handleToggleComplete(e, task)}
                         className={cn(
-                          "w-5 h-5 rounded flex items-center justify-center transition-all shadow-sm",
-                          isComp 
-                            ? "bg-green border-green text-white" 
+                          "w-5 h-5 rounded-sm flex items-center justify-center transition-all shadow-sm",
+                          isComp
+                            ? "bg-green border-green text-white"
                             : "border border-border bg-bg-surface hover:border-accent"
                         )}
                       >
@@ -268,9 +273,9 @@ export function Tasks() {
                       <span className={cn(
                         "inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] uppercase font-black tracking-widest bg-bg-elevated/50",
                         pConf.bg && (
-                          pConf.bg.includes('red') ? 'text-red' : 
-                          pConf.bg.includes('yellow') ? 'text-amber' : 
-                          pConf.bg.includes('green') ? 'text-green' : 'text-text-secondary'
+                          pConf.bg.includes('red') ? 'text-red' :
+                            pConf.bg.includes('yellow') ? 'text-amber' :
+                              pConf.bg.includes('green') ? 'text-green' : 'text-text-secondary'
                         )
                       )}>
                         <span className={cn("w-1.5 h-1.5 rounded-full", pConf.dot && (pConf.bg.includes('yellow') ? 'bg-amber' : pConf.bg.includes('red') ? 'bg-red' : pConf.bg.includes('green') ? 'bg-green' : 'bg-text-muted'))} />
@@ -284,7 +289,7 @@ export function Tasks() {
                         "inline-flex px-2 py-1 rounded text-[10px] uppercase font-black tracking-widest",
                         sConf.bg && (
                           sConf.bg.includes('green') ? 'bg-green/10 text-green' :
-                          sConf.bg.includes('blue') ? 'bg-accent/10 text-accent' : 'bg-bg-elevated text-text-secondary'
+                            sConf.bg.includes('blue') ? 'bg-accent/10 text-accent' : 'bg-bg-elevated text-text-secondary'
                         )
                       )}>
                         {sConf.label}
@@ -315,8 +320,8 @@ export function Tasks() {
 
                     {/* Actions */}
                     <div className="flex justify-end pr-2">
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="icon"
                         className="h-8 w-8 opacity-0 group-hover:opacity-100 text-text-muted hover:text-red transition-all"
                         onClick={(e) => {
@@ -345,17 +350,17 @@ export function Tasks() {
         </div>
       </div>
 
-      <AddTaskModal 
-        open={showAddModal} 
-        onOpenChange={setShowAddModal} 
+      <AddTaskModal
+        open={showAddModal}
+        onOpenChange={setShowAddModal}
         onSave={(task) => addItems([task])}
         userId={user?.id ?? ""}
       />
 
-      <EditTaskModal 
-        task={editingTask} 
-        open={!!editingTask} 
-        onOpenChange={(open) => !open && setEditingTask(null)} 
+      <EditTaskModal
+        task={editingTask}
+        open={!!editingTask}
+        onOpenChange={(open) => !open && setEditingTask(null)}
         onUpdate={updateItem}
         onDelete={deleteItem}
         userId={user?.id ?? ""}

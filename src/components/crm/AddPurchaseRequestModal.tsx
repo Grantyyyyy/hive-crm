@@ -1,13 +1,15 @@
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
+  Dialog,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { PurchaseRequestForm } from "./PurchaseRequestForm"
-import { purchaseRequestsApi } from "@/lib/api"
-import type { PurchaseRequest } from "@/lib/types"
-import { Layers } from "lucide-react"
+import { useCRMContext, insertRows } from "@/lib/CRMContext"
+import { useCRMResource } from "@/lib/hooks"
+import type { PurchaseRequest, InventoryItem } from "@/lib/types"
+import { Layers, X } from "lucide-react"
+import { toast } from "sonner"
+import { generateNumber } from "@/services/types"
 
 interface AddPurchaseRequestModalProps {
   open: boolean
@@ -16,44 +18,70 @@ interface AddPurchaseRequestModalProps {
 }
 
 export function AddPurchaseRequestModal({ open, onOpenChange, onSuccess }: AddPurchaseRequestModalProps) {
-  const handleSave = async (request: Partial<PurchaseRequest>) => {
+  const ctx = useCRMContext()
+  const { data: inventoryItems, isLoaded } = useCRMResource<InventoryItem>('inventory')
+  const { data: requests } = useCRMResource<PurchaseRequest>('purchase_requests')
+
+  const handleSave = async (request: PurchaseRequest) => {
     try {
-      const response = await purchaseRequestsApi.create(request as any)
-      if (response.success && response.data) {
-        onOpenChange(false)
-        if (onSuccess) onSuccess(response.data)
-      }
-    } catch (error) {
-      console.error('Error creating purchase request:', error)
+      const existingNumbers = requests.map(r => r.requestNumber)
+      request.requestNumber = generateNumber('PR', existingNumbers)
+
+      const [newRequest] = await insertRows<PurchaseRequest>(ctx, 'purchase_requests', [request])
+      
+      onOpenChange(false)
+      if (onSuccess) onSuccess(newRequest)
+      toast.success("Purchase Request Submitted", {
+        description: `Request ${newRequest.requestNumber} has been saved.`
+      })
+    } catch (error: any) {
+      toast.error("Failed to submit request", { description: error.message })
     }
   }
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-3xl p-0 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex flex-col h-full overflow-hidden">
-        <SheetHeader className="px-8 py-8 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 shrink-0">
-          <div className="flex items-center gap-4">
-            <div className="size-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center">
-              <Layers className="size-6 text-indigo-600 dark:text-indigo-400" />
-            </div>
-            <div>
-              <SheetTitle className="text-xl font-bold text-slate-900 dark:text-white leading-tight">
-                Submit Purchase Request
-              </SheetTitle>
-              <p className="text-slate-500 dark:text-slate-400 text-xs mt-1 font-medium italic">
-                Get approval for new procurement needs
-              </p>
-            </div>
+    <Dialog 
+      open={open} 
+      onOpenChange={onOpenChange}
+      className="max-w-[1100px] w-[95vw] h-[85vh] max-h-[85vh] flex flex-col bg-white dark:bg-slate-950 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden p-0"
+    >
+      <button
+        onClick={() => onOpenChange(false)}
+        className="absolute right-6 top-8 z-50 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+      >
+        <X className="size-5" />
+      </button>
+
+      <DialogHeader className="px-8 py-5 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 shrink-0 mb-0">
+        <div className="flex items-center gap-4">
+          <div className="size-11 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center shrink-0 shadow-sm">
+            <Layers className="size-5 text-indigo-600 dark:text-indigo-400" />
           </div>
-        </SheetHeader>
-        
-        <div className="flex-1 overflow-hidden relative">
-          <PurchaseRequestForm 
+          <div>
+            <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white leading-tight uppercase tracking-normal">
+              Submit Purchase Request
+            </DialogTitle>
+            <p className="text-slate-500 dark:text-slate-400 text-[10px] mt-0.5 font-medium uppercase tracking-widest flex items-center gap-2">
+              <span className="w-1 h-1 rounded-full bg-indigo-500 animate-pulse" />
+              Procurement Workflow System
+            </p>
+          </div>
+        </div>
+      </DialogHeader>
+
+      <div className="flex-1 overflow-hidden relative">
+        {isLoaded ? (
+          <PurchaseRequestForm
             onSave={handleSave}
             onCancel={() => onOpenChange(false)}
+            inventoryItems={inventoryItems}
           />
-        </div>
-      </SheetContent>
-    </Sheet>
+        ) : (
+          <div className="flex items-center justify-center h-full text-slate-400 font-bold animate-pulse">
+            INITIALIZING WORKFLOW...
+          </div>
+        )}
+      </div>
+    </Dialog>
   )
 }

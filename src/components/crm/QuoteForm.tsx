@@ -1,9 +1,10 @@
 import { useState, useMemo, useRef, useEffect } from "react"
-import { Trash2, Calendar, ChevronDown } from "lucide-react"
+import { Trash2, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { DatePicker } from "@/components/ui/date-picker"
 import { cn } from "@/lib/utils"
 import type { Quote, QuoteStatus, Contact, InventoryItem } from "@/lib/types"
 import { generateId } from "@/lib/helpers"
@@ -138,15 +139,11 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
 
           <div className="space-y-1.5">
             <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Valid Until</Label>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
-              <Input
-                type="date"
-                value={validUntil}
-                onChange={(e) => setValidUntil(e.target.value)}
-                className="h-10 pl-9 rounded-lg border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-1 focus:ring-indigo-500 text-xs font-medium dark:text-slate-200"
-              />
-            </div>
+            <DatePicker
+              value={validUntil}
+              onChange={setValidUntil}
+              className="h-12 py-3 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
+            />
           </div>
 
           <div className="space-y-1.5">

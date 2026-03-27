@@ -1,4 +1,4 @@
-import type { Quote, SalesOrder, InventoryItem, PurchaseRequest, PurchaseOrder } from "../lib/types";
+import type { Quote, SalesOrder, InventoryItem, PurchaseRequest, PurchaseOrder, InventoryTransaction } from "../lib/types";
 
 export const STOCK_THRESHOLDS = {
   low: 10,   // stockQuantity <= 10 → low_stock
@@ -33,6 +33,10 @@ export interface JobAdapter {
   getPurchaseOrders: () => PurchaseOrder[];
   updatePurchaseOrder: (id: string, patch: Partial<PurchaseOrder>) => Promise<void>;
   insertPurchaseOrder: (po: Omit<PurchaseOrder, 'id' | 'createdAt' | 'updatedAt'>) => Promise<PurchaseOrder>;
+
+  // Inventory Transactions (Audit Trail)
+  getInventoryTransactions: () => InventoryTransaction[];
+  insertInventoryTransaction: (tx: Omit<InventoryTransaction, 'id' | 'createdAt'>) => Promise<InventoryTransaction>;
 }
 
 /**

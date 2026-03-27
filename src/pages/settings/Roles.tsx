@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Shield, Plus, Edit, Trash2, Loader2 } from 'lucide-react';
+import { Shield, PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function Roles() {
@@ -151,7 +151,7 @@ export function Roles() {
           <p className="text-sm text-slate-500 mt-1">Manage roles and their permissions</p>
         </div>
         <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={() => setShowCreateDialog(true)}>
-          <Plus className="w-4 h-4 mr-2" />
+          <PlusCircle className="w-4 h-4" />
           Create Role
         </Button>
       </div>

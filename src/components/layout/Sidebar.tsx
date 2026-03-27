@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { UserButton, useUser, useOrganization, OrganizationSwitcher } from "@clerk/clerk-react";
+import { UserButton, useUser } from "@clerk/clerk-react";
 import {
   LayoutDashboard,
   Users,
@@ -32,7 +32,7 @@ interface SidebarProps {
 export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: SidebarProps) {
   const [location] = useLocation();
   const { user } = useUser();
-  const { organization } = useOrganization();
+
 
   const groups = [
     {
@@ -137,7 +137,16 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
                               isActive ? "text-accent" : "text-text-muted group-hover:text-text-primary"
                             )}
                           />
-                          {!collapsed && <span className="text-[13px] tracking-wide truncate">{link.label}</span>}
+                          {!collapsed && (
+                            <span 
+                              className={cn(
+                                "text-[13px] tracking-wide truncate transition-colors",
+                                isActive ? "text-text-primary font-bold" : "text-inherit"
+                              )}
+                            >
+                              {link.label}
+                            </span>
+                          )}
                         </div>
 
                         {/* Tooltip for collapsed state */}

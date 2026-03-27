@@ -18,7 +18,9 @@ import { SalesOrderDetail } from "@/pages/sales/SalesOrderDetail";
 import { Quotes } from "@/pages/sales/Quotes";
 import { QuoteDetail } from "@/pages/sales/QuoteDetail";
 import { PurchaseOrders } from "@/pages/logistics/PurchaseOrders";
+import { PurchaseOrderDetail } from "@/pages/logistics/PurchaseOrderDetail";
 import { PurchaseRequests } from "@/pages/logistics/PurchaseRequests";
+import { PurchaseRequestDetail } from "@/pages/logistics/PurchaseRequestDetail";
 import { Users } from "@/pages/settings/Users";
 import { Roles } from "@/pages/settings/Roles";
 import { Navbar } from "@/components/Navbar";
@@ -31,7 +33,7 @@ import { Reports } from "@/pages/logistics/Reports";
 import { Toaster } from "sonner";
 import { CRMProvider, useCRMContext, updateRow, insertRows } from "@/lib/CRMContext";
 import { useCRMResource } from "@/lib/hooks";
-import type { Quote, SalesOrder, InventoryItem, PurchaseRequest, PurchaseOrder } from "@/lib/types";
+import type { Quote, SalesOrder, InventoryItem, PurchaseRequest, PurchaseOrder, InventoryTransaction } from "@/lib/types";
 import { runScheduledJobs } from "@/services/scheduledJobs";
 import type { JobAdapter } from "@/services/types";
 import { setAuthToken, setOrganizationId } from "@/lib/api";
@@ -58,29 +60,33 @@ function AutomationRunner() {
   const { isLoaded: inventoryLoaded } = useCRMResource('inventory')
   const { isLoaded: prLoaded } = useCRMResource('purchase_requests')
   const { isLoaded: poLoaded } = useCRMResource('purchase_orders')
+  const { isLoaded: txLoaded } = useCRMResource('inventory_transactions')
 
-  const dataReady = quotesLoaded && ordersLoaded && inventoryLoaded && prLoaded && poLoaded
+  const dataReady = quotesLoaded && ordersLoaded && inventoryLoaded && prLoaded && poLoaded && txLoaded
   const runOnce = useRef(false)
 
   const adapter = useMemo<JobAdapter>(() => ({
     getQuotes: () => ctx.getResource<Quote>('quotes').data,
     updateQuote: (id, patch) => updateRow<Quote>(ctx, 'quotes', id, patch),
-    insertQuote: (q) => insertRows<Quote>(ctx, 'quotes', [q as any]).then(() => { }),
+    insertQuote: (q) => insertRows<Quote>(ctx, 'quotes', [q as any]).then(rows => rows[0] as Quote),
 
     getSalesOrders: () => ctx.getResource<SalesOrder>('orders').data,
     updateSalesOrder: (id, patch) => updateRow<SalesOrder>(ctx, 'orders', id, patch),
-    insertSalesOrder: (o) => insertRows<SalesOrder>(ctx, 'orders', [o as any]).then(() => { }),
+    insertSalesOrder: (o) => insertRows<SalesOrder>(ctx, 'orders', [o as any]).then(rows => rows[0] as SalesOrder),
 
     getInventoryItems: () => ctx.getResource<InventoryItem>('inventory').data,
     updateInventoryItem: (id, patch) => updateRow<InventoryItem>(ctx, 'inventory', id, patch),
 
     getPurchaseRequests: () => ctx.getResource<PurchaseRequest>('purchase_requests').data,
     updatePurchaseRequest: (id, patch) => updateRow<PurchaseRequest>(ctx, 'purchase_requests', id, patch),
-    insertPurchaseRequest: (pr) => insertRows<PurchaseRequest>(ctx, 'purchase_requests', [pr as any]).then(() => { }),
+    insertPurchaseRequest: (pr) => insertRows<PurchaseRequest>(ctx, 'purchase_requests', [pr as any]).then(rows => rows[0] as PurchaseRequest),
 
     getPurchaseOrders: () => ctx.getResource<PurchaseOrder>('purchase_orders').data,
     updatePurchaseOrder: (id, patch) => updateRow<PurchaseOrder>(ctx, 'purchase_orders', id, patch),
-    insertPurchaseOrder: (po) => insertRows<PurchaseOrder>(ctx, 'purchase_orders', [po as any]).then(() => { }),
+    insertPurchaseOrder: (po) => insertRows<PurchaseOrder>(ctx, 'purchase_orders', [po as any]).then(rows => rows[0] as PurchaseOrder),
+
+    getInventoryTransactions: () => ctx.getResource<InventoryTransaction>('inventory_transactions').data,
+    insertInventoryTransaction: (tx) => insertRows<InventoryTransaction>(ctx, 'inventory_transactions', [tx as any]).then(rows => rows[0] as InventoryTransaction),
   }), [ctx])
 
   useEffect(() => {
@@ -99,29 +105,32 @@ function AppContent() {
   const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
-    const updateAuth = async () => {
-      if (isSignedIn && isAuthLoaded) {
-        try {
-          const token = await getToken();
-          setAuthToken(token);
-        } catch (e) {
-          console.error('Failed to get token:', e);
+    const syncAuth = async () => {
+      if (isAuthLoaded && isOrgLoaded) {
+        if (isSignedIn) {
+          try {
+            const token = await getToken();
+            setAuthToken(token);
+            setOrganizationId(organization?.id || null);
+          } catch (e) {
+            console.error('Failed to sync auth:', e);
+          }
+        } else {
+          setAuthToken(null);
+          setOrganizationId(null);
         }
-      } else {
-        setAuthToken(null);
+        setAuthReady(true);
       }
-      setAuthReady(true);
     };
-    updateAuth();
+    syncAuth();
 
-    // Refresh token every 50 seconds (Clerk tokens are short-lived)
-    const interval = setInterval(updateAuth, 50000);
+    // Refresh token every 50 seconds if signed in
+    let interval: NodeJS.Timeout;
+    if (isSignedIn) {
+      interval = setInterval(syncAuth, 50000);
+    }
     return () => clearInterval(interval);
-  }, [isSignedIn, isAuthLoaded, getToken]);
-
-  useEffect(() => {
-    setOrganizationId(organization?.id || null);
-  }, [organization]);
+  }, [isSignedIn, isAuthLoaded, isOrgLoaded, getToken, organization]);
 
   if (!isAuthLoaded || !isOrgLoaded || !authReady) {
     return (
@@ -134,7 +143,7 @@ function AppContent() {
   return (
     <Router>
       <div className="min-h-screen flex flex-col bg-background font-sans antialiased text-foreground">
-        <Toaster position="bottom-right" richColors />
+        <Toaster position="top-center" richColors />
         <Navbar />
         <main className="flex-[1_0_auto] flex flex-col">
           <AutomationRunner />
@@ -152,19 +161,25 @@ function AppContent() {
               {() => <Protected component={SalesOrders} />}
             </Route>
             <Route path="/orders/:id">
-               {() => <Protected component={SalesOrderDetail} />}
+              {() => <Protected component={SalesOrderDetail} />}
             </Route>
             <Route path="/quotes">
               {() => <Protected component={Quotes} />}
             </Route>
             <Route path="/quotes/:id">
-               {() => <Protected component={QuoteDetail} />}
+              {() => <Protected component={QuoteDetail} />}
             </Route>
             <Route path="/purchase-orders">
               {() => <Protected component={PurchaseOrders} />}
             </Route>
+            <Route path="/purchase-orders/:id">
+              {() => <Protected component={PurchaseOrderDetail} />}
+            </Route>
             <Route path="/purchase-requests">
               {() => <Protected component={PurchaseRequests} />}
+            </Route>
+            <Route path="/purchase-requests/:id">
+              {() => <Protected component={PurchaseRequestDetail} />}
             </Route>
             <Route path="/leads">
               {() => <Protected component={Leads} />}
@@ -205,7 +220,7 @@ function AppContent() {
             <Route path="/in-progress">
               {() => <Protected component={InProgress} />}
             </Route>
-            
+
             {/* Fallback route */}
             <Route>
               <div className="flex-1 flex items-center justify-center">

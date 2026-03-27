@@ -17,6 +17,7 @@ import { AddQuoteModal } from "@/components/crm/AddQuoteModal"
 import { PageSkeleton } from "@/components/ui/page-skeleton"
 import { toast } from "sonner"
 import { sendQuoteEmail, acceptQuote, reserveStockForQuote } from "@/services/quoteService"
+import { useUser } from "@clerk/clerk-react"
 
 export function Quotes() {
   const ctx = useCRMContext()
@@ -54,6 +55,8 @@ export function Quotes() {
     currentPage * itemsPerPage
   )
 
+  const { user } = useUser()
+
   const handleCreateSuccess = (quote: Quote) => {
     refresh()
     toast.success("Quote Created Successfully", {
@@ -63,7 +66,7 @@ export function Quotes() {
 
   const handleMarkSent = async (quote: Quote) => {
     try {
-      await reserveStockForQuote(quote, ctx)
+      await reserveStockForQuote(quote, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
       sendQuoteEmail(quote)
       refresh()
       toast.success("Quote Sent", { description: "Stock reserved and email dispatched." })
@@ -77,7 +80,7 @@ export function Quotes() {
     try {
       const newOrder = await acceptQuote(quote, ctx)
       refresh()
-      toast.success("Quote Accepted", { 
+      toast.success("Quote Accepted", {
         description: `Sales Order ${newOrder.orderNumber} created.`,
         action: { label: "View Order", onClick: () => navigate(`/orders/${newOrder.id}`) }
       })
@@ -92,7 +95,7 @@ export function Quotes() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen font-sans">
-      <div className="mx-auto p-4 md:p-8 max-w-[1600px] animate-fade-in space-y-8">
+      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
 
         {/* Header Region */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
@@ -103,13 +106,13 @@ export function Quotes() {
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outlineNeutral">
-              <Download className="w-4 h-4 mr-2" /> Export
+              <Download className="w-4 h-4" /> Export
             </Button>
             <Button
               variant="default"
               onClick={() => setIsAddModalOpen(true)}
             >
-              <PlusCircle className="w-4 h-4 mr-2" /> Create Quote
+              <PlusCircle className="w-4 h-4" /> Create Quote
             </Button>
           </div>
         </div>
@@ -144,7 +147,7 @@ export function Quotes() {
           <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
 
           <Button variant="outlineNeutral" size="sm" className="h-10 px-4">
-            <Filter className="w-4 h-4 mr-2" /> More Filters
+            <Filter className="w-4 h-4" /> More Filters
           </Button>
         </div>
 

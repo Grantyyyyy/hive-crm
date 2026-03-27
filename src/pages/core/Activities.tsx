@@ -4,7 +4,7 @@ import { Link } from "wouter"
 import {
   Activity as ActivityIcon,
   Download,
-  Plus,
+  PlusCircle,
   Phone,
   Mail,
   Video,
@@ -97,7 +97,7 @@ export function Activities() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen">
-      <div className="mx-auto p-4 md:p-8 max-w-[1600px] animate-fade-in space-y-8">
+      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
 
         {/* Header Region */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
@@ -108,10 +108,10 @@ export function Activities() {
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outlineNeutral">
-              <Download className="w-4 h-4 mr-2" /> Export
+              <Download className="w-4 h-4" /> Export
             </Button>
             <Button variant="default" onClick={() => setShowLogModal(true)}>
-              <Plus className="w-4 h-4 mr-2" /> Log Activity
+              <PlusCircle className="w-4 h-4" /> Log Activity
             </Button>
           </div>
         </div>

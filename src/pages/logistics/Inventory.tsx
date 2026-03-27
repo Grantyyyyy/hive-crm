@@ -1,9 +1,9 @@
 import { useState, useMemo, useEffect } from "react"
 import { useLocation } from "wouter"
-import { 
-  Package, 
-  Search, 
-  Filter, 
+import {
+  Package,
+  Search,
+  Filter,
   Download,
   PlusCircle,
   MoreVertical,
@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Pagination } from "@/components/ui/Pagination"
+import { AddInventoryModal } from "@/components/crm/AddInventoryModal"
 import { useCRMResource } from "@/lib/hooks"
 import { cn } from "@/lib/utils"
 import type { InventoryItem, StockLevel, InventoryStatus } from "@/lib/types"
@@ -18,77 +19,19 @@ import { generateId } from "@/lib/helpers"
 
 export function Inventory() {
   const [, navigate] = useLocation()
-  const { 
-    data: items, 
-    addItems, 
-    isLoaded 
+  const {
+    data: items,
+    addItems,
+    isLoaded
   } = useCRMResource<InventoryItem>('inventory')
 
   const [search, setSearch] = useState("")
   const [filterState, setFilterState] = useState<'all' | 'low_stock' | 'out_of_stock' | 'draft'>('all')
   const [currentPage, setCurrentPage] = useState(1)
+  const [showAddModal, setShowAddModal] = useState(false)
   const itemsPerPage = 8
 
-  // Seed dummy data if empty
-  useEffect(() => {
-    if (isLoaded && items.length === 0) {
-      const dummyItems: InventoryItem[] = [
-        {
-          id: generateId(),
-          name: "Premium Ergonomic Chair",
-          sku: "CH-PREM-001",
-          category: "Furniture",
-          price: 499.00,
-          stockQuantity: 124,
-          reservedQuantity: 14,
-          stockLevel: 'in_stock',
-          status: 'active',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        },
-        {
-          id: generateId(),
-          name: "Bluetooth Wireless Headphones",
-          sku: "AU-WL-992",
-          category: "Electronics",
-          price: 129.99,
-          stockQuantity: 12,
-          reservedQuantity: 8,
-          stockLevel: 'low_stock',
-          status: 'active',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        },
-        {
-          id: generateId(),
-          name: "Adjustable Standing Desk",
-          sku: "DSK-ADJ-S",
-          category: "Furniture",
-          price: 349.50,
-          stockQuantity: 0,
-          reservedQuantity: 0,
-          stockLevel: 'out_of_stock',
-          status: 'active',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        },
-        {
-          id: generateId(),
-          name: "Mechanical Keyboard Set",
-          sku: "KB-MECH-G",
-          category: "Accessories",
-          price: 189.99,
-          stockQuantity: 45,
-          reservedQuantity: 0,
-          stockLevel: 'in_stock',
-          status: 'draft',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }
-      ]
-      addItems(dummyItems)
-    }
-  }, [isLoaded, items.length, addItems])
+  // Removed legacy dummy data seeding
 
   // Filter logic
   const filteredItems = useMemo(() => {
@@ -99,11 +42,11 @@ export function Inventory() {
       else if (filterState === 'draft') matchesFilter = item.status === 'draft'
 
       const q = search.toLowerCase()
-      const matchesSearch = !q || 
-        item.name.toLowerCase().includes(q) || 
+      const matchesSearch = !q ||
+        item.name.toLowerCase().includes(q) ||
         item.sku.toLowerCase().includes(q) ||
         item.category.toLowerCase().includes(q)
-        
+
       return matchesFilter && matchesSearch
     })
     return result.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -127,8 +70,8 @@ export function Inventory() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen font-sans">
-      <div className="mx-auto p-4 md:p-8 max-w-[1600px] animate-fade-in space-y-8">
-        
+      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
+
         {/* Header Region */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
           <div>
@@ -138,10 +81,10 @@ export function Inventory() {
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outlineNeutral">
-              <Download className="w-4 h-4 mr-2" /> Export
+              <Download className="w-4 h-4" /> Export
             </Button>
-            <Button variant="default">
-              <PlusCircle className="w-4 h-4 mr-2" /> Add Product
+            <Button variant="default" onClick={() => setShowAddModal(true)}>
+              <PlusCircle className="w-4 h-4" /> Create Product
             </Button>
           </div>
         </div>
@@ -171,8 +114,8 @@ export function Inventory() {
                 onClick={() => setFilterState(tab.id as typeof filterState)}
                 className={cn(
                   "px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap",
-                  filterState === tab.id 
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-100 dark:shadow-none" 
+                  filterState === tab.id
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-100 dark:shadow-none"
                     : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
                 )}
               >
@@ -215,7 +158,7 @@ export function Inventory() {
                   </tr>
                 ) : (
                   paginatedItems.map((item) => (
-                    <tr 
+                    <tr
                       key={item.id}
                       onClick={() => navigate(`/inventory/${item.id}`)}
                       className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors cursor-pointer group"
@@ -250,8 +193,8 @@ export function Inventory() {
                         <ItemStatusBadge status={item.status} />
                       </td>
                       <td className="px-4 py-2.5 text-right">
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="sm"
                           className="text-slate-400 hover:text-slate-600 transition-colors h-6 px-2 opacity-0 group-hover:opacity-100"
                         >
@@ -276,20 +219,25 @@ export function Inventory() {
           />
         </div>
       </div>
+
+      <AddInventoryModal 
+        open={showAddModal}
+        onOpenChange={setShowAddModal}
+      />
     </div>
   )
 }
 
 function StockBadge({ level, quantity, reserved = 0 }: { level: StockLevel, quantity: number, reserved?: number }) {
   const available = quantity - reserved;
-  
+
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-1.5">
         <span className={cn(
           "size-1.5 rounded-full shrink-0",
           level === 'in_stock' ? "bg-emerald-500 animate-pulse" :
-          level === 'low_stock' ? "bg-amber-500" : "bg-rose-500"
+            level === 'low_stock' ? "bg-amber-500" : "bg-rose-500"
         )} />
         <span className="text-[13px] font-bold text-slate-900 dark:text-white">{available} ATP</span>
       </div>
@@ -304,6 +252,6 @@ function ItemStatusBadge({ status }: { status: InventoryStatus }) {
   if (status === 'draft') {
     return <span className="text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">Draft</span>
   }
-  
+
   return <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 rounded-md">Active</span>
 }

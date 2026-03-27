@@ -5,7 +5,7 @@ import {
   Mail,
   Phone,
   Building,
-  Plus,
+  PlusCircle,
   Pencil,
   AlertTriangle,
   X,
@@ -32,7 +32,7 @@ import {
   isOverdue,
   sortTasks,
 } from "@/lib/helpers"
-import type { Contact, Activity, Deal, Task } from "@/lib/types"
+import type { CreateContactInput, Contact, Activity, Deal, Task } from "@/lib/types"
 import { SOURCE_LABELS, STAGE_LABELS } from "@/lib/types"
 import { AddTaskModal } from "@/components/crm/AddTaskModal"
 import { EditTaskModal } from "@/components/crm/EditTaskModal"
@@ -127,8 +127,8 @@ export function ContactDetail() {
   const relLabel = getRelationshipLabel(relScore)
 
   const handleEditContact = useCallback(
-    (updated: Contact) => {
-      updateContact(updated.id, updated)
+    (updated: CreateContactInput & { id?: string }) => {
+      if (updated.id) updateContact(updated.id, updated)
       setShowEditModal(false)
     },
     [updateContact]
@@ -185,13 +185,6 @@ export function ContactDetail() {
     return <PageSkeleton />
   }
 
-  if (loading) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-[var(--bg-base)]">
-        <p className="text-[14px] font-mono text-[var(--text-muted)]">Loading...</p>
-      </div>
-    )
-  }
 
   if (!contact) {
     return (
@@ -199,7 +192,7 @@ export function ContactDetail() {
         <h2 className="text-sm font-medium text-slate-500">Contact not found</h2>
         <Link href="/contacts">
           <Button variant="outlineNeutral">
-            <ArrowLeft className="h-4 w-4 mr-2" /> Back to Contacts
+            <ArrowLeft className="h-4 w-4" /> Back to Contacts
           </Button>
         </Link>
       </div>
@@ -208,7 +201,7 @@ export function ContactDetail() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 font-sans min-h-screen text-slate-900 dark:text-slate-100">
-      <div className="mx-auto p-3 md:p-5 max-w-[1400px]">
+      <div className="mx-auto p-3 md:p-5 max-w-full">
         <div className="space-y-4 animate-fade-in">
 
           {/* Follow-up banner */}
@@ -232,7 +225,7 @@ export function ContactDetail() {
             href="/contacts"
             className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" /> Back
+            <ArrowLeft className="h-4 w-4" /> Back
           </Link>
 
           {/* Contact Header */}
@@ -287,19 +280,19 @@ export function ContactDetail() {
                   variant="outlineNeutral"
                   onClick={() => setShowEditModal(true)}
                 >
-                  <Pencil className="h-4 w-4 mr-2" /> Edit
+                  <Pencil className="h-4 w-4" /> Edit
                 </Button>
                 <Button
                   variant="destructive"
                   onClick={() => setShowDeleteModal(true)}
                 >
-                  <Trash2 className="h-4 w-4 mr-2" /> Delete
+                  <Trash2 className="h-4 w-4" /> Delete
                 </Button>
                 <Button
                   variant="default"
                   onClick={() => setShowActivityModal(true)}
                 >
-                  <Plus className="h-4 w-4 mr-2" /> Log Activity
+                  <PlusCircle className="h-4 w-4" /> Log Activity
                 </Button>
               </div>
             </div>
@@ -317,7 +310,7 @@ export function ContactDetail() {
                     size="sm"
                     onClick={() => setShowActivityModal(true)}
                   >
-                    <Plus className="h-4 w-4 mr-2" /> Log Activity
+                    <PlusCircle className="h-4 w-4" /> Log Activity
                   </Button>
                 </div>
 
@@ -387,7 +380,7 @@ export function ContactDetail() {
                   </div>
                   <div>
                     <div className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-1">Created</div>
-                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{relativeTime(contact.createdAt)}</p>
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{relativeTime(contact.createdAt || new Date().toISOString())}</p>
                   </div>
                 </div>
               </div>
@@ -436,7 +429,7 @@ export function ContactDetail() {
                     onClick={() => setShowAddTaskModal(true)}
                     className="h-8 w-8 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400"
                   >
-                    <Plus className="h-4 w-4" />
+                    <PlusCircle className="h-4 w-4" />
                   </Button>
                 </div>
 

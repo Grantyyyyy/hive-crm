@@ -4,7 +4,7 @@ import {
   ArrowLeft,
   DollarSign,
   Calendar,
-  Plus,
+  PlusCircle,
   Pencil,
   Trash2,
   Activity as ActivityIcon,
@@ -165,7 +165,7 @@ export function DealDetail() {
         <h2 className="text-sm font-medium text-slate-500">Deal not found</h2>
         <Link href="/deals">
           <Button variant="outlineNeutral">
-            <ArrowLeft className="h-4 w-4 mr-2" /> Back to Deals
+            <ArrowLeft className="h-4 w-4" /> Back to Deals
           </Button>
         </Link>
       </div>
@@ -174,7 +174,7 @@ export function DealDetail() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 font-sans min-h-screen text-slate-900 dark:text-slate-100">
-      <div className="mx-auto p-3 md:p-5 max-w-[1400px]">
+      <div className="mx-auto p-3 md:p-5 max-w-full">
         <div className="space-y-4 animate-fade-in">
 
           {/* Back button */}
@@ -182,7 +182,7 @@ export function DealDetail() {
             href="/deals"
             className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" /> Back
+            <ArrowLeft className="h-4 w-4" /> Back
           </Link>
 
           {/* Deal Header */}
@@ -212,7 +212,7 @@ export function DealDetail() {
                   )}
                   <span className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-slate-400" />{" "}
-                    Close: {new Date(deal.expectedCloseDate).toLocaleDateString()}
+                    Close: {deal.expectedCloseDate ? new Date(deal.expectedCloseDate).toLocaleDateString() : "Not set"}
                   </span>
                 </div>
 
@@ -234,13 +234,13 @@ export function DealDetail() {
               {/* Actions */}
               <div className="flex gap-3 shrink-0 flex-wrap">
                 <Button variant="outlineNeutral" onClick={() => setShowEditModal(true)}>
-                  <Pencil className="h-4 w-4 mr-2" /> Edit
+                  <Pencil className="h-4 w-4" /> Edit
                 </Button>
                 <Button variant="destructive" onClick={() => setShowDeleteModal(true)}>
-                  <Trash2 className="h-4 w-4 mr-2" /> Delete
+                  <Trash2 className="h-4 w-4" /> Delete
                 </Button>
                 <Button variant="default" onClick={() => setShowActivityModal(true)}>
-                  <Plus className="h-4 w-4 mr-2" /> Log Activity
+                  <PlusCircle className="h-4 w-4" /> Log Activity
                 </Button>
               </div>
             </div>
@@ -254,7 +254,7 @@ export function DealDetail() {
                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4 mb-4">
                   <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500">Activity Timeline</h2>
                   <Button variant="outlineNeutral" size="sm" onClick={() => setShowActivityModal(true)}>
-                    <Plus className="h-4 w-4 mr-2" /> Log Activity
+                    <PlusCircle className="h-4 w-4" /> Log Activity
                   </Button>
                 </div>
 
@@ -333,7 +333,7 @@ export function DealDetail() {
                   <div>
                     <div className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-1">Expected Close</div>
                     <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      {new Date(deal.expectedCloseDate).toLocaleDateString()}
+                      {deal.expectedCloseDate ? new Date(deal.expectedCloseDate).toLocaleDateString() : "Not set"}
                     </p>
                   </div>
                   {deal.lostReason && (
@@ -348,11 +348,11 @@ export function DealDetail() {
                   </div>
                   <div>
                     <div className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-1">Created</div>
-                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{relativeTime(deal.createdAt)}</p>
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{deal.createdAt ? relativeTime(deal.createdAt) : "-"}</p>
                   </div>
                   <div>
                     <div className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-1">Last Updated</div>
-                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{relativeTime(deal.updatedAt)}</p>
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{deal.updatedAt ? relativeTime(deal.updatedAt) : "-"}</p>
                   </div>
                 </div>
               </div>
@@ -372,7 +372,7 @@ export function DealDetail() {
                     onClick={() => setShowAddTaskModal(true)}
                     className="h-8 w-8 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400"
                   >
-                    <Plus className="h-4 w-4" />
+                    <PlusCircle className="h-4 w-4" />
                   </Button>
                 </div>
 

@@ -2,7 +2,6 @@ import { useState, useMemo } from "react"
 import { Link } from "wouter"
 import {
   Activity,
-  TrendingUp,
   CreditCard,
   Briefcase,
   AlertTriangle,
@@ -16,6 +15,7 @@ import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/helpers"
 import type { Deal, Activity as ActivityT } from "@/lib/types"
 import { useCRMResource } from "@/lib/hooks"
+import { seedApi } from "@/lib/api"
 import { PageSkeleton } from "@/components/ui/page-skeleton"
 
 export function Dashboard() {
@@ -89,7 +89,7 @@ export function Dashboard() {
 
   return (
     <div className="flex-1 bg-bg-base text-text-primary min-h-screen">
-      <div className="mx-auto p-4 md:p-8 max-w-[1600px] animate-fade-in">
+      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in">
 
         {/* Title Section */}
         <div className="mb-8">
@@ -102,73 +102,71 @@ export function Dashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {/* Revenue Card */}
-          <div className="bg-bg-surface p-6 rounded-3xl border border-border shadow-sm shadow-bg-elevated/50 transition-all hover:shadow-md">
+          <div className="bg-bg-surface p-6 rounded-md border border-border shadow-sm border-l-4 border-l-indigo-600 transition-all hover:shadow-xl hover:shadow-indigo-600/5 group">
             <div className="flex items-center justify-between mb-6">
-              <div className="w-12 h-12 bg-green/10 rounded-2xl flex items-center justify-center">
-                <CreditCard className="w-6 h-6 text-green" />
+              <div className="w-10 h-10 bg-indigo-600/10 rounded flex items-center justify-center transition-transform group-hover:scale-110">
+                <CreditCard className="w-5 h-5 text-indigo-600" />
               </div>
-              <div className="flex items-center gap-1.5 px-2 py-1 bg-green/5 text-green text-xs font-bold rounded-lg leading-none">
-                <TrendingUp className="w-3.5 h-3.5" />
+              <div className="px-2 py-1 bg-green/5 text-green text-[10px] font-black rounded uppercase tracking-wider shadow-sm">
                 +12.5%
               </div>
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-text-muted">Total Revenue</p>
-              <h3 className="text-3xl font-bold tracking-tight">{formatCurrency(totalDealValue || 128430)}</h3>
+              <p className="text-[11px] font-black uppercase tracking-widest text-text-muted">Total Revenue</p>
+              <h3 className="text-3xl font-extrabold tracking-tight">{formatCurrency(totalDealValue || 128430)}</h3>
             </div>
           </div>
 
           {/* Active Deals Card */}
-          <div className="bg-bg-surface p-6 rounded-3xl border border-border shadow-sm shadow-bg-elevated/50 transition-all hover:shadow-md">
+          <div className="bg-bg-surface p-6 rounded-md border border-border shadow-sm border-l-4 border-l-emerald-500 transition-all hover:shadow-xl hover:shadow-emerald-600/5 group">
             <div className="flex items-center justify-between mb-6">
-              <div className="w-12 h-12 bg-accent/10 rounded-2xl flex items-center justify-center">
-                <Briefcase className="w-6 h-6 text-accent" />
+              <div className="w-10 h-10 bg-emerald-500/10 rounded flex items-center justify-center transition-transform group-hover:scale-110">
+                <Briefcase className="w-5 h-5 text-emerald-500" />
               </div>
-              <div className="flex items-center gap-1.5 px-2 py-1 bg-accent/5 text-accent text-xs font-bold rounded-lg leading-none">
-                <TrendingUp className="w-3.5 h-3.5" />
+              <div className="px-2 py-1 bg-emerald-500/5 text-emerald-600 text-[10px] font-black rounded uppercase tracking-wider shadow-sm">
                 +5.2%
               </div>
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-text-muted">Active Deals</p>
-              <h3 className="text-3xl font-bold tracking-tight">{openDeals.length || 42}</h3>
+              <p className="text-[11px] font-black uppercase tracking-widest text-text-muted">Active Pipeline</p>
+              <h3 className="text-3xl font-extrabold tracking-tight">{openDeals.length || 42}</h3>
             </div>
           </div>
 
           {/* Alerts Card */}
           <Link href="/in-progress" className="block transform transition-all active:scale-95 group">
-            <div className="bg-bg-surface p-6 rounded-3xl border border-border shadow-sm shadow-bg-elevated/50 transition-all hover:shadow-md hover:border-accent/20">
+            <div className="bg-bg-surface p-6 rounded-md border border-border shadow-sm border-l-4 border-l-amber transition-all hover:shadow-xl hover:shadow-amber/10 h-full">
               <div className="flex items-center justify-between mb-6">
-                <div className="w-12 h-12 bg-amber/10 rounded-2xl flex items-center justify-center">
-                  <AlertTriangle className="w-6 h-6 text-amber" />
+                <div className="w-10 h-10 bg-amber/10 rounded flex items-center justify-center transition-transform group-hover:scale-110">
+                  <AlertTriangle className="w-5 h-5 text-amber" />
                 </div>
-                <div className="flex items-center gap-1.5 px-3 py-1 bg-amber/5 text-amber text-[10px] uppercase tracking-wider font-bold rounded-lg leading-none">
-                  Requires Action
+                <div className="px-2 py-1 bg-amber/5 text-amber text-[10px] font-black rounded uppercase tracking-wider shadow-sm">
+                  Priority Action
                 </div>
               </div>
               <div className="space-y-1">
-                <p className="text-sm font-semibold text-text-muted">Low Stock Alerts</p>
-                <h3 className="text-3xl font-bold tracking-tight">12</h3>
+                <p className="text-[11px] font-black uppercase tracking-widest text-text-muted">Low Stock Alerts</p>
+                <h3 className="text-3xl font-extrabold tracking-tight text-text-primary">12</h3>
               </div>
             </div>
           </Link>
 
           {/* Tickets Card */}
           <Link href="/in-progress" className="block transform transition-all active:scale-95 group">
-            <div className="bg-bg-surface p-6 rounded-3xl border border-border shadow-sm shadow-bg-elevated/50 transition-all hover:shadow-md hover:border-accent/20">
+            <div className="bg-bg-surface p-6 rounded-md border border-border shadow-sm border-l-4 border-l-accent transition-all hover:shadow-xl hover:shadow-accent/10 h-full">
               <div className="flex items-center justify-between mb-6">
-                <div className="w-12 h-12 bg-accent/10 rounded-2xl flex items-center justify-center">
-                  <Ticket className="w-6 h-6 text-accent" />
+                <div className="w-10 h-10 bg-accent/10 rounded flex items-center justify-center transition-transform group-hover:scale-110">
+                  <Ticket className="w-5 h-5 text-accent" />
                 </div>
-                <div className="flex items-center gap-1.5 px-2 py-1 bg-bg-elevated text-text-muted text-xs font-bold rounded-lg leading-none">
-                  -2 today
+                <div className="px-2 py-1 bg-bg-elevated text-text-muted text-[10px] font-black rounded uppercase tracking-wider shadow-sm">
+                  Active Support
                 </div>
               </div>
               <div className="space-y-1">
-                <p className="text-sm font-semibold text-text-muted">Open Support Tickets</p>
-                <h3 className="text-3xl font-bold tracking-tight">8</h3>
+                <p className="text-[11px] font-black uppercase tracking-widest text-text-muted">Tickets Open</p>
+                <h3 className="text-3xl font-extrabold tracking-tight text-text-primary">8</h3>
               </div>
             </div>
           </Link>
@@ -288,20 +286,20 @@ export function Dashboard() {
               ) : (
                 recentActivities.map((activity) => (
                   <div key={activity.id} className={cn(
-                    "flex items-center gap-4 px-6 py-4 rounded-2xl hover:bg-bg-elevated transition-colors",
+                    "flex items-center gap-4 px-6 py-4 rounded-md hover:bg-bg-surface transition-all border-l-4 border-transparent hover:border-indigo-600 hover:shadow-xl hover:shadow-indigo-600/5 group/row relative z-0 hover:z-10",
                   )}>
-                    <div className="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center shrink-0">
-                      <Activity className="w-5 h-5 text-accent" />
+                    <div className="w-10 h-10 bg-indigo-600/10 rounded flex items-center justify-center shrink-0 transition-transform group-hover/row:scale-110">
+                      <Activity className="w-5 h-5 text-indigo-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-text-primary truncate">
+                      <p className="text-sm font-bold text-text-primary truncate">
                         {activity.content}
                       </p>
-                      <p className="text-xs text-text-muted mt-0.5">
+                      <p className="text-[11px] font-semibold text-text-muted mt-0.5">
                         {new Date(activity.createdAt).toLocaleDateString()} at {new Date(activity.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
-                    <div className="text-[10px] font-bold text-text-muted uppercase tracking-widest bg-bg-elevated px-2 py-1 rounded-md">
+                    <div className="text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-600/5 px-2 py-1 rounded shadow-sm">
                       {activity.type}
                     </div>
                   </div>

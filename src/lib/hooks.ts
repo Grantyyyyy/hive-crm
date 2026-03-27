@@ -35,17 +35,19 @@ export function useCRMResource<T extends { id: string }>(
   )
 
   const updateItem = useCallback(
-    async (id: string, updates: Partial<T>) => {
+    async (id: string, updates: Partial<T>, silent: boolean = false) => {
       // Optimistic update — apply to cache immediately, then persist
       ctx.setResourceData<T>(String(resourceName), (prev) =>
         prev.map((item) => (item.id === id ? { ...item, ...updates } : item))
       )
       const promise = updateRow<T>(ctx, String(resourceName), id, updates)
-      toast.promise(promise, {
-        loading: `Updating ${resourceName}...`,
-        success: `Successfully updated ${resourceName}`,
-        error: `Failed to update ${resourceName}`,
-      })
+      if (!silent) {
+        toast.promise(promise, {
+          loading: `Updating ${resourceName}...`,
+          success: `Successfully updated ${resourceName}`,
+          error: `Failed to update ${resourceName}`,
+        })
+      }
       return promise
     },
     [ctx, resourceName]

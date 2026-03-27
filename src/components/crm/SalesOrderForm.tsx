@@ -1,8 +1,9 @@
 import { useState, useMemo, useRef, useEffect } from "react"
-import { Trash2, Info, Calendar, ChevronDown } from "lucide-react"
+import { Trash2, Info, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { DatePicker } from "@/components/ui/date-picker"
 import { cn } from "@/lib/utils"
 import type { SalesOrder, SalesOrderStatus, Contact, InventoryItem } from "@/lib/types"
 import { generateId } from "@/lib/helpers"
@@ -122,15 +123,11 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
 
           <div className="space-y-1.5">
             <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Order Date</Label>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
-              <Input
-                type="date"
-                value={orderDate}
-                readOnly
-                className="h-10 pl-9 rounded-lg border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 cursor-not-allowed text-xs font-medium dark:text-slate-400 disabled:opacity-100 shadow-none border-none"
-              />
-            </div>
+            <DatePicker
+              value={orderDate}
+              disabled={true}
+              className="h-12 py-3 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 cursor-not-allowed text-sm font-medium dark:text-slate-400 disabled:opacity-100"
+            />
           </div>
 
           <div className="space-y-1.5">

@@ -1,10 +1,10 @@
 import { useState, useMemo } from "react"
-import { Plus, Trash2, Package, AlertTriangle, Layers } from "lucide-react"
+import { Plus, Trash2, Package, AlertTriangle, Layers, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
-import type { PurchaseRequest, PurchaseRequestStatus } from "@/lib/types"
+import type { PurchaseRequest, PurchaseRequestStatus, InventoryItem } from "@/lib/types"
 import { generateId } from "@/lib/helpers"
 import { useUser } from "@clerk/clerk-react"
 
@@ -12,16 +12,19 @@ interface PurchaseRequestFormProps {
   onSave: (request: PurchaseRequest) => void
   onCancel: () => void
   initialData?: Partial<PurchaseRequest>
+  inventoryItems?: InventoryItem[]  // Added: inventory catalog for selection
 }
 
-export function PurchaseRequestForm({ onSave, onCancel, initialData }: PurchaseRequestFormProps) {
+export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryItems = [] }: PurchaseRequestFormProps) {
   const { user } = useUser()
   const [department, setDepartment] = useState(initialData?.department ?? "")
   const [requestNumber] = useState(initialData?.requestNumber ?? `PR-${Math.floor(10000 + Math.random() * 90000)}`)
   const [date] = useState(initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0])
   const [priority, setPriority] = useState<PurchaseRequest['priority']>(initialData?.priority ?? "medium")
+  const [searchTerm, setSearchTerm] = useState("")
+  const [showResults, setShowResults] = useState(false)
   const [items, setItems] = useState(initialData?.items ?? [
-    { id: generateId(), name: "", quantity: 1, estimatedPrice: 0 }
+    { id: generateId(), name: "", quantity: 1, estimatedPrice: 0, inventoryItemId: initialData?.inventoryItemId ?? "" }
   ])
   const [purpose, setPurpose] = useState(initialData?.purpose ?? "")
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -31,22 +34,46 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData }: PurchaseR
   }, [items])
 
   const addItem = () => {
-    setItems([...items, { id: generateId(), name: "", quantity: 1, estimatedPrice: 0 }])
+    setItems([...items, { id: generateId(), name: "", quantity: 1, estimatedPrice: 0, inventoryItemId: "" }])
   }
 
   const removeItem = (id: string) => {
     setItems(items.filter(i => i.id !== id))
   }
 
-  const updateItem = (id: string, updates: Partial<{ name: string, quantity: number, estimatedPrice: number }>) => {
+  const updateItem = (id: string, updates: Partial<{ name: string, quantity: number, estimatedPrice: number, inventoryItemId: string }>) => {
     setItems(items.map(item => item.id === id ? { ...item, ...updates } : item))
+  }
+
+  const handleInventorySelect = (inventoryItemId: string) => {
+    const invItem = inventoryItems.find(i => i.id === inventoryItemId)
+    if (invItem) {
+      // Update first item or add new one with inventory data
+      if (items.length === 1 && !items[0].name && !items[0].inventoryItemId) {
+        setItems([{
+          id: items[0].id,
+          name: invItem.name,
+          quantity: 10, // Default reorder quantity
+          estimatedPrice: invItem.price * 0.7,
+          inventoryItemId: invItem.id
+        }])
+      } else {
+        setItems([...items, {
+          id: generateId(),
+          name: invItem.name,
+          quantity: 10,
+          estimatedPrice: invItem.price * 0.7,
+          inventoryItemId: invItem.id
+        }])
+      }
+    }
   }
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
     if (!department.trim()) newErrors.department = "Department is required"
     if (items.length === 0) newErrors.items = "At least one item is required"
-    
+
     items.forEach((item, index) => {
       if (!item.name.trim()) newErrors[`item_${index}_name`] = "Name required"
     })
@@ -85,18 +112,18 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData }: PurchaseR
     <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950">
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto px-8 py-10 space-y-12 pb-32">
-        
+
         {/* Section: Request Info */}
         <section className="space-y-6">
           <div className="flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
             <Layers className="w-4 h-4 text-slate-400" />
             <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Request Information</h3>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">Department</Label>
-              <select 
+              <select
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
                 className={cn(
@@ -124,8 +151,8 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData }: PurchaseR
                     onClick={() => setPriority(p)}
                     className={cn(
                       "flex-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-                      priority === p 
-                        ? "bg-indigo-600 text-white shadow-md shadow-indigo-200" 
+                      priority === p
+                        ? "bg-indigo-600 text-white shadow-md shadow-indigo-200"
                         : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                     )}
                   >
@@ -137,7 +164,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData }: PurchaseR
 
             <div className="md:col-span-2 space-y-2">
               <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">Purpose / Reason for Request</Label>
-              <Textarea 
+              <Textarea
                 placeholder="Explain why this purchase is needed..."
                 value={purpose}
                 onChange={(e) => setPurpose(e.target.value)}
@@ -154,7 +181,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData }: PurchaseR
               <Package className="w-4 h-4 text-slate-400" />
               <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Requested Items</h3>
             </div>
-            <Button 
+            <Button
               type="button"
               variant="link"
               size="sm"
@@ -165,7 +192,95 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData }: PurchaseR
             </Button>
           </div>
 
-          <div className="rounded-[1.5rem] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
+          {/* Improved Item Selector: Quick Search and Add */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">Quick Add from Inventory</Label>
+              {inventoryItems.length > 0 && (
+                <span className="text-[10px] font-medium text-slate-400">
+                  {inventoryItems.filter(i => i.status === 'active').length} active items available
+                </span>
+              )}
+            </div>
+            
+            <div className="relative group">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 min-w-4 h-4 text-slate-400 pointer-events-none group-focus-within:text-indigo-500 transition-colors" />
+                <input
+                  type="text"
+                  placeholder="Search by Item Name, SKU, or Category..."
+                  className="w-full h-12 pl-12 pr-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm group-focus-within:shadow-md"
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  value={searchTerm}
+                  onFocus={() => setShowResults(true)}
+                />
+              </div>
+
+              {/* Search Results Dropdown */}
+              {showResults && searchTerm.length >= 1 && (
+                <div 
+                  className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden max-h-[320px] divide-y divide-slate-50 dark:divide-slate-800 flex flex-col animate-in fade-in slide-in-from-top-2 duration-200"
+                  onMouseLeave={() => setShowResults(false)}
+                >
+                  <div className="overflow-y-auto flex-1">
+                    {inventoryItems
+                      .filter(item => 
+                        item.status === 'active' && 
+                        (item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         item.sku.toLowerCase().includes(searchTerm.toLowerCase()))
+                      )
+                      .map((item) => {
+                        const atp = item.stockQuantity - (item.reservedQuantity || 0)
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => {
+                              handleInventorySelect(item.id)
+                              setSearchTerm("")
+                              setShowResults(false)
+                            }}
+                            className="w-full text-left px-5 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors flex items-center justify-between group/item"
+                          >
+                            <div className="flex flex-col">
+                              <span className="text-sm font-bold text-slate-900 dark:text-white group-hover/item:text-indigo-600 transition-colors">
+                                {item.name}
+                              </span>
+                              <span className="text-[10px] text-slate-500 font-medium">
+                                SKU: {item.sku} · {item.category}
+                              </span>
+                            </div>
+                            <div className="flex flex-col items-end">
+                              <span className="text-xs font-black text-slate-700 dark:text-slate-300">
+                                ${item.price.toFixed(2)}
+                              </span>
+                              <span className={cn(
+                                "text-[9px] font-bold uppercase",
+                                atp <= 5 ? "text-amber-500" : "text-slate-400"
+                              )}>
+                                ATP: {atp}
+                              </span>
+                            </div>
+                          </button>
+                        )
+                      })}
+                  </div>
+                  {inventoryItems.filter(item => 
+                    item.status === 'active' && 
+                    (item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                     item.sku.toLowerCase().includes(searchTerm.toLowerCase()))
+                  ).length === 0 && (
+                    <div className="px-5 py-8 text-center bg-slate-50/50 dark:bg-slate-800/50">
+                      <p className="text-sm font-bold text-slate-400">No matching items found</p>
+                      <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-black">Check spelling or try SKU</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
             <table className="w-full text-left text-sm font-sans">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/50 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200 dark:border-slate-800">
@@ -180,7 +295,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData }: PurchaseR
                 {items.map((item, index) => (
                   <tr key={item.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/10">
                     <td className="px-6 py-4">
-                      <input 
+                      <input
                         className="w-full bg-transparent border-none focus:ring-0 p-0 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 text-sm font-bold"
                         placeholder="What do you need?..."
                         value={item.name}
@@ -189,7 +304,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData }: PurchaseR
                       {errors[`item_${index}_name`] && <p className="text-[8px] font-bold text-red-500 uppercase mt-1">{errors[`item_${index}_name`]}</p>}
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <input 
+                      <input
                         type="number"
                         className="w-full bg-transparent border-none focus:ring-0 p-0 text-slate-900 dark:text-slate-100 text-sm font-black text-center"
                         value={item.quantity}
@@ -199,7 +314,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData }: PurchaseR
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-1">
                         <span className="text-slate-400">$</span>
-                        <input 
+                        <input
                           type="number"
                           className="w-24 bg-transparent border-none focus:ring-0 p-0 text-slate-900 dark:text-slate-100 text-sm font-black text-right"
                           value={item.estimatedPrice}
@@ -211,7 +326,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData }: PurchaseR
                       ${(item.quantity * item.estimatedPrice).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <Button 
+                      <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => removeItem(item.id)}
@@ -239,7 +354,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData }: PurchaseR
 
         {/* Info Box */}
         <section className="pb-10">
-          <div className="p-6 rounded-[1.5rem] bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 flex items-start gap-5">
+          <div className="p-6 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 flex items-start gap-5">
             <AlertTriangle className="w-6 h-6 text-amber-500 shrink-0" />
             <div className="space-y-1">
               <h4 className="text-xs font-black uppercase tracking-wide text-amber-700 dark:text-amber-400">Policy Reminder</h4>
@@ -252,23 +367,25 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData }: PurchaseR
       </div>
 
       {/* Footer Actions */}
-      <div className="fixed bottom-0 left-0 right-0 px-10 py-8 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 flex items-center justify-between z-10">
+      <div className="px-8 py-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
         <div className="flex flex-col">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Requester</span>
-          <span className="text-sm font-bold text-slate-900 dark:text-white">{user?.fullName}</span>
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Requester</span>
+          <span className="text-sm font-bold text-slate-900 dark:text-white mt-1">{user?.fullName}</span>
         </div>
-        <div className="flex gap-4">
-          <Button 
+        <div className="flex items-center gap-3">
+          <Button
             variant="ghost"
+            size="sm"
             onClick={onCancel}
-            className="rounded-xl px-6 font-bold"
+            className="h-10 px-6 font-bold text-[11px]"
           >
             Cancel
           </Button>
-          <Button 
+          <Button
             variant="default"
+            size="sm"
             onClick={() => handleSave('pending_review')}
-            className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white px-10 h-12 shadow-xl shadow-indigo-200 dark:shadow-none font-bold text-xs uppercase tracking-widest"
+            className="h-10 px-8 font-black bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] rounded-lg shadow-sm uppercase tracking-widest"
           >
             Submit for Review
           </Button>

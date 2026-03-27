@@ -1,12 +1,26 @@
-import type { Quote, SalesOrder, OrderItem, InventoryItem } from "../lib/types";
+import type { Quote, SalesOrder, OrderItem, InventoryItem, InventoryTransaction } from "../lib/types";
 import { generateNumber } from "./types";
 import { recalculateStockLevel } from "./inventoryService";
 import type { CRMContextValue, AtomicOp } from "../lib/CRMContext";
+import { createReservationTransaction, createReleaseTransaction } from "./inventoryTransactionService";
+
+/**
+ * Adapter for audit trail operations in quote service
+ */
+interface QuoteAuditAdapter {
+  getInventoryTransactions: () => InventoryTransaction[];
+  insertInventoryTransaction: (tx: Omit<InventoryTransaction, 'id' | 'createdAt'>) => Promise<InventoryTransaction>;
+}
 
 /**
  * Atomically reserves stock for a quote with duplicate item protection.
  */
-export async function reserveStockForQuote(quote: Quote, ctx: CRMContextValue): Promise<void> {
+export async function reserveStockForQuote(
+  quote: Quote,
+  ctx: CRMContextValue,
+  userId: string,
+  userName: string
+): Promise<void> {
   if (quote.stockReserved || quote.status === 'accepted') return;
 
   const inventory = ctx.getResource<InventoryItem>('inventory').data;
@@ -18,7 +32,7 @@ export async function reserveStockForQuote(quote: Quote, ctx: CRMContextValue): 
     if (!item.inventoryItemId) continue;
     const invItem = inventory.find(i => i.id === item.inventoryItemId);
     const currentRequested = (pendingTally[item.inventoryItemId] || 0) + item.quantity;
-    
+
     if (invItem) {
       const available = invItem.stockQuantity - (invItem.reservedQuantity || 0);
       if (currentRequested > available) {
@@ -35,7 +49,7 @@ export async function reserveStockForQuote(quote: Quote, ctx: CRMContextValue): 
     updates.push({
       resource: 'inventory',
       id: itemId,
-      patch: { 
+      patch: {
         reservedQuantity: newReserved,
         stockLevel: recalculateStockLevel(invItem.stockQuantity, newReserved)
       }
@@ -49,12 +63,45 @@ export async function reserveStockForQuote(quote: Quote, ctx: CRMContextValue): 
   });
 
   await ctx.runAtomicUpdate(updates);
+
+  // Create audit trail entries
+  const auditAdapter: QuoteAuditAdapter = {
+    getInventoryTransactions: () => ctx.getResource<InventoryTransaction>('inventory_transactions').data,
+    insertInventoryTransaction: async (tx) => {
+      const { insertRows } = await import('../lib/CRMContext');
+      return insertRows<InventoryTransaction>(ctx, 'inventory_transactions', [tx as any]).then(rows => rows[0]);
+    }
+  };
+
+  for (const item of quote.items) {
+    if (!item.inventoryItemId) continue;
+    const invItem = inventory.find(i => i.id === item.inventoryItemId);
+    if (invItem) {
+      await createReservationTransaction({
+        inventoryItemId: invItem.id,
+        inventoryItemName: invItem.name,
+        reservedChange: item.quantity,
+        reservedBefore: invItem.reservedQuantity || 0,
+        reservedAfter: (invItem.reservedQuantity || 0) + item.quantity,
+        referenceId: quote.id,
+        referenceNumber: quote.quoteNumber,
+        reason: `Reserved for Quote ${quote.quoteNumber}`,
+        userId,
+        userName
+      }, auditAdapter as any);
+    }
+  }
 }
 
 /**
  * Releases reserved stock if a quote is rejected or expired.
  */
-export async function releaseQuoteStock(quote: Quote, ctx: CRMContextValue): Promise<void> {
+export async function releaseQuoteStock(
+  quote: Quote,
+  ctx: CRMContextValue,
+  userId: string,
+  userName: string
+): Promise<void> {
   if (!quote.stockReserved || quote.status === 'accepted') return;
 
   const inventory = ctx.getResource<InventoryItem>('inventory').data;
@@ -72,7 +119,7 @@ export async function releaseQuoteStock(quote: Quote, ctx: CRMContextValue): Pro
       updates.push({
         resource: 'inventory',
         id: invItem.id,
-        patch: { 
+        patch: {
           reservedQuantity: newReserved,
           stockLevel: recalculateStockLevel(invItem.stockQuantity, newReserved)
         }
@@ -87,6 +134,34 @@ export async function releaseQuoteStock(quote: Quote, ctx: CRMContextValue): Pro
   });
 
   await ctx.runAtomicUpdate(updates);
+
+  // Create audit trail entries
+  const auditAdapter: QuoteAuditAdapter = {
+    getInventoryTransactions: () => ctx.getResource<InventoryTransaction>('inventory_transactions').data,
+    insertInventoryTransaction: async (tx) => {
+      const { insertRows } = await import('../lib/CRMContext');
+      return insertRows<InventoryTransaction>(ctx, 'inventory_transactions', [tx as any]).then(rows => rows[0]);
+    }
+  };
+
+  for (const item of quote.items) {
+    if (!item.inventoryItemId) continue;
+    const invItem = inventory.find(i => i.id === item.inventoryItemId);
+    if (invItem) {
+      await createReleaseTransaction({
+        inventoryItemId: invItem.id,
+        inventoryItemName: invItem.name,
+        reservedChange: -item.quantity,
+        reservedBefore: invItem.reservedQuantity || 0,
+        reservedAfter: (invItem.reservedQuantity || 0) - item.quantity,
+        referenceId: quote.id,
+        referenceNumber: quote.quoteNumber,
+        reason: `Quote ${quote.quoteNumber} ${quote.status === 'expired' ? 'expired' : 'rejected'} - releasing reservation`,
+        userId,
+        userName
+      }, auditAdapter as any);
+    }
+  }
 }
 
 /**
@@ -120,15 +195,15 @@ export async function acceptQuote(quote: Quote, ctx: CRMContextValue): Promise<S
 
   // Atomic Phase: Update Quote and Insert Order in one UI-committed batch
   const ops = [
-    { 
-      resource: 'quotes', 
-      id: quote.id, 
-      patch: { status: 'accepted', stockReserved: false } 
+    {
+      resource: 'quotes',
+      id: quote.id,
+      patch: { status: 'accepted', stockReserved: false }
     },
-    { 
-      resource: 'orders', 
-      action: 'insert' as const, 
-      patch: newOrder 
+    {
+      resource: 'orders',
+      action: 'insert' as const,
+      patch: newOrder
     }
   ];
 

@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react"
 import {
   ShoppingCart,
-  Plus,
+  PlusCircle,
   Search,
   Filter,
   Download,
@@ -23,12 +23,13 @@ import { AddSalesOrderModal } from "@/components/crm/AddSalesOrderModal"
 import { InvoiceModal } from "@/components/crm/InvoiceModal"
 import { PageSkeleton } from "@/components/ui/page-skeleton"
 import { toast } from "sonner"
-import { 
-  fulfillOrderStock, 
-  releaseOrderStock, 
-  sendShippingNotification, 
-  generateInvoice 
+import {
+  fulfillOrderStock,
+  releaseOrderStock,
+  sendShippingNotification,
+  generateInvoice
 } from "@/services/orderService"
+import { useUser } from "@clerk/clerk-react"
 
 // ── Actions dropdown ──────────────────────────────────────────────────────────
 
@@ -177,6 +178,8 @@ export function SalesOrders() {
     currentPage * itemsPerPage
   )
 
+  const { user } = useUser()
+
   const handleCreateSuccess = (order: SalesOrder) => {
     refresh()
     toast.success("Order Created Successfully", {
@@ -186,7 +189,7 @@ export function SalesOrders() {
 
   const handleShipOrder = async (order: SalesOrder) => {
     try {
-      await fulfillOrderStock(order, ctx)
+      await fulfillOrderStock(order, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
       sendShippingNotification(order)
       refresh()
       toast.success("Order Marked as Shipped", { description: `#${order.orderNumber} — stock physical/reserved updated.` })
@@ -209,7 +212,7 @@ export function SalesOrders() {
 
   const handleCancelOrder = async (order: SalesOrder) => {
     try {
-      await releaseOrderStock(order, ctx)
+      await releaseOrderStock(order, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
       refresh()
       toast.success("Order Cancelled", { description: `#${order.orderNumber} — stock reservation released.` })
     } catch (e: unknown) {
@@ -223,7 +226,7 @@ export function SalesOrders() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen font-sans">
-      <div className="mx-auto p-4 md:p-8 max-w-[1600px] animate-fade-in space-y-8">
+      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
 
         {/* Header Region */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
@@ -234,13 +237,13 @@ export function SalesOrders() {
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outlineNeutral">
-              <Download className="w-4 h-4 mr-2" /> Export
+              <Download className="w-4 h-4" /> Export
             </Button>
             <Button
               variant="default"
               onClick={() => setIsAddModalOpen(true)}
             >
-              <Plus className="w-4 h-4 mr-2" /> Create Order
+              <PlusCircle className="w-4 h-4" /> Create Order
             </Button>
           </div>
         </div>
@@ -278,7 +281,7 @@ export function SalesOrders() {
           <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
 
           <Button variant="outlineNeutral" className="h-10 px-4">
-            <Filter className="w-4 h-4 mr-2" /> More Filters
+            <Filter className="w-4 h-4" /> More Filters
           </Button>
         </div>
 
@@ -414,8 +417,8 @@ export function SalesOrders() {
 
 function StatusBadge({ status }: { status: SalesOrderStatus }) {
   const styles: Record<SalesOrderStatus, string> = {
-    pending:   "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400",
-    shipped:   "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400",
+    pending: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400",
+    shipped: "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400",
     delivered: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400",
     cancelled: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400",
   }

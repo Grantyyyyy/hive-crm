@@ -64,7 +64,7 @@ export function InventoryDetail() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen font-sans">
-      <div className="mx-auto p-4 md:p-8 max-w-[1400px] animate-fade-in space-y-8">
+      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
         
         {/* Breadcrumbs & Navigation */}
         <div className="flex items-center justify-between">

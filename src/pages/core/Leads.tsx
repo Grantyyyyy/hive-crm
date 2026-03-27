@@ -1,12 +1,12 @@
 import { useState, useMemo } from "react"
 import { Pagination } from "@/components/ui/Pagination"
 import { useLocation } from "wouter"
-import { 
-  UserSearch, 
-  Search, 
-  Plus, 
+import {
+  UserSearch,
+  Search,
+  PlusCircle,
   Trash2,
-  Download, 
+  Download,
   Filter,
   Globe,
   Users,
@@ -41,24 +41,24 @@ const SOURCE_ICONS: Record<LeadSource, any> = {
 }
 
 const STATUS_STYLE: Record<LeadStatus, { bg: string; text: string; dot: string }> = {
-  new:          { bg: "bg-blue-50 dark:bg-blue-900/20",    text: "text-blue-700 dark:text-blue-400", dot: "bg-blue-600" },
-  contacted:    { bg: "bg-amber-50 dark:bg-amber-900/20", text: "text-amber-700 dark:text-amber-400", dot: "bg-amber-600" },
-  qualified:    { bg: "bg-emerald-50 dark:bg-emerald-900/20", text: "text-emerald-700 dark:text-emerald-400", dot: "bg-emerald-600" },
-  unqualified:  { bg: "bg-slate-100 dark:bg-slate-800",   text: "text-slate-600 dark:text-slate-400", dot: "bg-slate-500" },
-  converted:    { bg: "bg-indigo-50 dark:bg-indigo-900/20", text: "text-indigo-700 dark:text-indigo-400", dot: "bg-indigo-600" },
+  new: { bg: "bg-blue-50 dark:bg-blue-900/20", text: "text-blue-700 dark:text-blue-400", dot: "bg-blue-600" },
+  contacted: { bg: "bg-amber-50 dark:bg-amber-900/20", text: "text-amber-700 dark:text-amber-400", dot: "bg-amber-600" },
+  qualified: { bg: "bg-emerald-50 dark:bg-emerald-900/20", text: "text-emerald-700 dark:text-emerald-400", dot: "bg-emerald-600" },
+  unqualified: { bg: "bg-slate-100 dark:bg-slate-800", text: "text-slate-600 dark:text-slate-400", dot: "bg-slate-500" },
+  converted: { bg: "bg-indigo-50 dark:bg-indigo-900/20", text: "text-indigo-700 dark:text-indigo-400", dot: "bg-indigo-600" },
 }
 
 export function Leads() {
   const [, navigate] = useLocation()
-  const { 
-    data: leads, 
-    search, 
-    setSearch, 
-    userId, 
+  const {
+    data: leads,
+    search,
+    setSearch,
+    userId,
     isLoaded,
     addItems,
     updateItem,
-    deleteItem 
+    deleteItem
   } = useCRMResource<Lead>('leads')
 
   const [statusFilter, setStatusFilter] = useState<LeadStatus | "all">("all")
@@ -102,8 +102,8 @@ export function Leads() {
 
   return (
     <div className="flex-1 bg-bg-base text-text-primary min-h-screen">
-      <div className="mx-auto p-4 md:p-8 max-w-[1600px] animate-fade-in">
-        
+      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in">
+
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8">
           <div>
@@ -114,15 +114,15 @@ export function Leads() {
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outlineNeutral">
-              <Download className="w-4 h-4 mr-2" />
+              <Download className="w-4 h-4" />
               Export CSV
             </Button>
-            <Button 
+            <Button
               variant="default"
               onClick={() => { setEditingLead(null); setShowModal(true) }}
             >
-              <Plus className="w-5 h-5 mr-2" />
-              Add Lead
+              <PlusCircle className="w-4 h-4" />
+              Create Lead
             </Button>
           </div>
         </div>
@@ -163,7 +163,7 @@ export function Leads() {
               ))}
             </div>
             <Button variant="ghostPrimary" size="sm" className="h-auto py-2">
-              <Filter className="w-4 h-4 mr-2" />
+              <Filter className="w-4 h-4" />
               Advanced Filters
             </Button>
           </div>
@@ -197,10 +197,10 @@ export function Leads() {
                       const status = STATUS_STYLE[lead.status] || STATUS_STYLE.new
                       const SourceIcon = SOURCE_ICONS[lead.source] || Globe
                       const initials = lead.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-                      
+
                       return (
-                        <tr 
-                          key={lead.id} 
+                        <tr
+                          key={lead.id}
                           className="hover:bg-bg-elevated/30 transition-colors cursor-pointer group"
                           onClick={() => navigate(`/leads/${lead.id}`)}
                         >
@@ -208,9 +208,9 @@ export function Leads() {
                             <div className="flex items-center gap-3">
                               <div className={cn(
                                 "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black uppercase shrink-0 shadow-sm ring-1 ring-bg-surface",
-                                lead.status === 'qualified' ? "bg-green/10 text-green" : 
-                                lead.status === 'new' ? "bg-accent/10 text-accent" : 
-                                "bg-bg-elevated text-text-secondary"
+                                lead.status === 'qualified' ? "bg-green/10 text-green" :
+                                  lead.status === 'new' ? "bg-accent/10 text-accent" :
+                                    "bg-bg-elevated text-text-secondary"
                               )}>
                                 {initials}
                               </div>
@@ -234,9 +234,9 @@ export function Leads() {
                               "flex items-center gap-2 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest w-fit",
                               status.bg && (
                                 status.bg.includes('blue') ? 'bg-accent/10 text-accent' :
-                                status.bg.includes('amber') ? 'bg-amber/10 text-amber' :
-                                status.bg.includes('emerald') ? 'bg-green/10 text-green' :
-                                status.bg.includes('indigo') ? 'bg-accent/10 text-accent' : 'bg-bg-elevated text-text-secondary'
+                                  status.bg.includes('amber') ? 'bg-amber/10 text-amber' :
+                                    status.bg.includes('emerald') ? 'bg-green/10 text-green' :
+                                      status.bg.includes('indigo') ? 'bg-accent/10 text-accent' : 'bg-bg-elevated text-text-secondary'
                               )
                             )}>
                               {lead.status}
@@ -248,7 +248,7 @@ export function Leads() {
                             </p>
                           </td>
                           <td className="px-4 py-2.5 text-right">
-                            <Button 
+                            <Button
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 opacity-0 group-hover:opacity-100 text-text-muted hover:text-red transition-all"
@@ -285,13 +285,13 @@ export function Leads() {
         <SheetHeader>
           <SheetTitle>{editingLead ? "Edit Lead" : "Add New Lead"}</SheetTitle>
           <SheetDescription>
-            {editingLead 
-              ? "Update the details for this sales prospect." 
+            {editingLead
+              ? "Update the details for this sales prospect."
               : "Fill in the information to create a new sales prospect."}
           </SheetDescription>
         </SheetHeader>
         <SheetContent>
-          <LeadForm 
+          <LeadForm
             userId={userId}
             onSave={handleSaveLead}
             onCancel={() => setShowModal(false)}

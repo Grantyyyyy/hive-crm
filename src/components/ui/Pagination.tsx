@@ -143,7 +143,7 @@ export function Pagination({
                 className={cn(
                   "h-8 w-8 rounded-lg text-xs font-bold",
                   currentPage === page &&
-                    "bg-indigo-600 text-white shadow-sm shadow-indigo-200 dark:shadow-none"
+                  "bg-indigo-600 text-white shadow-sm shadow-indigo-200 dark:shadow-none"
                 )}
                 onClick={() => onPageChange(page as number)}
                 aria-label={`Page ${page}`}

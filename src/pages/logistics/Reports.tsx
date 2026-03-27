@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 export function Reports() {
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen">
-      <div className="mx-auto p-4 md:p-8 max-w-[1600px] animate-fade-in space-y-8">
+      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
         
         {/* Header Pattern */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8">

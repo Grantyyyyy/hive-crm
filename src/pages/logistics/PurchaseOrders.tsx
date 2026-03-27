@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from "react"
-import { 
-  Plus, 
-  Search, 
-  Filter, 
+import {
+  PlusCircle,
+  Search,
+  Filter,
   Download,
   FileSearch,
 } from "lucide-react"
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Pagination } from "@/components/ui/Pagination"
 import { useCRMResource } from "@/lib/hooks"
 import { cn } from "@/lib/utils"
-import type { PurchaseOrder, PurchaseOrderStatus } from "@/lib/types"
+import type { PurchaseOrder, PurchaseOrderStatus, InventoryTransaction } from "@/lib/types"
 import { generateId } from "@/lib/helpers"
 import { AddPurchaseOrderModal } from "@/components/crm/AddPurchaseOrderModal"
 import { restockFromPO } from "@/services/procurementService"
@@ -18,14 +18,19 @@ import type { JobAdapter } from "@/services/types"
 import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
 import { toast } from "sonner"
 import type { Quote, SalesOrder, InventoryItem, PurchaseRequest } from "@/lib/types"
+import { useUser } from "@clerk/clerk-react"
 
 export function PurchaseOrders() {
-  const { 
-    data: orders, 
-    addItems: addOrders, 
+  const { user } = useUser()
+  const {
+    data: orders,
+    addItems: addOrders,
     refresh,
-    isLoaded 
+    isLoaded
   } = useCRMResource<PurchaseOrder>('purchase_orders')
+  const {
+    data: inventoryTransactions
+  } = useCRMResource<InventoryTransaction>('inventory_transactions')
   const ctx = useCRMContext()
 
   const adapter = useMemo<JobAdapter>(() => ({
@@ -43,12 +48,14 @@ export function PurchaseOrders() {
     getPurchaseOrders: () => orders,
     updatePurchaseOrder: (id, patch) => updateRow<PurchaseOrder>(ctx, 'purchase_orders', id, patch),
     insertPurchaseOrder: (po) => insertRows<PurchaseOrder>(ctx, 'purchase_orders', [po as any]).then(rows => rows[0]),
-  }), [ctx, orders])
+    getInventoryTransactions: () => inventoryTransactions,
+    insertInventoryTransaction: (tx) => insertRows<InventoryTransaction>(ctx, 'inventory_transactions', [tx as any]).then(rows => rows[0]),
+  }), [ctx, orders, inventoryTransactions])
 
   const handleReceive = async (order: PurchaseOrder) => {
     try {
       await updateRow<PurchaseOrder>(ctx, 'purchase_orders', order.id, { status: 'received' })
-      await restockFromPO({ ...order, status: 'received' }, adapter)
+      await restockFromPO({ ...order, status: 'received' }, adapter, user?.id, user?.fullName || 'Unknown User')
       refresh()
       toast.success("Order Received", { description: "Inventory has been restocked automatically." })
     } catch (e: any) {
@@ -118,8 +125,8 @@ export function PurchaseOrders() {
     let result = orders.filter(order => {
       const matchesStatus = statusFilter === 'all' || order.status === statusFilter
       const q = search.toLowerCase()
-      const matchesSearch = !q || 
-        order.poNumber.toLowerCase().includes(q) || 
+      const matchesSearch = !q ||
+        order.poNumber.toLowerCase().includes(q) ||
         order.vendorName.toLowerCase().includes(q)
       return matchesStatus && matchesSearch
     })
@@ -144,8 +151,8 @@ export function PurchaseOrders() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen font-sans">
-      <div className="mx-auto p-4 md:p-8 max-w-[1600px] animate-fade-in space-y-8">
-        
+      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
+
         {/* Header Region */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
           <div>
@@ -155,31 +162,31 @@ export function PurchaseOrders() {
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outlineNeutral">
-              <Download className="w-4 h-4 mr-2" /> Export
+              <Download className="w-4 h-4" /> Export
             </Button>
-            <Button 
+            <Button
               variant="default"
               onClick={() => setIsAddModalOpen(true)}
             >
-              <Plus className="w-4 h-4 mr-2" /> Create PO
+              <PlusCircle className="w-4 h-4" /> Create PO
             </Button>
           </div>
         </div>
 
         {/* Stats Strip */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Total Spent (YTD)</p>
-                <h4 className="text-2xl font-black text-slate-900 dark:text-white">$142,500.00</h4>
-            </div>
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Active Orders</p>
-                <h4 className="text-2xl font-black text-slate-900 dark:text-white">{orders.filter(o => o.status === 'pending' || o.status === 'sent').length}</h4>
-            </div>
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Vendor Compliance</p>
-                <h4 className="text-2xl font-black text-emerald-600">98.2%</h4>
-            </div>
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Total Spent (YTD)</p>
+            <h4 className="text-2xl font-black text-slate-900 dark:text-white">$142,500.00</h4>
+          </div>
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Active Orders</p>
+            <h4 className="text-2xl font-black text-slate-900 dark:text-white">{orders.filter(o => o.status === 'pending' || o.status === 'sent').length}</h4>
+          </div>
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Vendor Compliance</p>
+            <h4 className="text-2xl font-black text-emerald-600">98.2%</h4>
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -202,8 +209,8 @@ export function PurchaseOrders() {
                 onClick={() => setStatusFilter(s)}
                 className={cn(
                   "px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap",
-                  statusFilter === s 
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-100" 
+                  statusFilter === s
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-100"
                     : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
                 )}
               >
@@ -215,7 +222,7 @@ export function PurchaseOrders() {
           <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
 
           <Button variant="outlineNeutral" className="h-10 px-4 rounded-xl font-bold text-xs uppercase tracking-widest">
-            <Filter className="w-4 h-4 mr-2" /> More Filters
+            <Filter className="w-4 h-4" /> More Filters
           </Button>
         </div>
 
@@ -245,8 +252,9 @@ export function PurchaseOrders() {
                   </tr>
                 ) : (
                   paginatedOrders.map((order) => (
-                    <tr 
+                    <tr
                       key={order.id}
+                      onClick={() => (window.location.href = `/purchase-orders/${order.id}`)}
                       className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors cursor-pointer group"
                     >
                       <td className="px-4 py-2.5">
@@ -254,7 +262,7 @@ export function PurchaseOrders() {
                       </td>
                       <td className="px-4 py-2.5">
                         <div className="flex items-center gap-3">
-                          <div className="size-6 rounded bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 text-[10px] font-black uppercase">
+                          <div className="size-6 rounded bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 text-[10px] font-black uppercase ring-1 ring-white dark:ring-slate-900 shadow-sm">
                             {order.vendorName.split(' ').map(n => n[0]).join('').slice(0, 2)}
                           </div>
                           <span className="text-[13px] font-medium text-slate-900 dark:text-white truncate max-w-[140px]">{order.vendorName}</span>
@@ -274,19 +282,24 @@ export function PurchaseOrders() {
                         </span>
                       </td>
                       <td className="px-4 py-2.5 text-right">
-                        <div className="flex justify-end gap-2 items-center">
+                        <div className="flex justify-end gap-2 items-center opacity-0 group-hover:opacity-100 transition-opacity">
                           {order.status === 'sent' && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={(e) => { e.stopPropagation(); handleReceive(order) }}
                               className="text-[11px] h-7 px-3 font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
                             >
                               Receive
                             </Button>
                           )}
-                          <Button variant="ghost" size="sm" className="text-slate-400 hover:text-slate-600 transition-colors h-7 px-2">
-                             View
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => { e.stopPropagation(); window.location.href = `/purchase-orders/${order.id}` }}
+                            className="text-slate-400 hover:text-indigo-600 font-bold text-[11px] transition-colors h-7 px-2"
+                          >
+                            View
                           </Button>
                         </div>
                       </td>
@@ -308,10 +321,10 @@ export function PurchaseOrders() {
           />
         </div>
       </div>
-      
-      <AddPurchaseOrderModal 
-        open={isAddModalOpen} 
-        onOpenChange={setIsAddModalOpen} 
+
+      <AddPurchaseOrderModal
+        open={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
         onSuccess={refresh}
       />
     </div>

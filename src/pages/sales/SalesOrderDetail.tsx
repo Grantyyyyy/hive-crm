@@ -23,12 +23,13 @@ import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
 import { useCRMContext, updateRow } from "@/lib/CRMContext"
 import type { SalesOrder, SalesOrderStatus } from "@/lib/types"
-import { 
-  fulfillOrderStock, 
-  releaseOrderStock, 
-  sendShippingNotification, 
-  generateInvoice 
+import {
+  fulfillOrderStock,
+  releaseOrderStock,
+  sendShippingNotification,
+  generateInvoice
 } from "@/services/orderService"
+import { useUser } from "@clerk/clerk-react"
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -42,16 +43,16 @@ function relativeTime(iso: string): string {
 }
 
 const STATUS_CONFIG: Record<SalesOrderStatus, { label: string; badge: string; dot: string }> = {
-  pending:   { label: "Pending",   badge: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 ring-1 ring-amber-200 dark:ring-amber-800",   dot: "bg-amber-500" },
-  shipped:   { label: "Shipped",   badge: "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 ring-1 ring-blue-200 dark:ring-blue-800",     dot: "bg-blue-500" },
+  pending: { label: "Pending", badge: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 ring-1 ring-amber-200 dark:ring-amber-800", dot: "bg-amber-500" },
+  shipped: { label: "Shipped", badge: "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 ring-1 ring-blue-200 dark:ring-blue-800", dot: "bg-blue-500" },
   delivered: { label: "Delivered", badge: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200 dark:ring-emerald-800", dot: "bg-emerald-500" },
   cancelled: { label: "Cancelled", badge: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 ring-1 ring-slate-200 dark:ring-slate-700", dot: "bg-slate-400" },
 }
 
 const TIMELINE: { status: SalesOrderStatus; label: string; icon: React.ElementType }[] = [
-  { status: "pending",   label: "Order Placed",  icon: ShoppingCart },
-  { status: "shipped",   label: "Shipped",        icon: Truck },
-  { status: "delivered", label: "Delivered",      icon: PackageCheck },
+  { status: "pending", label: "Order Placed", icon: ShoppingCart },
+  { status: "shipped", label: "Shipped", icon: Truck },
+  { status: "delivered", label: "Delivered", icon: PackageCheck },
 ]
 
 const STATUS_ORDER: SalesOrderStatus[] = ["pending", "shipped", "delivered"]
@@ -61,6 +62,7 @@ export function SalesOrderDetail() {
   useLocation()
   const orderId = params?.id ?? ""
   const ctx = useCRMContext()
+  const { user } = useUser()
 
   const { data: orders, isLoaded } = useCRMResource<SalesOrder>("orders")
 
@@ -72,7 +74,7 @@ export function SalesOrderDetail() {
   const handleShip = async () => {
     if (!order) return
     try {
-      await fulfillOrderStock(order, ctx)
+      await fulfillOrderStock(order, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
       sendShippingNotification(order)
       toast.success("Order Marked as Shipped", { description: `#${order.orderNumber} — stock physical/reserved updated.` })
     } catch (e: unknown) {
@@ -95,7 +97,7 @@ export function SalesOrderDetail() {
   const handleCancel = async () => {
     if (!order) return
     try {
-      await releaseOrderStock(order, ctx)
+      await releaseOrderStock(order, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
       toast.success("Order Cancelled", { description: `#${order.orderNumber} — stock reservation released.` })
     } catch (e: unknown) {
       toast.error("Failed to cancel order", { description: (e as Error).message })
@@ -133,7 +135,7 @@ export function SalesOrderDetail() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 font-sans min-h-screen text-slate-900 dark:text-slate-100">
-      <div className="mx-auto p-4 md:p-8 max-w-[1400px] space-y-6 animate-fade-in">
+      <div className="mx-auto p-4 md:p-8 max-w-full space-y-6 animate-fade-in">
 
         {/* Back */}
         <Link

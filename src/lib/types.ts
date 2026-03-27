@@ -207,6 +207,24 @@ export interface Quote {
 export type InventoryStatus = 'active' | 'draft'
 export type StockLevel = 'in_stock' | 'low_stock' | 'out_of_stock'
 
+export type VendorStatus = 'active' | 'inactive' | 'on_hold'
+
+export interface Vendor {
+  id: string
+  name: string
+  email?: string
+  phone?: string
+  website?: string
+  address?: string
+  category?: string
+  taxId?: string
+  paymentTerms?: string
+  status: VendorStatus
+  notes?: string
+  createdAt: string
+  updatedAt: string
+}
+
 export interface InventoryItem {
   id: string
   name: string
@@ -280,4 +298,28 @@ export interface PurchaseRequest {
   priority: 'low' | 'medium' | 'high' | 'urgent'
   createdAt: string
   updatedAt: string
+}
+
+export type InventoryTransactionType = 'receipt' | 'shipment' | 'adjustment' | 'reservation' | 'release' | 'return'
+
+export type InventoryTransactionSource = 'purchase_order' | 'sales_order' | 'quote' | 'manual' | 'system'
+
+export interface InventoryTransaction {
+  id: string
+  inventoryItemId: string
+  inventoryItemName: string
+  type: InventoryTransactionType
+  quantityChange: number      // + for in, - for out
+  quantityBefore: number      // stockQuantity before change
+  quantityAfter: number       // stockQuantity after change
+  reservedChange?: number     // change in reserved quantity (optional)
+  reservedBefore?: number
+  reservedAfter?: number
+  reason?: string             // human-readable reason
+  referenceType: InventoryTransactionSource
+  referenceId?: string        // PO ID, Order ID, etc.
+  referenceNumber?: string    // PO Number, Order Number, etc.
+  userId: string
+  userName: string
+  createdAt: string
 }

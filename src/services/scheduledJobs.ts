@@ -15,7 +15,7 @@ export async function autoExpireQuotes(ctx: CRMContextValue): Promise<void> {
     if (quote.status === 'sent' && quote.validUntil) {
       const validUntil = new Date(quote.validUntil);
       if (now > validUntil) {
-        await releaseQuoteStock(quote, ctx);
+        await releaseQuoteStock(quote, ctx, 'system', 'Scheduled Job');
         console.log(`[scheduledJobs] Quote ${quote.quoteNumber} expired and stock released.`);
       }
     }
@@ -33,7 +33,7 @@ export async function sendFollowUpReminders(adapter: JobAdapter): Promise<void> 
     if (quote.status === 'sent' && quote.validUntil && !quote.reminderSent) {
       const createDate = new Date(quote.createdAt);
       const validUntil = new Date(quote.validUntil);
-      
+
       const totalDuration = validUntil.getTime() - createDate.getTime();
       const midpoint = new Date(createDate.getTime() + totalDuration / 2);
 

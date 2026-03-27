@@ -11,6 +11,7 @@ import { sendQuoteEmail, reserveStockForQuote } from "@/services/quoteService"
 import { generateNumber } from "@/services/types"
 import { FileText, X } from "lucide-react"
 import { toast } from "sonner"
+import { useUser } from "@clerk/clerk-react"
 
 interface AddQuoteModalProps {
   open: boolean
@@ -20,6 +21,7 @@ interface AddQuoteModalProps {
 
 export function AddQuoteModal({ open, onOpenChange, onSuccess }: AddQuoteModalProps) {
   const ctx = useCRMContext()
+  const { user } = useUser()
   const { data: contacts } = useCRMResource<Contact>('contacts')
   const { data: inventory } = useCRMResource<InventoryItem>('inventory')
   const { data: quotes } = useCRMResource<Quote>('quotes')
@@ -28,16 +30,16 @@ export function AddQuoteModal({ open, onOpenChange, onSuccess }: AddQuoteModalPr
     try {
       const existingNumbers = quotes.map(q => q.quoteNumber)
       quote.quoteNumber = generateNumber('QT', existingNumbers)
-      
+
       // 1. Insert the quote
       const [newQuote] = await insertRows<Quote>(ctx, 'quotes', [quote])
-      
+
       // 2. If 'sent', trigger atomic reservation
       if (newQuote.status === 'sent') {
-         sendQuoteEmail(newQuote)
-         await reserveStockForQuote(newQuote, ctx)
+        sendQuoteEmail(newQuote)
+        await reserveStockForQuote(newQuote, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
       }
-      
+
       onOpenChange(false)
       if (onSuccess) onSuccess(newQuote)
     } catch (error: any) {
@@ -49,7 +51,7 @@ export function AddQuoteModal({ open, onOpenChange, onSuccess }: AddQuoteModalPr
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      className="max-w-[1100px] w-[95vw] h-[85vh] max-h-[85vh] flex flex-col bg-white dark:bg-slate-950 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden p-0"
+      className="max-w-[1100px] w-[95vw] h-[85vh] max-h-[85vh] flex flex-col bg-white dark:bg-slate-950 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden p-0"
     >
       <button
         onClick={() => onOpenChange(false)}
@@ -60,7 +62,7 @@ export function AddQuoteModal({ open, onOpenChange, onSuccess }: AddQuoteModalPr
 
       <DialogHeader className="px-8 py-5 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 shrink-0 mb-0">
         <div className="flex items-center gap-4">
-          <div className="size-11 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center shrink-0">
+          <div className="size-11 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center shrink-0">
             <FileText className="size-5 text-indigo-600 dark:text-indigo-400" />
           </div>
           <div>

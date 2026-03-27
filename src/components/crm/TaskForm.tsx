@@ -2,7 +2,6 @@ import { useState } from "react"
 import {
   Type,
   AlignLeft,
-  Calendar,
   CheckCircle2,
   Link2,
   ChevronDown,
@@ -12,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { DatePicker } from "@/components/ui/date-picker"
 import type { Task, Contact, Deal, Lead } from "@/lib/types"
 import { generateId } from "@/lib/helpers"
 import { cn } from "@/lib/utils"
@@ -65,7 +65,7 @@ export function TaskForm({
       id: initialData?.id ?? generateId(),
       title: title.trim(),
       description: description.trim() || undefined,
-      dueDate: new Date(dueDate).toISOString(),
+      dueDate: dueDate ? new Date(dueDate).toISOString() : now,
       priority,
       status,
       entityType: entityType === 'none' ? undefined : (entityType as any),
@@ -80,19 +80,13 @@ export function TaskForm({
     onSave(task)
   }
 
-  const inputClass = "h-12 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 font-medium text-sm transition-all shadow-sm text-slate-900 dark:text-white"
+  const inputClass = "h-12 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-md focus:ring-indigo-500 focus:border-indigo-500 font-medium text-sm transition-all shadow-sm text-slate-900 dark:text-white"
   const labelClass = "text-[12px] font-bold text-slate-700 dark:text-slate-300 mb-2 block"
 
   const priorities: Task['priority'][] = ['low', 'medium', 'high', 'urgent']
   const statuses: Task['status'][] = ['open', 'in-progress', 'completed']
 
-  const priorityActiveClass = (p: Task['priority'], isActive: boolean) => {
-    if (!isActive) return "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-    if (p === 'urgent') return "bg-[rgba(239,68,68,0.2)] text-[var(--red)] border-[var(--red)]"
-    if (p === 'high') return "bg-[rgba(245,158,11,0.2)] text-[var(--amber)] border-[var(--amber)]"
-    if (p === 'medium') return "bg-[rgba(var(--accent-rgb),0.2)] text-[var(--accent)] border-[var(--accent)]"
-    return "bg-[var(--bg-highlight)] text-[var(--text-primary)] border-[var(--text-muted)]"
-  }
+
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col h-full overflow-hidden font-sans">
@@ -132,15 +126,11 @@ export function TaskForm({
         <div className="grid grid-cols-2 gap-4 animate-content-in [animation-delay:200ms]">
           <div className="space-y-1.5">
             <Label className={labelClass}>Due Date</Label>
-            <div className="relative group">
-              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-              <Input
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className={cn(inputClass, "pl-11", errors.dueDate && "border-red-500")}
-              />
-            </div>
+            <DatePicker
+              value={dueDate}
+              onChange={setDueDate}
+              className={cn("h-12 py-3 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900", errors.dueDate && "border-red-500")}
+            />
           </div>
           <div className="space-y-1.5">
             <Label className={labelClass}>Status</Label>
@@ -170,7 +160,7 @@ export function TaskForm({
                 type="button"
                 onClick={() => setPriority(p)}
                 className={cn(
-                  "h-10 px-3 rounded-xl border text-[11px] font-bold uppercase tracking-wider transition-all",
+                  "h-10 px-3 rounded-md border text-[11px] font-bold uppercase tracking-wider transition-all",
                   priority === p
                     ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none"
                     : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 hover:border-indigo-300 dark:hover:border-indigo-700"
@@ -186,7 +176,7 @@ export function TaskForm({
         <div className="space-y-4 animate-content-in [animation-delay:300ms] border-t border-slate-100 dark:border-slate-800 pt-6">
           <Label className={labelClass}>Linked Reference</Label>
 
-          <div className="flex bg-slate-50 dark:bg-slate-900 rounded-xl p-1 border border-slate-200 dark:border-slate-800">
+          <div className="flex bg-slate-50 dark:bg-slate-900 rounded-md p-1 border border-slate-200 dark:border-slate-800">
             {['none', 'contact', 'deal', 'lead'].map((type) => (
               <button
                 key={type}
@@ -197,7 +187,7 @@ export function TaskForm({
                   setEntityId("")
                 }}
                 className={cn(
-                  "flex-1 py-2 text-[11px] font-bold uppercase tracking-wider rounded-lg transition-all",
+                  "flex-1 py-2 text-[11px] font-bold uppercase tracking-wider rounded-sm transition-all",
                   entityType === type
                     ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-100 dark:border-slate-700"
                     : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-50"

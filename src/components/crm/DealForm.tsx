@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { 
   DollarSign, 
-  Calendar, 
   Target, 
   User, 
   ChevronDown,
@@ -11,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { DatePicker } from "@/components/ui/date-picker"
 import type { Deal, Contact, DealStage } from "@/lib/types"
 import { STAGE_LABELS } from "@/lib/types"
 import { generateId } from "@/lib/helpers"
@@ -127,15 +127,11 @@ export function DealForm({ onSave, onCancel, contacts, initialData }: DealFormPr
           </div>
           <div className="space-y-1.5">
             <Label className={labelClass}>Expected Close</Label>
-            <div className="relative group">
-              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none group-focus-within:text-indigo-500 transition-colors" />
-              <Input
-                type="date"
-                value={expectedCloseDate}
-                onChange={(e) => setExpectedCloseDate(e.target.value)}
-                className={cn(inputClass, "pl-11", errors.expectedCloseDate && "border-red-500")}
-              />
-            </div>
+            <DatePicker
+              value={expectedCloseDate}
+              onChange={setExpectedCloseDate}
+              className={cn("h-12 py-3 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900", errors.expectedCloseDate && "border-red-500")}
+            />
           </div>
         </div>
 

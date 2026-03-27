@@ -1,7 +1,7 @@
 import React from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { useLocation } from "wouter";
-import { cachedToken, cachedOrgId } from "@/lib/api";
+import { cachedToken, cachedOrgId, subscribeAuth } from "@/lib/api";
 
 interface ProtectedRouteProps {
   component: React.ComponentType<any>;
@@ -14,6 +14,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 }) => {
   const { isSignedIn, isLoaded } = useAuth();
   const [, navigate] = useLocation();
+  const [apiAuth, setApiAuth] = React.useState({ token: cachedToken, orgId: cachedOrgId });
+
+  React.useEffect(() => {
+    return subscribeAuth(setApiAuth);
+  }, []);
 
   if (!isLoaded) {
     return (
@@ -28,7 +33,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return null;
   }
 
-  if (!cachedToken || !cachedOrgId) {
+  // Only block if we don't have a token yet. 
+  // orgId can be null if the user has no organization.
+  if (!apiAuth.token) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent"></div>

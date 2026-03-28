@@ -196,12 +196,24 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">Reference ID</Label>
+              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                Reference ID
+                {initialData?.referenceId && (
+                  <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">
+                    Auto-linked
+                  </span>
+                )}
+              </Label>
               <Input
-                placeholder="REF-XXXX"
+                placeholder="—"
                 value={referenceId}
+                readOnly={!!initialData?.referenceId}
+                disabled={!!initialData?.referenceId}
                 onChange={(e) => setReferenceId(e.target.value)}
-                className="h-12 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
+                className={cn(
+                  "h-12 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900",
+                  initialData?.referenceId && "opacity-60 cursor-not-allowed select-none bg-slate-50 dark:bg-slate-800/50 font-mono text-xs text-slate-500"
+                )}
               />
             </div>
 

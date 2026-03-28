@@ -18,6 +18,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Building2,
+  FolderOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -41,6 +42,7 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
       links: [
         { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
         { href: "/tasks", label: "Tasks", icon: CheckSquare },
+        { href: "/projects", label: "Projects", icon: FolderOpen },
         { href: "/leads", label: "Leads", icon: UserSearch },
         { href: "/contacts", label: "Contacts", icon: Users },
         { href: "/deals", label: "Deals", icon: Handshake },
@@ -140,7 +142,7 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
                             )}
                           />
                           {!collapsed && (
-                            <span 
+                            <span
                               className={cn(
                                 "text-[13px] tracking-wide truncate transition-colors",
                                 isActive ? "text-text-primary font-bold" : "text-inherit"

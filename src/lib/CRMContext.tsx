@@ -24,6 +24,7 @@ export const TABLE_MAP: Record<string, string> = {
   purchase_requests: "purchase_requests",
   inventory_transactions: "inventory_transactions",
   vendors: "vendors",
+  projects: "projects",
 }
 
 // ── Case converters ──────────────────────────────────────────────────────────
@@ -34,7 +35,7 @@ type CamelObject = Record<string, any>
 const UUID_FIELDS = [
   "contact_id", "deal_id", "lead_id", "entity_id",
   "converted_to_contact_id", "converted_to_deal_id",
-  "customer_id", "vendor_id",
+  "customer_id",
 ]
 
 export function toSnake(obj: CamelObject): SnakeObject {
@@ -89,7 +90,7 @@ const CRMContext = createContext<CRMContextValue | null>(null)
 // ── Provider ─────────────────────────────────────────────────────────────────
 
 const PRELOAD_RESOURCES = [
-  "leads", "contacts", "deals", "tasks", "activities",
+  "leads", "contacts", "deals", "tasks", "activities", "projects",
 ]
 
 export function CRMProvider({ children }: { children: React.ReactNode }) {
@@ -275,7 +276,8 @@ export async function insertRows<T extends { id: string }>(
   const rows = newItems.map((item) => {
     const row = toSnake(item)
     row.user_id = ctx.userId
-    if (!row.id || row.id === "0") delete row.id
+    // Always delete id so the database generates it (avoids UUID conflicts)
+    delete row.id
     return row
   })
 

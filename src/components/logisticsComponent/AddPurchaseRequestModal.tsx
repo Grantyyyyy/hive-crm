@@ -3,45 +3,46 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { PurchaseOrderForm } from "./PurchaseOrderForm"
+import { PurchaseRequestForm } from "./PurchaseRequestForm"
 import { useCRMContext, insertRows } from "@/lib/CRMContext"
 import { useCRMResource } from "@/lib/hooks"
-import type { PurchaseOrder, InventoryItem } from "@/lib/types"
-import { ScrollText, X } from "lucide-react"
+import type { PurchaseRequest, InventoryItem, Vendor } from "@/lib/types"
+import { Layers, X } from "lucide-react"
 import { toast } from "sonner"
 import { generateNumber } from "@/services/types"
 
-interface AddPurchaseOrderModalProps {
+interface AddPurchaseRequestModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSuccess?: (order: PurchaseOrder) => void
+  onSuccess?: (request: PurchaseRequest) => void
 }
 
-export function AddPurchaseOrderModal({ open, onOpenChange, onSuccess }: AddPurchaseOrderModalProps) {
+export function AddPurchaseRequestModal({ open, onOpenChange, onSuccess }: AddPurchaseRequestModalProps) {
   const ctx = useCRMContext()
   const { data: inventoryItems, isLoaded } = useCRMResource<InventoryItem>('inventory')
-  const { data: purchaseOrders } = useCRMResource<PurchaseOrder>('purchase_orders')
+  const { data: vendors } = useCRMResource<Vendor>('vendors')
+  const { data: requests } = useCRMResource<PurchaseRequest>('purchase_requests')
 
-  const handleSave = async (order: PurchaseOrder) => {
+  const handleSave = async (request: PurchaseRequest) => {
     try {
-      const existingNumbers = purchaseOrders.map(o => o.poNumber)
-      order.poNumber = generateNumber('PO', existingNumbers)
+      const existingNumbers = requests.map(r => r.requestNumber)
+      request.requestNumber = generateNumber('PR', existingNumbers)
 
-      const [newOrder] = await insertRows<PurchaseOrder>(ctx, 'purchase_orders', [order])
-      
+      const [newRequest] = await insertRows<PurchaseRequest>(ctx, 'purchase_requests', [request])
+
       onOpenChange(false)
-      if (onSuccess) onSuccess(newOrder)
-      toast.success("Purchase Order Created Successfully", {
-        description: `Order ${newOrder.poNumber} has been saved.`
+      if (onSuccess) onSuccess(newRequest)
+      toast.success("Purchase Request Submitted", {
+        description: `Request ${newRequest.requestNumber} has been saved.`
       })
     } catch (error: any) {
-      toast.error("Failed to create PO", { description: error.message })
+      toast.error("Failed to submit request", { description: error.message })
     }
   }
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onOpenChange={onOpenChange}
       className="max-w-[1100px] w-[95vw] h-[85vh] max-h-[85vh] flex flex-col bg-white dark:bg-slate-950 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden p-0"
     >
@@ -55,15 +56,15 @@ export function AddPurchaseOrderModal({ open, onOpenChange, onSuccess }: AddPurc
       <DialogHeader className="px-8 py-5 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 shrink-0 mb-0">
         <div className="flex items-center gap-4">
           <div className="size-11 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center shrink-0 shadow-sm">
-            <ScrollText className="size-5 text-indigo-600 dark:text-indigo-400" />
+            <Layers className="size-5 text-indigo-600 dark:text-indigo-400" />
           </div>
           <div>
             <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white leading-tight uppercase tracking-normal">
-              New Purchase Order
+              Submit Purchase Request
             </DialogTitle>
             <p className="text-slate-500 dark:text-slate-400 text-[10px] mt-0.5 font-medium uppercase tracking-widest flex items-center gap-2">
               <span className="w-1 h-1 rounded-full bg-indigo-500 animate-pulse" />
-              Inventory Procurement Management
+              Procurement Workflow System
             </p>
           </div>
         </div>
@@ -71,14 +72,15 @@ export function AddPurchaseOrderModal({ open, onOpenChange, onSuccess }: AddPurc
 
       <div className="flex-1 overflow-hidden relative">
         {isLoaded ? (
-          <PurchaseOrderForm
+          <PurchaseRequestForm
             onSave={handleSave}
             onCancel={() => onOpenChange(false)}
             inventoryItems={inventoryItems}
+            vendors={vendors.filter(v => v.status === 'active')}
           />
         ) : (
           <div className="flex items-center justify-center h-full text-slate-400 font-bold animate-pulse">
-            INITIALIZING PROCUREMENT SYSTEM...
+            INITIALIZING WORKFLOW...
           </div>
         )}
       </div>

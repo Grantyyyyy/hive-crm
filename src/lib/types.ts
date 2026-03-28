@@ -69,6 +69,16 @@ export interface LeadConversion {
   convertedAt: string
 }
 
+export interface Project {
+  id: string
+  name: string
+  description?: string
+  color: string
+  ownerId: string
+  createdAt: string
+  updatedAt: string
+}
+
 export interface Task {
   id: string
   title: string
@@ -84,7 +94,14 @@ export interface Task {
   contactId?: string
   dealId?: string
   leadId?: string
+  projectId?: string
   completedAt?: string
+  // Recurrence fields
+  recurrencePattern?: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom'
+  recurrenceInterval?: number  // Every X days/weeks/months (default 1)
+  recurrenceEndDate?: string
+  parentTaskId?: string  // Link to parent recurring task
+  nextOccurrence?: string
   createdAt: string
   updatedAt: string
 }
@@ -237,6 +254,8 @@ export interface InventoryItem {
   stockLevel: StockLevel
   status: InventoryStatus
   imageUrl?: string
+  reorderThreshold?: number
+  reorderQuantity?: number
   createdAt: string
   updatedAt: string
 }
@@ -259,17 +278,30 @@ export interface PurchaseOrder {
     quantity: number
     price: number
     inventoryItemId?: string
+    trackInInventory?: boolean
   }>
-  purchaseRequestId?: string  // reference back to source PurchaseRequest
-  referenceId?: string
+  referenceId?: string         // reference back to source PurchaseRequest
   shippingInfo?: string
   internalNotes?: string
   vendorInstructions?: string
+  stockReceived?: boolean      // prevents double-receipt
   createdAt: string
   updatedAt: string
 }
 
 export type PurchaseRequestStatus = 'draft' | 'pending_review' | 'approved' | 'rejected' | 'ordered'
+
+export interface PurchaseRequestItem {
+  id: string
+  name: string
+  description?: string
+  quantity: number
+  estimatedPrice: number
+  inventoryItemId?: string
+  vendorId?: string
+  vendorName?: string
+  trackInInventory?: boolean
+}
 
 export interface PurchaseRequest {
   id: string
@@ -280,20 +312,10 @@ export interface PurchaseRequest {
   status: PurchaseRequestStatus
   date: string
   department: string
-  items: Array<{
-    id: string
-    name: string
-    description?: string
-    quantity: number
-    estimatedPrice: number
-    inventoryItemId?: string
-  }>
-  inventoryItemId?: string
-  inventoryItemName?: string
-  requestedQuantity: number
-  estimatedPrice: number
+  items: PurchaseRequestItem[]
+
   justification: string
-  urgent: boolean             // true when triggered by out_of_stock
+  urgent: boolean
   purpose?: string
   priority: 'low' | 'medium' | 'high' | 'urgent'
   createdAt: string

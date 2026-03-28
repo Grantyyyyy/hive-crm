@@ -5,14 +5,16 @@ import {
   CheckCircle2,
   Link2,
   ChevronDown,
-  Check
+  Check,
+  FolderOpen,
+  Repeat2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/ui/date-picker"
-import type { Task, Contact, Deal, Lead } from "@/lib/types"
+import type { Task, Contact, Deal, Lead, Project } from "@/lib/types"
 import { generateId } from "@/lib/helpers"
 import { cn } from "@/lib/utils"
 
@@ -23,6 +25,7 @@ interface TaskFormProps {
   contacts: Contact[]
   deals: Deal[]
   leads: Lead[]
+  projects: Project[]
   fixedEntity?: { type: 'contact' | 'deal' | 'lead'; id: string }
   userId: string
 }
@@ -34,6 +37,7 @@ export function TaskForm({
   contacts,
   deals,
   leads,
+  projects,
   fixedEntity,
   userId
 }: TaskFormProps) {
@@ -46,6 +50,11 @@ export function TaskForm({
     fixedEntity?.type ?? initialData?.entityType ?? "none"
   )
   const [entityId, setEntityId] = useState(fixedEntity?.id ?? initialData?.entityId ?? "")
+  const [projectId, setProjectId] = useState(initialData?.projectId ?? "")
+  // Recurrence state
+  const [recurrencePattern, setRecurrencePattern] = useState<Task['recurrencePattern']>(initialData?.recurrencePattern)
+  const [recurrenceInterval, setRecurrenceInterval] = useState(initialData?.recurrenceInterval ?? 1)
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState(initialData?.recurrenceEndDate ? initialData.recurrenceEndDate.split('T')[0] : "")
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const validate = () => {
@@ -70,14 +79,32 @@ export function TaskForm({
       status,
       entityType: entityType === 'none' ? undefined : (entityType as any),
       entityId: entityType === 'none' ? undefined : entityId,
+      projectId: projectId || undefined,
       ownerId: initialData?.ownerId ?? userId,
       createdBy: initialData?.createdBy ?? userId,
       createdAt: initialData?.createdAt ?? now,
       updatedAt: now,
-      completedAt: status === 'completed' ? (initialData?.completedAt ?? now) : undefined
+      completedAt: status === 'completed' ? (initialData?.completedAt ?? now) : undefined,
+      // Recurrence fields
+      recurrencePattern: recurrencePattern || undefined,
+      recurrenceInterval: recurrencePattern ? recurrenceInterval : undefined,
+      recurrenceEndDate: recurrencePattern && recurrenceEndDate ? new Date(recurrenceEndDate).toISOString() : undefined,
+      nextOccurrence: recurrencePattern ? calculateNextOccurrence(dueDate, recurrencePattern, recurrenceInterval) : undefined
     }
 
     onSave(task)
+  }
+
+  const calculateNextOccurrence = (dateStr: string, pattern: string, interval: number): string => {
+    const date = new Date(dateStr)
+    switch (pattern) {
+      case 'daily': date.setDate(date.getDate() + interval); break
+      case 'weekly': date.setDate(date.getDate() + (interval * 7)); break
+      case 'monthly': date.setMonth(date.getMonth() + interval); break
+      case 'yearly': date.setFullYear(date.getFullYear() + interval); break
+      case 'custom': date.setDate(date.getDate() + interval); break
+    }
+    return date.toISOString()
   }
 
   const inputClass = "h-12 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-md focus:ring-indigo-500 focus:border-indigo-500 font-medium text-sm transition-all shadow-sm text-slate-900 dark:text-white"
@@ -170,6 +197,141 @@ export function TaskForm({
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Project Selector */}
+        <div className="space-y-4 animate-content-in [animation-delay:280ms] border-t border-slate-100 dark:border-slate-800 pt-6">
+          <Label className={labelClass}>Project</Label>
+          <div className="relative group">
+            <FolderOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+            <select
+              value={projectId}
+              onChange={(e) => setProjectId(e.target.value)}
+              className={cn(inputClass, "w-full appearance-none pl-11 pr-10 cursor-pointer")}
+            >
+              <option value="">No project</option>
+              {projects.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          </div>
+        </div>
+
+        {/* Recurrence Settings */}
+        <div className="space-y-4 animate-content-in [animation-delay:290ms] border-t border-slate-100 dark:border-slate-800 pt-6">
+          <div className="flex items-center justify-between">
+            <Label className={labelClass}>Recurring Task</Label>
+            <button
+              type="button"
+              onClick={() => {
+                setRecurrencePattern(recurrencePattern ? undefined : 'weekly')
+              }}
+              className={cn(
+                "text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded transition-all",
+                recurrencePattern
+                  ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400"
+                  : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+              )}
+            >
+              {recurrencePattern ? 'Enabled' : 'Disabled'}
+            </button>
+          </div>
+
+          {recurrencePattern && (
+            <div className="space-y-4 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+              {/* Pattern Selection */}
+              <div>
+                <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-2 block">Repeat Pattern</Label>
+                <div className="grid grid-cols-5 gap-2">
+                  {(['daily', 'weekly', 'monthly', 'yearly', 'custom'] as const).map((pattern) => (
+                    <button
+                      key={pattern}
+                      type="button"
+                      onClick={() => setRecurrencePattern(pattern)}
+                      className={cn(
+                        "py-2 px-1 rounded text-[10px] font-bold uppercase tracking-wider border transition-all",
+                        recurrencePattern === pattern
+                          ? "bg-indigo-600 border-indigo-600 text-white shadow-sm"
+                          : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-indigo-300"
+                      )}
+                    >
+                      {pattern}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Interval Input */}
+              <div className="flex items-center gap-2">
+                <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap">Every</Label>
+                <div className="relative flex-1">
+                  <Input
+                    type="number"
+                    min="1"
+                    max="365"
+                    value={recurrenceInterval}
+                    onChange={(e) => setRecurrenceInterval(Math.max(1, parseInt(e.target.value) || 1))}
+                    className={cn(inputClass, "h-9 w-20 text-center")}
+                  />
+                </div>
+                <span className="text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                  {recurrencePattern === 'daily' ? 'day(s)' :
+                    recurrencePattern === 'weekly' ? 'week(s)' :
+                      recurrencePattern === 'monthly' ? 'month(s)' :
+                        recurrencePattern === 'yearly' ? 'year(s)' : 'day(s)'}
+                </span>
+              </div>
+
+              {/* End Date */}
+              <div>
+                <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-2 block">Ends</Label>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setRecurrenceEndDate("")}
+                    className={cn(
+                      "text-[11px] font-bold px-3 py-1.5 rounded border transition-all",
+                      !recurrenceEndDate
+                        ? "bg-indigo-600 border-indigo-600 text-white"
+                        : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500"
+                    )}
+                  >
+                    Never
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRecurrenceEndDate(dueDate)}
+                    className={cn(
+                      "text-[11px] font-bold px-3 py-1.5 rounded border transition-all",
+                      recurrenceEndDate && recurrenceEndDate === dueDate
+                        ? "bg-indigo-600 border-indigo-600 text-white"
+                        : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500"
+                    )}
+                  >
+                    On due date
+                  </button>
+                  <DatePicker
+                    value={recurrenceEndDate}
+                    onChange={setRecurrenceEndDate}
+                    className="h-9 flex-1"
+                  />
+                </div>
+              </div>
+
+              {/* Preview */}
+              <div className="flex items-center gap-2 p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded border border-indigo-100 dark:border-indigo-800">
+                <Repeat2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                <span className="text-[12px] text-indigo-700 dark:text-indigo-300">
+                  Repeats every {recurrenceInterval} {recurrencePattern === 'daily' ? 'day' :
+                    recurrencePattern === 'weekly' ? 'week' :
+                      recurrencePattern === 'monthly' ? 'month' :
+                        recurrencePattern === 'yearly' ? 'year' : 'day'}
+                  {recurrenceEndDate && ` until ${new Date(recurrenceEndDate).toLocaleDateString()}`}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Linked To */}

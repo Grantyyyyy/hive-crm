@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/sheet"
 import { TaskForm } from "./TaskForm"
 import { useCRMResource } from "@/lib/hooks"
-import type { Contact, Deal, Lead, Task } from "@/lib/types"
+import type { Contact, Deal, Lead, Task, Project } from "@/lib/types"
 
 interface AddTaskModalProps {
   open: boolean
@@ -22,6 +22,7 @@ export function AddTaskModal({ open, onOpenChange, onSave, userId, fixedEntity }
   const { data: contacts } = useCRMResource<Contact>('contacts')
   const { data: deals } = useCRMResource<Deal>('deals')
   const { data: leads } = useCRMResource<Lead>('leads')
+  const { data: projects } = useCRMResource<Project>('projects')
 
   const handleSave = (task: Task) => {
     onSave(task)
@@ -44,6 +45,7 @@ export function AddTaskModal({ open, onOpenChange, onSave, userId, fixedEntity }
             contacts={contacts}
             deals={deals}
             leads={leads}
+            projects={projects ?? []}
             fixedEntity={fixedEntity}
             userId={userId}
           />

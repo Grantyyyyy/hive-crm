@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
-import type { PurchaseRequest, PurchaseRequestStatus, InventoryItem } from "@/lib/types"
+import type { PurchaseRequest, PurchaseRequestStatus, InventoryItem, Vendor } from "@/lib/types"
 import { generateId } from "@/lib/helpers"
 import { useUser } from "@clerk/clerk-react"
 
@@ -13,9 +13,10 @@ interface PurchaseRequestFormProps {
   onCancel: () => void
   initialData?: Partial<PurchaseRequest>
   inventoryItems?: InventoryItem[]  // Added: inventory catalog for selection
+  vendors?: Vendor[]                // Optional: vendor list for per-item assignment
 }
 
-export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryItems = [] }: PurchaseRequestFormProps) {
+export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryItems = [], vendors = [] }: PurchaseRequestFormProps) {
   const { user } = useUser()
   const [department, setDepartment] = useState(initialData?.department ?? "")
   const [requestNumber] = useState(initialData?.requestNumber ?? `PR-${Math.floor(10000 + Math.random() * 90000)}`)
@@ -24,7 +25,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
   const [searchTerm, setSearchTerm] = useState("")
   const [showResults, setShowResults] = useState(false)
   const [items, setItems] = useState(initialData?.items ?? [
-    { id: generateId(), name: "", quantity: 1, estimatedPrice: 0, inventoryItemId: initialData?.inventoryItemId ?? "" }
+    { id: generateId(), name: "", quantity: 1, estimatedPrice: 0, inventoryItemId: "", vendorId: "", vendorName: "", trackInInventory: false }
   ])
   const [purpose, setPurpose] = useState(initialData?.purpose ?? "")
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -34,15 +35,28 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
   }, [items])
 
   const addItem = () => {
-    setItems([...items, { id: generateId(), name: "", quantity: 1, estimatedPrice: 0, inventoryItemId: "" }])
+    setItems([...items, { id: generateId(), name: "", quantity: 1, estimatedPrice: 0, inventoryItemId: "", vendorId: "", vendorName: "", trackInInventory: false }])
   }
 
   const removeItem = (id: string) => {
     setItems(items.filter(i => i.id !== id))
   }
 
-  const updateItem = (id: string, updates: Partial<{ name: string, quantity: number, estimatedPrice: number, inventoryItemId: string }>) => {
+  const updateItem = (id: string, updates: Partial<{ name: string, quantity: number, estimatedPrice: number, inventoryItemId: string, vendorId: string, vendorName: string, trackInInventory: boolean }>) => {
     setItems(items.map(item => item.id === id ? { ...item, ...updates } : item))
+  }
+
+  const handleVendorChange = (itemId: string, vendorId: string) => {
+    if (!vendorId) {
+      updateItem(itemId, { vendorId: '', vendorName: '' })
+      return
+    }
+    const vendor = vendors.find(v => v.id === vendorId)
+    if (vendor) {
+      updateItem(itemId, { vendorId: vendor.id, vendorName: vendor.name })
+    } else {
+      updateItem(itemId, { vendorId: '', vendorName: '' })
+    }
   }
 
   const handleInventorySelect = (inventoryItemId: string) => {
@@ -55,7 +69,8 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
           name: invItem.name,
           quantity: 10, // Default reorder quantity
           estimatedPrice: invItem.price * 0.7,
-          inventoryItemId: invItem.id
+          inventoryItemId: invItem.id,
+          trackInInventory: true
         }])
       } else {
         setItems([...items, {
@@ -63,7 +78,8 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
           name: invItem.name,
           quantity: 10,
           estimatedPrice: invItem.price * 0.7,
-          inventoryItemId: invItem.id
+          inventoryItemId: invItem.id,
+          trackInInventory: true
         }])
       }
     }
@@ -97,8 +113,6 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
       items,
       purpose,
       priority,
-      requestedQuantity: items.reduce((sum, i) => sum + i.quantity, 0),
-      estimatedPrice: totalEstimate,
       justification: purpose || "Standard request",
       urgent: priority === 'urgent',
       createdAt: initialData?.createdAt ?? new Date().toISOString(),
@@ -285,6 +299,8 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/50 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200 dark:border-slate-800">
                   <th className="px-6 py-4">Item Name / Description</th>
+                  <th className="px-6 py-4 w-48">Vendor</th>
+                  <th className="px-6 py-4 w-32 text-center">Track in Inv.</th>
                   <th className="px-6 py-4 w-28 text-center">Quantity</th>
                   <th className="px-6 py-4 w-36 text-right">Est. Cost</th>
                   <th className="px-6 py-4 w-36 text-right">Total Est.</th>
@@ -302,6 +318,35 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                         onChange={(e) => updateItem(item.id, { name: e.target.value })}
                       />
                       {errors[`item_${index}_name`] && <p className="text-[8px] font-bold text-red-500 uppercase mt-1">{errors[`item_${index}_name`]}</p>}
+                    </td>
+                    <td className="px-6 py-4">
+                      {vendors.length > 0 ? (
+                        <select
+                          className="w-full bg-transparent border-none focus:ring-0 p-0 text-slate-900 dark:text-slate-100 text-sm font-bold cursor-pointer"
+                          value={item.vendorId || ''}
+                          onChange={(e) => handleVendorChange(item.id, e.target.value)}
+                        >
+                          <option value="">No vendor</option>
+                          {vendors.map(v => (
+                            <option key={v.id} value={v.id}>{v.name}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          className="w-full bg-transparent border-none focus:ring-0 p-0 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 text-sm font-bold"
+                          placeholder="Vendor name..."
+                          value={item.vendorName || ''}
+                          onChange={(e) => updateItem(item.id, { vendorName: e.target.value })}
+                        />
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 dark:border-slate-700 bg-transparent cursor-pointer"
+                        checked={item.trackInInventory ?? !!item.inventoryItemId}
+                        onChange={(e) => updateItem(item.id, { trackInInventory: e.target.checked })}
+                      />
                     </td>
                     <td className="px-6 py-4 text-center">
                       <input
@@ -340,7 +385,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
               </tbody>
               <tfoot>
                 <tr className="bg-slate-50/50 dark:bg-slate-800/30">
-                  <td colSpan={3} className="px-6 py-6 text-right text-[10px] font-black uppercase tracking-widest text-slate-400">Total Estimated Budget</td>
+                  <td colSpan={5} className="px-6 py-6 text-right text-[10px] font-black uppercase tracking-widest text-slate-400">Total Estimated Budget</td>
                   <td className="px-6 py-6 text-right text-xl font-black text-indigo-600 dark:text-indigo-400">
                     ${totalEstimate.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </td>

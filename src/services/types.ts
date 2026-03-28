@@ -23,6 +23,7 @@ export interface JobAdapter {
   // Inventory
   getInventoryItems: () => InventoryItem[];
   updateInventoryItem: (id: string, patch: Partial<InventoryItem>) => Promise<void>;
+  insertInventoryItem: (item: Omit<InventoryItem, 'id'>) => Promise<InventoryItem>;
 
   // Purchase Requests
   getPurchaseRequests: () => PurchaseRequest[];

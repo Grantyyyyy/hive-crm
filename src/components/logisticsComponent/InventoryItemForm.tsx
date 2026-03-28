@@ -1,12 +1,14 @@
 import { useState } from "react"
-import { Package, Hash, Tag, DollarSign, Database, Activity, Info, Zap } from "lucide-react"
+import { Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
-import type { InventoryItem, InventoryStatus, StockLevel } from "@/lib/types"
+import type { InventoryItem, InventoryStatus } from "@/lib/types"
 import { generateId } from "@/lib/helpers"
+import { recalculateStockLevel } from "@/services/inventoryService"
+import { STOCK_THRESHOLDS } from "@/services/types"
 
 interface InventoryItemFormProps {
   initialData?: Partial<InventoryItem>
@@ -22,6 +24,8 @@ export function InventoryItemForm({ initialData, onSave, onCancel }: InventoryIt
   const [stockQuantity, setStockQuantity] = useState(initialData?.stockQuantity?.toString() ?? "0")
   const [description, setDescription] = useState(initialData?.description ?? "")
   const [status, setStatus] = useState<InventoryStatus>(initialData?.status ?? "active")
+  const [reorderThreshold, setReorderThreshold] = useState(initialData?.reorderThreshold?.toString() ?? "")
+  const [reorderQuantity, setReorderQuantity] = useState(initialData?.reorderQuantity?.toString() ?? "")
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   
@@ -48,9 +52,8 @@ export function InventoryItemForm({ initialData, onSave, onCancel }: InventoryIt
     if (!validate()) return
 
     const qty = parseInt(stockQuantity)
-    let level: StockLevel = 'in_stock'
-    if (qty <= 0) level = 'out_of_stock'
-    else if (qty <= 10) level = 'low_stock'
+    const threshold = reorderThreshold ? parseInt(reorderThreshold) : undefined
+    const level = recalculateStockLevel(qty, initialData?.reservedQuantity ?? 0, threshold)
 
     const item: InventoryItem = {
       id: initialData?.id ?? generateId(),
@@ -63,6 +66,8 @@ export function InventoryItemForm({ initialData, onSave, onCancel }: InventoryIt
       stockLevel: level,
       status,
       description,
+      reorderThreshold: threshold,
+      reorderQuantity: reorderQuantity ? parseInt(reorderQuantity) : undefined,
       createdAt: initialData?.createdAt ?? new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
@@ -71,44 +76,41 @@ export function InventoryItemForm({ initialData, onSave, onCancel }: InventoryIt
   }
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950 transition-all duration-300">
+    <div className="flex flex-col h-full bg-white dark:bg-slate-950 transition-all duration-300">
       <div className="flex-1 overflow-y-auto px-8 py-10 space-y-10 pb-32">
         
         {/* Section: Basic Information */}
         <section className="space-y-6">
           <div className="flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
-            <Info className="w-4 h-4 text-slate-400" />
             <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Basic Information</h3>
           </div>
-
+  
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2 space-y-2">
-              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">Product Name</Label>
+              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300 px-1">Product Name</Label>
               <div className="relative group">
-                <Package className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                 <Input
                   placeholder="e.g. Premium Wireless Mouse"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className={cn(
-                    "h-12 pl-12 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all",
+                    "h-12 px-5 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm",
                     errors.name && "border-red-500 focus:ring-red-500/20"
                   )}
                 />
               </div>
-              {errors.name && <p className="text-[10px] font-bold text-red-500 uppercase tracking-wider">{errors.name}</p>}
+              {errors.name && <p className="text-[10px] font-bold text-red-500 uppercase tracking-wider px-1">{errors.name}</p>}
             </div>
-
+  
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">SKU / Item Code</Label>
+              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300 px-1">SKU / Item Code</Label>
               <div className="relative group flex items-center">
-                <Hash className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
                 <Input
                   placeholder="SKU-XXXX-X"
                   value={sku}
                   onChange={(e) => setSku(e.target.value)}
                   className={cn(
-                    "h-12 pl-12 pr-28 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all",
+                    "h-12 pl-5 pr-28 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm",
                     errors.sku && "border-red-500"
                   )}
                 />
@@ -122,90 +124,107 @@ export function InventoryItemForm({ initialData, onSave, onCancel }: InventoryIt
                 </button>
               </div>
             </div>
-
+  
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">Category</Label>
-              <div className="relative group">
-                <Tag className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-                <Input
-                  placeholder="e.g. Electronics"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className={cn(
-                    "h-12 pl-12 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all",
-                    errors.category && "border-red-500"
-                  )}
-                />
-              </div>
+              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300 px-1">Category</Label>
+              <Input
+                placeholder="e.g. Electronics"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className={cn(
+                  "h-12 px-5 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm",
+                  errors.category && "border-red-500"
+                )}
+              />
             </div>
           </div>
         </section>
-
+  
         {/* Section: Pricing & Stock */}
         <section className="space-y-6">
           <div className="flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
-            <Activity className="w-4 h-4 text-slate-400" />
             <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Pricing & Inventory</h3>
           </div>
-
+  
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">Unit Price ($)</Label>
-              <div className="relative group">
-                <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  className={cn(
-                    "h-12 pl-12 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all",
-                    errors.price && "border-red-500"
-                  )}
-                />
-              </div>
+              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300 px-1">Unit Price ($)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                className={cn(
+                  "h-12 px-5 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm",
+                  errors.price && "border-red-500"
+                )}
+              />
+            </div>
+  
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300 px-1">Opening Stock Quantity</Label>
+              <Input
+                type="number"
+                placeholder="0"
+                value={stockQuantity}
+                onChange={(e) => setStockQuantity(e.target.value)}
+                className={cn(
+                  "h-12 px-5 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm",
+                  errors.stockQuantity && "border-red-500"
+                )}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300 px-1">Reorder Threshold</Label>
+              <Input
+                type="number"
+                min={0}
+                placeholder={`Default: ${STOCK_THRESHOLDS.low}`}
+                value={reorderThreshold}
+                onChange={(e) => setReorderThreshold(e.target.value)}
+                className="h-12 px-5 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm"
+              />
+              <p className="text-[10px] text-slate-400 font-medium px-1">ATP units at which this item is flagged as low stock</p>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">Opening Stock Quantity</Label>
-              <div className="relative group">
-                <Database className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-                <Input
-                  type="number"
-                  placeholder="0"
-                  value={stockQuantity}
-                  onChange={(e) => setStockQuantity(e.target.value)}
-                  className={cn(
-                    "h-12 pl-12 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all",
-                    errors.stockQuantity && "border-red-500"
-                  )}
-                />
-              </div>
+              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300 px-1">Reorder Quantity</Label>
+              <Input
+                type="number"
+                min={1}
+                placeholder="e.g. 50"
+                value={reorderQuantity}
+                onChange={(e) => setReorderQuantity(e.target.value)}
+                className="h-12 px-5 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm"
+              />
+              <p className="text-[10px] text-slate-400 font-medium px-1">Suggested quantity to order when restocking</p>
             </div>
           </div>
         </section>
-
+  
         {/* Section: Details */}
         <section className="space-y-6">
           <div className="flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
-            <Activity className="w-4 h-4 text-slate-400" />
             <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Additional Details</h3>
           </div>
-
+  
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">Description</Label>
+              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300 px-1">Description</Label>
               <Textarea
                 placeholder="Product technical specifications and details..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[120px] p-4 text-sm focus:ring-2 focus:ring-indigo-500/20 shadow-sm transition-all"
+                className="rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 min-h-[120px] p-4 text-sm focus:ring-2 focus:ring-indigo-500/20 shadow-sm transition-all"
               />
             </div>
-
+  
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">Initial Status</Label>
+              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300 px-1">Initial Status</Label>
               <div className="grid grid-cols-2 gap-3 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
                 {(['active', 'draft'] as InventoryStatus[]).map((s) => (
                   <button

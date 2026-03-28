@@ -18,6 +18,7 @@ interface DeleteModalProps {
   onDelete: () => void
   cancelText?: string
   deleteText?: string
+  loading?: boolean
 }
 
 export function DeleteModal({
@@ -28,9 +29,16 @@ export function DeleteModal({
   onDelete,
   cancelText = "Cancel",
   deleteText = "Delete",
+  loading = false,
 }: DeleteModalProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(value) => {
+        if (loading) return
+        onOpenChange(value)
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
@@ -47,14 +55,16 @@ export function DeleteModal({
           <Button
             variant="outlineNeutral"
             onClick={() => onOpenChange(false)}
+            disabled={loading}
           >
             {cancelText}
           </Button>
           <Button
             variant="destructive"
             onClick={onDelete}
+            disabled={loading}
           >
-            {deleteText}
+            {loading ? 'Deleting...' : deleteText}
           </Button>
         </DialogFooter>
       </DialogContent>

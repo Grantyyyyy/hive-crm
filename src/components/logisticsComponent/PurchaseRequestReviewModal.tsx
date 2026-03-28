@@ -29,7 +29,10 @@ export function PurchaseRequestReviewModal({
   if (!request) return null
 
   const totalEstimate = request.items.reduce((sum, item) => sum + (item.quantity * item.estimatedPrice), 0)
-  const inventoryItem = inventoryItems.find(i => i.id === request.inventoryItemId)
+
+  // Find linked inventory item from the first item with an inventoryItemId
+  const firstLinkedItemId = request.items.find(i => i.inventoryItemId)?.inventoryItemId
+  const inventoryItem = firstLinkedItemId ? inventoryItems.find(i => i.id === firstLinkedItemId) : undefined
   const atp = inventoryItem ? inventoryItem.stockQuantity - (inventoryItem.reservedQuantity || 0) : null
 
   const handleApprove = async () => {

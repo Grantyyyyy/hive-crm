@@ -17,8 +17,9 @@ import {
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { PageSkeleton } from "@/components/ui/page-skeleton"
-import { InvoiceModal } from "@/components/crm/InvoiceModal"
+import { InvoiceModal } from "@/components/crmComponent/InvoiceModal"
 import { DeleteModal } from "@/components/ui/delete-modal"
+import { ConfirmModal } from "@/components/ui/confirm-modal"
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
 import { useCRMContext, updateRow } from "@/lib/CRMContext"
@@ -26,6 +27,7 @@ import type { SalesOrder, SalesOrderStatus } from "@/lib/types"
 import {
   fulfillOrderStock,
   releaseOrderStock,
+  returnShippedOrderStock,
   sendShippingNotification,
   generateInvoice
 } from "@/services/orderService"
@@ -59,26 +61,34 @@ const STATUS_ORDER: SalesOrderStatus[] = ["pending", "shipped", "delivered"]
 
 export function SalesOrderDetail() {
   const [, params] = useRoute("/orders/:id")
-  useLocation()
+  const [, navigate] = useLocation()
   const orderId = params?.id ?? ""
   const ctx = useCRMContext()
   const { user } = useUser()
 
-  const { data: orders, isLoaded } = useCRMResource<SalesOrder>("orders")
+  const { data: orders, isLoaded, deleteItem } = useCRMResource<SalesOrder>("orders")
 
   const [invoiceOpen, setInvoiceOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [returnOpen, setReturnOpen] = useState(false)
+  const [isShipping, setIsShipping] = useState(false)
+  const [isCancelling, setIsCancelling] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isReturning, setIsReturning] = useState(false)
 
   const order = useMemo(() => orders.find(o => o.id === orderId), [orders, orderId])
 
   const handleShip = async () => {
-    if (!order) return
+    if (!order || isShipping) return
+    setIsShipping(true)
     try {
       await fulfillOrderStock(order, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
       sendShippingNotification(order)
       toast.success("Order Marked as Shipped", { description: `#${order.orderNumber} — stock physical/reserved updated.` })
     } catch (e: unknown) {
       toast.error("Failed to ship order", { description: (e as Error).message })
+    } finally {
+      setIsShipping(false)
     }
   }
 
@@ -95,12 +105,53 @@ export function SalesOrderDetail() {
   }
 
   const handleCancel = async () => {
-    if (!order) return
+    if (!order || isCancelling) return
+    setIsCancelling(true)
     try {
       await releaseOrderStock(order, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
       toast.success("Order Cancelled", { description: `#${order.orderNumber} — stock reservation released.` })
     } catch (e: unknown) {
       toast.error("Failed to cancel order", { description: (e as Error).message })
+    } finally {
+      setIsCancelling(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!order || isDeleting) return
+    setIsDeleting(true)
+    try {
+      if (order.stockDeducted) {
+        toast.error("Cannot delete a shipped order", {
+          description: "Stock has already been deducted. Please create a return or adjustment instead."
+        })
+        return
+      }
+      // Release reservation if held
+      if (order.stockReserved) {
+        await releaseOrderStock(order, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
+      }
+      await deleteItem(order.id)
+      navigate("/orders")
+    } catch (e: unknown) {
+      toast.error("Failed to delete order", { description: (e as Error).message })
+    } finally {
+      setIsDeleting(false)
+      setDeleteOpen(false)
+    }
+  }
+
+  const handleReturn = async () => {
+    if (!order || isReturning) return
+    setIsReturning(true)
+    try {
+      await returnShippedOrderStock(order, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
+      toast.success("Order Returned", { description: `#${order.orderNumber} — stock returned to inventory.` })
+      setReturnOpen(false)
+    } catch (e: unknown) {
+      toast.error("Failed to return order", { description: (e as Error).message })
+    } finally {
+      setIsReturning(false)
     }
   }
 
@@ -172,8 +223,8 @@ export function SalesOrderDetail() {
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-2 shrink-0">
               {order.status === "pending" && (
-                <Button variant="outlineNeutral" onClick={handleShip}>
-                  <Truck className="w-4 h-4 mr-2 text-amber-500" /> Mark Shipped
+                <Button variant="outlineNeutral" onClick={handleShip} disabled={isShipping}>
+                  <Truck className="w-4 h-4 mr-2 text-amber-500" /> {isShipping ? 'Shipping...' : 'Mark Shipped'}
                 </Button>
               )}
               {order.status === "shipped" && (
@@ -184,9 +235,14 @@ export function SalesOrderDetail() {
               <Button variant="outlineNeutral" onClick={() => setInvoiceOpen(true)}>
                 <Receipt className="w-4 h-4 mr-2 text-indigo-500" /> View Invoice
               </Button>
-              {order.status !== "delivered" && order.status !== "cancelled" && (
-                <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
-                  <XCircle className="w-4 h-4 mr-2" /> Cancel Order
+              {order.status === "shipped" && order.stockDeducted === true && (
+                <Button variant="destructive" onClick={() => setReturnOpen(true)} disabled={isReturning}>
+                  <XCircle className="w-4 h-4 mr-2" /> {isReturning ? 'Returning...' : 'Return & Cancel'}
+                </Button>
+              )}
+              {order.status !== "delivered" && order.status !== "cancelled" && order.status !== "shipped" && (
+                <Button variant="destructive" onClick={() => setDeleteOpen(true)} disabled={isCancelling}>
+                  <XCircle className="w-4 h-4 mr-2" /> {isCancelling ? 'Cancelling...' : 'Cancel Order'}
                 </Button>
               )}
             </div>
@@ -373,8 +429,9 @@ export function SalesOrderDetail() {
                   variant="destructive"
                   className="w-full rounded-xl"
                   onClick={() => setDeleteOpen(true)}
+                  disabled={isCancelling}
                 >
-                  <XCircle className="w-4 h-4 mr-2" /> Cancel Order
+                  <XCircle className="w-4 h-4 mr-2" /> {isCancelling ? 'Cancelling...' : 'Cancel Order'}
                 </Button>
               </div>
             )}
@@ -397,9 +454,29 @@ export function SalesOrderDetail() {
             This will stop all fulfillment and cannot be undone.
           </>
         }
-        onDelete={handleCancel}
+        onDelete={handleDelete}
         cancelText="Keep Order"
         deleteText="Cancel Order"
+        loading={isDeleting}
+      />
+
+      {/* Return & Cancel Confirmation */}
+      <ConfirmModal
+        open={returnOpen}
+        onOpenChange={setReturnOpen}
+        title="Return & Cancel Order"
+        description={
+          <>
+            Are you sure you want to return and cancel order{" "}
+            <strong className="text-slate-900 dark:text-slate-100">#{order.orderNumber}</strong>?
+            This will return the stock to inventory and mark the order as cancelled.
+          </>
+        }
+        confirmLabel="Return & Cancel"
+        cancelLabel="Keep Order"
+        confirmClassName="bg-rose-600 hover:bg-rose-700 text-white"
+        onConfirm={handleReturn}
+        loading={isReturning}
       />
     </div>
   )

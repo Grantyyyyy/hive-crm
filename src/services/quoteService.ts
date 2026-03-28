@@ -31,15 +31,18 @@ export async function reserveStockForQuote(
   for (const item of quote.items) {
     if (!item.inventoryItemId) continue;
     const invItem = inventory.find(i => i.id === item.inventoryItemId);
+    if (!invItem) {
+      throw new Error(
+        `Inventory item not found for "${item.name}" (ID: ${item.inventoryItemId}). It may have been deleted.`
+      );
+    }
     const currentRequested = (pendingTally[item.inventoryItemId] || 0) + item.quantity;
 
-    if (invItem) {
-      const available = invItem.stockQuantity - (invItem.reservedQuantity || 0);
-      if (currentRequested > available) {
-        throw new Error(`Insufficient Available Stock for ${invItem.name}. Available: ${available}, Total in Quote: ${currentRequested}`);
-      }
-      pendingTally[item.inventoryItemId] = currentRequested;
+    const available = invItem.stockQuantity - (invItem.reservedQuantity || 0);
+    if (currentRequested > available) {
+      throw new Error(`Insufficient Available Stock for ${invItem.name}. Available: ${available}, Total in Quote: ${currentRequested}`);
     }
+    pendingTally[item.inventoryItemId] = currentRequested;
   }
 
   // 2. Build Atomic Updates
@@ -51,7 +54,7 @@ export async function reserveStockForQuote(
       id: itemId,
       patch: {
         reservedQuantity: newReserved,
-        stockLevel: recalculateStockLevel(invItem.stockQuantity, newReserved)
+        stockLevel: recalculateStockLevel(invItem.stockQuantity, newReserved, invItem.reorderThreshold)
       }
     });
   });
@@ -121,7 +124,7 @@ export async function releaseQuoteStock(
         id: invItem.id,
         patch: {
           reservedQuantity: newReserved,
-          stockLevel: recalculateStockLevel(invItem.stockQuantity, newReserved)
+          stockLevel: recalculateStockLevel(invItem.stockQuantity, newReserved, invItem.reorderThreshold)
         }
       });
     }

@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { PageSkeleton } from "@/components/ui/page-skeleton"
 import { DeleteModal } from "@/components/ui/delete-modal"
+import { ConfirmModal } from "@/components/ui/confirm-modal"
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
 import { useCRMContext } from "@/lib/CRMContext"
@@ -69,6 +70,11 @@ export function QuoteDetail() {
 
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
+  const [expireOpen, setExpireOpen] = useState(false)
+  const [isSending, setIsSending] = useState(false)
+  const [isAccepting, setIsAccepting] = useState(false)
+  const [isExpiring, setIsExpiring] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const quote = useMemo(() => quotes.find(q => q.id === quoteId), [quotes, quoteId])
 
@@ -80,18 +86,22 @@ export function QuoteDetail() {
   }, [quote?.validUntil])
 
   const handleMarkSent = async () => {
-    if (!quote) return
+    if (!quote || isSending) return
+    setIsSending(true)
     try {
       await reserveStockForQuote(quote, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
       sendQuoteEmail(quote)
       toast.success("Quote Sent & Stock Reserved", { description: "Email dispatched. Inventory items are now 'Soft Reserved'." })
     } catch (e: unknown) {
       toast.error("Failed to send quote", { description: (e as Error).message })
+    } finally {
+      setIsSending(false)
     }
   }
 
   const handleAccept = async () => {
-    if (!quote) return
+    if (!quote || isAccepting) return
+    setIsAccepting(true)
     try {
       const order = await acceptQuote(quote, ctx)
       toast.success("Quote Accepted", {
@@ -100,6 +110,8 @@ export function QuoteDetail() {
       })
     } catch (e: unknown) {
       toast.error("Failed to accept quote", { description: (e as Error).message })
+    } finally {
+      setIsAccepting(false)
     }
   }
 
@@ -114,22 +126,34 @@ export function QuoteDetail() {
   }
 
   const handleExpire = async () => {
-    if (!quote) return
+    if (!quote || isExpiring) return
+    setIsExpiring(true)
     try {
       await releaseQuoteStock(quote, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
       toast.success("Quote Expired", { description: "Reservation released back to available stock." })
+      setExpireOpen(false)
     } catch (e: unknown) {
       toast.error("Failed to expire quote", { description: (e as Error).message })
+    } finally {
+      setIsExpiring(false)
     }
   }
 
   const handleDelete = async () => {
-    if (!quote) return
+    if (!quote || isDeleting) return
+    setIsDeleting(true)
     try {
+      // Release reservation before deletion if stock is held
+      if (quote.stockReserved) {
+        await releaseQuoteStock(quote, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
+      }
       await deleteItem(quote.id)
       navigate("/quotes")
     } catch (e: unknown) {
       toast.error("Failed to delete quote", { description: (e as Error).message })
+    } finally {
+      setIsDeleting(false)
+      setDeleteOpen(false)
     }
   }
 
@@ -213,8 +237,8 @@ export function QuoteDetail() {
             {/* Actions */}
             <div className="flex flex-wrap items-center gap-2 shrink-0">
               {quote.status === "draft" && (
-                <Button variant="default" onClick={handleMarkSent} className="bg-blue-600 hover:bg-blue-700">
-                  <Send className="w-4 h-4 mr-2" /> Send Quote
+                <Button variant="default" onClick={handleMarkSent} disabled={isSending} className="bg-blue-600 hover:bg-blue-700">
+                  <Send className="w-4 h-4 mr-2" /> {isSending ? 'Sending...' : 'Send Quote'}
                 </Button>
               )}
               {quote.status === "sent" && (
@@ -222,8 +246,8 @@ export function QuoteDetail() {
                   <Button variant="outlineNeutral" onClick={handleFollowUp}>
                     <Receipt className="w-4 h-4 mr-2 text-slate-400" /> Follow Up
                   </Button>
-                  <Button variant="default" onClick={handleAccept} className="bg-emerald-600 hover:bg-emerald-700">
-                    <CheckCircle2 className="w-4 h-4 mr-2" /> Accept & Create Order
+                  <Button variant="default" onClick={handleAccept} disabled={isAccepting} className="bg-emerald-600 hover:bg-emerald-700">
+                    <CheckCircle2 className="w-4 h-4 mr-2" /> {isAccepting ? 'Accepting...' : 'Accept & Create Order'}
                   </Button>
                 </>
               )}
@@ -244,7 +268,7 @@ export function QuoteDetail() {
                   >
                     {quote.status !== "expired" && quote.status !== "accepted" && (
                       <button
-                        onClick={() => { setMoreOpen(false); handleExpire() }}
+                        onClick={() => { setMoreOpen(false); setExpireOpen(true) }}
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
                       >
                         <XCircle className="w-4 h-4 shrink-0" /> Mark Expired
@@ -454,16 +478,18 @@ export function QuoteDetail() {
                 <Button
                   className="w-full mt-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-emerald-100 dark:shadow-none"
                   onClick={handleAccept}
+                  disabled={isAccepting}
                 >
-                  <ShoppingCart className="w-4 h-4 mr-2" /> Accept & Create Order
+                  <ShoppingCart className="w-4 h-4 mr-2" /> {isAccepting ? 'Accepting...' : 'Accept & Create Order'}
                 </Button>
               )}
               {quote.status === "draft" && (
                 <Button
                   className="w-full mt-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-blue-100 dark:shadow-none"
                   onClick={handleMarkSent}
+                  disabled={isSending}
                 >
-                  <Send className="w-4 h-4 mr-2" /> Send to Customer
+                  <Send className="w-4 h-4 mr-2" /> {isSending ? 'Sending...' : 'Send to Customer'}
                 </Button>
               )}
             </div>
@@ -486,6 +512,25 @@ export function QuoteDetail() {
         onDelete={handleDelete}
         cancelText="Keep Quote"
         deleteText="Delete Quote"
+        loading={isDeleting}
+      />
+
+      {/* Expire Confirmation */}
+      <ConfirmModal
+        open={expireOpen}
+        onOpenChange={setExpireOpen}
+        title="Expire Quote"
+        description={
+          <>
+            Are you sure you want to expire{' '}
+            <strong className="text-slate-900 dark:text-slate-100">#{quote.quoteNumber}</strong>?
+            Any reserved stock will be released back to available inventory.
+          </>
+        }
+        confirmLabel="Mark as Expired"
+        confirmClassName="bg-amber-600 hover:bg-amber-700 text-white"
+        onConfirm={handleExpire}
+        loading={isExpiring}
       />
     </div>
   )

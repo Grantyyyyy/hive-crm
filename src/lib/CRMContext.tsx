@@ -25,6 +25,8 @@ export const TABLE_MAP: Record<string, string> = {
   inventory_transactions: "inventory_transactions",
   vendors: "vendors",
   projects: "projects",
+  task_tags: "task_tags",
+  task_tag_links: "task_tag_links",
 }
 
 // ── Case converters ──────────────────────────────────────────────────────────
@@ -38,26 +40,38 @@ const UUID_FIELDS = [
   "customer_id",
 ]
 
-export function toSnake(obj: CamelObject): SnakeObject {
-  const result: SnakeObject = {}
-  for (const key in obj) {
-    const snakeKey = key.replace(/[A-Z]/g, (l) => `_${l.toLowerCase()}`)
-    let value = obj[key]
-    if (UUID_FIELDS.includes(snakeKey) && value === "") value = null
-    result[snakeKey] = value
+export function toSnake(obj: any): any {
+  if (Array.isArray(obj)) {
+    return obj.map(item => toSnake(item))
   }
-  return result
+  if (obj !== null && typeof obj === 'object') {
+    const result: SnakeObject = {}
+    for (const key in obj) {
+      const snakeKey = key.replace(/[A-Z]/g, (l) => `_${l.toLowerCase()}`)
+      let value = obj[key]
+      if (UUID_FIELDS.includes(snakeKey) && value === "") value = null
+      result[snakeKey] = toSnake(value)
+    }
+    return result
+  }
+  return obj
 }
 
-export function toCamel(obj: SnakeObject): CamelObject {
-  const result: CamelObject = {}
-  for (const key in obj) {
-    const camelKey = key.replace(/([-_][a-z])/g, (g) =>
-      g.toUpperCase().replace("-", "").replace("_", "")
-    )
-    result[camelKey] = obj[key]
+export function toCamel(obj: any): any {
+  if (Array.isArray(obj)) {
+    return obj.map(item => toCamel(item))
   }
-  return result
+  if (obj !== null && typeof obj === 'object') {
+    const result: CamelObject = {}
+    for (const key in obj) {
+      const camelKey = key.replace(/([-_][a-z])/g, (g) =>
+        g.toUpperCase().replace("-", "").replace("_", "")
+      )
+      result[camelKey] = toCamel(obj[key])
+    }
+    return result
+  }
+  return obj
 }
 
 // ── Per-resource state shape ─────────────────────────────────────────────────
@@ -91,6 +105,7 @@ const CRMContext = createContext<CRMContextValue | null>(null)
 
 const PRELOAD_RESOURCES = [
   "leads", "contacts", "deals", "tasks", "activities", "projects",
+  "task_tags", "task_tag_links",
 ]
 
 export function CRMProvider({ children }: { children: React.ReactNode }) {
@@ -210,12 +225,21 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         }
 
         const snakePatch = toSnake(op.patch)
+        if (op.resource === 'tasks') {
+          ['subtasks', 'comments', 'activities', 'tags', 'time_entries'].forEach(f => delete snakePatch[f])
+        }
         if (action === "update") {
           const { error } = await client.from(tableName).update(snakePatch).eq("id", op.id)
           if (error) errors.push({ resource: op.resource, id: op.id, error })
           else successes.push({ ...op, action })
         } else if (action === "insert") {
-          snakePatch.user_id = userId
+          const skipUserId = ['tasks', 'task_tags', 'task_tag_links', 'projects', 'activities', 'leads', 'contacts', 'deals'].includes(op.resource)
+          if (!skipUserId && !snakePatch.user_id && !snakePatch.owner_id) {
+            snakePatch.user_id = userId
+          }
+          if (['tasks', 'task_tags', 'projects', 'leads', 'contacts', 'deals'].includes(op.resource)) {
+            if (!snakePatch.owner_id) snakePatch.owner_id = userId
+          }
           const { data, error } = await client.from(tableName).insert(snakePatch).select()
           if (error) errors.push({ resource: op.resource, error })
           else {
@@ -275,7 +299,16 @@ export async function insertRows<T extends { id: string }>(
   const tableName = TABLE_MAP[resourceName]
   const rows = newItems.map((item) => {
     const row = toSnake(item)
-    row.user_id = ctx.userId
+    if (resourceName === 'tasks') {
+      ['subtasks', 'comments', 'activities', 'tags', 'time_entries'].forEach(f => delete row[f])
+    }
+    const skipUserId = ['tasks', 'task_tags', 'task_tag_links', 'projects', 'activities', 'leads', 'contacts', 'deals'].includes(resourceName)
+    if (!skipUserId && !row.user_id && !row.owner_id) {
+      row.user_id = ctx.userId
+    }
+    if (['tasks', 'task_tags', 'projects', 'leads', 'contacts', 'deals'].includes(resourceName)) {
+      if (!row.owner_id) row.owner_id = ctx.userId
+    }
     // Always delete id so the database generates it (avoids UUID conflicts)
     delete row.id
     return row
@@ -285,6 +318,22 @@ export async function insertRows<T extends { id: string }>(
   if (error) throw error
 
   const mapped = (result ?? []).map(toCamel) as T[]
+
+  if (resourceName === 'tasks') {
+    for (let i = 0; i < newItems.length; i++) {
+      const item = newItems[i] as any
+      const resultItem = mapped[i]
+      if (item.tags && Array.isArray(item.tags) && item.tags.length > 0 && resultItem) {
+        const links = item.tags.map((tagId: string) => ({
+          task_id: resultItem.id,
+          tag_id: tagId,
+          // task_tag_links likely inherits security or has no owner_id
+        }))
+        await client.from('task_tag_links').insert(links)
+      }
+    }
+  }
+
   ctx.setResourceData(resourceName, (prev: T[]) => [...mapped, ...prev])
   return mapped
 }
@@ -299,7 +348,12 @@ export async function updateRow<T extends { id: string }>(
   if (!client) throw new Error("Not authenticated")
 
   const tableName = TABLE_MAP[resourceName]
-  const { error } = await client.from(tableName).update(toSnake(updates)).eq("id", id)
+  const snakePatch = toSnake(updates)
+  if (resourceName === 'tasks') {
+    ['subtasks', 'comments', 'activities', 'tags', 'time_entries'].forEach(f => delete snakePatch[f])
+  }
+
+  const { error } = await client.from(tableName).update(snakePatch).eq("id", id)
   if (error) throw error
 
   ctx.setResourceData(resourceName, (prev: T[]) =>

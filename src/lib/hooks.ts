@@ -22,13 +22,15 @@ export function useCRMResource<T extends { id: string }>(
   const [search, setSearch] = useState(initialSearch)
 
   const addItems = useCallback(
-    async (newItems: T[]) => {
+    async (newItems: T[], silent: boolean = false) => {
       const promise = insertRows<T>(ctx, String(resourceName), newItems)
-      toast.promise(promise, {
-        loading: `Saving ${resourceName}...`,
-        success: `Successfully added to ${resourceName}`,
-        error: `Failed to add to ${resourceName}`,
-      })
+      if (!silent) {
+        toast.promise(promise, {
+          loading: `Saving ${resourceName}...`,
+          success: `Successfully added to ${resourceName}`,
+          error: `Failed to add to ${resourceName}`,
+        })
+      }
       return promise
     },
     [ctx, resourceName]
@@ -54,13 +56,15 @@ export function useCRMResource<T extends { id: string }>(
   )
 
   const deleteItem = useCallback(
-    async (id: string) => {
+    async (id: string, silent: boolean = false) => {
       const promise = deleteRow<T>(ctx, String(resourceName), id)
-      toast.promise(promise, {
-        loading: `Deleting from ${resourceName}...`,
-        success: `Successfully removed from ${resourceName}`,
-        error: `Failed to delete from ${resourceName}`,
-      })
+      if (!silent) {
+        toast.promise(promise, {
+          loading: `Deleting from ${resourceName}...`,
+          success: `Successfully removed from ${resourceName}`,
+          error: `Failed to delete from ${resourceName}`,
+        })
+      }
       return promise
     },
     [ctx, resourceName]

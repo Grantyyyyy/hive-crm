@@ -178,9 +178,9 @@ export function getTasksDueSoon(tasks: Task[], days: number): Task[] {
   const now = new Date()
   const targetDate = new Date(now)
   targetDate.setDate(now.getDate() + days)
-  
-  return tasks.filter(t => 
-    t.status !== 'completed' && 
+
+  return tasks.filter(t =>
+    t.status !== 'completed' &&
     new Date(t.dueDate).getTime() <= targetDate.getTime()
   )
 }
@@ -220,4 +220,70 @@ export function sortTasks(tasks: Task[]): Task[] {
     // 4. dueDate asc
     return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
   })
+}
+
+// ── CSV Export ────────────────────────────────────────────────────────────────
+
+export function exportToCSV<T extends Record<string, any>>(
+  data: T[],
+  columns: Array<{ key: string; header: string }>,
+  filename: string
+): void {
+  // Create CSV header
+  const headers = columns.map(col => col.header).join(',')
+
+  // Create CSV rows
+  const rows = data.map(item => {
+    return columns.map(col => {
+      const value = item[col.key]
+      // Handle null/undefined
+      if (value === null || value === undefined) return '""'
+      // Convert to string and escape quotes
+      const stringValue = String(value)
+      const escaped = stringValue.replace(/"/g, '""')
+      // Wrap in quotes if contains comma, quote, or newline
+      if (escaped.includes(',') || escaped.includes('"') || escaped.includes('\n')) {
+        return `"${escaped}"`
+      }
+      return escaped
+    }).join(',')
+  })
+
+  // Combine header and rows
+  const csv = [headers, ...rows].join('\n')
+
+  // Create blob and download
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const link = document.createElement('a')
+  const url = URL.createObjectURL(blob)
+
+  link.setAttribute('href', url)
+  link.setAttribute('download', `${filename}_${new Date().toISOString().split('T')[0]}.csv`)
+  link.style.visibility = 'hidden'
+
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+// ── Debounce ──────────────────────────────────────────────────────────────────
+
+export function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: ReturnType<typeof setTimeout> | null = null
+
+  return function executedFunction(...args: Parameters<T>) {
+    const later = () => {
+      timeout = null
+      func(...args)
+    }
+
+    if (timeout) {
+      clearTimeout(timeout)
+    }
+    timeout = setTimeout(later, wait)
+  }
 }

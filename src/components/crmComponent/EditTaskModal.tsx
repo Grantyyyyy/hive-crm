@@ -1,3 +1,4 @@
+import { useState } from "react"
 import {
   Sheet,
   SheetContent,
@@ -6,10 +7,14 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet"
 import { TaskForm } from "./TaskForm"
+import { SubtasksList } from "./SubtasksList"
+import { CommentsList } from "./CommentsList"
+import { TimeTracker } from "./TimeTracker"
 import { useCRMResource } from "@/lib/hooks"
 import type { Contact, Deal, Lead, Task, Project } from "@/lib/types"
 import { Button } from "@/components/ui/button"
-import { Repeat2 } from "lucide-react"
+import { Repeat2, Info, CheckSquare, MessageSquare, Trash2, Calendar, Target, Clock } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface EditTaskModalProps {
   task: Task | null
@@ -17,11 +22,13 @@ interface EditTaskModalProps {
   onOpenChange: (open: boolean) => void
   onUpdate: (id: string, updates: Partial<Task>) => void
   onDelete: (id: string) => void
-  userId: string
+  user: any // Accepting the Clerk user object for rich metadata
 }
 
-export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, userId }: EditTaskModalProps) {
-  // Use hooks to get live data from Supabase for the form dropdowns
+type Tab = 'overview' | 'subtasks' | 'comments' | 'time'
+
+export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, user }: EditTaskModalProps) {
+  const [activeTab, setActiveTab] = useState<Tab>('overview')
   const { data: contacts } = useCRMResource<Contact>('contacts')
   const { data: deals } = useCRMResource<Deal>('deals')
   const { data: leads } = useCRMResource<Lead>('leads')
@@ -29,60 +36,248 @@ export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, us
 
   if (!task) return null
 
+  const userId = user?.id || ""
+
   const handleSave = (updated: Task) => {
     onUpdate(task.id, updated)
     onOpenChange(false)
   }
 
   const handleDelete = async () => {
-    if (window.confirm("Delete this task?")) {
+    if (window.confirm("Are you sure you want to permanently delete this task?")) {
       onDelete(task.id)
       onOpenChange(false)
     }
   }
 
+  const handleAddSubtask = (title: string) => {
+    const newSubtask = {
+      id: crypto.randomUUID(),
+      taskId: task.id,
+      title,
+      completed: false,
+      createdAt: new Date().toISOString()
+    }
+    const subtasks = task.subtasks ? [...task.subtasks, newSubtask] : [newSubtask]
+    onUpdate(task.id, { subtasks })
+  }
+
+  const handleToggleSubtask = (id: string, completed: boolean) => {
+    const subtasks = task.subtasks?.map(s =>
+      s.id === id ? { ...s, completed, completedAt: completed ? new Date().toISOString() : undefined } : s
+    )
+    onUpdate(task.id, { subtasks })
+  }
+
+  const handleDeleteSubtask = (id: string) => {
+    const subtasks = task.subtasks?.filter(s => s.id !== id)
+    onUpdate(task.id, { subtasks })
+  }
+
+  const handleAddComment = (content: string) => {
+    const newComment = {
+      id: crypto.randomUUID(),
+      taskId: task.id,
+      content,
+      authorId: userId,
+      authorName: user?.fullName || "You",
+      authorAvatar: user?.imageUrl, // Use the real avatar
+      createdAt: new Date().toISOString()
+    }
+    const comments = task.comments ? [...task.comments, newComment] : [newComment]
+    onUpdate(task.id, { comments })
+  }
+
+  const handleDeleteComment = (id: string) => {
+    const comments = task.comments?.filter(c => c.id !== id)
+    onUpdate(task.id, { comments })
+  }
+
+  const handleUpdateComment = (id: string, content: string) => {
+    const comments = task.comments?.map(c =>
+      c.id === id ? { ...c, content, updatedAt: new Date().toISOString() } : c
+    )
+    onUpdate(task.id, { comments })
+  }
+
+  const subtaskCount = task.subtasks?.length || 0
+  const completedSubtasks = task.subtasks?.filter(s => s.completed).length || 0
+  const commentCount = task.comments?.length || 0
+  const timeEntryCount = task.timeEntries?.length || 0
+  const totalTrackedTime = task.trackedSeconds || 0
+  const isTaskCompleted = task.status === 'completed'
+
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-xl p-0 flex flex-col h-full">
-        <SheetHeader>
-          <div className="flex items-center justify-between pr-8">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <SheetTitle>Edit Task</SheetTitle>
-                {task.recurrencePattern && (
-                  <div className="flex items-center gap-1 px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 rounded-full" title="Recurring task">
-                    <Repeat2 className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
-                    <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase">RECURS</span>
-                  </div>
-                )}
+    <Sheet open={open} onOpenChange={(val) => {
+      onOpenChange(val)
+      if (!val) setActiveTab('overview')
+    }}>
+      <SheetContent className="sm:max-w-2xl p-0 flex flex-col h-full bg-slate-50 dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800">
+        <SheetHeader className="px-8 pt-8 pb-4 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 shadow-sm relative">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <SheetTitle className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Edit Task</SheetTitle>
+                  {task.recurrencePattern && (
+                    <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-900/50 rounded-full" title="Recurring task">
+                      <Repeat2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                      <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Recurring</span>
+                    </div>
+                  )}
+                </div>
+                <SheetDescription className="text-sm font-medium text-slate-500">
+                  Update task details, track subtasks, or discuss progress.
+                </SheetDescription>
               </div>
-              <SheetDescription>
-                Update the details of this task or remove it if no longer needed.
-                {task.parentTaskId && " This is part of a recurring task series."}
-              </SheetDescription>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDelete}
+                className="text-slate-400 hover:text-red hover:bg-red/10 transition-all font-bold uppercase text-[11px] tracking-wider h-9"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </Button>
             </div>
-            <Button
-              variant="destructiveOutline"
-              size="sm"
-              onClick={handleDelete}
-            >
-              Delete
-            </Button>
+
+            {/* Quick Badges Row */}
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[11px] font-black uppercase tracking-wider",
+                task.priority === 'urgent' ? "bg-red/5 border-red/20 text-red" :
+                  task.priority === 'high' ? "bg-red/5 border-red/20 text-red" :
+                    task.priority === 'medium' ? "bg-amber/5 border-amber/20 text-amber" :
+                      "bg-green/5 border-green/20 text-green"
+              )}>
+                <Target className="w-3 h-3" />
+                {task.priority} Priority
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 text-[11px] font-black uppercase tracking-wider">
+                <Calendar className="w-3 h-3" />
+                Due: {new Date(task.dueDate).toLocaleDateString()}
+              </div>
+            </div>
+
+            {/* Premium Tab Navigation */}
+            <div className="flex items-center gap-1 mt-2">
+              {[
+                { id: 'overview', icon: Info, label: 'Overview' },
+                { id: 'subtasks', icon: CheckSquare, label: 'Subtasks', badge: subtaskCount > 0 ? `${completedSubtasks}/${subtaskCount}` : null },
+                { id: 'comments', icon: MessageSquare, label: 'Comments', badge: commentCount > 0 ? commentCount : null },
+                { id: 'time', icon: Clock, label: 'Time', badge: timeEntryCount > 0 ? formatDuration(totalTrackedTime) : null, disabled: isTaskCompleted }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => !tab.disabled && setActiveTab(tab.id as Tab)}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 px-4 py-3 text-xs font-bold uppercase tracking-widest transition-all relative border-b-2",
+                    activeTab === tab.id
+                      ? "text-indigo-600 border-indigo-600 bg-indigo-50/50 dark:bg-indigo-900/10"
+                      : tab.disabled
+                        ? "text-slate-300 border-transparent cursor-not-allowed opacity-50"
+                        : "text-slate-400 border-transparent hover:text-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  )}
+                >
+                  <tab.icon className="w-4 h-4" />
+                  {tab.label}
+                  {tab.badge && (
+                    <span className={cn(
+                      "ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-black",
+                      activeTab === tab.id ? "bg-indigo-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+                    )}>
+                      {tab.badge}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
         </SheetHeader>
+
         <div className="flex-1 overflow-y-auto">
-          <TaskForm
-            onSave={handleSave}
-            onCancel={() => onOpenChange(false)}
-            initialData={task}
-            contacts={contacts}
-            deals={deals}
-            leads={leads}
-            projects={projects ?? []}
-            userId={userId}
-          />
+          {activeTab === 'overview' && (
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <TaskForm
+                onSave={handleSave}
+                onCancel={() => onOpenChange(false)}
+                initialData={task}
+                contacts={contacts}
+                deals={deals}
+                leads={leads}
+                projects={projects ?? []}
+                userId={userId}
+              />
+            </div>
+          )}
+
+          {activeTab === 'subtasks' && (
+            <div className="px-8 py-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-6">
+                <SubtasksList
+                  subtasks={task.subtasks || []}
+                  onAdd={handleAddSubtask}
+                  onToggle={handleToggleSubtask}
+                  onDelete={handleDeleteSubtask}
+                />
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'comments' && (
+            <div className="px-8 py-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-6 min-h-[400px]">
+                <CommentsList
+                  comments={task.comments || []}
+                  userId={userId}
+                  onAdd={handleAddComment}
+                  onDelete={handleDeleteComment}
+                  onUpdate={handleUpdateComment}
+                />
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'time' && !isTaskCompleted && (
+            <div className="px-8 py-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <TimeTracker
+                taskId={task.id}
+                taskTitle={task.title}
+                initialEntries={task.timeEntries || []}
+                initialTrackedSeconds={task.trackedSeconds || 0}
+                onEntriesChange={(updatedEntries, newTotal) => {
+                  onUpdate(task.id, {
+                    timeEntries: updatedEntries,
+                    trackedSeconds: newTotal
+                  })
+                }}
+              />
+            </div>
+          )}
+
+          {activeTab === 'time' && isTaskCompleted && (
+            <div className="px-8 py-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-6 text-center">
+                <Clock className="w-10 h-10 mx-auto text-amber-500 mb-3" />
+                <p className="text-sm font-bold text-amber-700 dark:text-amber-400 uppercase tracking-widest mb-1">Task Completed</p>
+                <p className="text-xs text-amber-600 dark:text-amber-500">Time tracking is disabled for completed tasks</p>
+              </div>
+            </div>
+          )}
         </div>
       </SheetContent>
     </Sheet>
   )
+}
+
+function formatDuration(totalSeconds: number): string {
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`
+  } else if (minutes > 0) {
+    return `${minutes}m`
+  }
+  return `${Math.floor(totalSeconds / 60)}s`
 }

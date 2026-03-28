@@ -5,9 +5,9 @@ import {
   CheckCircle2,
   Link2,
   ChevronDown,
-  Check,
   FolderOpen,
-  Repeat2,
+  Users,
+  Clock,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/ui/date-picker"
 import type { Task, Contact, Deal, Lead, Project } from "@/lib/types"
+import { TagSelector } from '@/components/crmComponent/TagSelector'
 import { generateId } from "@/lib/helpers"
 import { cn } from "@/lib/utils"
 
@@ -51,6 +52,9 @@ export function TaskForm({
   )
   const [entityId, setEntityId] = useState(fixedEntity?.id ?? initialData?.entityId ?? "")
   const [projectId, setProjectId] = useState(initialData?.projectId ?? "")
+  const [assignedTo, setAssignedTo] = useState<string[]>(initialData?.assignedTo ?? [])
+  const [estimatedHours, setEstimatedHours] = useState(String(initialData?.estimatedHours ?? ""))
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(initialData?.tags ?? [])
   // Recurrence state
   const [recurrencePattern, setRecurrencePattern] = useState<Task['recurrencePattern']>(initialData?.recurrencePattern)
   const [recurrenceInterval, setRecurrenceInterval] = useState(initialData?.recurrenceInterval ?? 1)
@@ -80,6 +84,8 @@ export function TaskForm({
       entityType: entityType === 'none' ? undefined : (entityType as any),
       entityId: entityType === 'none' ? undefined : entityId,
       projectId: projectId || undefined,
+      assignedTo: assignedTo.length > 0 ? assignedTo : undefined,
+      estimatedHours: estimatedHours ? parseInt(estimatedHours) : undefined,
       ownerId: initialData?.ownerId ?? userId,
       createdBy: initialData?.createdBy ?? userId,
       createdAt: initialData?.createdAt ?? now,
@@ -89,7 +95,8 @@ export function TaskForm({
       recurrencePattern: recurrencePattern || undefined,
       recurrenceInterval: recurrencePattern ? recurrenceInterval : undefined,
       recurrenceEndDate: recurrencePattern && recurrenceEndDate ? new Date(recurrenceEndDate).toISOString() : undefined,
-      nextOccurrence: recurrencePattern ? calculateNextOccurrence(dueDate, recurrencePattern, recurrenceInterval) : undefined
+      nextOccurrence: recurrencePattern ? calculateNextOccurrence(dueDate, recurrencePattern, recurrenceInterval) : undefined,
+      tags: selectedTagIds.length > 0 ? selectedTagIds : undefined
     }
 
     onSave(task)
@@ -107,302 +114,329 @@ export function TaskForm({
     return date.toISOString()
   }
 
-  const inputClass = "h-12 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-md focus:ring-indigo-500 focus:border-indigo-500 font-medium text-sm transition-all shadow-sm text-slate-900 dark:text-white"
-  const labelClass = "text-[12px] font-bold text-slate-700 dark:text-slate-300 mb-2 block"
-
-  const priorities: Task['priority'][] = ['low', 'medium', 'high', 'urgent']
-  const statuses: Task['status'][] = ['open', 'in-progress', 'completed']
 
 
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col h-full overflow-hidden font-sans">
-      {/* Scrollable Content Area */}
-      <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8 scroll-smooth scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
+    <form onSubmit={handleSubmit} className="flex flex-col h-full overflow-hidden">
+      {/* Content Area */}
+      <div className="flex-1 overflow-y-auto px-8 py-8 space-y-10">
 
-        {/* Title */}
-        <div className="space-y-1.5 animate-content-in [animation-delay:100ms]">
-          <Label className={labelClass}>Task Title</Label>
-          <div className="relative group">
-            <Type className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Follow up with Sarah"
-              className={cn(inputClass, "pl-11", errors.title && "border-red-500")}
-            />
+        {/* Main Info Section */}
+        <section className="space-y-6">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-1 h-4 bg-indigo-600 rounded-full" />
+            <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Basic Details</h3>
           </div>
-        </div>
 
-        {/* Description */}
-        <div className="space-y-1.5 animate-content-in [animation-delay:150ms]">
-          <Label className={labelClass}>Description</Label>
-          <div className="relative group">
-            <AlignLeft className="absolute left-4 top-4 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Brief details about this task..."
-              rows={3}
-              className={cn(inputClass, "pl-11 pt-3 resize-none h-auto min-h-[100px]")}
-            />
+          {/* Title */}
+          <div className="space-y-2">
+            <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Task Title</Label>
+            <div className="group relative">
+              <Type className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="What needs to be done?"
+                className={cn(
+                  "h-14 pl-12 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl text-base font-bold transition-all focus:ring-4 focus:ring-indigo-500/10",
+                  errors.title && "border-red-500 ring-4 ring-red-500/10"
+                )}
+              />
+            </div>
+            {errors.title && <p className="text-[10px] font-bold text-red uppercase tracking-wide">{errors.title}</p>}
           </div>
-        </div>
 
-        {/* Date & Status Row */}
-        <div className="grid grid-cols-2 gap-4 animate-content-in [animation-delay:200ms]">
-          <div className="space-y-1.5">
-            <Label className={labelClass}>Due Date</Label>
-            <DatePicker
-              value={dueDate}
-              onChange={setDueDate}
-              className={cn("h-12 py-3 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900", errors.dueDate && "border-red-500")}
-            />
+          {/* Description */}
+          <div className="space-y-2">
+            <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Description</Label>
+            <div className="group relative">
+              <AlignLeft className="absolute left-4 top-4 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+              <Textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Add more details or context..."
+                rows={4}
+                className="pl-12 pt-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium transition-all focus:ring-4 focus:ring-indigo-500/10 resize-none"
+              />
+            </div>
           </div>
-          <div className="space-y-1.5">
-            <Label className={labelClass}>Status</Label>
+        </section>
+
+        {/* Tags Section */}
+        <section className="space-y-6 pt-6 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-1 h-4 bg-cyan-500 rounded-full" />
+            <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Tags</h3>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Categorization
+            </Label>
+            <div className="relative">
+              <TagSelector
+                taskId={initialData?.id ?? ''}
+                selectedTagIds={selectedTagIds}
+                onChange={setSelectedTagIds}
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Planning Section */}
+        <section className="space-y-6 pt-6 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-1 h-4 bg-amber-500 rounded-full" />
+            <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Planning & Priority</h3>
+          </div>
+
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Due Date</Label>
+              <DatePicker
+                value={dueDate}
+                onChange={setDueDate}
+                className={cn(
+                  "h-12 w-full bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl shadow-sm",
+                  errors.dueDate && "border-red-500 ring-2 ring-red-500/10"
+                )}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</Label>
+              <div className="relative group">
+                <CheckCircle2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as any)}
+                  className="w-full h-12 pl-12 pr-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-sm"
+                >
+                  <option value="open">To Do</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="completed">Completed</option>
+                </select>
+                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Priority Level</Label>
+            <div className="grid grid-cols-4 gap-2">
+              {[
+                { id: 'low', color: 'green' },
+                { id: 'medium', color: 'amber' },
+                { id: 'high', color: 'red' },
+                { id: 'urgent', color: 'red' }
+              ].map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setPriority(p.id as any)}
+                  className={cn(
+                    "h-11 rounded-xl border-2 text-[10px] font-black uppercase tracking-widest transition-all scale-100 active:scale-95",
+                    priority === p.id
+                      ? `bg-${p.color}/10 border-${p.color} text-${p.color} shadow-lg shadow-${p.color}/5`
+                      : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-400 hover:border-slate-300"
+                  )}
+                >
+                  {p.id}
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Links & Ownership */}
+        <section className="space-y-6 pt-6 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-1 h-4 bg-emerald-500 rounded-full" />
+            <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Context & Links</h3>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Project Association</Label>
             <div className="relative group">
-              <CheckCircle2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+              <FolderOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
               <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as any)}
-                className={cn(inputClass, "w-full appearance-none pl-11 pr-10 cursor-pointer")}
+                value={projectId}
+                onChange={(e) => setProjectId(e.target.value)}
+                className="w-full h-12 pl-12 pr-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-sm"
               >
-                {statuses.map(s => (
-                  <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                <option value="">None</option>
+                {projects.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
               <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
             </div>
           </div>
-        </div>
 
-        {/* Priority Toggle */}
-        <div className="space-y-3 animate-content-in [animation-delay:250ms]">
-          <Label className={labelClass}>Priority Level</Label>
-          <div className="grid grid-cols-4 gap-2">
-            {priorities.map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPriority(p)}
-                className={cn(
-                  "h-10 px-3 rounded-md border text-[11px] font-bold uppercase tracking-wider transition-all",
-                  priority === p
-                    ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none"
-                    : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 hover:border-indigo-300 dark:hover:border-indigo-700"
-                )}
-              >
-                {p}
-              </button>
-            ))}
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Assignee</Label>
+              <div className="relative group">
+                <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+                <select
+                  value={assignedTo[0] || ""}
+                  onChange={(e) => setAssignedTo(e.target.value ? [e.target.value] : [])}
+                  className="w-full h-12 pl-12 pr-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-sm"
+                >
+                  <option value="">Unassigned</option>
+                  <option value={userId}>Me (Individual)</option>
+                </select>
+                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Est. Effort (Hrs)</Label>
+              <div className="group relative">
+                <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+                <Input
+                  type="number"
+                  value={estimatedHours}
+                  onChange={(e) => setEstimatedHours(e.target.value)}
+                  placeholder="0.0"
+                  className="h-12 pl-12 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-indigo-500/10 shadow-sm"
+                />
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* Project Selector */}
-        <div className="space-y-4 animate-content-in [animation-delay:280ms] border-t border-slate-100 dark:border-slate-800 pt-6">
-          <Label className={labelClass}>Project</Label>
-          <div className="relative group">
-            <FolderOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-            <select
-              value={projectId}
-              onChange={(e) => setProjectId(e.target.value)}
-              className={cn(inputClass, "w-full appearance-none pl-11 pr-10 cursor-pointer")}
-            >
-              <option value="">No project</option>
-              {projects.map(p => (
-                <option key={p.id} value={p.id}>{p.name}</option>
+          <div className="space-y-4 pt-6 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-1 h-4 bg-cyan-500 rounded-full" />
+              <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Linked Reference</h3>
+            </div>
+
+            <div className="flex bg-slate-100 dark:bg-slate-900 rounded-xl p-1.5 border border-slate-200 dark:border-slate-800">
+              {['none', 'contact', 'deal', 'lead'].map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  disabled={!!fixedEntity}
+                  onClick={() => {
+                    setEntityType(type as any)
+                    setEntityId("")
+                  }}
+                  className={cn(
+                    "flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all",
+                    entityType === type
+                      ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-100 dark:border-slate-700"
+                      : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-50"
+                  )}
+                >
+                  {type}
+                </button>
               ))}
-            </select>
-            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-          </div>
-        </div>
+            </div>
 
-        {/* Recurrence Settings */}
-        <div className="space-y-4 animate-content-in [animation-delay:290ms] border-t border-slate-100 dark:border-slate-800 pt-6">
+            {!fixedEntity && entityType !== 'none' && (
+              <div className="relative group animate-in slide-in-from-top-2 duration-200">
+                <Link2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+                <select
+                  value={entityId}
+                  onChange={(e) => setEntityId(e.target.value)}
+                  className="w-full h-12 pl-12 pr-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-sm"
+                >
+                  <option value="">Select a {entityType}...</option>
+                  {entityType === 'contact' && contacts.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  {entityType === 'deal' && deals.map(d => <option key={d.id} value={d.id}>{d.title}</option>)}
+                  {entityType === 'lead' && leads.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                </select>
+                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Recurrence Section */}
+        <section className="space-y-6 pt-6 border-t border-slate-100 dark:border-slate-800">
           <div className="flex items-center justify-between">
-            <Label className={labelClass}>Recurring Task</Label>
+            <div className="flex items-center gap-2">
+              <div className="w-1 h-4 bg-indigo-500 rounded-full" />
+              <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Recurrence</h3>
+            </div>
             <button
               type="button"
-              onClick={() => {
-                setRecurrencePattern(recurrencePattern ? undefined : 'weekly')
-              }}
+              onClick={() => setRecurrencePattern(recurrencePattern ? undefined : 'weekly')}
               className={cn(
-                "text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded transition-all",
+                "px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border-2 transition-all",
                 recurrencePattern
-                  ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400"
-                  : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                  ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-600/20"
+                  : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-400 hover:border-slate-300"
               )}
             >
-              {recurrencePattern ? 'Enabled' : 'Disabled'}
+              {recurrencePattern ? 'Repeating' : 'Off'}
             </button>
           </div>
 
           {recurrencePattern && (
-            <div className="space-y-4 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
-              {/* Pattern Selection */}
-              <div>
-                <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-2 block">Repeat Pattern</Label>
-                <div className="grid grid-cols-5 gap-2">
-                  {(['daily', 'weekly', 'monthly', 'yearly', 'custom'] as const).map((pattern) => (
-                    <button
-                      key={pattern}
-                      type="button"
-                      onClick={() => setRecurrencePattern(pattern)}
-                      className={cn(
-                        "py-2 px-1 rounded text-[10px] font-bold uppercase tracking-wider border transition-all",
-                        recurrencePattern === pattern
-                          ? "bg-indigo-600 border-indigo-600 text-white shadow-sm"
-                          : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-indigo-300"
-                      )}
-                    >
-                      {pattern}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Interval Input */}
-              <div className="flex items-center gap-2">
-                <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap">Every</Label>
-                <div className="relative flex-1">
-                  <Input
-                    type="number"
-                    min="1"
-                    max="365"
-                    value={recurrenceInterval}
-                    onChange={(e) => setRecurrenceInterval(Math.max(1, parseInt(e.target.value) || 1))}
-                    className={cn(inputClass, "h-9 w-20 text-center")}
-                  />
-                </div>
-                <span className="text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                  {recurrencePattern === 'daily' ? 'day(s)' :
-                    recurrencePattern === 'weekly' ? 'week(s)' :
-                      recurrencePattern === 'monthly' ? 'month(s)' :
-                        recurrencePattern === 'yearly' ? 'year(s)' : 'day(s)'}
-                </span>
-              </div>
-
-              {/* End Date */}
-              <div>
-                <Label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-2 block">Ends</Label>
-                <div className="flex items-center gap-2">
+            <div className="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-6 animate-in zoom-in-95 duration-200">
+              <div className="grid grid-cols-5 gap-2">
+                {(['daily', 'weekly', 'monthly', 'yearly', 'custom'] as const).map((pattern) => (
                   <button
+                    key={pattern}
                     type="button"
-                    onClick={() => setRecurrenceEndDate("")}
+                    onClick={() => setRecurrencePattern(pattern)}
                     className={cn(
-                      "text-[11px] font-bold px-3 py-1.5 rounded border transition-all",
-                      !recurrenceEndDate
+                      "py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest border-2 transition-all",
+                      recurrencePattern === pattern
                         ? "bg-indigo-600 border-indigo-600 text-white"
-                        : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500"
+                        : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-400 hover:border-indigo-200"
                     )}
                   >
-                    Never
+                    {pattern}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setRecurrenceEndDate(dueDate)}
-                    className={cn(
-                      "text-[11px] font-bold px-3 py-1.5 rounded border transition-all",
-                      recurrenceEndDate && recurrenceEndDate === dueDate
-                        ? "bg-indigo-600 border-indigo-600 text-white"
-                        : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500"
-                    )}
-                  >
-                    On due date
-                  </button>
-                  <DatePicker
-                    value={recurrenceEndDate}
-                    onChange={setRecurrenceEndDate}
-                    className="h-9 flex-1"
-                  />
-                </div>
+                ))}
               </div>
 
-              {/* Preview */}
-              <div className="flex items-center gap-2 p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded border border-indigo-100 dark:border-indigo-800">
-                <Repeat2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                <span className="text-[12px] text-indigo-700 dark:text-indigo-300">
-                  Repeats every {recurrenceInterval} {recurrencePattern === 'daily' ? 'day' :
-                    recurrencePattern === 'weekly' ? 'week' :
-                      recurrencePattern === 'monthly' ? 'month' :
-                        recurrencePattern === 'yearly' ? 'year' : 'day'}
-                  {recurrenceEndDate && ` until ${new Date(recurrenceEndDate).toLocaleDateString()}`}
-                </span>
+              <div className="flex items-center justify-between gap-6 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Frequency</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300 italic">Every</span>
+                    <input
+                      type="number"
+                      min="1"
+                      value={recurrenceInterval}
+                      onChange={(e) => setRecurrenceInterval(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-12 h-8 bg-slate-50 dark:bg-slate-900 border-none text-center font-black text-indigo-600 rounded text-sm focus:ring-0"
+                    />
+                    <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                      {recurrencePattern === 'daily' ? 'Days' : recurrencePattern === 'weekly' ? 'Weeks' : recurrencePattern === 'monthly' ? 'Months' : 'Years'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="h-8 w-[1px] bg-slate-100 dark:bg-slate-700" />
+
+                <div className="space-y-1 flex-1">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">End Date</p>
+                  <DatePicker value={recurrenceEndDate} onChange={setRecurrenceEndDate} className="h-8 border-none bg-slate-50 dark:bg-slate-900" />
+                </div>
               </div>
             </div>
           )}
-        </div>
-
-        {/* Linked To */}
-        <div className="space-y-4 animate-content-in [animation-delay:300ms] border-t border-slate-100 dark:border-slate-800 pt-6">
-          <Label className={labelClass}>Linked Reference</Label>
-
-          <div className="flex bg-slate-50 dark:bg-slate-900 rounded-md p-1 border border-slate-200 dark:border-slate-800">
-            {['none', 'contact', 'deal', 'lead'].map((type) => (
-              <button
-                key={type}
-                type="button"
-                disabled={!!fixedEntity}
-                onClick={() => {
-                  setEntityType(type as any)
-                  setEntityId("")
-                }}
-                className={cn(
-                  "flex-1 py-2 text-[11px] font-bold uppercase tracking-wider rounded-sm transition-all",
-                  entityType === type
-                    ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-100 dark:border-slate-700"
-                    : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-50"
-                )}
-              >
-                {type}
-              </button>
-            ))}
-          </div>
-
-          {!fixedEntity && entityType !== 'none' && (
-            <div className="relative group animate-content-in">
-              <Link2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-              <select
-                id="task-entity-id"
-                value={entityId}
-                onChange={(e) => setEntityId(e.target.value)}
-                className={cn(inputClass, "w-full appearance-none pl-11 pr-10 cursor-pointer")}
-              >
-                <option value="">Select a {entityType}...</option>
-                {entityType === 'contact' && contacts.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                {entityType === 'deal' && deals.map(d => <option key={d.id} value={d.id}>{d.title}</option>)}
-                {entityType === 'lead' && leads.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-              </select>
-              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-            </div>
-          )}
-        </div>
+        </section>
       </div>
 
-      {/* Sticky Action Footer */}
-      <div className="sticky bottom-0 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md px-8 py-6 border-t border-slate-100 dark:border-slate-900/50 flex items-center gap-3 z-10 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.05)]">
+      {/* Modern Footer Actions */}
+      <div className="px-8 py-6 bg-white dark:bg-slate-900/50 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 flex items-center gap-4">
         <Button
           type="button"
           variant="outlineNeutral"
           onClick={onCancel}
-          className="flex-1 h-12"
+          className="flex-1 h-12 rounded-xl text-[11px] font-black uppercase tracking-widest border-2"
         >
           Cancel
         </Button>
         <Button
           type="submit"
-          variant="default"
-          className="flex-[1.5] h-12"
+          className="flex-[2] h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-600/20 text-[11px] font-black uppercase tracking-widest"
         >
-          {initialData?.id ? (
-            <>Save Changes</>
-          ) : (
-            <>
-              <Check className="w-4 h-4 mr-2" />
-              Create Task
-            </>
-          )}
+          {initialData?.id ? 'Update Task' : 'Create Task'}
         </Button>
       </div>
     </form>

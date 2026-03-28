@@ -79,6 +79,65 @@ export interface Project {
   updatedAt: string
 }
 
+export interface TaskSubtask {
+  id: string
+  taskId: string
+  title: string
+  completed: boolean
+  completedAt?: string
+  completedBy?: string
+  createdAt: string
+}
+
+export interface TaskComment {
+  id: string
+  taskId: string
+  content: string
+  authorId: string
+  authorName: string
+  authorAvatar?: string
+  createdAt: string
+  updatedAt?: string
+}
+
+export interface TaskActivity {
+  id: string
+  taskId: string
+  type: 'created' | 'updated' | 'completed' | 'reopened' | 'assigned' | 'comment' | 'attachment'
+  description: string
+  userId: string
+  userName: string
+  userAvatar?: string
+  metadata?: Record<string, any>
+  createdAt: string
+}
+
+export interface TaskTag {
+  id: string
+  name: string
+  color: string
+  ownerId?: string
+  createdAt?: string
+}
+
+export interface TaskTagLink {
+  id: string
+  taskId: string
+  tagId: string
+  createdAt: string
+}
+
+export interface TaskTimeEntry {
+  id: string
+  taskId: string
+  userId: string
+  userName: string
+  startTime: string
+  endTime?: string
+  durationSeconds: number
+  description?: string
+}
+
 export interface Task {
   id: string
   title: string
@@ -88,6 +147,7 @@ export interface Task {
   priority: 'low' | 'medium' | 'high' | 'urgent'
   status: 'open' | 'in-progress' | 'completed'
   ownerId: string
+  assignedTo?: string[]  // Team member IDs
   createdBy: string
   entityType?: 'contact' | 'deal' | 'lead'
   entityId?: string
@@ -102,6 +162,14 @@ export interface Task {
   recurrenceEndDate?: string
   parentTaskId?: string  // Link to parent recurring task
   nextOccurrence?: string
+  // New fields
+  subtasks?: TaskSubtask[]
+  comments?: TaskComment[]
+  activities?: TaskActivity[]
+  tags?: string[]  // Array of tag IDs
+  timeEntries?: TaskTimeEntry[]
+  estimatedHours?: number
+  trackedSeconds?: number
   createdAt: string
   updatedAt: string
 }

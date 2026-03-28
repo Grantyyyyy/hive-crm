@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react"
 import { toast } from "sonner"
+import { useLocation } from "wouter"
 import {
   FolderOpen,
   PlusCircle,
@@ -20,6 +21,7 @@ import { DeleteModal } from "@/components/ui/delete-modal"
 
 export function Projects() {
   const { user, isLoaded: clerkLoaded } = useUser()
+  const [, setLocation] = useLocation()
   const {
     data: projects,
     isLoaded: projectsLoaded,
@@ -70,37 +72,37 @@ export function Projects() {
   }
 
   return (
-    <div className="flex-1 bg-bg-base text-text-primary min-h-screen">
+    <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen font-sans">
       <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
 
         {/* Header Area */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted mb-1">Work Organization</p>
-            <h1 className="text-3xl font-bold tracking-tight text-text-primary">Projects</h1>
-            <p className="text-text-muted mt-1 font-medium">Organize tasks into projects for better workflow management.</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 mb-1">Work Organization</p>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Projects</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">Organize tasks into projects for better workflow management.</p>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="default" onClick={() => setShowAddModal(true)}>
+            <Button className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-teal-200 dark:shadow-none" onClick={() => setShowAddModal(true)}>
               <PlusCircle className="w-4 h-4" /> Create Project
             </Button>
           </div>
         </div>
 
         {/* Search */}
-        <div className="flex items-center justify-between gap-4 border-b border-border pb-4">
+        <div className="flex items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
           <div className="flex-1 max-w-xl">
             <div className="relative group/search">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted group-focus-within/search:text-indigo-600 transition-colors" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within/search:text-teal-600 transition-colors" />
               <input
                 placeholder="Search projects..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 h-10 bg-bg-surface border-border rounded-md shadow-sm text-sm font-semibold focus:ring-4 focus:ring-indigo-600/5 focus:border-indigo-600/50 placeholder:text-text-muted outline-none transition-all duration-300"
+                className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-semibold focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all duration-300"
               />
             </div>
           </div>
-          <div className="text-sm text-text-muted font-medium">
+          <div className="text-sm text-slate-500 dark:text-slate-400 font-medium">
             {filteredProjects.length} project{filteredProjects.length !== 1 ? 's' : ''}
           </div>
         </div>
@@ -109,9 +111,9 @@ export function Projects() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {paginatedProjects.length === 0 ? (
             <div className="col-span-full p-12 text-center">
-              <FolderOpen className="w-16 h-16 text-text-muted mx-auto mb-4 opacity-50" />
-              <p className="text-text-muted font-medium mb-4">No projects found</p>
-              <Button variant="default" onClick={() => setShowAddModal(true)}>
+              <FolderOpen className="w-16 h-16 text-slate-300 dark:text-slate-700 mx-auto mb-4 opacity-50" />
+              <p className="text-slate-500 dark:text-slate-400 font-medium mb-4">No projects found</p>
+              <Button className="bg-teal-600 hover:bg-teal-700 text-white" onClick={() => setShowAddModal(true)}>
                 <PlusCircle className="w-4 h-4 mr-2" /> Create your first project
               </Button>
             </div>
@@ -124,23 +126,23 @@ export function Projects() {
               return (
                 <div
                   key={project.id}
-                  className="group bg-bg-surface rounded-lg border border-border p-5 hover:shadow-lg hover:shadow-indigo-600/5 hover:border-indigo-600/30 transition-all duration-300 cursor-pointer"
-                  onClick={() => setEditingProject(project)}
+                  className="group bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 p-5 hover:shadow-lg hover:shadow-teal-600/5 hover:border-teal-600/30 transition-all duration-300 cursor-pointer"
+                  onClick={() => setLocation(`/projects/${project.id}`)}
                 >
                   {/* Header */}
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <div
-                        className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 shadow-md"
+                        className="w-10 h-10 rounded-md flex items-center justify-center shrink-0 shadow-sm"
                         style={{ backgroundColor: `${project.color}20` }}
                       >
                         <FolderOpen className="w-5 h-5" style={{ color: project.color }} />
                       </div>
                       <div className="min-w-0">
-                        <h3 className="text-[15px] font-bold text-text-primary truncate group-hover:text-indigo-600 transition-colors">
+                        <h3 className="text-[15px] font-bold text-slate-900 dark:text-white truncate group-hover:text-teal-600 transition-colors">
                           {project.name}
                         </h3>
-                        <p className="text-[11px] text-text-muted font-medium">
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                           {taskCount} {taskCount === 1 ? 'task' : 'tasks'}
                         </p>
                       </div>
@@ -148,19 +150,19 @@ export function Projects() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-all"
+                      className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-all text-slate-400"
                       onClick={(e) => {
                         e.stopPropagation()
                         setPendingDelete(project)
                       }}
                     >
-                      <MoreVertical className="w-4 h-4 text-text-muted" />
+                      <MoreVertical className="w-4 h-4" />
                     </Button>
                   </div>
 
                   {/* Description */}
                   {project.description && (
-                    <p className="text-[13px] text-text-muted line-clamp-2 mb-4 min-h-[36px]">
+                    <p className="text-[13px] text-slate-500 dark:text-slate-400 line-clamp-2 mb-4 min-h-[36px]">
                       {project.description}
                     </p>
                   )}
@@ -168,12 +170,12 @@ export function Projects() {
                   {/* Progress */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-[11px] font-semibold">
-                      <span className="text-text-muted uppercase tracking-wider">Progress</span>
-                      <span className="text-text-primary">{progress}%</span>
+                      <span className="text-slate-500 dark:text-slate-400 uppercase tracking-wider">Progress</span>
+                      <span className="text-slate-900 dark:text-white">{progress}%</span>
                     </div>
-                    <div className="h-2 bg-bg-elevated rounded-full overflow-hidden">
+                    <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-md overflow-hidden">
                       <div
-                        className="h-full rounded-full transition-all duration-500"
+                        className="h-full rounded-md transition-all duration-500"
                         style={{
                           width: `${progress}%`,
                           backgroundColor: project.color
@@ -181,18 +183,18 @@ export function Projects() {
                       />
                     </div>
                     {taskCount > 0 && (
-                      <p className="text-[11px] text-text-muted font-medium">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                         {completedCount} of {taskCount} tasks completed
                       </p>
                     )}
                   </div>
 
                   {/* Quick Actions */}
-                  <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
+                  <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 px-3 text-[12px] font-semibold flex-1"
+                      className="h-8 px-3 text-[12px] font-semibold flex-1 text-slate-600 dark:text-slate-400"
                       onClick={(e) => {
                         e.stopPropagation()
                         setEditingProject(project)
@@ -204,7 +206,7 @@ export function Projects() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 px-3 text-[12px] font-semibold flex-1 text-red hover:bg-red/10"
+                      className="h-8 px-3 text-[12px] font-semibold flex-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                       onClick={(e) => {
                         e.stopPropagation()
                         setPendingDelete(project)

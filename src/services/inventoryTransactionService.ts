@@ -221,3 +221,43 @@ export async function createReleaseTransaction(
     userName: params.userName,
   }, adapter);
 }
+
+/**
+ * Helper to create a return transaction.
+ * Used when stock is returned from a cancelled shipped order.
+ */
+export async function createReturnTransaction(
+  params: {
+    inventoryItemId: string;
+    inventoryItemName: string;
+    quantityBefore: number;
+    quantityAfter: number;
+    quantityChange: number;
+    reservedBefore: number;
+    reservedAfter: number;
+    referenceId?: string;
+    referenceNumber?: string;
+    reason?: string;
+    userId: string;
+    userName: string;
+  },
+  adapter: JobAdapter
+): Promise<InventoryTransaction> {
+  return createInventoryTransaction({
+    inventoryItemId: params.inventoryItemId,
+    inventoryItemName: params.inventoryItemName,
+    type: 'return',
+    quantityChange: params.quantityChange,
+    quantityBefore: params.quantityBefore,
+    quantityAfter: params.quantityAfter,
+    reservedChange: params.reservedAfter - params.reservedBefore,
+    reservedBefore: params.reservedBefore,
+    reservedAfter: params.reservedAfter,
+    referenceType: 'sales_order',
+    referenceId: params.referenceId,
+    referenceNumber: params.referenceNumber,
+    reason: params.reason || 'Stock return from cancelled order',
+    userId: params.userId,
+    userName: params.userName,
+  }, adapter);
+}

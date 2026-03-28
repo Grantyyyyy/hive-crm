@@ -4,14 +4,12 @@ import {
   Package,
   Search,
   Filter,
-  Download,
-  PlusCircle,
   MoreVertical,
   Image as ImageIcon
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Pagination } from "@/components/ui/Pagination"
-import { AddInventoryModal } from "@/components/crm/AddInventoryModal"
+import { AddInventorySheet } from "@/components/logisticsComponent/AddInventorySheet"
 import { useCRMResource } from "@/lib/hooks"
 import { cn } from "@/lib/utils"
 import type { InventoryItem, StockLevel, InventoryStatus } from "@/lib/types"
@@ -79,10 +77,10 @@ export function Inventory() {
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outlineNeutral">
-              <Download className="w-4 h-4" /> Export
+              Export
             </Button>
             <Button variant="default" onClick={() => setShowAddModal(true)}>
-              <PlusCircle className="w-4 h-4" /> Create Product
+              Create Product
             </Button>
           </div>
         </div>
@@ -218,7 +216,7 @@ export function Inventory() {
         </div>
       </div>
 
-      <AddInventoryModal 
+      <AddInventorySheet
         open={showAddModal}
         onOpenChange={setShowAddModal}
       />

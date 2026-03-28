@@ -12,7 +12,7 @@ import { useCRMResource } from "@/lib/hooks"
 import { cn } from "@/lib/utils"
 import type { PurchaseOrder, PurchaseOrderStatus, InventoryTransaction } from "@/lib/types"
 import { generateId } from "@/lib/helpers"
-import { AddPurchaseOrderModal } from "@/components/crm/AddPurchaseOrderModal"
+import { AddPurchaseOrderModal } from "@/components/logisticsComponent/AddPurchaseOrderModal"
 import { restockFromPO } from "@/services/procurementService"
 import type { JobAdapter } from "@/services/types"
 import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
@@ -42,6 +42,7 @@ export function PurchaseOrders() {
     insertSalesOrder: (o) => insertRows<SalesOrder>(ctx, 'orders', [o as any]).then(rows => rows[0]),
     getInventoryItems: () => ctx.getResource<InventoryItem>('inventory').data,
     updateInventoryItem: (id, patch) => updateRow<InventoryItem>(ctx, 'inventory', id, patch),
+    insertInventoryItem: (item: Omit<InventoryItem, 'id'>) => insertRows<InventoryItem>(ctx, 'inventory', [item as any]).then(rows => rows[0] as InventoryItem),
     getPurchaseRequests: () => ctx.getResource<PurchaseRequest>('purchase_requests').data,
     updatePurchaseRequest: (id, patch) => updateRow<PurchaseRequest>(ctx, 'purchase_requests', id, patch),
     insertPurchaseRequest: (pr) => insertRows<PurchaseRequest>(ctx, 'purchase_requests', [pr as any]).then(rows => rows[0]),

@@ -13,8 +13,8 @@ import { useCRMResource } from "@/lib/hooks"
 import { cn } from "@/lib/utils"
 import type { PurchaseRequest, PurchaseRequestStatus, InventoryTransaction } from "@/lib/types"
 import { generateId } from "@/lib/helpers"
-import { AddPurchaseRequestModal } from "@/components/crm/AddPurchaseRequestModal"
-import { PurchaseRequestReviewModal } from "@/components/crm/PurchaseRequestReviewModal"
+import { AddPurchaseRequestModal } from "@/components/logisticsComponent/AddPurchaseRequestModal"
+import { PurchaseRequestReviewModal } from "@/components/logisticsComponent/PurchaseRequestReviewModal"
 import { approvePurchaseRequest } from "@/services/procurementService"
 import type { JobAdapter } from "@/services/types"
 import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
@@ -42,6 +42,7 @@ export function PurchaseRequests() {
     insertSalesOrder: (o) => insertRows<SalesOrder>(ctx, 'orders', [o as any]).then(rows => rows[0]),
     getInventoryItems: () => ctx.getResource<InventoryItem>('inventory').data,
     updateInventoryItem: (id, patch) => updateRow<InventoryItem>(ctx, 'inventory', id, patch),
+    insertInventoryItem: (item: Omit<InventoryItem, 'id'>) => insertRows<InventoryItem>(ctx, 'inventory', [item as any]).then(rows => rows[0] as InventoryItem),
     getPurchaseRequests: () => requests,
     updatePurchaseRequest: (id, patch) => updateRow<PurchaseRequest>(ctx, 'purchase_requests', id, patch),
     insertPurchaseRequest: (pr) => insertRows<PurchaseRequest>(ctx, 'purchase_requests', [pr as any]).then(rows => rows[0]),
@@ -108,12 +109,14 @@ export function PurchaseRequests() {
           status: 'pending_review',
           date: "2023-10-25T10:00:00Z",
           department: "Marketing",
-          items: [],
+          items: [{
+            id: generateId(),
+            name: 'Premium Widget',
+            quantity: 100,
+            estimatedPrice: 15.00,
+            inventoryItemId: 'inv-1',
+          }],
           priority: 'high',
-          inventoryItemId: 'inv-1',
-          inventoryItemName: 'Premium Widget',
-          requestedQuantity: 100,
-          estimatedPrice: 15.00,
           justification: 'Stock replenishment',
           urgent: false,
           createdAt: "2023-10-25T10:00:00Z",
@@ -128,12 +131,14 @@ export function PurchaseRequests() {
           status: 'approved',
           date: "2023-10-22T14:30:00Z",
           department: "IT",
-          items: [],
+          items: [{
+            id: generateId(),
+            name: 'Cloud Server',
+            quantity: 1,
+            estimatedPrice: 850.50,
+            inventoryItemId: 'inv-2',
+          }],
           priority: 'medium',
-          inventoryItemId: 'inv-2',
-          inventoryItemName: 'Cloud Server',
-          requestedQuantity: 1,
-          estimatedPrice: 850.50,
           justification: 'Annual renewal',
           urgent: false,
           createdAt: "2023-10-22T14:30:00Z",
@@ -148,12 +153,14 @@ export function PurchaseRequests() {
           status: 'pending_review',
           date: "2023-10-20T09:15:00Z",
           department: "Ops",
-          items: [],
+          items: [{
+            id: generateId(),
+            name: 'Industrial Drill',
+            quantity: 2,
+            estimatedPrice: 6000.00,
+            inventoryItemId: 'inv-3',
+          }],
           priority: 'urgent',
-          inventoryItemId: 'inv-3',
-          inventoryItemName: 'Industrial Drill',
-          requestedQuantity: 2,
-          estimatedPrice: 6000.00,
           justification: 'Replace broken units',
           urgent: true,
           createdAt: "2023-10-20T09:15:00Z",

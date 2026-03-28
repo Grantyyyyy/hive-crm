@@ -212,13 +212,13 @@ export function PurchaseRequestDetail() {
     [requests, requestId]
   )
 
-  // find the PO linked to this PR (for "ordered" status)
-  const linkedPO = useMemo(
+  // find all POs linked to this PR (for "ordered" status)
+  const linkedPOs = useMemo(
     () =>
-      purchaseOrders.find(
+      purchaseOrders.filter(
         (po) =>
-          po.purchaseRequestId === requestId || po.referenceId === requestId
-      ) ?? null,
+          po.referenceId === requestId
+      ),
     [purchaseOrders, requestId]
   )
 
@@ -242,6 +242,10 @@ export function PurchaseRequestDetail() {
         ctx.getResource<InventoryItem>("inventory").data,
       updateInventoryItem: (id, patch) =>
         updateRow<InventoryItem>(ctx, "inventory", id, patch),
+      insertInventoryItem: (item: Omit<InventoryItem, 'id'>) =>
+        insertRows<InventoryItem>(ctx, "inventory", [item as any]).then(
+          (rows) => rows[0] as InventoryItem
+        ),
       getPurchaseRequests: () => requests,
       updatePurchaseRequest: (id, patch) =>
         updateRow<PurchaseRequest>(ctx, "purchase_requests", id, patch),
@@ -292,7 +296,7 @@ export function PurchaseRequestDetail() {
     try {
       await approvePurchaseRequest(request.id, adapter)
       toast.success("Request Approved", {
-        description: "Purchase Order created automatically.",
+        description: "Purchase Order(s) created automatically.",
       })
     } catch (e: any) {
       toast.error("Approval failed", { description: e.message })
@@ -480,25 +484,29 @@ export function PurchaseRequestDetail() {
           </div>
 
           {/* Linked PO banner — shown when status is "ordered" */}
-          {request.status === "ordered" && linkedPO && (
-            <div className="mt-6 flex items-center justify-between gap-4 px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
-              <div className="flex items-center gap-3">
-                <ShoppingCart className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
-                  Purchase Order{" "}
-                  <span className="font-black">{linkedPO.poNumber}</span> was
-                  created from this request.
-                </p>
-              </div>
-              <Link href={`/purchase-orders/${linkedPO.id}`}>
-                <Button
-                  size="sm"
-                  variant="outlineNeutral"
-                  className="shrink-0 text-xs border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
-                >
-                  View PO <ExternalLink className="w-3 h-3 ml-1.5" />
-                </Button>
-              </Link>
+          {request.status === "ordered" && linkedPOs.length > 0 && (
+            <div className="mt-6 space-y-2">
+              {linkedPOs.map((po) => (
+                <div key={po.id} className="flex items-center justify-between gap-4 px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+                  <div className="flex items-center gap-3">
+                    <ShoppingCart className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+                      <span className="font-black">{po.poNumber}</span>
+                      {" · "}{po.vendorName || "TBD"}
+                      {" · "}{po.items.length} item{po.items.length !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                  <Link href={`/purchase-orders/${po.id}`}>
+                    <Button
+                      size="sm"
+                      variant="outlineNeutral"
+                      className="shrink-0 text-xs border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40"
+                    >
+                      View PO <ExternalLink className="w-3 h-3 ml-1.5" />
+                    </Button>
+                  </Link>
+                </div>
+              ))}
             </div>
           )}
 
@@ -590,7 +598,7 @@ export function PurchaseRequestDetail() {
                 </h2>
               </div>
 
-              {/* Multi-item table if items array exists, fallback to flat fields */}
+              {/* Multi-item table — items[] is the single source of truth */}
               {Array.isArray(request.items) && request.items.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -598,6 +606,9 @@ export function PurchaseRequestDetail() {
                       <tr className="border-b border-slate-100 dark:border-slate-800">
                         <th className="text-left px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
                           Item
+                        </th>
+                        <th className="text-left px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                          Vendor
                         </th>
                         <th className="text-right px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
                           Qty
@@ -611,24 +622,27 @@ export function PurchaseRequestDetail() {
                       </tr>
                     </thead>
                     <tbody>
-                      {request.items.map((item: any, idx: number) => (
+                      {request.items.map((item, idx: number) => (
                         <tr
-                          key={idx}
+                          key={item.id || idx}
                           className="border-b border-slate-50 dark:border-slate-800/50 last:border-0"
                         >
                           <td className="px-6 py-4 font-semibold text-slate-900 dark:text-white">
-                            {item.name ?? item.inventoryItemName ?? "—"}
+                            {item.name || "—"}
+                          </td>
+                          <td className="px-6 py-4 text-slate-600 dark:text-slate-400 text-xs font-medium">
+                            {item.vendorName || <span className="text-slate-300 italic">Unassigned</span>}
                           </td>
                           <td className="px-6 py-4 text-right font-black text-indigo-600 dark:text-indigo-400">
-                            {item.quantity ?? item.requestedQuantity}
+                            {item.quantity}
                           </td>
                           <td className="px-6 py-4 text-right text-slate-600 dark:text-slate-400">
-                            {fmt(item.unitPrice ?? item.estimatedPrice ?? 0)}
+                            {fmt(item.estimatedPrice ?? 0)}
                           </td>
                           <td className="px-6 py-4 text-right font-bold text-slate-900 dark:text-white">
                             {fmt(
-                              (item.quantity ?? item.requestedQuantity ?? 0) *
-                              (item.unitPrice ?? item.estimatedPrice ?? 0)
+                              (item.quantity ?? 0) *
+                              (item.estimatedPrice ?? 0)
                             )}
                           </td>
                         </tr>
@@ -637,44 +651,8 @@ export function PurchaseRequestDetail() {
                   </table>
                 </div>
               ) : (
-                // Fallback: flat single-item display
-                <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">
-                        Item Name
-                      </p>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white">
-                        {request.inventoryItemName}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">
-                        Quantity Requested
-                      </p>
-                      <p className="text-lg font-black text-indigo-600 dark:text-indigo-400">
-                        {request.requestedQuantity}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">
-                        Estimated Unit Price
-                      </p>
-                      <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                        {fmt(request.estimatedPrice)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">
-                        Total Estimated Amount
-                      </p>
-                      <p className="text-lg font-black text-slate-900 dark:text-white">
-                        {fmt(request.amount)}
-                      </p>
-                    </div>
-                  </div>
+                <div className="p-6 text-center text-sm text-slate-400">
+                  No items on this request.
                 </div>
               )}
             </div>

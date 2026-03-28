@@ -13,6 +13,7 @@ import { Activities } from "@/pages/core/Activities";
 import { Leads } from "@/pages/core/Leads";
 import { LeadDetail } from "@/pages/LeadDetail";
 import { Tasks } from "@/pages/core/Tasks";
+import { Projects } from "@/pages/core/Projects";
 import { SalesOrders } from "@/pages/sales/SalesOrders";
 import { SalesOrderDetail } from "@/pages/sales/SalesOrderDetail";
 import { Quotes } from "@/pages/sales/Quotes";
@@ -77,6 +78,7 @@ function AutomationRunner() {
 
     getInventoryItems: () => ctx.getResource<InventoryItem>('inventory').data,
     updateInventoryItem: (id, patch) => updateRow<InventoryItem>(ctx, 'inventory', id, patch),
+    insertInventoryItem: (item: Omit<InventoryItem, 'id'>) => insertRows<InventoryItem>(ctx, 'inventory', [item as any]).then(rows => rows[0] as InventoryItem),
 
     getPurchaseRequests: () => ctx.getResource<PurchaseRequest>('purchase_requests').data,
     updatePurchaseRequest: (id, patch) => updateRow<PurchaseRequest>(ctx, 'purchase_requests', id, patch),
@@ -157,6 +159,9 @@ function AppContent() {
             </Route>
             <Route path="/tasks">
               {() => <Protected component={Tasks} />}
+            </Route>
+            <Route path="/projects">
+              {() => <Protected component={Projects} />}
             </Route>
             <Route path="/orders">
               {() => <Protected component={SalesOrders} />}

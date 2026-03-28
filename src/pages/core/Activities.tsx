@@ -123,7 +123,7 @@ export function Activities() {
             placeholder="Search activity content..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-slate-400 outline-none transition-all"
+            className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
           />
         </div>
 
@@ -136,7 +136,7 @@ export function Activities() {
                 onClick={() => setFilter("all")}
                 className={cn(
                   "px-4 py-1.5 rounded-lg text-sm font-semibold transition-all whitespace-nowrap",
-                  filter === "all" ? "bg-indigo-600 text-white shadow-sm shadow-indigo-200" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
+                  filter === "all" ? "bg-teal-600 text-white shadow-sm shadow-teal-200" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
                 )}
               >
                 All
@@ -218,7 +218,7 @@ export function Activities() {
                             )}>
                               <div className="bg-white dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow group-hover:border-indigo-200 dark:group-hover:border-indigo-800/50">
                                 <div className="flex items-center justify-between mb-2">
-                                  <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded">{timeString}</span>
+                                  <span className="text-[11px] font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/20 px-1.5 py-0.5 rounded">{timeString}</span>
                                   <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{TYPE_META[activity.type].label.slice(0, -1)}</span>
                                 </div>
 
@@ -243,7 +243,7 @@ export function Activities() {
                                     <span className="text-slate-300 dark:text-slate-700 text-[10px]">•</span>
                                     {activity.contactId ? (
                                       <Link href={`/contacts/${activity.contactId}`}>
-                                        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 truncate max-w-[100px] cursor-pointer">
+                                        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 truncate max-w-[100px] cursor-pointer">
                                           {contactMap.get(activity.contactId) || "Contact"}
                                         </span>
                                       </Link>

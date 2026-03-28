@@ -356,7 +356,6 @@ export function PurchaseRequestDetail() {
   const cfg = STATUS_CONFIG[request.status]
   const progressIdx = PROGRESS_ORDER.indexOf(request.status)
   const isRejected = request.status === "rejected"
-  const isTerminal = isRejected || request.status === "ordered"
   const initials = request.requesterName
     .split(" ")
     .map((n) => n[0])

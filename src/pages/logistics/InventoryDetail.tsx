@@ -95,14 +95,10 @@ export function InventoryDetail() {
     await createAdjustmentTransaction({
       inventoryItemId: item.id,
       inventoryItemName: item.name,
+      quantityChange: newQuantity - item.stockQuantity,
       quantityBefore: item.stockQuantity,
       quantityAfter: newQuantity,
-      quantityChanged: newQuantity - item.stockQuantity,
-      reservedBefore: item.reservedQuantity ?? 0,
-      reservedAfter: item.reservedQuantity ?? 0,
       reason,
-      referenceId: item.id,
-      referenceType: 'manual',
       userId,
       userName,
     }, auditAdapter as any)

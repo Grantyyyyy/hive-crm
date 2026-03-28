@@ -72,7 +72,7 @@ export function SalesOrderDetail() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [returnOpen, setReturnOpen] = useState(false)
   const [isShipping, setIsShipping] = useState(false)
-  const [isCancelling, setIsCancelling] = useState(false)
+  const [isCancelling, _setIsCancelling] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isReturning, setIsReturning] = useState(false)
 
@@ -101,19 +101,6 @@ export function SalesOrderDetail() {
       setInvoiceOpen(true)
     } catch {
       toast.error("Failed to update order.")
-    }
-  }
-
-  const handleCancel = async () => {
-    if (!order || isCancelling) return
-    setIsCancelling(true)
-    try {
-      await releaseOrderStock(order, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
-      toast.success("Order Cancelled", { description: `#${order.orderNumber} — stock reservation released.` })
-    } catch (e: unknown) {
-      toast.error("Failed to cancel order", { description: (e as Error).message })
-    } finally {
-      setIsCancelling(false)
     }
   }
 

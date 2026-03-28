@@ -242,6 +242,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  username?: string;
   organizationId: string;
   roleId: string;
   role?: {

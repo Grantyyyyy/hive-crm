@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from "react"
 import { useLocation, useRoute, Link } from "wouter"
+import { useUser } from "@clerk/clerk-react"
 import {
   ArrowLeft,
   DollarSign,
@@ -58,6 +59,7 @@ export function DealDetail() {
   const [, navigate] = useLocation()
   const dealId = params?.id ?? ""
 
+  const { user } = useUser()
   const {
     data: deals,
     updateItem: updateDeal,
@@ -205,7 +207,7 @@ export function DealDetail() {
                   {contact && (
                     <Link
                       href={`/contacts/${contact.id}`}
-                      className="flex items-center gap-2 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                      className="flex items-center gap-2 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
                     >
                       <User className="h-4 w-4 text-slate-400" /> {contact.name}
                     </Link>
@@ -318,7 +320,7 @@ export function DealDetail() {
                     {contact ? (
                       <Link
                         href={`/contacts/${contact.id}`}
-                        className="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                        className="text-sm font-bold text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 transition-colors"
                       >
                         {contact.name} →
                       </Link>
@@ -362,7 +364,7 @@ export function DealDetail() {
                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-3">
                   <div className="flex items-center gap-2">
                     <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500">Tasks</h2>
-                    <span className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-bold px-2 py-0.5 rounded-md">
+                    <span className="bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 text-xs font-bold px-2 py-0.5 rounded-md">
                       {tasks.filter((t) => t.status !== "completed").length}
                     </span>
                   </div>
@@ -370,7 +372,7 @@ export function DealDetail() {
                     variant="ghost"
                     size="icon"
                     onClick={() => setShowAddTaskModal(true)}
-                    className="h-8 w-8 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+                    className="h-8 w-8 text-slate-400 hover:text-teal-600 dark:hover:text-teal-400"
                   >
                     <PlusCircle className="h-4 w-4" />
                   </Button>
@@ -402,7 +404,7 @@ export function DealDetail() {
                           >
                             <button
                               onClick={(e) => handleToggleTask(e, task)}
-                              className="shrink-0 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                              className="shrink-0 text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
                             >
                               {isComp ? (
                                 <CheckCircle2 className="w-5 h-5 text-emerald-500 group-hover/task:text-emerald-600" />
@@ -526,7 +528,7 @@ export function DealDetail() {
         onOpenChange={(o) => !o && setEditingTask(null)}
         onUpdate={updateTaskItem}
         onDelete={deleteTaskItem}
-        userId={userId || ""}
+        user={user}
       />
     </div>
   )

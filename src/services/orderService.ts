@@ -86,9 +86,7 @@ export async function fulfillOrderStock(
     const invItem = inventory.find(i => i.id === item.inventoryItemId);
     if (invItem) {
       const quantityBefore = invItem.stockQuantity;
-      const quantityAfter = newPhysical;
-      const reservedBefore = invItem.reservedQuantity || 0;
-      const reservedAfter = newReserved;
+      const quantityAfter = quantityBefore - item.quantity;
 
       await createShipmentTransaction({
         inventoryItemId: invItem.id,
@@ -96,8 +94,6 @@ export async function fulfillOrderStock(
         quantityChange: -item.quantity,
         quantityBefore,
         quantityAfter,
-        reservedBefore,
-        reservedAfter,
         referenceId: order.id,
         referenceNumber: order.orderNumber,
         reason: `Shipped for Order ${order.orderNumber}`,

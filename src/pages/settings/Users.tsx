@@ -12,7 +12,7 @@ import { UserPlus, Mail, Shield, Trash2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function Users() {
-  const { user } = useUser();
+  const { user, isLoaded: userLoaded } = useUser();
   const queryClient = useQueryClient();
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [showRoleDialog, setShowRoleDialog] = useState(false);
@@ -27,6 +27,7 @@ export function Users() {
       const response = await usersApi.list();
       return response.data as User[];
     },
+    enabled: userLoaded,
   });
 
   const { data: rolesData } = useQuery({
@@ -110,7 +111,7 @@ export function Users() {
     }
   };
 
-  if (usersLoading) {
+  if (!userLoaded || usersLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
@@ -252,8 +253,8 @@ export function Users() {
               <Button type="button" variant="outline" onClick={() => setShowInviteDialog(false)}>
                 Cancel
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="bg-indigo-600 hover:bg-indigo-700"
                 disabled={inviteMutation.isPending}
               >

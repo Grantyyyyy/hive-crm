@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from "react"
 import { useLocation, useRoute, Link } from "wouter"
+import { useUser } from "@clerk/clerk-react"
 import {
   ArrowLeft,
   Mail,
@@ -55,6 +56,7 @@ export function LeadDetail() {
   const [, navigate] = useLocation()
   const leadId = params?.id ?? ""
 
+  const { user } = useUser()
   const {
     data: leads,
     updateItem: updateLead,
@@ -568,7 +570,7 @@ export function LeadDetail() {
         onOpenChange={(o) => !o && setEditingTask(null)}
         onUpdate={updateTaskItem}
         onDelete={deleteTaskItem}
-        userId={userId || ""}
+        user={user}
       />
     </div>
   )

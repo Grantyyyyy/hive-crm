@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react"
+import { useState, useMemo, useCallback, useEffect } from "react"
 import { Pagination } from "@/components/ui/Pagination"
 import { useLocation } from "wouter"
 import {
@@ -37,12 +37,14 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet"
 import { DealForm } from "@/components/crmComponent/DealForm"
+import { LostReasonModal } from "@/components/crmComponent/LostReasonModal"
 import { formatCurrency } from "@/lib/helpers"
 import { useCRMResource } from "@/lib/hooks"
 import { PageSkeleton } from "@/components/ui/page-skeleton"
 import type { Deal, DealStage, Contact } from "@/lib/types"
 import { STAGE_LABELS, DEAL_STAGES } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { exportToCSV, debounce } from "@/lib/helpers"
 
 const STAGE_STYLE: Record<DealStage, { bg: string; text: string; icon: any }> = {
   discovery: { bg: "bg-blue-50 dark:bg-blue-900/20", text: "text-blue-700 dark:text-blue-400", icon: DollarSign },
@@ -89,7 +91,7 @@ function SortableDealCard({ deal, contactName, onClick }: SortableDealCardProps)
       onClick={onClick}
       className={cn(
         "group relative bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md cursor-grab active:cursor-grabbing",
-        isDragging && "z-50 shadow-xl ring-2 ring-indigo-500 border-transparent rotate-1",
+        isDragging && "z-50 shadow-xl ring-2 ring-teal-500 border-transparent rotate-1",
         deal.stage === 'won' && "border-emerald-100 dark:border-emerald-900/50 hover:border-emerald-500",
         deal.stage === 'lost' && "border-rose-100 dark:border-rose-900/50 hover:border-rose-500"
       )}
@@ -145,8 +147,20 @@ export function Deals() {
   const [viewMode, setViewMode] = useState<"board" | "list">("board")
   const [activeId, setActiveId] = useState<string | null>(null)
   const [pendingDelete, setPendingDelete] = useState<Deal | null>(null)
+  const [pendingLostDeal, setPendingLostDeal] = useState<Deal | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
+  const [searchInput, setSearchInput] = useState("")
   const itemsPerPage = 10
+
+  // Debounced search
+  const debouncedSetSearch = useCallback(
+    debounce((value: string) => setSearch(value), 300),
+    [setSearch]
+  )
+
+  useEffect(() => {
+    debouncedSetSearch(searchInput)
+  }, [searchInput, debouncedSetSearch])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -219,7 +233,12 @@ export function Deals() {
     if (newStage) {
       const deal = deals.find(d => d.id === dealId)
       if (deal && deal.stage !== newStage) {
-        updateItem(dealId, { stage: newStage, updatedAt: new Date().toISOString() })
+        // If moving to lost stage, show lost reason modal
+        if (newStage === 'lost') {
+          setPendingLostDeal(deal)
+        } else {
+          updateItem(dealId, { stage: newStage, updatedAt: new Date().toISOString() })
+        }
       }
     }
   }, [deals, updateItem])
@@ -233,27 +252,42 @@ export function Deals() {
     setShowModal(false)
   }
 
+  function handleExportCSV() {
+    exportToCSV(
+      filtered,
+      [
+        { key: 'title', header: 'Deal Title' },
+        { key: 'contactId', header: 'Contact ID' },
+        { key: 'value', header: 'Value' },
+        { key: 'stage', header: 'Stage' },
+        { key: 'expectedCloseDate', header: 'Expected Close Date' },
+        { key: 'createdAt', header: 'Created Date' },
+      ],
+      'deals'
+    )
+  }
+
   const activeDeal = activeId ? deals.find(d => d.id === activeId) : null
 
   return (
-    <div className="flex-1 bg-bg-base text-text-primary min-h-screen">
+    <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen font-sans">
       <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
 
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 pt-2 mb-4">
           <div className="space-y-1">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600 mb-1">SALES OPERATIONS</p>
-            <h1 className="text-4xl font-extrabold tracking-tight text-text-primary">Pipeline</h1>
-            <p className="text-sm font-semibold text-text-muted">Track and manage active sales opportunities.</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-600 mb-1">SALES OPERATIONS</p>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Pipeline</h1>
+            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Track and manage active sales opportunities.</p>
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
-            <div className="bg-bg-surface p-1 rounded-md border border-border flex items-center mr-2 shadow-sm">
+            <div className="bg-white dark:bg-slate-900 p-1 rounded-md border border-slate-200 dark:border-slate-800 flex items-center mr-2 shadow-sm">
               <Button
                 variant={viewMode === "board" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode("board")}
-                className={cn("h-8 px-4 font-bold rounded-sm", viewMode === "board" && "bg-indigo-600 text-white shadow-md hover:bg-indigo-700")}
+                className={cn("h-8 px-4 font-bold rounded-sm", viewMode === "board" && "bg-teal-600 text-white shadow-md hover:bg-teal-700")}
               >
                 Board
               </Button>
@@ -261,14 +295,19 @@ export function Deals() {
                 variant={viewMode === "list" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode("list")}
-                className={cn("h-8 px-4 font-bold rounded-sm", viewMode === "list" && "bg-indigo-600 text-white shadow-md hover:bg-indigo-700")}
+                className={cn("h-8 px-4 font-bold rounded-sm", viewMode === "list" && "bg-teal-600 text-white shadow-md hover:bg-teal-700")}
               >
                 List
               </Button>
             </div>
 
+            <Button variant="outline" onClick={handleExportCSV} className="border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
+              <DollarSign className="w-4 h-4" />
+              Export CSV
+            </Button>
+
             <Button
-              variant="default"
+              className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-teal-200 dark:shadow-none"
               onClick={() => setShowModal(true)}
             >
               <PlusCircle className="w-4 h-4" /> Create Deal
@@ -277,25 +316,25 @@ export function Deals() {
         </div>
 
         {/* Unified Search Bar */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-border pb-6 mb-2">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6 mb-2">
           <div className="flex items-center gap-8 overflow-x-auto scrollbar-none">
-            <button className="pb-4 font-bold text-sm tracking-wide text-indigo-600 relative flex items-center gap-2 cursor-pointer">
+            <button className="pb-4 font-bold text-sm tracking-wide text-teal-600 relative flex items-center gap-2 cursor-pointer">
               Active Deals
-              <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-indigo-600 rounded-t-full" />
+              <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-teal-600 rounded-t-full" />
             </button>
-            <button className="pb-4 font-bold text-sm tracking-wide text-text-secondary hover:text-text-primary transition-colors cursor-pointer opacity-50">
+            <button className="pb-4 font-bold text-sm tracking-wide text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors cursor-pointer opacity-50">
               Won / Lost
             </button>
           </div>
 
           <div className="flex-1 w-full lg:max-w-xl pb-4 lg:pb-3">
             <div className="relative group/search">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted group-focus-within/search:text-indigo-600 transition-colors" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within/search:text-teal-600 transition-colors" />
               <input
                 placeholder="Search deals, contacts or companies..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 h-10 bg-bg-surface border-border rounded-md shadow-sm text-sm font-semibold focus:ring-4 focus:ring-indigo-600/5 focus:border-indigo-600/50 placeholder:text-text-muted outline-none transition-all duration-300"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-semibold focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all duration-300"
               />
             </div>
           </div>
@@ -303,26 +342,26 @@ export function Deals() {
 
         {viewMode === "list" ? (
           /* ── List View ───────────────────────────────────────────── */
-          <div className="bg-bg-surface rounded-md border border-border shadow-xl shadow-indigo-600/5 overflow-hidden animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden animate-in fade-in duration-300">
             <div className="overflow-x-auto">
               <table className="w-full text-left table-auto">
                 <thead>
-                  <tr className="bg-bg-elevated/50 border-b border-border">
-                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-widest text-text-muted">Deal Title</th>
-                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-widest text-text-muted">Contact</th>
-                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-widest text-text-muted">Value</th>
-                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-widest text-text-muted">Stage</th>
-                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-widest text-text-muted">Expected Close</th>
-                    <th className="px-4 py-3 text-[11px] font-black uppercase tracking-widest text-text-muted text-right">Actions</th>
+                  <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Deal Title</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Contact</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Value</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Stage</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Expected Close</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-4 py-20 text-center">
+                      <td colSpan={6} className="px-6 py-20 text-center">
                         <div className="flex flex-col items-center gap-3">
-                          <BarChart3 className="w-10 h-10 text-text-muted/30" />
-                          <p className="text-text-muted font-medium">No deals found.</p>
+                          <BarChart3 className="w-10 h-10 text-slate-300 dark:text-slate-700" />
+                          <p className="text-slate-500 dark:text-slate-400 font-medium">No deals found.</p>
                         </div>
                       </td>
                     </tr>
@@ -332,26 +371,26 @@ export function Deals() {
                       return (
                         <tr
                           key={d.id}
-                          className="hover:bg-bg-surface transition-all cursor-pointer group border-l-4 border-transparent hover:border-indigo-600 hover:shadow-xl hover:shadow-indigo-600/5 relative z-0 hover:z-10"
+                          className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all cursor-pointer group border-l-4 border-transparent hover:border-teal-600 hover:shadow-xl hover:shadow-teal-600/5 relative z-0 hover:z-10"
                           onClick={() => navigate(`/deals/${d.id}`)}
                         >
-                          <td className="px-4 py-2.5">
+                          <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-6 h-6 rounded bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                              <div className="w-6 h-6 rounded bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center text-teal-600 group-hover:bg-teal-600 group-hover:text-white transition-colors">
                                 <DollarSign className="w-3.5 h-3.5" />
                               </div>
                               <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{d.title}</p>
                             </div>
                           </td>
-                          <td className="px-4 py-2.5">
-                            <p className="text-[13px] font-semibold text-slate-700 dark:text-slate-300">
+                          <td className="px-6 py-4">
+                            <p className="text-[13px] font-semibold text-slate-600 dark:text-slate-400">
                               {contactMap.get(d.contactId) || "Unknown"}
                             </p>
                           </td>
-                          <td className="px-4 py-2.5">
+                          <td className="px-6 py-4">
                             <p className="text-[13px] font-extrabold text-slate-900 dark:text-white">{formatCurrency(d.value)}</p>
                           </td>
-                          <td className="px-4 py-2.5">
+                          <td className="px-6 py-4">
                             <div className={cn(
                               "flex items-center gap-2 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest w-fit border border-transparent shadow-sm",
                               style.bg,
@@ -360,7 +399,7 @@ export function Deals() {
                               {STAGE_LABELS[d.stage]}
                             </div>
                           </td>
-                          <td className="px-4 py-2.5">
+                          <td className="px-6 py-4">
                             <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
                               <Calendar className="w-3.5 h-3.5" />
                               <p className="text-[11px] font-bold tracking-tight">
@@ -368,11 +407,11 @@ export function Deals() {
                               </p>
                             </div>
                           </td>
-                          <td className="px-4 py-2.5 text-right">
+                          <td className="px-6 py-4 text-right">
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-all"
+                              className="h-8 w-8 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-all"
                               onClick={(e) => {
                                 e.stopPropagation()
                                 setPendingDelete(d)
@@ -410,18 +449,18 @@ export function Deals() {
             >
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                 {DEAL_STAGES.map((stage) => (
-                  <div key={stage} className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-4">
                     {/* Column Header */}
                     <div className="flex items-center justify-between px-2">
                       <div className="flex items-center gap-3 min-w-0">
                         <h3 className="text-sm font-black text-slate-900 dark:text-white truncate uppercase tracking-tight">
                           {STAGE_LABELS[stage]}
                         </h3>
-                        <span className="flex-shrink-0 px-2 py-0.5 bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[10px] font-black rounded-lg">
+                        <span className="flex-shrink-0 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-black rounded-md">
                           {(dealsByStage[stage] || []).length}
                         </span>
                       </div>
-                      <span className="text-[11px] font-black text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
+                      <span className="text-[11px] font-black text-teal-600 dark:text-teal-400 whitespace-nowrap">
                         {formatCurrency(totalsByStage[stage])}
                       </span>
                     </div>
@@ -433,8 +472,8 @@ export function Deals() {
                       strategy={verticalListSortingStrategy}
                     >
                       <div className={cn(
-                        "flex-1 flex flex-col gap-3 min-h-[500px] p-2 rounded-[2rem] border-2 border-dashed transition-colors",
-                        "border-slate-200 dark:border-slate-800/50 hover:border-indigo-200 dark:hover:border-indigo-900/50"
+                        "flex-1 flex flex-col gap-3 min-h-[500px] p-2 rounded-md border-2 border-dashed transition-colors",
+                        "border-slate-200 dark:border-slate-800/50 hover:border-teal-200 dark:hover:border-teal-900/50"
                       )}>
                         {(dealsByStage[stage] || []).map((deal) => (
                           <SortableDealCard
@@ -504,6 +543,22 @@ export function Deals() {
         }}
         cancelText="Cancel"
         deleteText="Delete Deal"
+      />
+
+      <LostReasonModal
+        open={!!pendingLostDeal}
+        onOpenChange={(open) => { if (!open) setPendingLostDeal(null) }}
+        onConfirm={(reason) => {
+          if (pendingLostDeal) {
+            updateItem(pendingLostDeal.id, {
+              stage: 'lost',
+              lostReason: reason,
+              updatedAt: new Date().toISOString()
+            })
+          }
+          setPendingLostDeal(null)
+        }}
+        dealTitle={pendingLostDeal?.title ?? ''}
       />
     </div>
   )

@@ -21,8 +21,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { ContactForm } from "@/components/crm/ContactForm"
-import { ActivityForm } from "@/components/crm/ActivityForm"
+import { ContactForm } from "@/components/crmComponent/ContactForm"
+import { ActivityForm } from "@/components/crmComponent/ActivityForm"
 import {
   relativeTime,
   daysSince,
@@ -34,8 +34,8 @@ import {
 } from "@/lib/helpers"
 import type { CreateContactInput, Contact, Activity, Deal, Task } from "@/lib/types"
 import { SOURCE_LABELS, STAGE_LABELS } from "@/lib/types"
-import { AddTaskModal } from "@/components/crm/AddTaskModal"
-import { EditTaskModal } from "@/components/crm/EditTaskModal"
+import { AddTaskModal } from "@/components/crmComponent/AddTaskModal"
+import { EditTaskModal } from "@/components/crmComponent/EditTaskModal"
 import { useCRMResource } from "@/lib/hooks"
 import { PageSkeleton } from "@/components/ui/page-skeleton"
 import { DeleteModal } from "@/components/ui/delete-modal"

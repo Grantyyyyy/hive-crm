@@ -17,7 +17,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet"
-import { ContactForm } from "@/components/crm/ContactForm"
+import { ContactForm } from "@/components/crmComponent/ContactForm"
 import { useCRMResource } from "@/lib/hooks"
 import type { Contact } from "@/lib/types"
 import { PageSkeleton } from "@/components/ui/page-skeleton"

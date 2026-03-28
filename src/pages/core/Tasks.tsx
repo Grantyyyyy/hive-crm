@@ -6,16 +6,17 @@ import {
   Trash2,
   Check,
   Search,
-  PlusCircle
+  PlusCircle,
+  Repeat2,
 } from "lucide-react"
 import { DeleteModal } from "@/components/ui/delete-modal"
 import { Button } from "@/components/ui/button"
 import { Pagination } from "@/components/ui/Pagination"
 import { cn } from "@/lib/utils"
 import { isOverdue, sortTasks } from "@/lib/helpers"
-import type { Task, Contact, Deal, Lead } from "@/lib/types"
-import { AddTaskModal } from "@/components/crm/AddTaskModal"
-import { EditTaskModal } from "@/components/crm/EditTaskModal"
+import type { Task, Contact, Deal, Lead, Project } from "@/lib/types"
+import { AddTaskModal } from "@/components/crmComponent/AddTaskModal"
+import { EditTaskModal } from "@/components/crmComponent/EditTaskModal"
 import { useCRMResource } from "@/lib/hooks"
 import { useUser } from "@clerk/clerk-react"
 import { PageSkeleton } from "@/components/ui/page-skeleton"
@@ -33,32 +34,60 @@ export function Tasks() {
   const { data: contacts } = useCRMResource<Contact>('contacts')
   const { data: deals } = useCRMResource<Deal>('deals')
   const { data: leads } = useCRMResource<Lead>('leads')
+  const { data: projects } = useCRMResource<Project>('projects')
 
   const isLoaded = clerkLoaded && tasksLoaded
 
   // UI State
   const [search, setSearch] = useState("")
   const [activeTab, setActiveTab] = useState<'my' | 'team' | 'upcoming'>('my')
-  const [statusFilter] = useState<'all' | 'open' | 'in-progress' | 'completed'>('all')
-  const [priorityFilter] = useState<'all' | 'urgent' | 'high' | 'medium' | 'low'>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'in-progress' | 'completed'>('all')
+  const [priorityFilter, setPriorityFilter] = useState<'all' | 'urgent' | 'high' | 'medium' | 'low'>('all')
+  const [projectFilter, setProjectFilter] = useState<string>('all')
 
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [pendingDelete, setPendingDelete] = useState<Task | null>(null)
+  const [deleteAllOccurrences, setDeleteAllOccurrences] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 6
+  const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set())
+  const [showBulkActions, setShowBulkActions] = useState(false)
+  const itemsPerPage = 12
+
+  // Project lookup map for quick access
+  const projectMap = useMemo(() => {
+    const map: Record<string, Project> = {}
+    projects?.forEach(p => map[p.id] = p)
+    return map
+  }, [projects])
 
   // Filtering & Sorting
   const filteredTasks = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
     let result = tasks.filter(t => {
       const matchesStatus = statusFilter === 'all' || t.status === statusFilter
       const matchesPriority = priorityFilter === 'all' || t.priority === priorityFilter
+      const matchesProject = projectFilter === 'all' || t.projectId === projectFilter
       const q = search.toLowerCase()
       const matchesSearch = !q || t.title.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q)
-      return matchesStatus && matchesPriority && matchesSearch
+
+      // Tab filtering
+      let matchesTab = true
+      if (activeTab === 'my') {
+        matchesTab = t.ownerId === user?.id
+      } else if (activeTab === 'team') {
+        matchesTab = t.ownerId !== user?.id
+      } else if (activeTab === 'upcoming') {
+        const dueDate = new Date(t.dueDate)
+        matchesTab = dueDate >= today && t.status !== 'completed'
+      }
+
+      return matchesStatus && matchesPriority && matchesProject && matchesSearch && matchesTab
     })
     return sortTasks(result)
-  }, [tasks, statusFilter, priorityFilter, search])
+  }, [tasks, statusFilter, priorityFilter, projectFilter, search, activeTab, user?.id])
 
   const paginatedTasks = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage
@@ -66,6 +95,24 @@ export function Tasks() {
   }, [filteredTasks, currentPage])
 
   const totalPages = Math.ceil(filteredTasks.length / itemsPerPage)
+
+  // Calculate tab counts
+  const myTasksCount = useMemo(() => {
+    return tasks.filter(t => t.ownerId === user?.id).length
+  }, [tasks, user?.id])
+
+  const teamTasksCount = useMemo(() => {
+    return tasks.filter(t => t.ownerId !== user?.id).length
+  }, [tasks, user?.id])
+
+  const upcomingTasksCount = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return tasks.filter(t => {
+      const dueDate = new Date(t.dueDate)
+      return dueDate >= today && t.status !== 'completed'
+    }).length
+  }, [tasks])
 
   const handleToggleComplete = (e: React.MouseEvent, task: Task) => {
     e.stopPropagation()
@@ -83,6 +130,139 @@ export function Tasks() {
         error: 'Failed to update task status'
       }
     )
+  }
+
+  // Bulk Selection Handlers
+  const toggleSelectTask = (e: React.MouseEvent, taskId: string) => {
+    e.stopPropagation()
+    const newSelected = new Set(selectedTaskIds)
+    if (newSelected.has(taskId)) {
+      newSelected.delete(taskId)
+    } else {
+      newSelected.add(taskId)
+    }
+    setSelectedTaskIds(newSelected)
+    setShowBulkActions(newSelected.size > 0)
+  }
+
+  const selectAllPage = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const allSelected = paginatedTasks.every(t => selectedTaskIds.has(t.id))
+    const newSelected = new Set(selectedTaskIds)
+
+    if (allSelected) {
+      // Deselect all on current page
+      paginatedTasks.forEach(task => newSelected.delete(task.id))
+    } else {
+      // Select all on current page
+      paginatedTasks.forEach(task => newSelected.add(task.id))
+    }
+
+    setSelectedTaskIds(newSelected)
+    setShowBulkActions(newSelected.size > 0)
+  }
+
+  const clearSelection = () => {
+    setSelectedTaskIds(new Set())
+    setShowBulkActions(false)
+  }
+
+  // Bulk Actions
+  const bulkComplete = () => {
+    if (selectedTaskIds.size === 0) return
+
+    toast.promise(
+      Promise.all(
+        Array.from(selectedTaskIds).map(id =>
+          updateItem(id, {
+            status: 'completed',
+            completedAt: new Date().toISOString()
+          }, true)
+        )
+      ),
+      {
+        loading: 'Completing tasks...',
+        success: `Marked ${selectedTaskIds.size} task${selectedTaskIds.size !== 1 ? 's' : ''} as completed`,
+        error: 'Failed to complete tasks'
+      }
+    )
+    clearSelection()
+  }
+
+  const bulkReopen = () => {
+    if (selectedTaskIds.size === 0) return
+
+    toast.promise(
+      Promise.all(
+        Array.from(selectedTaskIds).map(id =>
+          updateItem(id, {
+            status: 'open',
+            completedAt: undefined
+          }, true)
+        )
+      ),
+      {
+        loading: 'Re-opening tasks...',
+        success: `Re-opened ${selectedTaskIds.size} task${selectedTaskIds.size !== 1 ? 's' : ''}`,
+        error: 'Failed to re-open tasks'
+      }
+    )
+    clearSelection()
+  }
+
+  const bulkDelete = () => {
+    if (selectedTaskIds.size === 0) return
+
+    toast.promise(
+      Promise.all(
+        Array.from(selectedTaskIds).map(id => deleteItem(id))
+      ),
+      {
+        loading: 'Deleting tasks...',
+        success: `Deleted ${selectedTaskIds.size} task${selectedTaskIds.size !== 1 ? 's' : ''}`,
+        error: 'Failed to delete tasks'
+      }
+    )
+    clearSelection()
+  }
+
+  const bulkChangeStatus = (newStatus: Task['status']) => {
+    if (selectedTaskIds.size === 0) return
+
+    toast.promise(
+      Promise.all(
+        Array.from(selectedTaskIds).map(id =>
+          updateItem(id, {
+            status: newStatus,
+            completedAt: newStatus === 'completed' ? new Date().toISOString() : undefined
+          }, true)
+        )
+      ),
+      {
+        loading: 'Updating tasks...',
+        success: `Updated ${selectedTaskIds.size} task${selectedTaskIds.size !== 1 ? 's' : ''}`,
+        error: 'Failed to update tasks'
+      }
+    )
+    clearSelection()
+  }
+
+  const bulkChangePriority = (newPriority: Task['priority']) => {
+    if (selectedTaskIds.size === 0) return
+
+    toast.promise(
+      Promise.all(
+        Array.from(selectedTaskIds).map(id =>
+          updateItem(id, { priority: newPriority }, true)
+        )
+      ),
+      {
+        loading: 'Updating priority...',
+        success: `Updated priority for ${selectedTaskIds.size} task${selectedTaskIds.size !== 1 ? 's' : ''}`,
+        error: 'Failed to update priority'
+      }
+    )
+    clearSelection()
   }
 
   const getEntityName = (task: Task) => {
@@ -152,28 +332,40 @@ export function Tasks() {
                 "px-2 py-0.5 rounded-full text-xs font-semibold",
                 activeTab === 'my' ? "bg-accent-dim text-accent" : "bg-bg-elevated text-text-muted"
               )}>
-                {tasks.length}
+                {myTasksCount}
               </span>
               {activeTab === 'my' && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-accent rounded-t-full" />}
             </button>
             <button
               onClick={() => setActiveTab('team')}
               className={cn(
-                "pb-4 font-bold text-sm tracking-wide transition-colors relative shrink-0",
+                "pb-4 font-bold text-sm tracking-wide transition-colors relative flex items-center gap-2 shrink-0",
                 activeTab === 'team' ? "text-accent" : "text-text-secondary hover:text-text-primary"
               )}
             >
               Team Tasks
+              <span className={cn(
+                "px-2 py-0.5 rounded-full text-xs font-semibold",
+                activeTab === 'team' ? "bg-accent-dim text-accent" : "bg-bg-elevated text-text-muted"
+              )}>
+                {teamTasksCount}
+              </span>
               {activeTab === 'team' && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-accent rounded-t-full" />}
             </button>
             <button
               onClick={() => setActiveTab('upcoming')}
               className={cn(
-                "pb-4 font-bold text-sm tracking-wide transition-colors relative shrink-0",
+                "pb-4 font-bold text-sm tracking-wide transition-colors relative flex items-center gap-2 shrink-0",
                 activeTab === 'upcoming' ? "text-accent" : "text-text-secondary hover:text-text-primary"
               )}
             >
               Upcoming
+              <span className={cn(
+                "px-2 py-0.5 rounded-full text-xs font-semibold",
+                activeTab === 'upcoming' ? "bg-accent-dim text-accent" : "bg-bg-elevated text-text-muted"
+              )}>
+                {upcomingTasksCount}
+              </span>
               {activeTab === 'upcoming' && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-accent rounded-t-full" />}
             </button>
           </div>
@@ -193,31 +385,136 @@ export function Tasks() {
 
         {/* Inline Filters */}
         <div className="flex items-center gap-6 mt-6">
-          <div className="flex items-center gap-2 cursor-pointer group">
-            <span className="text-sm font-semibold text-text-secondary group-hover:text-text-primary">Status: All</span>
+          {/* Status Filter */}
+          <div className="flex items-center gap-2 cursor-pointer group relative">
+            <span className="text-sm font-semibold text-text-secondary group-hover:text-text-primary">
+              Status: {statusFilter === 'all' ? 'All' : statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}
+            </span>
             <ChevronDown className="w-4 h-4 text-text-muted group-hover:text-text-secondary" />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as any)}
+              className="absolute inset-0 opacity-0 cursor-pointer"
+            >
+              <option value="all">All Status</option>
+              <option value="open">To Do</option>
+              <option value="in-progress">In Progress</option>
+              <option value="completed">Completed</option>
+            </select>
           </div>
-          <div className="flex items-center gap-2 cursor-pointer group">
-            <span className="text-sm font-semibold text-text-secondary group-hover:text-text-primary">Priority: All</span>
+
+          {/* Priority Filter */}
+          <div className="flex items-center gap-2 cursor-pointer group relative">
+            <span className="text-sm font-semibold text-text-secondary group-hover:text-text-primary">
+              Priority: {priorityFilter === 'all' ? 'All' : priorityFilter.charAt(0).toUpperCase() + priorityFilter.slice(1)}
+            </span>
             <ChevronDown className="w-4 h-4 text-text-muted group-hover:text-text-secondary" />
+            <select
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value as any)}
+              className="absolute inset-0 opacity-0 cursor-pointer"
+            >
+              <option value="all">All Priorities</option>
+              <option value="urgent">Urgent</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
           </div>
-          <div className="flex items-center gap-2 cursor-pointer group">
-            <span className="text-sm font-semibold text-text-secondary group-hover:text-text-primary">Due: This Week</span>
+
+          {/* Project Filter */}
+          <div className="flex items-center gap-2 cursor-pointer group relative">
+            <span className="text-sm font-semibold text-text-secondary group-hover:text-text-primary">
+              Project: {projectFilter === 'all' ? 'All' : projectMap[projectFilter]?.name || 'All'}
+            </span>
             <ChevronDown className="w-4 h-4 text-text-muted group-hover:text-text-secondary" />
+            <select
+              value={projectFilter}
+              onChange={(e) => setProjectFilter(e.target.value)}
+              className="absolute inset-0 opacity-0 cursor-pointer"
+            >
+              <option value="all">All Projects</option>
+              {projects?.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
           </div>
         </div>
+
+        {/* Bulk Actions Toolbar */}
+        {showBulkActions && (
+          <div className="bg-accent-dim border border-accent/30 rounded-md p-4 animate-fade-in">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-bold text-accent">
+                  {selectedTaskIds.size} task{selectedTaskIds.size !== 1 ? 's' : ''} selected
+                </span>
+                <Button variant="ghost" size="sm" onClick={clearSelection} className="h-7 text-xs">
+                  Clear selection
+                </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={bulkComplete} className="h-8 text-xs">
+                  <Check className="w-3.5 h-3.5 mr-1.5" /> Complete
+                </Button>
+                <Button variant="outline" size="sm" onClick={bulkReopen} className="h-8 text-xs">
+                  Re-open
+                </Button>
+                <div className="relative group">
+                  <Button variant="outline" size="sm" className="h-8 text-xs">
+                    Status <ChevronDown className="w-3.5 h-3.5 ml-1" />
+                  </Button>
+                  <div className="absolute right-0 top-full mt-1 bg-bg-surface border border-border rounded-md shadow-lg z-50 min-w-[140px] hidden group-hover:block">
+                    <button onClick={() => bulkChangeStatus('open')} className="w-full px-3 py-2 text-left text-sm hover:bg-bg-elevated first:rounded-t-md">To Do</button>
+                    <button onClick={() => bulkChangeStatus('in-progress')} className="w-full px-3 py-2 text-left text-sm hover:bg-bg-elevated">In Progress</button>
+                    <button onClick={() => bulkChangeStatus('completed')} className="w-full px-3 py-2 text-left text-sm hover:bg-bg-elevated last:rounded-b-md">Completed</button>
+                  </div>
+                </div>
+                <div className="relative group">
+                  <Button variant="outline" size="sm" className="h-8 text-xs">
+                    Priority <ChevronDown className="w-3.5 h-3.5 ml-1" />
+                  </Button>
+                  <div className="absolute right-0 top-full mt-1 bg-bg-surface border border-border rounded-md shadow-lg z-50 min-w-[120px] hidden group-hover:block">
+                    <button onClick={() => bulkChangePriority('urgent')} className="w-full px-3 py-2 text-left text-sm hover:bg-bg-elevated text-red first:rounded-t-md">Urgent</button>
+                    <button onClick={() => bulkChangePriority('high')} className="w-full px-3 py-2 text-left text-sm hover:bg-bg-elevated text-red">High</button>
+                    <button onClick={() => bulkChangePriority('medium')} className="w-full px-3 py-2 text-left text-sm hover:bg-bg-elevated text-amber">Medium</button>
+                    <button onClick={() => bulkChangePriority('low')} className="w-full px-3 py-2 text-left text-sm hover:bg-bg-elevated text-green last:rounded-b-md">Low</button>
+                  </div>
+                </div>
+                <Button variant="destructive" size="sm" onClick={bulkDelete} className="h-8 text-xs">
+                  <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Delete
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Main Table Container */}
         <div className="bg-bg-surface rounded-md border border-border shadow-sm overflow-hidden">
           {/* Header Row */}
-          <div className="grid grid-cols-[auto_1fr_120px_140px_160px_120px_40px] items-center gap-4 px-4 py-2.5 border-b border-border bg-bg-elevated/50">
-            <div className="w-6"></div> {/* Checkbox placeholder */}
+          <div className="grid grid-cols-[50px_1fr_100px_140px_160px_140px_80px] items-center gap-4 px-4 py-2.5 border-b border-border bg-bg-elevated/50">
+            <div className="flex items-center justify-center">
+              <button
+                onClick={paginatedTasks.length > 0 ? selectAllPage : undefined}
+                className={cn(
+                  "w-5 h-5 rounded-sm flex items-center justify-center transition-all shadow-sm border",
+                  paginatedTasks.length > 0 && paginatedTasks.every(t => selectedTaskIds.has(t.id))
+                    ? "bg-accent border-accent text-white"
+                    : "border-border bg-bg-surface hover:border-accent"
+                )}
+                title={paginatedTasks.length > 0 ? "Select all on page" : "No tasks"}
+              >
+                {paginatedTasks.length > 0 && paginatedTasks.every(t => selectedTaskIds.has(t.id)) && (
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                )}
+              </button>
+            </div>
             <div className="text-[11px] font-bold text-text-muted uppercase tracking-tight">Task Name</div>
             <div className="text-[11px] font-bold text-text-muted uppercase tracking-tight">Priority</div>
             <div className="text-[11px] font-bold text-text-muted uppercase tracking-tight">Status</div>
+            <div className="text-[11px] font-bold text-text-muted uppercase tracking-tight">Project</div>
             <div className="text-[11px] font-bold text-text-muted uppercase tracking-tight">Assigned To</div>
-            <div className="text-[11px] font-bold text-text-muted uppercase tracking-tight">Due Date</div>
-            <div className="text-[11px] font-bold text-text-muted uppercase tracking-tight text-right">Actions</div>
+            <div className="text-[11px] font-bold text-text-muted uppercase tracking-tight text-center">Actions</div>
           </div>
 
           {/* Task Rows */}
@@ -235,41 +532,70 @@ export function Tasks() {
                 return (
                   <div
                     key={task.id}
-                    className="grid grid-cols-[auto_1fr_120px_140px_160px_120px_40px] items-center gap-4 px-4 py-3 hover:bg-bg-surface transition-all group cursor-pointer border-l-4 border-transparent hover:border-indigo-600 hover:shadow-xl hover:shadow-indigo-600/5 relative z-0 hover:z-10"
+                    className={cn(
+                      "grid grid-cols-[50px_1fr_100px_140px_160px_140px_80px] items-center gap-4 px-4 py-3 transition-all group cursor-pointer border-l-4 border-transparent hover:border-indigo-600 hover:shadow-xl hover:shadow-indigo-600/5 relative z-0 hover:z-10",
+                      selectedTaskIds.has(task.id) ? "bg-accent-dim/30" : "hover:bg-bg-surface"
+                    )}
                     onClick={() => setEditingTask(task)}
                   >
-                    {/* Checkbox */}
-                    <div className="w-6 py-1">
+                    {/* Selection Checkbox */}
+                    <div className="flex items-center justify-center">
                       <button
-                        onClick={(e) => handleToggleComplete(e, task)}
+                        onClick={(e) => toggleSelectTask(e, task.id)}
                         className={cn(
-                          "w-5 h-5 rounded-sm flex items-center justify-center transition-all shadow-sm",
-                          isComp
-                            ? "bg-green border-green text-white"
-                            : "border border-border bg-bg-surface hover:border-accent"
+                          "w-5 h-5 rounded-sm flex items-center justify-center transition-all shadow-sm border",
+                          selectedTaskIds.has(task.id)
+                            ? "bg-accent border-accent text-white"
+                            : "border-border bg-bg-surface hover:border-accent"
                         )}
                       >
-                        {isComp && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                        {selectedTaskIds.has(task.id) && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                       </button>
                     </div>
 
                     {/* Task Name */}
                     <div className="flex flex-col pr-4 min-w-0">
-                      <span className={cn(
-                        "text-[13px] font-bold truncate transition-colors",
-                        isComp ? "text-text-muted line-through" : "text-text-primary"
-                      )}>
-                        {task.title}
-                      </span>
-                      {entityName && !isComp && (
-                        <span className="text-[11px] text-text-muted truncate mt-0.5">
-                          {task.entityType}: {entityName}
+                      <div className="flex items-center gap-2">
+                        <span className={cn(
+                          "text-[13px] font-bold truncate transition-colors",
+                          isComp ? "text-text-muted line-through" : "text-text-primary"
+                        )}>
+                          {task.title}
                         </span>
-                      )}
+                        {task.recurrencePattern && (
+                          <div className="shrink-0" title={`Repeats ${task.recurrencePattern} every ${task.recurrenceInterval || 1} ${task.recurrencePattern === 'daily' ? 'day' : task.recurrencePattern === 'weekly' ? 'week' : task.recurrencePattern === 'monthly' ? 'month' : 'year'}`}>
+                            <Repeat2 className="w-3.5 h-3.5 text-indigo-500" />
+                          </div>
+                        )}
+                        <button
+                          onClick={(e) => handleToggleComplete(e, task)}
+                          className={cn(
+                            "opacity-0 group-hover:opacity-100 w-5 h-5 rounded-sm flex items-center justify-center transition-all shadow-sm border shrink-0",
+                            isComp
+                              ? "bg-green border-green text-white opacity-100"
+                              : "border-border bg-bg-surface hover:border-accent"
+                          )}
+                          title={isComp ? "Mark as incomplete" : "Mark as complete"}
+                        >
+                          {isComp ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <Check className="w-3.5 h-3.5 text-transparent" />}
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {entityName && !isComp && (
+                          <span className="text-[11px] text-text-muted truncate">
+                            {task.entityType}: {entityName}
+                          </span>
+                        )}
+                        {task.recurrencePattern && !isComp && (
+                          <span className="text-[10px] text-indigo-500 font-medium whitespace-nowrap">
+                            {task.nextOccurrence ? `Next: ${new Date(task.nextOccurrence).toLocaleDateString()}` : ''}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Priority */}
-                    <div>
+                    <div className="flex items-center justify-start">
                       <span className={cn(
                         "inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] uppercase font-black tracking-widest bg-bg-elevated/50",
                         pConf.bg && (
@@ -284,7 +610,7 @@ export function Tasks() {
                     </div>
 
                     {/* Status */}
-                    <div>
+                    <div className="flex flex-col items-start gap-0.5">
                       <span className={cn(
                         "inline-flex px-2 py-1 rounded text-[10px] uppercase font-black tracking-widest",
                         sConf.bg && (
@@ -294,32 +620,57 @@ export function Tasks() {
                       )}>
                         {sConf.label}
                       </span>
+                      <div className={cn(
+                        "text-[11px] font-medium truncate w-full text-left",
+                        isComp ? "text-text-muted italic" : (isOverdueTask ? "text-red font-bold" : "text-text-muted")
+                      )}>
+                        {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </div>
+                    </div>
+
+                    {/* Project */}
+                    <div>
+                      {task.projectId && projectMap[task.projectId] ? (
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-2 h-2 rounded-full shrink-0"
+                            style={{ backgroundColor: projectMap[task.projectId].color }}
+                          />
+                          <span className="text-[13px] font-semibold text-text-secondary truncate">
+                            {projectMap[task.projectId].name}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-[13px] text-text-muted italic">No project</span>
+                      )}
                     </div>
 
                     {/* Assigned To */}
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded bg-amber/10 flex items-center justify-center ring-1 ring-bg-surface shrink-0 overflow-hidden shadow-sm">
-                        {user?.imageUrl ? (
+                      <div className={cn(
+                        "w-6 h-6 rounded flex items-center justify-center ring-1 ring-bg-surface shrink-0 overflow-hidden shadow-sm",
+                        task.ownerId === user?.id ? "bg-amber/10" : "bg-blue/10"
+                      )}>
+                        {task.ownerId === user?.id && user?.imageUrl ? (
                           <img src={user.imageUrl} alt="Avatar" className="w-full h-full object-cover" />
                         ) : (
-                          <span className="text-[8px] font-black text-amber">ME</span>
+                          <span className={cn(
+                            "text-[8px] font-black",
+                            task.ownerId === user?.id ? "text-amber" : "text-blue"
+                          )}>
+                            {task.ownerId === user?.id ? "ME" : "TM"}
+                          </span>
                         )}
                       </div>
                       <span className="text-[13px] font-semibold text-text-secondary truncate">
-                        {user?.firstName || "Me"}
+                        {task.ownerId === user?.id
+                          ? (user?.firstName || "Me")
+                          : "Team Member"}
                       </span>
                     </div>
 
-                    {/* Due Date */}
-                    <div className={cn(
-                      "text-[13px] font-medium truncate",
-                      isComp ? "text-text-muted italic" : (isOverdueTask ? "text-red font-bold" : "text-text-muted")
-                    )}>
-                      {isComp ? "Completed" : new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </div>
-
                     {/* Actions */}
-                    <div className="flex justify-end pr-2">
+                    <div className="flex justify-center pr-2">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -368,18 +719,49 @@ export function Tasks() {
 
       <DeleteModal
         open={!!pendingDelete}
-        onOpenChange={(open) => { if (!open) setPendingDelete(null) }}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingDelete(null)
+            setDeleteAllOccurrences(false)
+          }
+        }}
         title="Delete Task"
         description={
-          <>
-            Are you sure you want to delete{" "}
-            <strong className="text-text-primary font-bold">{pendingDelete?.title}</strong>?
-            {" "}This action cannot be undone.
-          </>
+          <div className="space-y-3">
+            <p>
+              Are you sure you want to delete{" "}
+              <strong className="text-text-primary font-bold">{pendingDelete?.title}</strong>?
+              {" "}This action cannot be undone.
+            </p>
+            {pendingDelete?.recurrencePattern && !pendingDelete.parentTaskId && (
+              <label className="flex items-start gap-2 p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded border border-indigo-100 dark:border-indigo-800 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={deleteAllOccurrences}
+                  onChange={(e) => setDeleteAllOccurrences(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 text-indigo-600 border-indigo-300 rounded focus:ring-indigo-500"
+                />
+                <span className="text-[13px] text-indigo-800 dark:text-indigo-200">
+                  Also delete all future occurrences of this recurring task
+                </span>
+              </label>
+            )}
+          </div>
         }
         onDelete={() => {
-          if (pendingDelete) deleteItem(pendingDelete.id)
-          setPendingDelete(null)
+          if (pendingDelete) {
+            if (deleteAllOccurrences && pendingDelete.recurrencePattern) {
+              // Delete all child occurrences first
+              const childTasks = tasks.filter(t => t.parentTaskId === pendingDelete.id)
+              Promise.all(childTasks.map(t => deleteItem(t.id))).then(() => {
+                deleteItem(pendingDelete.id)
+              })
+            } else {
+              deleteItem(pendingDelete.id)
+            }
+            setPendingDelete(null)
+            setDeleteAllOccurrences(false)
+          }
         }}
         cancelText="Cancel"
         deleteText="Delete Task"

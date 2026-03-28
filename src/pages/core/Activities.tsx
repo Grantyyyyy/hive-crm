@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils"
 import type { Activity, ActivityType, Contact } from "@/lib/types"
 import { useCRMResource } from "@/lib/hooks"
 import { useUser } from "@clerk/clerk-react"
-import { ActivityForm } from "@/components/crm/ActivityForm"
+import { ActivityForm } from "@/components/crmComponent/ActivityForm"
 import {
   Sheet,
   SheetContent,

@@ -36,7 +36,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet"
-import { DealForm } from "@/components/crm/DealForm"
+import { DealForm } from "@/components/crmComponent/DealForm"
 import { formatCurrency } from "@/lib/helpers"
 import { useCRMResource } from "@/lib/hooks"
 import { PageSkeleton } from "@/components/ui/page-skeleton"

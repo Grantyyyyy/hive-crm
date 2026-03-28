@@ -21,14 +21,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { LeadForm } from "@/components/crm/LeadForm"
-import { ActivityForm } from "@/components/crm/ActivityForm"
-import { ConvertLeadModal } from "@/components/crm/ConvertLeadModal"
+import { LeadForm } from "@/components/crmComponent/LeadForm"
+import { ActivityForm } from "@/components/crmComponent/ActivityForm"
+import { ConvertLeadModal } from "@/components/crmComponent/ConvertLeadModal"
 import { relativeTime, calculateLeadScore, isOverdue, sortTasks } from "@/lib/helpers"
 import type { Lead, Activity, Task } from "@/lib/types"
 import { LEAD_SOURCE_LABELS, LEAD_STATUS_LABELS } from "@/lib/types"
-import { AddTaskModal } from "@/components/crm/AddTaskModal"
-import { EditTaskModal } from "@/components/crm/EditTaskModal"
+import { AddTaskModal } from "@/components/crmComponent/AddTaskModal"
+import { EditTaskModal } from "@/components/crmComponent/EditTaskModal"
 import { useCRMResource } from "@/lib/hooks"
 import { PageSkeleton } from "@/components/ui/page-skeleton"
 import { DeleteModal } from "@/components/ui/delete-modal"
@@ -55,8 +55,8 @@ export function LeadDetail() {
   const [, navigate] = useLocation()
   const leadId = params?.id ?? ""
 
-  const { 
-    data: leads, 
+  const {
+    data: leads,
     updateItem: updateLead,
     deleteItem: deleteLead,
     isLoaded: leadsLoaded,
@@ -93,7 +93,7 @@ export function LeadDetail() {
     [activities, leadId]
   )
 
-  const tasks = useMemo(() => 
+  const tasks = useMemo(() =>
     allTasks.filter(t => t.entityType === 'lead' && t.entityId === leadId),
     [allTasks, leadId]
   )
@@ -113,7 +113,7 @@ export function LeadDetail() {
   const handleToggleTask = useCallback((e: React.MouseEvent, task: Task) => {
     e.stopPropagation()
     const newStatus = task.status === 'completed' ? 'open' : 'completed'
-    updateTaskItem(task.id, { 
+    updateTaskItem(task.id, {
       status: newStatus,
       completedAt: newStatus === 'completed' ? new Date().toISOString() : undefined
     })
@@ -184,7 +184,7 @@ export function LeadDetail() {
 
       <div className="mx-auto p-3 md:p-5 max-w-full">
         <div className="space-y-4 animate-fade-in">
-          
+
           {/* Back button */}
           <Link
             href="/leads"
@@ -210,7 +210,7 @@ export function LeadDetail() {
                     {LEAD_SOURCE_LABELS[lead.source]}
                   </span>
                 </div>
-                
+
                 <div className="flex flex-wrap gap-6 text-sm font-medium text-slate-600 dark:text-slate-400">
                   <span className="flex items-center gap-2">
                     <Mail className="h-4 w-4 text-slate-400" /> {lead.email}
@@ -321,8 +321,8 @@ export function LeadDetail() {
                     <div className="space-y-6">
                       {leadActivities.map((a) => (
                         <div key={a.id} className="relative flex items-start group">
-                          <div 
-                            className={cn("absolute left-[-26px] top-1 w-3 h-3 rounded-full ring-4 ring-white dark:bg-slate-900 dark:ring-slate-900 z-10", activityColorMap[a.type] || "bg-slate-400")} 
+                          <div
+                            className={cn("absolute left-[-26px] top-1 w-3 h-3 rounded-full ring-4 ring-white dark:bg-slate-900 dark:ring-slate-900 z-10", activityColorMap[a.type] || "bg-slate-400")}
                           />
                           <div className="w-full bg-slate-50 dark:bg-slate-950 rounded-xl p-3 border border-slate-100 dark:border-slate-800/50">
                             <div className="flex justify-between items-start mb-2">
@@ -415,8 +415,8 @@ export function LeadDetail() {
                     </span>
                   </div>
                   {!isConverted && (
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="icon"
                       onClick={() => setShowAddTaskModal(true)}
                       className="h-8 w-8 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400"
@@ -425,7 +425,7 @@ export function LeadDetail() {
                     </Button>
                   )}
                 </div>
-                
+
                 {tasks.length === 0 ? (
                   <div className="py-8 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800 text-center">
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
@@ -438,9 +438,9 @@ export function LeadDetail() {
                       {topTasks.map(task => {
                         const isOverdueTask = isOverdue(task)
                         const isComp = task.status === 'completed'
-                        
+
                         return (
-                          <div 
+                          <div
                             key={task.id}
                             onClick={() => setEditingTask(task)}
                             className={cn(
@@ -450,7 +450,7 @@ export function LeadDetail() {
                               isComp && "opacity-60"
                             )}
                           >
-                            <button 
+                            <button
                               onClick={(e) => handleToggleTask(e, task)}
                               disabled={isConverted}
                               className="shrink-0 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors disabled:opacity-50"
@@ -507,7 +507,7 @@ export function LeadDetail() {
           <DialogHeader className="px-6 pt-6 pb-2">
             <DialogTitle className="text-xl font-bold text-slate-900 dark:text-white">Edit Lead</DialogTitle>
           </DialogHeader>
-          <LeadForm 
+          <LeadForm
             userId={userId}
             onSave={handleEditLead}
             onCancel={() => setShowEditModal(false)}
@@ -554,15 +554,15 @@ export function LeadDetail() {
         />
       )}
 
-      <AddTaskModal 
-        open={showAddTaskModal} 
+      <AddTaskModal
+        open={showAddTaskModal}
         onOpenChange={setShowAddTaskModal}
         fixedEntity={{ type: 'lead', id: leadId, name: lead.name }}
         onSave={(task) => addTaskItems([task])}
         userId={userId || ""}
       />
 
-      <EditTaskModal 
+      <EditTaskModal
         task={editingTask}
         open={!!editingTask}
         onOpenChange={(o) => !o && setEditingTask(null)}

@@ -22,7 +22,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet"
-import { LeadForm } from "@/components/crm/LeadForm"
+import { LeadForm } from "@/components/crmComponent/LeadForm"
 import { useCRMResource } from "@/lib/hooks"
 import { PageSkeleton } from "@/components/ui/page-skeleton"
 import { DeleteModal } from "@/components/ui/delete-modal"

@@ -26,13 +26,13 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet"
-import { DealForm } from "@/components/crm/DealForm"
-import { ActivityForm } from "@/components/crm/ActivityForm"
+import { DealForm } from "@/components/crmComponent/DealForm"
+import { ActivityForm } from "@/components/crmComponent/ActivityForm"
 import { relativeTime, formatCurrency, isOverdue, sortTasks } from "@/lib/helpers"
 import type { Deal, Activity, Contact, Task } from "@/lib/types"
 import { STAGE_LABELS } from "@/lib/types"
-import { AddTaskModal } from "@/components/crm/AddTaskModal"
-import { EditTaskModal } from "@/components/crm/EditTaskModal"
+import { AddTaskModal } from "@/components/crmComponent/AddTaskModal"
+import { EditTaskModal } from "@/components/crmComponent/EditTaskModal"
 import { useCRMResource } from "@/lib/hooks"
 import { PageSkeleton } from "@/components/ui/page-skeleton"
 import { DeleteModal } from "@/components/ui/delete-modal"

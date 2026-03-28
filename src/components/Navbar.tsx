@@ -21,19 +21,19 @@ export function Navbar() {
               {theme === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
             </Button>
             <div className="flex items-center space-x-6">
-            <Link
-              href="/sign-in"
-              className="text-sm font-semibold text-text-secondary transition-colors hover:text-accent"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/sign-up"
-              className="inline-flex h-10 items-center justify-center rounded-xl bg-accent px-5 py-2 text-sm font-bold text-white shadow-lg shadow-accent/20 transition-all hover:bg-accent/90 hover:scale-[1.02]"
-            >
-              Get Started
-            </Link>
-          </div>
+              <Link
+                href="/sign-in"
+                className="text-sm font-semibold text-text-secondary transition-colors hover:text-accent"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/sign-up"
+                className="inline-flex h-10 items-center justify-center rounded-xl bg-accent px-5 py-2 text-sm font-bold text-white shadow-lg shadow-accent/20 transition-all hover:bg-accent/90 hover:scale-[1.02]"
+              >
+                Get Started
+              </Link>
+            </div>
           </div>
         </div>
       </header>

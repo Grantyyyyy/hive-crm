@@ -14,6 +14,8 @@ import { Leads } from "@/pages/core/Leads";
 import { LeadDetail } from "@/pages/LeadDetail";
 import { Tasks } from "@/pages/core/Tasks";
 import { Projects } from "@/pages/core/Projects";
+import { ProjectDetail } from "@/pages/core/ProjectDetail";
+import { Workload } from "@/pages/core/Workload";
 import { SalesOrders } from "@/pages/sales/SalesOrders";
 import { SalesOrderDetail } from "@/pages/sales/SalesOrderDetail";
 import { Quotes } from "@/pages/sales/Quotes";
@@ -25,6 +27,7 @@ import { PurchaseRequestDetail } from "@/pages/logistics/PurchaseRequestDetail";
 import { Vendors } from "@/pages/logistics/Vendors";
 import { Users } from "@/pages/settings/Users";
 import { Roles } from "@/pages/settings/Roles";
+import { ProfilePage } from "@/pages/settings/ProfilePage";
 import { Navbar } from "@/components/Navbar";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -32,6 +35,8 @@ import { InProgress } from "@/pages/InProgress";
 import { Inventory } from "@/pages/logistics/Inventory";
 import { InventoryDetail } from "@/pages/logistics/InventoryDetail";
 import { Reports } from "@/pages/logistics/Reports";
+import { Design } from "@/pages/Design";
+import { Fonts } from "@/pages/Fonts";
 import { Toaster } from "sonner";
 import { CRMProvider, useCRMContext, updateRow, insertRows } from "@/lib/CRMContext";
 import { useCRMResource } from "@/lib/hooks";
@@ -163,6 +168,12 @@ function AppContent() {
             <Route path="/projects">
               {() => <Protected component={Projects} />}
             </Route>
+            <Route path="/projects/:id">
+              {() => <Protected component={ProjectDetail} />}
+            </Route>
+            <Route path="/workload">
+              {() => <Protected component={Workload} />}
+            </Route>
             <Route path="/orders">
               {() => <Protected component={SalesOrders} />}
             </Route>
@@ -226,8 +237,17 @@ function AppContent() {
             <Route path="/settings/roles">
               {() => <Protected component={Roles} />}
             </Route>
+            <Route path="/settings/profile">
+              {() => <Protected component={ProfilePage} />}
+            </Route>
             <Route path="/in-progress">
               {() => <Protected component={InProgress} />}
+            </Route>
+            <Route path="/design">
+              {() => <Design />}
+            </Route>
+            <Route path="/fonts">
+              {() => <Fonts />}
             </Route>
 
             {/* Fallback route */}

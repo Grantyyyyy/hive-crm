@@ -54,14 +54,12 @@ function DialogContent({
 }: React.HTMLAttributes<HTMLDivElement> & { onClose?: () => void }) {
   return (
     <div className={cn("p-6 relative", className)} {...props}>
-      {onClose && (
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      )}
+      <button
+        onClick={onClose}
+        className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none z-50"
+      >
+        <X className="h-4 w-4" />
+      </button>
       {children}
     </div>
   )

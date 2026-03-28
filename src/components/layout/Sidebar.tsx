@@ -43,6 +43,7 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
         { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
         { href: "/tasks", label: "Tasks", icon: CheckSquare },
         { href: "/projects", label: "Projects", icon: FolderOpen },
+        { href: "/workload", label: "Workload", icon: UserCog },
         { href: "/leads", label: "Leads", icon: UserSearch },
         { href: "/contacts", label: "Contacts", icon: Users },
         { href: "/deals", label: "Deals", icon: Handshake },
@@ -69,7 +70,8 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
     {
       title: "Settings",
       links: [
-        { href: "/settings/users", label: "Users", icon: UserCog },
+        { href: "/settings/profile", label: "Profile", icon: UserCog },
+        { href: "/settings/users", label: "Users", icon: Users },
         { href: "/settings/roles", label: "Roles", icon: Shield },
       ]
     }

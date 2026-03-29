@@ -1,768 +1,322 @@
 import { Link } from "wouter";
 import { SignedIn, SignedOut } from "@clerk/clerk-react";
-import { ArrowUpRight } from "lucide-react";
-
-/* ── Fonts ──────────────────────────────────────────────────────────── */
-const _fc = document.createElement("link");
-_fc.rel = "stylesheet";
-_fc.href = "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,200;0,9..144,400;0,9..144,600;1,9..144,200;1,9..144,400;1,9..144,600&family=Azeret+Mono:wght@300;400;500&family=DM+Sans:wght@200;300;400&display=swap";
-document.head.appendChild(_fc);
-
-/* ── Styles ─────────────────────────────────────────────────────────── */
-const _sc = document.createElement("style");
-_sc.textContent = `
-  :root {
-    --char:    #111110;
-    --char2:   #1a1a18;
-    --char3:   #222220;
-    --sage:    #899e89;
-    --sage2:   #b0c4b0;
-    --ecru:    #ddd8cc;
-    --warm:    #c4bdb0;
-    --line:    rgba(137,158,137,0.13);
-    --ff-disp: 'Fraunces', Georgia, serif;
-    --ff-mono: 'Azeret Mono', monospace;
-    --ff-sans: 'DM Sans', sans-serif;
-  }
-
-  .vc * { box-sizing: border-box; margin: 0; padding: 0; }
-  .vc {
-    background: var(--char);
-    color: var(--ecru);
-    font-family: var(--ff-sans);
-    font-weight: 300;
-    overflow-x: hidden;
-  }
-
-  /* grain */
-  .vc::before {
-    content: '';
-    position: fixed; inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    opacity: 0.03;
-    pointer-events: none;
-    z-index: 9999;
-  }
-
-  /* ── ambient lights ── */
-  .vc-light {
-    position: fixed;
-    border-radius: 50%;
-    filter: blur(100px);
-    pointer-events: none;
-    z-index: 0;
-  }
-  .vc-light-1 {
-    width: 600px; height: 600px;
-    background: radial-gradient(circle, rgba(137,158,137,0.07) 0%, transparent 70%);
-    top: -10%; left: -10%;
-  }
-  .vc-light-2 {
-    width: 400px; height: 400px;
-    background: radial-gradient(circle, rgba(176,196,176,0.05) 0%, transparent 70%);
-    bottom: 20%; right: 10%;
-  }
-
-  /* ── NAV ── */
-  .vc-nav {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 500;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1.6rem 3rem;
-    background: rgba(17,17,16,0.88);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-  }
-  .vc-nav-border {
-    position: absolute;
-    bottom: 0; left: 3rem; right: 3rem;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--line) 30%, var(--line) 70%, transparent);
-  }
-  .vc-logo {
-    font-family: var(--ff-disp);
-    font-size: 1.1rem;
-    font-weight: 200;
-    letter-spacing: 0.1em;
-    color: var(--ecru);
-    font-style: italic;
-  }
-  .vc-logo-dot { color: var(--sage); font-style: normal; }
-  .vc-nav-c {
-    display: flex;
-    gap: 3rem;
-    align-items: center;
-  }
-  .vc-nav-c a {
-    font-family: var(--ff-mono);
-    font-size: 0.6rem;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--warm);
-    opacity: 0.5;
-    text-decoration: none;
-    transition: opacity .2s, color .2s;
-  }
-  .vc-nav-c a:hover { opacity: 1; color: var(--sage2); }
-  .vc-btn {
-    font-family: var(--ff-mono);
-    font-size: 0.6rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    padding: 0.55rem 1.35rem;
-    border: 1px solid rgba(137,158,137,0.2);
-    background: transparent;
-    color: var(--ecru);
-    cursor: pointer;
-    transition: all .25s;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    border-radius: 2px;
-  }
-  .vc-btn:hover { border-color: var(--sage); color: var(--sage2); }
-  .vc-btn-fill {
-    background: rgba(137,158,137,0.12);
-    border-color: var(--sage);
-    color: var(--sage2);
-  }
-  .vc-btn-fill:hover { background: rgba(137,158,137,0.22); }
-
-  /* ── HERO ── */
-  .vc-hero {
-    min-height: 100vh;
-    padding-top: 5.5rem;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    z-index: 1;
-  }
-  .vc-hero-body {
-    flex: 1;
-    display: grid;
-    grid-template-columns: 5fr 4fr;
-    border-bottom: 1px solid var(--line);
-  }
-  .vc-hero-l {
-    padding: 5rem 4rem 4rem;
-    border-right: 1px solid var(--line);
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    position: relative;
-  }
-  .vc-ornament {
-    position: absolute;
-    top: 4rem; left: 4rem;
-    font-family: var(--ff-mono);
-    font-size: 0.5rem;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    color: var(--sage);
-    opacity: 0.45;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-  .vc-ornament::before {
-    content: '';
-    display: block;
-    width: 20px; height: 1px;
-    background: var(--sage);
-    opacity: 0.6;
-  }
-  .vc-hero-h {
-    font-family: var(--ff-disp);
-    font-size: clamp(4rem, 7.5vw, 9.5rem);
-    font-weight: 200;
-    line-height: 0.93;
-    letter-spacing: -0.02em;
-    color: var(--ecru);
-    margin-bottom: 2.5rem;
-  }
-  .vc-hero-h em {
-    font-style: italic;
-    font-weight: 200;
-    color: var(--sage);
-  }
-  .vc-hero-sub {
-    font-family: var(--ff-mono);
-    font-size: 0.68rem;
-    line-height: 2;
-    color: var(--warm);
-    opacity: 0.65;
-    max-width: 400px;
-    margin-bottom: 3.5rem;
-    letter-spacing: 0.04em;
-  }
-  .vc-cta-row { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
-  .vc-cta-note {
-    font-family: var(--ff-mono);
-    font-size: 0.55rem;
-    letter-spacing: 0.15em;
-    color: var(--warm);
-    opacity: 0.4;
-    text-transform: uppercase;
-  }
-
-  .vc-hero-r {
-    padding: 4rem 3rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    justify-content: center;
-  }
-  .vc-card {
-    border: 1px solid var(--line);
-    background: rgba(255,255,255,0.01);
-    padding: 1.75rem;
-    transition: background .25s, border-color .25s;
-    position: relative;
-    overflow: hidden;
-  }
-  .vc-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at 0% 0%, rgba(137,158,137,0.06) 0%, transparent 60%);
-    opacity: 0;
-    transition: opacity .3s;
-  }
-  .vc-card:hover { background: rgba(137,158,137,0.04); border-color: rgba(137,158,137,0.25); }
-  .vc-card:hover::before { opacity: 1; }
-  .vc-card-top {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    margin-bottom: 0.5rem;
-  }
-  .vc-card-val {
-    font-family: var(--ff-disp);
-    font-size: 2.6rem;
-    font-weight: 400;
-    color: var(--ecru);
-    line-height: 1;
-    letter-spacing: -0.01em;
-  }
-  .vc-card-delta {
-    font-family: var(--ff-mono);
-    font-size: 0.58rem;
-    color: var(--sage2);
-    letter-spacing: 0.1em;
-  }
-  .vc-card-lbl {
-    font-family: var(--ff-mono);
-    font-size: 0.55rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--warm);
-    opacity: 0.5;
-    margin-bottom: 1rem;
-  }
-  .vc-mini-bars {
-    display: flex;
-    align-items: flex-end;
-    gap: 2px;
-    height: 28px;
-  }
-  .vc-mini-bar {
-    flex: 1;
-    min-width: 4px;
-    background: rgba(137,158,137,0.15);
-    transition: background .2s;
-  }
-  .vc-mini-bar.hi { background: rgba(137,158,137,0.55); }
-  .vc-mini-bar:hover { background: rgba(176,196,176,0.5); }
-
-  /* pipeline rows */
-  .vc-pipe-row {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.6rem 0;
-    border-bottom: 1px solid rgba(137,158,137,0.07);
-  }
-  .vc-pipe-row:last-child { border-bottom: none; padding-bottom: 0; }
-  .vc-pipe-name {
-    font-family: var(--ff-mono);
-    font-size: 0.58rem;
-    color: var(--warm);
-    opacity: 0.65;
-    flex: 1;
-    letter-spacing: 0.03em;
-  }
-  .vc-pipe-track {
-    width: 70px; height: 2px;
-    background: rgba(137,158,137,0.1);
-    position: relative;
-  }
-  .vc-pipe-fill { height: 100%; background: var(--sage); }
-  .vc-pipe-val {
-    font-family: var(--ff-mono);
-    font-size: 0.58rem;
-    color: var(--ecru);
-    opacity: 0.7;
-    width: 38px;
-    text-align: right;
-  }
-
-  /* ── FEATURES SECTION ── */
-  .vc-features-wrap {
-    position: relative; z-index: 1;
-    border-bottom: 1px solid var(--line);
-    padding: 6rem 4rem;
-  }
-  .vc-sec-eyebrow {
-    font-family: var(--ff-mono);
-    font-size: 0.55rem;
-    letter-spacing: 0.35em;
-    text-transform: uppercase;
-    color: var(--sage);
-    margin-bottom: 2rem;
-    opacity: 0.7;
-  }
-  .vc-sec-h {
-    font-family: var(--ff-disp);
-    font-size: clamp(2.5rem, 4.5vw, 5.5rem);
-    font-weight: 200;
-    line-height: 1.05;
-    color: var(--ecru);
-    max-width: 700px;
-    margin-bottom: 5rem;
-    letter-spacing: -0.01em;
-  }
-  .vc-sec-h em { font-style: italic; color: var(--sage2); }
-  .vc-feats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1px;
-    background: var(--line);
-    border: 1px solid var(--line);
-  }
-  .vc-feat {
-    background: var(--char);
-    padding: 2.5rem 2rem;
-    transition: background .3s;
-    position: relative;
-  }
-  .vc-feat:hover { background: var(--char2); }
-  .vc-feat-line {
-    width: 32px; height: 1px;
-    background: var(--sage);
-    opacity: 0.3;
-    margin-bottom: 1.75rem;
-    transition: width .3s, opacity .3s;
-  }
-  .vc-feat:hover .vc-feat-line { width: 56px; opacity: 0.7; }
-  .vc-feat-n {
-    font-family: var(--ff-mono);
-    font-size: 0.5rem;
-    letter-spacing: 0.25em;
-    color: var(--sage);
-    opacity: 0.5;
-    margin-bottom: 1rem;
-  }
-  .vc-feat-title {
-    font-family: var(--ff-disp);
-    font-size: 1.1rem;
-    font-weight: 400;
-    color: var(--ecru);
-    margin-bottom: 0.75rem;
-    line-height: 1.3;
-  }
-  .vc-feat-title em { font-style: italic; color: var(--sage2); }
-  .vc-feat-desc {
-    font-family: var(--ff-mono);
-    font-size: 0.6rem;
-    line-height: 1.85;
-    color: var(--warm);
-    opacity: 0.6;
-    letter-spacing: 0.03em;
-  }
-
-  /* ── QUOTE ── */
-  .vc-quote-wrap {
-    position: relative; z-index: 1;
-    padding: 8rem 4rem;
-    border-bottom: 1px solid var(--line);
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6rem;
-    align-items: center;
-  }
-  .vc-quote-l {
-    font-family: var(--ff-disp);
-    font-style: italic;
-    font-weight: 200;
-    font-size: clamp(1.6rem, 2.8vw, 3.2rem);
-    line-height: 1.38;
-    color: var(--ecru);
-    letter-spacing: -0.01em;
-  }
-  .vc-quote-r {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-  }
-  .vc-quote-attr {
-    font-family: var(--ff-mono);
-    font-size: 0.6rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--sage);
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-  }
-  .vc-quote-attr-name { color: var(--ecru); opacity: 0.8; }
-  .vc-quote-stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-  }
-  .vc-q-stat {
-    padding: 1.25rem;
-    border: 1px solid var(--line);
-    background: rgba(255,255,255,0.01);
-  }
-  .vc-q-stat-v {
-    font-family: var(--ff-disp);
-    font-size: 1.8rem;
-    color: var(--ecru);
-    font-weight: 400;
-    line-height: 1;
-    margin-bottom: 0.3rem;
-  }
-  .vc-q-stat-l {
-    font-family: var(--ff-mono);
-    font-size: 0.52rem;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--warm);
-    opacity: 0.5;
-  }
-
-  /* ── LOGOS ── */
-  .vc-logos {
-    position: relative; z-index: 1;
-    padding: 3rem 4rem;
-    border-bottom: 1px solid var(--line);
-    display: flex;
-    align-items: center;
-    gap: 4rem;
-    flex-wrap: wrap;
-  }
-  .vc-logos-lbl {
-    font-family: var(--ff-mono);
-    font-size: 0.52rem;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    color: var(--warm);
-    opacity: 0.4;
-    white-space: nowrap;
-  }
-  .vc-logo-item {
-    font-family: var(--ff-disp);
-    font-size: 0.95rem;
-    font-weight: 400;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--warm);
-    opacity: 0.2;
-    transition: opacity .25s, color .25s;
-    cursor: default;
-  }
-  .vc-logo-item:hover { opacity: 0.7; color: var(--sage2); }
-
-  /* ── CTA ── */
-  .vc-cta {
-    position: relative; z-index: 1;
-    padding: 8rem 4rem;
-    border-bottom: 1px solid var(--line);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 3rem;
-    overflow: hidden;
-  }
-  .vc-cta-ring {
-    position: absolute;
-    border-radius: 50%;
-    border: 1px solid var(--line);
-    pointer-events: none;
-  }
-  .vc-cta-ring-1 { width: 500px; height: 500px; top: 50%; left: 50%; transform: translate(-50%,-50%); }
-  .vc-cta-ring-2 { width: 700px; height: 700px; top: 50%; left: 50%; transform: translate(-50%,-50%); opacity: 0.5; }
-  .vc-cta-ring-3 { width: 900px; height: 900px; top: 50%; left: 50%; transform: translate(-50%,-50%); opacity: 0.25; }
-  .vc-cta-h {
-    font-family: var(--ff-disp);
-    font-size: clamp(3rem, 6vw, 7rem);
-    font-weight: 200;
-    line-height: 1.0;
-    color: var(--ecru);
-    letter-spacing: -0.01em;
-    position: relative;
-  }
-  .vc-cta-h em { font-style: italic; color: var(--sage2); }
-  .vc-cta-sub {
-    font-family: var(--ff-mono);
-    font-size: 0.65rem;
-    line-height: 1.9;
-    color: var(--warm);
-    opacity: 0.55;
-    max-width: 400px;
-    letter-spacing: 0.04em;
-    position: relative;
-  }
-  .vc-cta-btns { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; position: relative; }
-
-  /* ── FOOTER ── */
-  .vc-footer {
-    position: relative; z-index: 1;
-    padding: 2.5rem 4rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 1.5rem;
-  }
-  .vc-footer-logo {
-    font-family: var(--ff-disp);
-    font-style: italic;
-    font-size: 1rem;
-    font-weight: 200;
-    color: var(--warm);
-    opacity: 0.35;
-    letter-spacing: 0.08em;
-  }
-  .vc-footer-links {
-    display: flex;
-    gap: 2.5rem;
-  }
-  .vc-footer-links a {
-    font-family: var(--ff-mono);
-    font-size: 0.58rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--warm);
-    opacity: 0.3;
-    text-decoration: none;
-    transition: opacity .2s, color .2s;
-  }
-  .vc-footer-links a:hover { opacity: 0.8; color: var(--sage2); }
-  .vc-footer-copy {
-    font-family: var(--ff-mono);
-    font-size: 0.55rem;
-    letter-spacing: 0.08em;
-    color: var(--warm);
-    opacity: 0.25;
-  }
-
-  /* Animations */
-  @keyframes vc-rise {
-    from { opacity: 0; transform: translateY(30px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  .vc-a1 { animation: vc-rise 1s cubic-bezier(0.16,1,0.3,1) both; }
-  .vc-a2 { animation: vc-rise 1s cubic-bezier(0.16,1,0.3,1) .14s both; }
-  .vc-a3 { animation: vc-rise 1s cubic-bezier(0.16,1,0.3,1) .28s both; }
-  .vc-a4 { animation: vc-rise 1s cubic-bezier(0.16,1,0.3,1) .42s both; }
-  .vc-a5 { animation: vc-rise 1s cubic-bezier(0.16,1,0.3,1) .56s both; }
-`;
-document.head.appendChild(_sc);
-
-const miniBarData = [10, 18, 14, 26, 22, 34, 30, 44, 38, 55, 48, 70];
-const pipes = [
-  { name: "Enterprise", pct: 88, val: "$2.4M" },
-  { name: "Mid-Market", pct: 60, val: "$890K" },
-  { name: "Growth", pct: 40, val: "$340K" },
-];
+import { 
+  ArrowRight, 
+  BarChart3, 
+  Users, 
+  Shield, 
+  Zap, 
+  CheckCircle2, 
+  TrendingUp, 
+  Layers, 
+  Search, 
+  LayoutList, 
+  MousePointer2,
+  Lock,
+  Calendar,
+  ChevronRight,
+  Activity,
+  Cpu,
+  Globe,
+  Database,
+  ArrowUpRight,
+  Maximize2,
+  Star,
+  Check,
+  ZapIcon
+} from "lucide-react";
 
 export function LandingPage() {
   return (
-    <div className="vc">
-      <div className="vc-light vc-light-1" />
-      <div className="vc-light vc-light-2" />
-
-      {/* NAV */}
-      <nav className="vc-nav">
-        <div className="vc-logo">Enterprise<span className="vc-logo-dot">.</span>CRM</div>
-        <div className="vc-nav-c">
-          <a href="#">Platform</a>
-          <a href="#">Pricing</a>
-          <a href="#">Docs</a>
-        </div>
-        <div style={{ display: "flex", gap: "0.75rem" }}>
-          <SignedOut>
-            <Link href="/sign-in"><a className="vc-btn">Sign In</a></Link>
-            <Link href="/sign-up"><a className="vc-btn vc-btn-fill">Get Started <ArrowUpRight size={11} /></a></Link>
-          </SignedOut>
-          <SignedIn>
-            <Link href="/dashboard"><a className="vc-btn vc-btn-fill">Dashboard <ArrowUpRight size={11} /></a></Link>
-          </SignedIn>
-        </div>
-        <div className="vc-nav-border" />
-      </nav>
-
-      {/* HERO */}
-      <section className="vc-hero">
-        <div className="vc-hero-body">
-          <div className="vc-hero-l">
-            <div className="vc-ornament vc-a1">Revenue Operations Platform</div>
-            <h1 className="vc-hero-h vc-a2">
-              The<br />
-              <em>Operating</em><br />
-              System<br />
-              for Sales
-            </h1>
-            <p className="vc-hero-sub vc-a3">
-              A unified intelligence layer that transforms fragmented customer
-              data into structured revenue architecture. Built for teams
-              who refuse to accept opacity in their pipeline.
-            </p>
-            <div className="vc-cta-row vc-a4">
-              <SignedOut>
-                <Link href="/sign-up"><a className="vc-btn vc-btn-fill">Begin Free Trial <ArrowUpRight size={11} /></a></Link>
-                <Link href="/sign-in"><a className="vc-btn">Sign In</a></Link>
-              </SignedOut>
-              <SignedIn>
-                <Link href="/dashboard"><a className="vc-btn vc-btn-fill">Open Dashboard <ArrowUpRight size={11} /></a></Link>
-              </SignedIn>
-              <span className="vc-cta-note">No card required</span>
+    <div className="bg-[#FAF9F6] dark:bg-slate-950 min-h-screen font-sans selection:bg-teal-600 selection:text-white text-slate-900 dark:text-slate-100 overflow-x-hidden">
+      
+      {/* 1. VIBRANT NAVIGATION */}
+      <nav className="fixed top-0 w-full z-[100] px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/20 dark:border-slate-800/20 rounded-2xl px-6 py-3 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center shadow-lg shadow-teal-600/20">
+              <BarChart3 className="w-5 h-5 text-white" />
             </div>
+            <span className="font-black text-xl tracking-tighter uppercase px-1">CRM Hub</span>
           </div>
-          <div className="vc-hero-r vc-a5">
-            {/* Revenue card */}
-            <div className="vc-card">
-              <div className="vc-card-lbl">Total Pipeline Value</div>
-              <div className="vc-card-top">
-                <div className="vc-card-val">$3.8M</div>
-                <span className="vc-card-delta">↑ 24% YoY</span>
-              </div>
-              <div className="vc-mini-bars">
-                {miniBarData.map((h, i) => (
-                  <div key={i} className={`vc-mini-bar ${i >= miniBarData.length - 2 ? "hi" : ""}`} style={{ height: `${h / 70 * 100}%` }} />
-                ))}
-              </div>
-            </div>
-            {/* Pipeline card */}
-            <div className="vc-card">
-              <div className="vc-card-lbl">Deal Stages</div>
-              {pipes.map(p => (
-                <div className="vc-pipe-row" key={p.name}>
-                  <span className="vc-pipe-name">{p.name}</span>
-                  <div className="vc-pipe-track">
-                    <div className="vc-pipe-fill" style={{ width: `${p.pct}%` }} />
-                  </div>
-                  <span className="vc-pipe-val">{p.val}</span>
-                </div>
-              ))}
-            </div>
-            {/* Stats row */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1px", background: "var(--line)", border: "1px solid var(--line)" }}>
-              {[["142", "Accounts"], ["68%", "Win Rate"]].map(([v, l]) => (
-                <div key={l} style={{ background: "var(--char)", padding: "1.5rem" }}>
-                  <div className="vc-card-val" style={{ fontSize: "1.9rem" }}>{v}</div>
-                  <div className="vc-card-lbl" style={{ marginBottom: 0 }}>{l}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* FEATURES */}
-      <section className="vc-features-wrap">
-        <div className="vc-sec-eyebrow">Core Ecosystem</div>
-        <h2 className="vc-sec-h">
-          Built for <em>clarity.</em><br />
-          Engineered for precision.
-        </h2>
-        <div className="vc-feats-grid">
-          {[
-            { n: "01", title: "Relationship", ti: "Intelligence", desc: "Deep contact mapping with contextual history, relationship graphs, and predictive scoring." },
-            { n: "02", title: "Pipeline", ti: "Cartography", desc: "Visual pipeline that renders your entire sales architecture in one fluid, spatial interface." },
-            { n: "03", title: "Sovereign", ti: "Data", desc: "Bank-grade encryption at rest and in transit. Role-based access. Full audit trails." },
-            { n: "04", title: "Velocity", ti: "Analytics", desc: "Cycle time analysis and win-rate forecasting that reveals the levers driving revenue." },
-          ].map(f => (
-            <div className="vc-feat" key={f.n}>
-              <div className="vc-feat-line" />
-              <div className="vc-feat-n">{f.n}</div>
-              <div className="vc-feat-title">{f.title} <em>{f.ti}</em></div>
-              <p className="vc-feat-desc">{f.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* QUOTE */}
-      <div className="vc-quote-wrap">
-        <p className="vc-quote-l">
-          "We replaced three separate tools and closed our best quarter in five years.
-          The pipeline visibility alone changed how we run our entire go-to-market motion."
-        </p>
-        <div className="vc-quote-r">
-          <div className="vc-quote-attr">
-            <span className="vc-quote-attr-name">Sarah Chen</span>
-            <span>VP Sales · Kube-IQ</span>
-          </div>
-          <div className="vc-quote-stats">
-            {[["↑68%", "Win Rate"], ["+$2M", "New ARR"], ["−14d", "Sales Cycle"], ["3→1", "Tools Consolidated"]].map(([v, l]) => (
-              <div className="vc-q-stat" key={l}>
-                <div className="vc-q-stat-v">{v}</div>
-                <div className="vc-q-stat-l">{l}</div>
-              </div>
+          <div className="hidden md:flex items-center gap-8">
+            {["Platform", "Solutions", "Enterprise", "Pricing"].map((item) => (
+              <a key={item} href="#" className="text-xs font-black uppercase tracking-widest text-slate-500 hover:text-teal-600 transition-colors">{item}</a>
             ))}
           </div>
-        </div>
-      </div>
 
-      {/* LOGOS */}
-      <div className="vc-logos">
-        <span className="vc-logos-lbl">Trusted by</span>
-        {["PROTECT", "KUBE–IQ", "FLASH", "DATA–X", "MERIDIAN", "AXIOM"].map(l => (
-          <span className="vc-logo-item" key={l}>{l}</span>
-        ))}
-      </div>
-
-      {/* CTA */}
-      <div className="vc-cta">
-        <div className="vc-cta-ring vc-cta-ring-1" />
-        <div className="vc-cta-ring vc-cta-ring-2" />
-        <div className="vc-cta-ring vc-cta-ring-3" />
-        <h2 className="vc-cta-h">
-          Your pipeline deserves<br />
-          <em>better infrastructure.</em>
-        </h2>
-        <p className="vc-cta-sub">
-          Start free. No credit card required. Full platform access
-          for 14 days — then choose a plan that scales with your team.
-        </p>
-        <div className="vc-cta-btns">
-          <SignedOut>
-            <Link href="/sign-up"><a className="vc-btn vc-btn-fill">Start Free Trial <ArrowUpRight size={11} /></a></Link>
-            <Link href="/sign-in"><a className="vc-btn">Sign In</a></Link>
-          </SignedOut>
-          <SignedIn>
-            <Link href="/dashboard"><a className="vc-btn vc-btn-fill">Open Dashboard <ArrowUpRight size={11} /></a></Link>
-          </SignedIn>
+          <div className="flex items-center gap-4">
+            <SignedOut>
+              <Link href="/sign-in">
+                <button className="text-xs font-bold text-slate-900 dark:text-white hover:text-teal-600 transition-colors">Log In</button>
+              </Link>
+              <Link href="/sign-up">
+                <button className="bg-teal-600 text-white px-6 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl shadow-xl shadow-teal-600/10 active:scale-95 transition-all">Get Started</button>
+              </Link>
+            </SignedOut>
+            <SignedIn>
+              <Link href="/dashboard">
+                <button className="bg-teal-600 text-white px-6 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl shadow-xl shadow-teal-600/10 active:scale-95 transition-all">Launch Dashboard</button>
+              </Link>
+            </SignedIn>
+          </div>
         </div>
-      </div>
+      </nav>
 
-      {/* FOOTER */}
-      <footer className="vc-footer">
-        <div className="vc-footer-logo">Enterprise.CRM</div>
-        <div className="vc-footer-links">
-          <a href="#">Documentation</a>
-          <a href="#">Privacy</a>
-          <a href="#">Terms</a>
-          <a href="#">Github</a>
+      {/* 2. ASYMMETRIC HERO (Combined Styles) */}
+      <header className="relative pt-32 pb-60 overflow-hidden">
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-[#E0F7F6] dark:bg-teal-900/10 z-0 rounded-bl-[10rem] hidden lg:block" />
+        
+        <div className="max-w-7xl mx-auto px-8 relative z-10 grid lg:grid-cols-2 gap-20 items-center">
+          <div className="space-y-8 animate-fade-in-up">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-full shadow-lg shadow-teal-600/20 active:scale-95 cursor-default">
+              <Star className="w-3.5 h-3.5 fill-white" />
+              <span className="text-[10px] font-black uppercase tracking-widest">Next-Gen Revenue Engine</span>
+            </div>
+            
+            <h1 className="text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-[0.85] text-slate-900 dark:text-white">
+              RUN ON <br />
+              <span className="text-teal-600">HUB.</span>
+            </h1>
+
+            <p className="text-xl md:text-2xl text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-xl">
+              Unify your sales, inventory, and logistics in a single high-bandwidth workspace. 
+              Built for teams who outpace their software.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center gap-4 pt-4">
+              <Link href="/sign-up">
+                <button className="w-full sm:w-auto px-10 py-5 bg-teal-600 text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-2xl hover:bg-teal-700 active:scale-95 transition-all">
+                  Initialize Free Trial
+                </button>
+              </Link>
+              <div className="flex items-center gap-3 px-6 py-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 group cursor-pointer hover:border-teal-500 transition-all">
+                <div className="flex -space-x-2">
+                  {[1,2,3].map(i => <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-slate-200" />)}
+                </div>
+                <span className="text-[10px] font-black text-slate-400 group-hover:text-teal-600 uppercase tracking-widest">+12k Teams Joined</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-12 pt-10">
+               <div>
+                  <p className="text-3xl font-black text-slate-900 dark:text-white">4.9/5</p>
+                  <div className="flex gap-0.5 py-1">
+                    {[1,2,3,4,5].map(i => <Star key={i} className="w-2.5 h-2.5 fill-teal-500 text-teal-500" />)}
+                  </div>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">G2 Rating</p>
+               </div>
+               <div className="w-px h-10 bg-slate-200 dark:bg-slate-800" />
+               <div>
+                  <p className="text-3xl font-black text-slate-900 dark:text-white">2.4M</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 py-1">Deals Synced</p>
+               </div>
+            </div>
+          </div>
+
+          {/* FLOATING CUT-OUT DASHBOARD */}
+          <div className="relative group perspective-1000">
+             <div className="absolute inset-0 bg-teal-600/20 blur-[100px] rounded-full scale-75 animate-pulse" />
+             <div className="relative z-10 bg-white dark:bg-slate-900 p-3 rounded-[3rem] border border-slate-200 dark:border-slate-800 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] group-hover:rotate-y-12 transition-all duration-1000">
+                <div className="rounded-[2.4rem] overflow-hidden border border-slate-100 dark:border-slate-800">
+                  <img 
+                    src="/crm_hero_dashboard.png" 
+                    alt="CRM Hub Dashboard" 
+                    className="w-full h-full object-cover grayscale-[30%] group-hover:grayscale-0 transition-all duration-700"
+                  />
+                </div>
+                {/* Floating Badges */}
+                <div className="absolute -top-10 -left-10 w-32 h-32 bg-[#FFEB3B] rounded-full flex flex-col items-center justify-center text-center p-4 shadow-xl rotate-12 group-hover:rotate-0 transition-transform">
+                  <span className="text-2xl font-black text-slate-900 leading-none">99.9%</span>
+                  <span className="text-[9px] font-black uppercase text-slate-700 tracking-tighter">Availability</span>
+                </div>
+                <div className="absolute -bottom-10 -right-5 px-6 py-4 bg-teal-600 text-white rounded-3xl shadow-2xl -rotate-6 group-hover:rotate-0 transition-transform">
+                   <p className="text-[10px] font-black uppercase tracking-widest mb-1">Live Feed</p>
+                   <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                      <span className="text-xs font-bold">Syncing US-WEST-2</span>
+                   </div>
+                </div>
+             </div>
+          </div>
         </div>
-        <div className="vc-footer-copy">© 2026 Enterprise CRM Ecosystem</div>
+
+        {/* ORGANIC WAVE TRANSITION */}
+        <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0]">
+          <svg className="relative block w-[calc(100%+1.3px)] h-[150px]" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" className="fill-[#FAF9F6] dark:fill-slate-950"></path>
+          </svg>
+        </div>
+      </header>
+
+      {/* 3. HIGH DENSITY FEATURES (Blue Style) */}
+      <section className="bg-teal-600 py-32 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,#ffffff10,transparent)] pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-8 relative z-10 text-white">
+          <div className="grid lg:grid-cols-[0.8fr_1.2fr] gap-20 items-center">
+            <div className="space-y-8">
+               <h2 className="text-5xl md:text-7xl font-bold tracking-tighter leading-tight">
+                 Your assistant <br />
+                 <span className="text-teal-200 italic">handles the work.</span>
+               </h2>
+               <div className="space-y-6">
+                 {[
+                   "Automated multi-channel integration",
+                   "Real-time pipeline synchronization",
+                   "Predictive win-rate forecasting",
+                   "Scale up to 10M entities without lag"
+                 ].map((item, i) => (
+                   <div key={i} className="flex items-center gap-4 group">
+                      <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/40 transition-all">
+                        <Check className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="text-lg font-medium opacity-90">{item}</span>
+                   </div>
+                 ))}
+               </div>
+               <button className="px-8 py-4 bg-white text-teal-600 text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-2xl hover:bg-slate-50 active:scale-95 transition-all">
+                 View Full Platform
+               </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { title: "Revenue flow", icon: TrendingUp },
+                { title: "Entity graph", icon: Users },
+                { title: "Scalability", icon: ZapIcon },
+                { title: "Global sync", icon: Globe }
+              ].map((card, i) => (
+                <div key={i} className="bg-white/10 border border-white/20 p-10 rounded-[2.5rem] backdrop-blur-xl group hover:bg-white/20 transition-all">
+                  <card.icon className="w-10 h-10 mb-6 opacity-60 group-hover:opacity-100 transition-opacity" />
+                  <h3 className="text-2xl font-bold mb-3">{card.title}</h3>
+                  <p className="text-sm font-medium opacity-70 leading-relaxed">
+                    High-bandwidth data processing for enterprise-grade operations.
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. EVERYTHING YOU NEED (Bento Mix) */}
+      <section className="py-40 bg-white dark:bg-slate-900 relative">
+        <div className="max-w-7xl mx-auto px-8 space-y-20">
+          <div className="text-center space-y-6 max-w-3xl mx-auto">
+             <h2 className="text-5xl md:text-7xl font-black tracking-tighter text-slate-900 dark:text-white leading-[0.9]">
+               EVERYTHING YOU NEED <br />
+               TO RUN ON <span className="text-teal-600">AUTOPILOT.</span>
+             </h2>
+             <div className="w-20 h-2 bg-teal-600 mx-auto rounded-full" />
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="lg:col-span-2 row-span-2 bg-[#F2F2F2] dark:bg-slate-800 rounded-[3rem] p-12 space-y-12 overflow-hidden relative group">
+               <div className="space-y-4">
+                 <p className="text-[10px] font-black uppercase tracking-widest text-teal-600">Module 01 // Operations</p>
+                 <h3 className="text-4xl font-bold">Dynamic Pipelines</h3>
+                 <p className="text-slate-500 font-medium">Custom stages with in-line logic and status monitoring.</p>
+               </div>
+               <div className="translate-y-10 group-hover:translate-y-0 transition-transform duration-700">
+                  <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-6">
+                     <div className="flex items-center justify-between border-b pb-4 dark:border-slate-800">
+                        <span className="text-xs font-bold">Active Deal Transit</span>
+                        <div className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[9px] font-black rounded-full uppercase">Optimal</div>
+                     </div>
+                     <div className="space-y-3">
+                        {[1,2,3].map(i => (
+                          <div key={i} className="flex items-center gap-4">
+                            <div className="w-2 h-2 rounded-full bg-teal-500" />
+                            <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                              <div className="h-full bg-teal-600" style={{ width: i === 1 ? '70%' : i === 2 ? '40%' : '85%' }} />
+                            </div>
+                          </div>
+                        ))}
+                     </div>
+                  </div>
+               </div>
+            </div>
+
+            <div className="bg-[#E9FBF9] dark:bg-teal-900/10 rounded-[3rem] p-10 space-y-6">
+               <Shield className="w-10 h-10 text-teal-600" />
+               <h3 className="text-xl font-bold">Enterprise Security</h3>
+               <p className="text-sm font-medium text-slate-500">Bank-level encryption and SOC2 cluster protection.</p>
+            </div>
+
+            <div className="bg-slate-900 rounded-[3rem] p-10 space-y-6 text-white">
+               <Database className="w-10 h-10 text-teal-500" />
+               <h3 className="text-xl font-bold">Data Sovereignty</h3>
+               <p className="text-sm font-medium opacity-60">Complete ownership of your cluster and data streams.</p>
+            </div>
+
+            <div className="lg:col-span-2 bg-white border border-slate-200 dark:bg-slate-800 dark:border-slate-700 rounded-[3rem] p-10 flex items-center justify-between group">
+               <div className="space-y-2">
+                 <h3 className="text-2xl font-bold">Global Presence</h3>
+                 <p className="text-sm font-medium text-slate-500">22 Data centers worldwide for sub-10ms latency.</p>
+               </div>
+               <Globe className="w-16 h-16 text-slate-100 group-hover:text-teal-100 transition-colors" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. VIBRANT FOOTER */}
+      <footer className="bg-teal-600 pt-32 pb-16 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full overflow-hidden leading-[0] rotate-180">
+          <svg className="relative block w-[calc(110%+1.3px)] h-[120px]" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" className="fill-white dark:fill-slate-900"></path>
+          </svg>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-8 relative z-10 text-white space-y-24">
+           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12">
+             <div className="space-y-8">
+               <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
+                   <BarChart3 className="w-6 h-6 text-teal-600" />
+                 </div>
+                 <span className="font-black text-2xl tracking-tighter uppercase">CRM Hub</span>
+               </div>
+               <p className="text-teal-100 font-medium leading-relaxed">
+                 The modern standard for high-bandwidth revenue and operations management.
+               </p>
+               <div className="flex gap-4">
+                 {[1,2,3,4].map(i => <div key={i} className="w-10 h-10 bg-white/10 rounded-xl hover:bg-white/20 transition-all cursor-pointer" />)}
+               </div>
+             </div>
+
+             {["Product", "Company", "Solutions", "Legal"].map((col) => (
+                <div key={col} className="space-y-6">
+                   <h4 className="text-xs font-black uppercase tracking-[0.2em]">{col}</h4>
+                   <ul className="space-y-4">
+                     {["Infrastructure", "Analytics", "Security", "Scale"].map(link => (
+                       <li key={link}><a href="#" className="text-teal-100 text-sm hover:text-white transition-colors">{link}</a></li>
+                     ))}
+                   </ul>
+                </div>
+             ))}
+           </div>
+
+           <div className="pt-16 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-8 text-teal-200">
+             <p className="text-sm font-medium">© 2026 CRM Hub. All systems operational.</p>
+             <div className="flex items-center gap-8 text-xs font-black uppercase tracking-widest">
+               <a href="#" className="hover:text-white">Privacy Policy</a>
+               <a href="#" className="hover:text-white">Terms of Use</a>
+               <a href="#" className="hover:text-white flex items-center gap-2">
+                 <Lock className="w-3.5 h-3.5" /> SOC2 Compliance
+               </a>
+             </div>
+           </div>
+        </div>
       </footer>
+
+      {/* Floating Action Badge */}
+      <button className="fixed bottom-10 right-10 w-20 h-20 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full shadow-2xl flex flex-col items-center justify-center group active:scale-90 transition-all z-[200]">
+         <Zap className="w-6 h-6 text-teal-600 group-hover:scale-125 transition-transform" />
+         <span className="text-[8px] font-black uppercase text-slate-400 mt-1">Deploy</span>
+      </button>
+
     </div>
   );
 }

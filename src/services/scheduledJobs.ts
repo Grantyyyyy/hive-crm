@@ -3,6 +3,7 @@ import { sendFollowUpReminder, releaseQuoteStock } from "./quoteService";
 import { checkAndAlertLowStock } from "./inventoryService";
 import type { CRMContextValue } from "../lib/CRMContext";
 import type { Quote, Task } from "../lib/types";
+import { toast } from "sonner";
 
 /**
  * Creates next occurrence for completed recurring tasks.
@@ -125,6 +126,50 @@ export async function sendFollowUpReminders(adapter: JobAdapter): Promise<void> 
   }
 }
 
+function formatReminderDescription(task: Task): string {
+  const due = new Date(task.dueDate);
+  const now = new Date();
+  const diffMs = due.getTime() - now.getTime();
+  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) return `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) !== 1 ? 's' : ''}`;
+  if (diffDays === 0) return 'Due today';
+  if (diffDays === 1) return 'Due tomorrow';
+  return `Due in ${diffDays} day${diffDays !== 1 ? 's' : ''}`;
+}
+
+/**
+ * Fires toast notifications when task remindAt time is reached.
+ */
+export async function checkTaskReminders(adapter: JobAdapter): Promise<void> {
+  const now = new Date();
+  const tasks = adapter.getTasks();
+
+  for (const task of tasks) {
+    // skip if no reminder set
+    if (!task.remindAt) continue;
+
+    // skip if already sent
+    if (task.reminderSent === true) continue;
+
+    // skip if task is already completed
+    if (task.status === 'completed') continue;
+
+    // skip if reminder time is still in the future
+    if (new Date(task.remindAt) > now) continue;
+
+    // fire the toast
+    toast(`Reminder: ${task.title}`, {
+      description: formatReminderDescription(task),
+      duration: 10000,
+    });
+
+    // mark as sent so it never fires again
+    await adapter.updateTask(task.id, { reminderSent: true });
+    console.log(`[scheduledJobs] Task reminder fired for "${task.title}"`);
+  }
+}
+
 /**
  * Master orchestrator for all scheduled tasks.
  */
@@ -134,5 +179,6 @@ export async function runScheduledJobs(adapter: JobAdapter, ctx: CRMContextValue
   await autoExpireQuotes(ctx);
   await sendFollowUpReminders(adapter);
   await checkAndAlertLowStock(adapter, ctx);
+  await checkTaskReminders(adapter);
   console.log("[scheduledJobs] Automation checks complete.");
 }

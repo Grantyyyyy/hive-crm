@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/sheet"
 import { DealForm } from "@/components/crmComponent/DealForm"
 import { ActivityForm } from "@/components/crmComponent/ActivityForm"
-import { relativeTime, formatCurrency, isOverdue, sortTasks } from "@/lib/helpers"
+import { relativeTime, formatCurrency, isOverdue, sortTasks, getDealHealth, daysSince } from "@/lib/helpers"
 import type { Deal, Activity, Contact, Task } from "@/lib/types"
 import { STAGE_LABELS } from "@/lib/types"
 import { AddTaskModal } from "@/components/crmComponent/AddTaskModal"
@@ -52,6 +52,39 @@ const activityColorMap: Record<string, string> = {
   email: "bg-indigo-500",
   note: "bg-amber-500",
   meeting: "bg-emerald-500",
+}
+
+function DealHealthBadge({ lastActivityDate }: { lastActivityDate: string | null }) {
+  const health = getDealHealth(lastActivityDate)
+  const config = {
+    green: {
+      label: 'Healthy',
+      dot: 'bg-emerald-500',
+      bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+      text: 'text-emerald-700 dark:text-emerald-400',
+    },
+    amber: {
+      label: 'Needs attention',
+      dot: 'bg-amber-400',
+      bg: 'bg-amber-50 dark:bg-amber-900/20',
+      text: 'text-amber-700 dark:text-amber-400',
+    },
+    red: {
+      label: 'At risk',
+      dot: 'bg-red-500',
+      bg: 'bg-red-50 dark:bg-red-900/20',
+      text: 'text-red-700 dark:text-red-400',
+    },
+  }[health]
+
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg
+                      text-[10px] font-black uppercase tracking-widest
+                      ${config.bg} ${config.text}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
+      {config.label}
+    </span>
+  )
 }
 
 export function DealDetail() {
@@ -107,6 +140,12 @@ export function DealDetail() {
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
     [activities, dealId]
   )
+
+  const lastActivityDate = useMemo(() => {
+    const sorted = (dealActivities ?? [])
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    return sorted[0]?.createdAt ?? null
+  }, [dealActivities])
 
   const tasks = useMemo(
     () => allTasks.filter((t) => t.entityType === "deal" && t.entityId === dealId),
@@ -201,6 +240,7 @@ export function DealDetail() {
                   >
                     {STAGE_LABELS[deal.stage]}
                   </span>
+                  <DealHealthBadge lastActivityDate={lastActivityDate} />
                 </div>
 
                 <div className="flex flex-wrap gap-6 text-sm font-medium text-slate-600 dark:text-slate-400">
@@ -217,6 +257,12 @@ export function DealDetail() {
                     Close: {deal.expectedCloseDate ? new Date(deal.expectedCloseDate).toLocaleDateString() : "Not set"}
                   </span>
                 </div>
+
+                {lastActivityDate && (
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    Last activity {daysSince(lastActivityDate)} day{daysSince(lastActivityDate) !== 1 ? 's' : ''} ago
+                  </p>
+                )}
 
                 {/* Deal Value */}
                 <div className="flex items-center gap-5 mt-3">

@@ -22,14 +22,13 @@ import { DeleteModal } from "@/components/ui/delete-modal"
 import { ConfirmModal } from "@/components/ui/confirm-modal"
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
-import { useCRMContext, updateRow } from "@/lib/CRMContext"
+import { useCRMContext } from "@/lib/CRMContext"
 import type { SalesOrder, SalesOrderStatus } from "@/lib/types"
 import {
   fulfillOrderStock,
   releaseOrderStock,
   returnShippedOrderStock,
-  sendShippingNotification,
-  generateInvoice
+  sendShippingNotification
 } from "@/services/orderService"
 import { useUser } from "@clerk/clerk-react"
 
@@ -66,15 +65,18 @@ export function SalesOrderDetail() {
   const ctx = useCRMContext()
   const { user } = useUser()
 
-  const { data: orders, isLoaded, deleteItem } = useCRMResource<SalesOrder>("orders")
+  const { data: orders, isLoaded, deleteItem, updateItem } = useCRMResource<SalesOrder>("orders")
 
   const [invoiceOpen, setInvoiceOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [returnOpen, setReturnOpen] = useState(false)
   const [isShipping, setIsShipping] = useState(false)
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
   const [isCancelling, _setIsCancelling] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isReturning, setIsReturning] = useState(false)
+  const [confirmDeliver, setConfirmDeliver] = useState(false)
+  const [confirmCancel, setConfirmCancel] = useState(false)
 
   const order = useMemo(() => orders.find(o => o.id === orderId), [orders, orderId])
 
@@ -93,14 +95,44 @@ export function SalesOrderDetail() {
   }
 
   const handleDeliver = async () => {
-    if (!order) return
+    if (!order || isUpdatingStatus) return
+    setIsUpdatingStatus(true)
     try {
-      generateInvoice(order)
-      await updateRow<SalesOrder>(ctx, "orders", order.id, { status: "delivered" })
-      toast.success("Order Delivered", { description: `Invoice generated for ${order.customerName}.` })
-      setInvoiceOpen(true)
-    } catch {
-      toast.error("Failed to update order.")
+      await updateItem(order.id, {
+        status: 'delivered',
+        updatedAt: new Date().toISOString()
+      })
+      toast.success('Order Delivered', {
+        description: `#${order.orderNumber} marked as delivered.`
+      })
+    } catch (e: unknown) {
+      toast.error('Failed to update order', {
+        description: (e as Error).message
+      })
+    } finally {
+      setIsUpdatingStatus(false)
+      setConfirmDeliver(false)
+    }
+  }
+
+  const handleCancel = async () => {
+    if (!order || isUpdatingStatus) return
+    setIsUpdatingStatus(true)
+    try {
+      await updateItem(order.id, {
+        status: 'cancelled',
+        updatedAt: new Date().toISOString()
+      })
+      toast.success('Order Cancelled', {
+        description: `#${order.orderNumber} has been cancelled.`
+      })
+    } catch (e: unknown) {
+      toast.error('Failed to cancel order', {
+        description: (e as Error).message
+      })
+    } finally {
+      setIsUpdatingStatus(false)
+      setConfirmCancel(false)
     }
   }
 
@@ -215,13 +247,28 @@ export function SalesOrderDetail() {
                 </Button>
               )}
               {order.status === "shipped" && (
-                <Button variant="default" onClick={handleDeliver} className="bg-emerald-600 hover:bg-emerald-700">
-                  <PackageCheck className="w-4 h-4 mr-2" /> Mark Delivered
-                </Button>
+                <button
+                  onClick={() => setConfirmDeliver(true)}
+                  disabled={isUpdatingStatus}
+                  className="border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl h-9 px-4 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  <PackageCheck className="w-3.5 h-3.5" />
+                  {isUpdatingStatus ? 'Updating...' : 'Mark Delivered'}
+                </button>
               )}
               <Button variant="outlineNeutral" onClick={() => setInvoiceOpen(true)}>
                 <Receipt className="w-4 h-4 mr-2 text-indigo-500" /> View Invoice
               </Button>
+              {(order.status === "pending" || order.status === "shipped") && (
+                <button
+                  onClick={() => setConfirmCancel(true)}
+                  disabled={isUpdatingStatus}
+                  className="border border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl h-9 px-4 text-xs font-bold uppercase tracking-wider text-red-600 dark:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                  {isUpdatingStatus ? 'Updating...' : 'Cancel Order'}
+                </button>
+              )}
               {order.status === "shipped" && order.stockDeducted === true && (
                 <Button variant="destructive" onClick={() => setReturnOpen(true)} disabled={isReturning}>
                   <XCircle className="w-4 h-4 mr-2" /> {isReturning ? 'Returning...' : 'Return & Cancel'}
@@ -464,6 +511,25 @@ export function SalesOrderDetail() {
         confirmClassName="bg-rose-600 hover:bg-rose-700 text-white"
         onConfirm={handleReturn}
         loading={isReturning}
+      />
+
+      <ConfirmModal
+        open={confirmDeliver}
+        onOpenChange={setConfirmDeliver}
+        title="Mark as delivered?"
+        description="This confirms the order has been received by the customer."
+        confirmLabel="Mark delivered"
+        onConfirm={handleDeliver}
+      />
+
+      <ConfirmModal
+        open={confirmCancel}
+        onOpenChange={setConfirmCancel}
+        title="Cancel this order?"
+        description="This will cancel the order. Stock will not be automatically returned — adjust inventory manually if needed."
+        confirmLabel="Cancel order"
+        confirmClassName="bg-rose-600 hover:bg-rose-700 text-white"
+        onConfirm={handleCancel}
       />
     </div>
   )

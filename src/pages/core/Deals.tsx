@@ -38,13 +38,14 @@ import {
 } from "@/components/ui/sheet"
 import { DealForm } from "@/components/crmComponent/DealForm"
 import { LostReasonModal } from "@/components/crmComponent/LostReasonModal"
-import { formatCurrency } from "@/lib/helpers"
+import { formatCurrency, getDealHealth } from "@/lib/helpers"
 import { useCRMResource } from "@/lib/hooks"
 import { PageSkeleton } from "@/components/ui/page-skeleton"
 import type { Deal, DealStage, Contact } from "@/lib/types"
 import { STAGE_LABELS, DEAL_STAGES } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { exportToCSV, debounce } from "@/lib/helpers"
+import type { Activity } from "@/lib/types"
 
 const STAGE_STYLE: Record<DealStage, { bg: string; text: string; icon: any }> = {
   discovery: { bg: "bg-blue-50 dark:bg-blue-900/20", text: "text-blue-700 dark:text-blue-400", icon: DollarSign },
@@ -56,13 +57,54 @@ const STAGE_STYLE: Record<DealStage, { bg: string; text: string; icon: any }> = 
 
 /* ── Sortable Card Component ─────────────────────────────────────── */
 
+function DealHealthBadge({ lastActivityDate }: { lastActivityDate: string | null }) {
+  const health = getDealHealth(lastActivityDate)
+  const config = {
+    green: {
+      label: 'Healthy',
+      dot: 'bg-emerald-500',
+      bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+      text: 'text-emerald-700 dark:text-emerald-400',
+    },
+    amber: {
+      label: 'Needs attention',
+      dot: 'bg-amber-400',
+      bg: 'bg-amber-50 dark:bg-amber-900/20',
+      text: 'text-amber-700 dark:text-amber-400',
+    },
+    red: {
+      label: 'At risk',
+      dot: 'bg-red-500',
+      bg: 'bg-red-50 dark:bg-red-900/20',
+      text: 'text-red-700 dark:text-red-400',
+    },
+  }[health]
+
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg
+                      text-[10px] font-black uppercase tracking-widest
+                      ${config.bg} ${config.text}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
+      {config.label}
+    </span>
+  )
+}
+
+function getLastActivityDate(dealId: string, activities: Activity[]): string | null {
+  const sorted = activities
+    .filter(a => a.dealId === dealId)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  return sorted[0]?.createdAt ?? null
+}
+
 interface SortableDealCardProps {
   deal: Deal
   contactName: string
+  activities: Activity[]
   onClick: () => void
 }
 
-function SortableDealCard({ deal, contactName, onClick }: SortableDealCardProps) {
+function SortableDealCard({ deal, contactName, activities, onClick }: SortableDealCardProps) {
   const {
     attributes,
     listeners,
@@ -108,7 +150,10 @@ function SortableDealCard({ deal, contactName, onClick }: SortableDealCardProps)
       </div>
 
       <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1 truncate">{deal.title}</h4>
-      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate mb-4">{contactName}</p>
+      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate mb-2">{contactName}</p>
+      <div className="mb-4">
+        <DealHealthBadge lastActivityDate={getLastActivityDate(deal.id, activities)} />
+      </div>
 
       <div className="flex items-center justify-between pt-2 border-t border-slate-50 dark:border-slate-800/50 mt-1">
         <div className="flex items-center gap-2">
@@ -142,6 +187,8 @@ export function Deals() {
   } = useCRMResource<Deal>('deals')
 
   const { data: contacts } = useCRMResource<Contact>('contacts')
+
+  const { data: activities } = useCRMResource<Activity>('activities')
 
   const [showModal, setShowModal] = useState(false)
   const [viewMode, setViewMode] = useState<"board" | "list">("board")
@@ -349,6 +396,7 @@ export function Deals() {
                   <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Deal Title</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Contact</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Health</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Value</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Stage</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Expected Close</th>
@@ -358,7 +406,7 @@ export function Deals() {
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-20 text-center">
+                      <td colSpan={7} className="px-6 py-20 text-center">
                         <div className="flex flex-col items-center gap-3">
                           <BarChart3 className="w-10 h-10 text-slate-300 dark:text-slate-700" />
                           <p className="text-slate-500 dark:text-slate-400 font-medium">No deals found.</p>
@@ -386,6 +434,9 @@ export function Deals() {
                             <p className="text-[13px] font-semibold text-slate-600 dark:text-slate-400">
                               {contactMap.get(d.contactId) || "Unknown"}
                             </p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <DealHealthBadge lastActivityDate={getLastActivityDate(d.id, activities)} />
                           </td>
                           <td className="px-6 py-4">
                             <p className="text-[13px] font-extrabold text-slate-900 dark:text-white">{formatCurrency(d.value)}</p>
@@ -480,6 +531,7 @@ export function Deals() {
                             key={deal.id}
                             deal={deal}
                             contactName={contactMap.get(deal.contactId) || "Unknown"}
+                            activities={activities}
                             onClick={() => navigate(`/deals/${deal.id}`)}
                           />
                         ))}
@@ -504,6 +556,7 @@ export function Deals() {
                     <SortableDealCard
                       deal={activeDeal}
                       contactName={contactMap.get(activeDeal.contactId) || "Unknown"}
+                      activities={activities}
                       onClick={() => { }}
                     />
                   </div>

@@ -34,6 +34,7 @@ import type {
   InventoryItem,
   PurchaseOrder,
   InventoryTransaction,
+  Task,
 } from "@/lib/types"
 import { approvePurchaseRequest } from "@/services/procurementService"
 import type { JobAdapter } from "@/services/types"
@@ -266,6 +267,9 @@ export function PurchaseRequestDetail() {
         insertRows<InventoryTransaction>(ctx, "inventory_transactions", [
           tx as any,
         ]).then((rows) => rows[0] as InventoryTransaction),
+
+      getTasks: () => ctx.getResource<Task>("tasks").data,
+      updateTask: (id, patch) => updateRow<Task>(ctx, "tasks", id, patch),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [requests, inventoryTransactions]

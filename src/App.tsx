@@ -25,6 +25,7 @@ import { PurchaseOrderDetail } from "@/pages/logistics/PurchaseOrderDetail";
 import { PurchaseRequests } from "@/pages/logistics/PurchaseRequests";
 import { PurchaseRequestDetail } from "@/pages/logistics/PurchaseRequestDetail";
 import { Vendors } from "@/pages/logistics/Vendors";
+import { VendorDetail } from "@/pages/logistics/VendorDetail";
 import { Users } from "@/pages/settings/Users";
 import { Roles } from "@/pages/settings/Roles";
 import { ProfilePage } from "@/pages/settings/ProfilePage";
@@ -40,7 +41,7 @@ import { Fonts } from "@/pages/Fonts";
 import { Toaster } from "sonner";
 import { CRMProvider, useCRMContext, updateRow, insertRows } from "@/lib/CRMContext";
 import { useCRMResource } from "@/lib/hooks";
-import type { Quote, SalesOrder, InventoryItem, PurchaseRequest, PurchaseOrder, InventoryTransaction } from "@/lib/types";
+import type { Quote, SalesOrder, InventoryItem, PurchaseRequest, PurchaseOrder, InventoryTransaction, Task } from "@/lib/types";
 import { runScheduledJobs } from "@/services/scheduledJobs";
 import type { JobAdapter } from "@/services/types";
 import { setAuthToken, setOrganizationId } from "@/lib/api";
@@ -95,6 +96,9 @@ function AutomationRunner() {
 
     getInventoryTransactions: () => ctx.getResource<InventoryTransaction>('inventory_transactions').data,
     insertInventoryTransaction: (tx) => insertRows<InventoryTransaction>(ctx, 'inventory_transactions', [tx as any]).then(rows => rows[0] as InventoryTransaction),
+
+    getTasks: () => ctx.getResource<Task>('tasks').data,
+    updateTask: (id, patch) => updateRow<Task>(ctx, 'tasks', id, patch),
   }), [ctx])
 
   useEffect(() => {
@@ -230,6 +234,9 @@ function AppContent() {
             </Route>
             <Route path="/vendors">
               {() => <Protected component={Vendors} />}
+            </Route>
+            <Route path="/vendors/:id">
+              {() => <Protected component={VendorDetail} />}
             </Route>
             <Route path="/settings/users">
               {() => <Protected component={Users} />}

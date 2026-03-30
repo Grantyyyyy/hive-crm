@@ -144,6 +144,7 @@ export interface Task {
   description?: string
   dueDate: string
   remindAt?: string
+  reminderSent?: boolean
   priority: 'low' | 'medium' | 'high' | 'urgent'
   status: 'open' | 'in-progress' | 'completed'
   ownerId: string

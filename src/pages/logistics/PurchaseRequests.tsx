@@ -19,7 +19,7 @@ import { approvePurchaseRequest } from "@/services/procurementService"
 import type { JobAdapter } from "@/services/types"
 import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
 import { toast } from "sonner"
-import type { Quote, SalesOrder, InventoryItem, PurchaseOrder } from "@/lib/types"
+import type { Quote, SalesOrder, InventoryItem, PurchaseOrder, Task } from "@/lib/types"
 
 export function PurchaseRequests() {
   const {
@@ -51,6 +51,9 @@ export function PurchaseRequests() {
     insertPurchaseOrder: (po) => insertRows<PurchaseOrder>(ctx, 'purchase_orders', [po as any]).then(rows => rows[0]),
     getInventoryTransactions: () => inventoryTransactions,
     insertInventoryTransaction: (tx) => insertRows<InventoryTransaction>(ctx, 'inventory_transactions', [tx as any]).then(rows => rows[0]),
+
+    getTasks: () => ctx.getResource<Task>('tasks').data,
+    updateTask: (id, patch) => updateRow<Task>(ctx, 'tasks', id, patch),
   }), [ctx, requests, inventoryTransactions])
 
   const [search, setSearch] = useState("")

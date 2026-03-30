@@ -24,7 +24,7 @@ import { DeleteModal } from "@/components/ui/delete-modal"
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
 import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
-import type { PurchaseOrder, PurchaseOrderStatus, Quote, SalesOrder, InventoryItem, PurchaseRequest, InventoryTransaction, Vendor } from "@/lib/types"
+import type { PurchaseOrder, PurchaseOrderStatus, Quote, SalesOrder, InventoryItem, PurchaseRequest, InventoryTransaction, Vendor, Task } from "@/lib/types"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { restockFromPO, sendPOToVendor } from "@/services/procurementService"
@@ -103,6 +103,9 @@ export function PurchaseOrderDetail() {
     insertPurchaseOrder: (po) => insertRows<PurchaseOrder>(ctx, 'purchase_orders', [po as any]).then(rows => rows[0] as PurchaseOrder),
     getInventoryTransactions: () => inventoryTransactions,
     insertInventoryTransaction: (tx) => insertRows<InventoryTransaction>(ctx, 'inventory_transactions', [tx as any]).then(rows => rows[0] as InventoryTransaction),
+
+    getTasks: () => ctx.getResource<Task>('tasks').data,
+    updateTask: (id, patch) => updateRow<Task>(ctx, 'tasks', id, patch),
   }), [ctx, orders, inventoryTransactions])
 
   const handleSend = async () => {
@@ -114,7 +117,7 @@ export function PurchaseOrderDetail() {
     }
 
     const promise = sendPOToVendor(order, vendor || { id: NIL_UUID, name: order.vendorName } as any, adapter)
-    
+
     toast.promise(promise, {
       loading: `Transmitting PO ${order.poNumber} to ${order.vendorName}...`,
       success: () => {
@@ -230,12 +233,12 @@ export function PurchaseOrderDetail() {
                 <p className="text-xs font-medium text-amber-700/80 dark:text-amber-400">This Purchase Order was generated from a request. Select a vendor before sending.</p>
               </div>
             </div>
-            <Button 
-                size="sm" 
-                variant="default" 
-                onClick={() => setVendorSelectorOpen(true)}
-                className="bg-amber-600 hover:bg-amber-700 text-white shrink-0"
-              >
+            <Button
+              size="sm"
+              variant="default"
+              onClick={() => setVendorSelectorOpen(true)}
+              className="bg-amber-600 hover:bg-amber-700 text-white shrink-0"
+            >
               Select Vendor
             </Button>
           </div>
@@ -437,7 +440,7 @@ export function PurchaseOrderDetail() {
                     <div className="flex items-center justify-between">
                       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Vendor</p>
                       {order.status === 'pending' && (
-                        <button 
+                        <button
                           onClick={() => setVendorSelectorOpen(true)}
                           className="opacity-0 group-hover:opacity-100 text-[9px] font-black uppercase text-indigo-600 hover:text-indigo-700 transition-all underline underline-offset-2"
                         >

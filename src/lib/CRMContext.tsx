@@ -37,7 +37,8 @@ type CamelObject = Record<string, any>
 const UUID_FIELDS = [
   "contact_id", "deal_id", "lead_id", "entity_id",
   "converted_to_contact_id", "converted_to_deal_id",
-  "customer_id",
+  "customer_id", "project_id", "task_id", "tag_id",
+  "parent_task_id", "inventory_item_id", "quote_id"
 ]
 
 export function toSnake(obj: any): any {
@@ -226,26 +227,35 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
 
         const snakePatch = toSnake(op.patch)
         if (op.resource === 'tasks') {
-          ['subtasks', 'comments', 'activities', 'tags', 'time_entries'].forEach(f => delete snakePatch[f])
+          ['activities', 'tags', 'time_entries'].forEach(f => delete snakePatch[f])
         }
-        if (action === "update") {
-          const { error } = await client.from(tableName).update(snakePatch).eq("id", op.id)
-          if (error) errors.push({ resource: op.resource, id: op.id, error })
-          else successes.push({ ...op, action })
-        } else if (action === "insert") {
-          const skipUserId = ['tasks', 'task_tags', 'task_tag_links', 'projects', 'activities', 'leads', 'contacts', 'deals'].includes(op.resource)
-          if (!skipUserId && !snakePatch.user_id && !snakePatch.owner_id) {
+
+        if (action === "insert") {
+          // Identify which columns the resource supports to avoid SQL errors
+          const noUserIdTables = ['task_tags', 'task_tag_links', 'task_subtasks', 'task_comments']
+          const ownerIdTables = ['tasks', 'task_tags', 'projects', 'leads', 'contacts', 'deals']
+
+          if (!noUserIdTables.includes(op.resource) && !snakePatch.user_id) {
             snakePatch.user_id = userId
           }
-          if (['tasks', 'task_tags', 'projects', 'leads', 'contacts', 'deals'].includes(op.resource)) {
-            if (!snakePatch.owner_id) snakePatch.owner_id = userId
+          if (ownerIdTables.includes(op.resource) && !snakePatch.owner_id) {
+            snakePatch.owner_id = userId
           }
+
           const { data, error } = await client.from(tableName).insert(snakePatch).select()
-          if (error) errors.push({ resource: op.resource, error })
-          else {
+          if (error) {
+            console.error(`[CRMContext] Insert failed for ${op.resource}:`, error)
+            errors.push({ resource: op.resource, error })
+          } else {
             const created = toCamel(data?.[0] || {})
             successes.push({ ...op, action, patch: created })
           }
+        } else if (action === "update") {
+          const { error } = await client.from(tableName).update(snakePatch).eq("id", op.id)
+          if (error) {
+            console.error(`[CRMContext] Update failed for ${op.resource}:${op.id}:`, error)
+            errors.push({ resource: op.resource, id: op.id, error })
+          } else successes.push({ ...op, action })
         }
       }
 
@@ -300,15 +310,19 @@ export async function insertRows<T extends { id: string }>(
   const rows = newItems.map((item) => {
     const row = toSnake(item)
     if (resourceName === 'tasks') {
-      ['subtasks', 'comments', 'activities', 'tags', 'time_entries'].forEach(f => delete row[f])
+      ['activities', 'tags', 'time_entries'].forEach(f => delete row[f])
     }
-    const skipUserId = ['tasks', 'task_tags', 'task_tag_links', 'projects', 'activities', 'leads', 'contacts', 'deals'].includes(resourceName)
-    if (!skipUserId && !row.user_id && !row.owner_id) {
+
+    const noUserIdTables = ['task_tags', 'task_tag_links', 'task_subtasks', 'task_comments']
+    const ownerIdTables = ['tasks', 'task_tags', 'projects', 'leads', 'contacts', 'deals']
+
+    if (!noUserIdTables.includes(resourceName) && !row.user_id) {
       row.user_id = ctx.userId
     }
-    if (['tasks', 'task_tags', 'projects', 'leads', 'contacts', 'deals'].includes(resourceName)) {
-      if (!row.owner_id) row.owner_id = ctx.userId
+    if (ownerIdTables.includes(resourceName) && !row.owner_id) {
+      row.owner_id = ctx.userId
     }
+
     // Always delete id so the database generates it (avoids UUID conflicts)
     delete row.id
     return row
@@ -350,7 +364,7 @@ export async function updateRow<T extends { id: string }>(
   const tableName = TABLE_MAP[resourceName]
   const snakePatch = toSnake(updates)
   if (resourceName === 'tasks') {
-    ['subtasks', 'comments', 'activities', 'tags', 'time_entries'].forEach(f => delete snakePatch[f])
+    ['activities', 'tags', 'time_entries'].forEach(f => delete snakePatch[f])
   }
 
   const { error } = await client.from(tableName).update(snakePatch).eq("id", id)

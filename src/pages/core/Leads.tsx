@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react"
-import { Pagination } from "@/components/ui/Pagination"
+import { DataTable } from "@/components/reusables/DataTable"
 import { useLocation } from "wouter"
 import {
   UserSearch,
@@ -148,7 +148,7 @@ export function Leads() {
               Export CSV
             </Button>
             <Button
-              className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-teal-200 dark:shadow-none"
+              variant="brand"
               onClick={() => { setEditingLead(null); setShowModal(true) }}
             >
               <PlusCircle className="w-4 h-4" />
@@ -198,134 +198,129 @@ export function Leads() {
             </Button>
           </div>
 
-          {/* Data Table Card */}
-          <div className="bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left table-auto">
-                <thead>
-                  <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Lead Name</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Company</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Source</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Status</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Score</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Date Added</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                  {filtered.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="px-6 py-20 text-center">
-                        <div className="flex flex-col items-center gap-3">
-                          <UserSearch className="w-10 h-10 text-slate-300 dark:text-slate-700" />
-                          <p className="text-slate-500 dark:text-slate-400 font-medium">No leads found matching your selection.</p>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    paginatedLeads.map((lead) => {
-                      const status = STATUS_STYLE[lead.status] || STATUS_STYLE.new
-                      const SourceIcon = SOURCE_ICONS[lead.source] || Globe
-                      const initials = lead.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-
-                      return (
-                        <tr
-                          key={lead.id}
-                          className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all cursor-pointer group border-l-4 border-transparent hover:border-teal-600 hover:shadow-xl hover:shadow-teal-600/5 relative z-0 hover:z-10"
-                          onClick={() => navigate(`/leads/${lead.id}`)}
-                        >
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className={cn(
-                                "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black uppercase shrink-0 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800",
-                                lead.status === 'qualified' ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400" :
-                                  lead.status === 'new' ? "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400" :
-                                    "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-                              )}>
-                                {initials}
-                              </div>
-                              <div className="min-w-0">
-                                <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{lead.name}</p>
-                                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{lead.email}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <p className="text-[13px] font-semibold text-slate-600 dark:text-slate-400">{lead.company || "—"}</p>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2 px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[11px] font-bold rounded-md w-fit">
-                              <SourceIcon className="w-3.5 h-3.5" />
-                              {lead.source.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className={cn(
-                              "flex items-center gap-2 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest w-fit",
-                              status.bg,
-                              status.text
-                            )}>
-                              {LEAD_STATUS_LABELS[lead.status] || lead.status}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2">
-                              <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                <div
-                                  className={cn(
-                                    "h-full rounded-full transition-all",
-                                    lead.score >= 70 ? "bg-emerald-500" :
-                                      lead.score >= 40 ? "bg-amber-500" : "bg-red-500"
-                                  )}
-                                  style={{ width: `${lead.score}%` }}
-                                />
-                              </div>
-                              <span className={cn(
-                                "text-[13px] font-bold",
-                                lead.score >= 70 ? "text-emerald-600" :
-                                  lead.score >= 40 ? "text-amber-600" : "text-red-600"
-                              )}>
-                                {lead.score}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <p className="text-[13px] text-slate-600 dark:text-slate-400">
-                              {new Date(lead.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                            </p>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-600 transition-all"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setPendingDelete(lead)
-                              }}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </td>
-                        </tr>
-                      )
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination */}
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              totalItems={totalItems}
-              itemsPerPage={itemsPerPage}
-              itemLabel="leads"
-            />
-          </div>
+          <DataTable<Lead>
+            data={paginatedLeads}
+            onRowClick={(lead) => navigate(`/leads/${lead.id}`)}
+            emptyState={{
+              icon: <UserSearch className="w-10 h-10" />,
+              title: "No leads found matching your selection."
+            }}
+            pagination={{
+              currentPage,
+              totalPages,
+              onPageChange: setCurrentPage,
+              totalItems,
+              itemsPerPage,
+              itemLabel: "leads"
+            }}
+            columns={[
+              {
+                header: "Lead Name",
+                render: (lead) => {
+                  const initials = lead.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+                  return (
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black uppercase shrink-0 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800",
+                        lead.status === 'qualified' ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400" :
+                          lead.status === 'new' ? "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400" :
+                            "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                      )}>
+                        {initials}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{lead.name}</p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{lead.email}</p>
+                      </div>
+                    </div>
+                  )
+                }
+              },
+              {
+                header: "Company",
+                render: (lead) => (
+                  <p className="text-[13px] font-semibold text-slate-600 dark:text-slate-400">{lead.company || "—"}</p>
+                )
+              },
+              {
+                header: "Source",
+                render: (lead) => {
+                  const SourceIcon = SOURCE_ICONS[lead.source] || Globe
+                  return (
+                    <div className="flex items-center gap-2 px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[11px] font-bold rounded-md w-fit">
+                      <SourceIcon className="w-3.5 h-3.5" />
+                      {lead.source.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </div>
+                  )
+                }
+              },
+              {
+                header: "Status",
+                render: (lead) => {
+                  const status = STATUS_STYLE[lead.status] || STATUS_STYLE.new
+                  return (
+                    <div className={cn(
+                      "flex items-center gap-2 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest w-fit",
+                      status.bg,
+                      status.text
+                    )}>
+                      {LEAD_STATUS_LABELS[lead.status] || lead.status}
+                    </div>
+                  )
+                }
+              },
+              {
+                header: "Score",
+                render: (lead) => (
+                  <div className="flex items-center gap-2">
+                    <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className={cn(
+                          "h-full rounded-full transition-all",
+                          lead.score >= 70 ? "bg-emerald-500" :
+                            lead.score >= 40 ? "bg-amber-500" : "bg-red-500"
+                        )}
+                        style={{ width: `${lead.score}%` }}
+                      />
+                    </div>
+                    <span className={cn(
+                      "text-[13px] font-bold",
+                      lead.score >= 70 ? "text-emerald-600" :
+                        lead.score >= 40 ? "text-amber-600" : "text-red-600"
+                    )}>
+                      {lead.score}
+                    </span>
+                  </div>
+                )
+              },
+              {
+                header: "Date Added",
+                render: (lead) => (
+                  <p className="text-[13px] text-slate-600 dark:text-slate-400">
+                    {new Date(lead.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </p>
+                )
+              },
+              {
+                header: "Actions",
+                headerClassName: "text-right",
+                align: "right",
+                render: (lead) => (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-600 transition-all"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setPendingDelete(lead)
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )
+              }
+            ]}
+          />
         </div>
       </div>
 

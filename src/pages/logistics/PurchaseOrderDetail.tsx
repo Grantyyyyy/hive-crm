@@ -64,7 +64,7 @@ export function PurchaseOrderDetail() {
   const [, navigate] = useLocation()
   const poId = params?.id ?? ""
   const ctx = useCRMContext()
-  const { user } = useUser()
+  const { user, isLoaded: userLoaded } = useUser()
 
   const { data: orders, isLoaded, updateItem, deleteItem, refresh } = useCRMResource<PurchaseOrder>("purchase_orders")
   const { data: inventoryTransactions } = useCRMResource<InventoryTransaction>('inventory_transactions')
@@ -182,7 +182,7 @@ export function PurchaseOrderDetail() {
     )
   }, [vendors, vendorSearch])
 
-  if (!isLoaded) return <PageSkeleton />
+  if (!userLoaded || !isLoaded) return <PageSkeleton />
 
   if (!order) {
     return (

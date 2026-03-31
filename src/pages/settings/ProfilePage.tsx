@@ -1,25 +1,19 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useRef } from "react"
 import { useUser } from "@clerk/clerk-react"
 import { Camera, Save, Info } from "lucide-react"
 import { toast } from "sonner"
 import { PageSkeleton } from "@/components/ui/page-skeleton"
+import { getUserInitials } from "@/lib/helpers"
 
 export function ProfilePage() {
   const { user, isLoaded } = useUser()
 
+  // Initialize form state from user data
   const [firstName, setFirstName] = useState(user?.firstName ?? '')
   const [lastName, setLastName] = useState(user?.lastName ?? '')
   const [saving, setSaving] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  // Sync state when user loads (Clerk loads async)
-  useEffect(() => {
-    if (user) {
-      setFirstName(user.firstName ?? '')
-      setLastName(user.lastName ?? '')
-    }
-  }, [user])
 
   // Dirty check for save button
   const isDirty = firstName.trim() !== (user?.firstName ?? '')
@@ -64,7 +58,7 @@ export function ProfilePage() {
     }
   }
 
-  const initials = ((firstName?.[0] ?? '') + (lastName?.[0] ?? '')).toUpperCase() || '?'
+  const initials = getUserInitials(user)
 
   if (!isLoaded) return <PageSkeleton />
 
@@ -95,7 +89,7 @@ export function ProfilePage() {
             <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none overflow-hidden p-6">
               <div className="flex flex-col items-center">
                 {/* Avatar */}
-                {user.imageUrl ? (
+                {user && user.imageUrl ? (
                   <img
                     src={user.imageUrl}
                     alt="Avatar"
@@ -137,7 +131,7 @@ export function ProfilePage() {
                       Member Since
                     </p>
                     <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                      {user.createdAt?.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) ?? '—'}
+                      {user?.createdAt?.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) ?? '—'}
                     </p>
                   </div>
                   <div>
@@ -145,7 +139,7 @@ export function ProfilePage() {
                       Last Sign In
                     </p>
                     <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                      {user.lastSignInAt?.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) ?? '—'}
+                      {user?.lastSignInAt?.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) ?? '—'}
                     </p>
                   </div>
                 </div>
@@ -208,7 +202,7 @@ export function ProfilePage() {
                 </label>
                 <input
                   type="text"
-                  value={user.primaryEmailAddress?.emailAddress ?? '—'}
+                  value={user?.primaryEmailAddress?.emailAddress ?? '—'}
                   disabled
                   className="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-sm font-medium cursor-not-allowed"
                 />

@@ -21,7 +21,7 @@ import type { Quote, SalesOrder, InventoryItem, PurchaseRequest, Task } from "@/
 import { useUser } from "@clerk/clerk-react"
 
 export function PurchaseOrders() {
-  const { user } = useUser()
+  const { user, isLoaded: userLoaded } = useUser()
   const {
     data: orders,
     addItems: addOrders,
@@ -145,7 +145,7 @@ export function PurchaseOrders() {
     currentPage * itemsPerPage
   )
 
-  if (!isLoaded) {
+  if (!userLoaded || !isLoaded) {
     return (
       <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-r-transparent" />

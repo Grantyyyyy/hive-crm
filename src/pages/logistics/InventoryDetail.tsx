@@ -30,7 +30,7 @@ export function InventoryDetail() {
   const [, params] = useRoute("/inventory/:id")
   const itemId = params?.id ?? ""
   const ctx = useCRMContext()
-  const { user } = useUser()
+  const { user, isLoaded: userLoaded } = useUser()
 
   const { data: items, isLoaded } = useCRMResource<InventoryItem>("inventory")
   const { data: orders } = useCRMResource<SalesOrder>("orders")
@@ -106,7 +106,7 @@ export function InventoryDetail() {
     toast.success("Stock Adjusted", { description: `${item.name}: ${item.stockQuantity} → ${newQuantity}` })
   }
 
-  if (!isLoaded) return <PageSkeleton />
+  if (!userLoaded || !isLoaded) return <PageSkeleton />
 
   if (!item) {
     return (

@@ -32,10 +32,10 @@ export function AddTaskModal({ open, onOpenChange, onSave, userId, fixedEntity, 
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-xl p-0 flex flex-col h-full">
-        <SheetHeader>
-          <SheetTitle>New Task</SheetTitle>
-          <SheetDescription>
+      <SheetContent className="sm:max-w-3xl p-0 flex flex-col h-full bg-slate-50 dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800">
+        <SheetHeader className="px-8 pt-8 pb-4 bg-white/50 dark:bg-slate-900/50 border-b border-slate-200/60 dark:border-slate-800/60 backdrop-blur-sm">
+          <SheetTitle className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">New Task</SheetTitle>
+          <SheetDescription className="text-sm font-medium text-slate-500">
             Create a new task to track your work and follow up with entities.
           </SheetDescription>
         </SheetHeader>

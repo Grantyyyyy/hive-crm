@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react"
-import { Pagination } from "@/components/ui/Pagination"
+import { DataTable } from "@/components/reusables/DataTable"
 import { useLocation } from "wouter"
 import {
   UserRound,
@@ -158,7 +158,7 @@ export function Contacts() {
               Export CSV
             </Button>
             <Button
-              className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-teal-200 dark:shadow-none"
+              variant="brand"
               onClick={() => setShowModal(true)}
             >
               <PlusCircle className="w-4 h-4" /> Create Contact
@@ -194,115 +194,107 @@ export function Contacts() {
           </div>
         </div>
 
-        {/* Data Table Card */}
-        <div className="bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left table-auto">
-              <thead>
-                <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 text-center">
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Contact Name</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Associated Company</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Email Address</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Phone Number</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Relationship</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Last Activity</th>
-                  <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                {filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-20 text-center">
-                      <div className="flex flex-col items-center gap-3">
-                        <UserRound className="w-10 h-10 text-slate-300 dark:text-slate-700" />
-                        <p className="text-slate-500 dark:text-slate-400 font-medium">No contacts found.</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  paginatedContacts.map((c: EnrichedContact) => {
-                    const initials = c.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
-                    return (
-                      <tr
-                        key={c.id}
-                        className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all cursor-pointer group border-l-4 border-transparent hover:border-teal-600 hover:shadow-xl hover:shadow-teal-600/5 relative z-0 hover:z-10"
-                        onClick={() => navigate(`/contacts/${c.id}`)}
-                      >
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 flex items-center justify-center text-[10px] font-black uppercase text-slate-600 dark:text-slate-400 ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm">
-                              {initials}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{c.name}</p>
-                              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">Individual</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-[13px] font-semibold text-slate-600 dark:text-slate-400">{c.company || "—"}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-[13px] text-slate-600 dark:text-slate-400">{c.email}</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[11px] font-bold rounded-md w-fit">
-                            {c.phone || "—"}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            <span className={cn(
-                              "text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg",
-                              c.relationshipLabel === 'Hot' ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400" :
-                                c.relationshipLabel === 'Warm' ? "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400" :
-                                  "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-                            )}>
-                              {c.relationshipLabel}
-                            </span>
-                            <span className="text-[13px] font-bold text-slate-600 dark:text-slate-400">{c.relationshipScore}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-[13px] text-slate-600 dark:text-slate-400">
-                            {c.lastActivityDate
-                              ? new Date(c.lastActivityDate).toLocaleDateString()
-                              : c.createdAt
-                                ? new Date(c.createdAt).toLocaleDateString()
-                                : '—'}
-                          </p>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-600 transition-all"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setPendingDelete(c)
-                            }}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    )
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-            totalItems={totalItems}
-            itemsPerPage={itemsPerPage}
-            itemLabel="contacts"
-          />
-        </div>
+        <DataTable
+          data={paginatedContacts}
+          onRowClick={(c: EnrichedContact) => navigate(`/contacts/${c.id}`)}
+          pagination={{
+            currentPage,
+            totalPages,
+            onPageChange: setCurrentPage,
+            totalItems,
+            itemsPerPage,
+            itemLabel: "contacts"
+          }}
+          emptyState={{
+            icon: <UserRound className="w-10 h-10" />,
+            title: "No contacts found."
+          }}
+          columns={[
+            {
+              header: "Contact Name",
+              render: (c: EnrichedContact) => {
+                const initials = c.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+                return (
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 flex items-center justify-center text-[10px] font-black uppercase text-slate-600 dark:text-slate-400 ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm">
+                      {initials}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{c.name}</p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">Individual</p>
+                    </div>
+                  </div>
+                )
+              }
+            },
+            {
+              header: "Associated Company",
+              render: (c: EnrichedContact) => (
+                <p className="text-[13px] font-semibold text-slate-600 dark:text-slate-400">{c.company || "—"}</p>
+              )
+            },
+            {
+              header: "Email Address",
+              render: (c: EnrichedContact) => (
+                <p className="text-[13px] text-slate-600 dark:text-slate-400">{c.email}</p>
+              )
+            },
+            {
+              header: "Phone Number",
+              render: (c: EnrichedContact) => (
+                <div className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[11px] font-bold rounded-md w-fit">
+                  {c.phone || "—"}
+                </div>
+              )
+            },
+            {
+              header: "Relationship",
+              render: (c: EnrichedContact) => (
+                <div className="flex items-center gap-2">
+                  <span className={cn(
+                    "text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg",
+                    c.relationshipLabel === 'Hot' ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400" :
+                      c.relationshipLabel === 'Warm' ? "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400" :
+                        "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                  )}>
+                    {c.relationshipLabel}
+                  </span>
+                  <span className="text-[13px] font-bold text-slate-600 dark:text-slate-400">{c.relationshipScore}</span>
+                </div>
+              )
+            },
+            {
+              header: "Last Activity",
+              render: (c: EnrichedContact) => (
+                <p className="text-[13px] text-slate-600 dark:text-slate-400">
+                  {c.lastActivityDate
+                    ? new Date(c.lastActivityDate).toLocaleDateString()
+                    : c.createdAt
+                      ? new Date(c.createdAt).toLocaleDateString()
+                      : '—'}
+                </p>
+              )
+            },
+            {
+              header: "Actions",
+              headerClassName: "text-right",
+              align: "right",
+              render: (c: EnrichedContact) => (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-600 transition-all"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setPendingDelete(c)
+                  }}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              )
+            }
+          ]}
+        />
       </div>
 
       <Sheet open={showModal} onOpenChange={setShowModal}>

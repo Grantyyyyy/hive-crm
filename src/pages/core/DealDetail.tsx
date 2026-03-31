@@ -92,7 +92,7 @@ export function DealDetail() {
   const [, navigate] = useLocation()
   const dealId = params?.id ?? ""
 
-  const { user } = useUser()
+  const { user, isLoaded: userLoaded } = useUser()
   const {
     data: deals,
     updateItem: updateDeal,
@@ -196,7 +196,7 @@ export function DealDetail() {
     return STAGE_COLORS[stage] || STAGE_COLORS.discovery
   }
 
-  if (!dealsLoaded || !contactsLoaded || !activitiesLoaded || !tasksLoaded) {
+  if (!userLoaded || !dealsLoaded || !contactsLoaded || !activitiesLoaded || !tasksLoaded) {
     return <PageSkeleton />
   }
 

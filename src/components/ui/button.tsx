@@ -22,6 +22,7 @@ const buttonVariants = cva(
         outlineNeutral: "border-border bg-background text-text-secondary hover:bg-bg-elevated hover:text-text-primary",
         ghostPrimary: "text-accent hover:bg-accent-dim hover:text-accent",
         destructiveOutline: "border-destructive/30 text-destructive bg-transparent hover:bg-destructive/5 hover:border-destructive/50",
+        brand: "bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold uppercase tracking-wider shadow-none dark:shadow-none",
       },
       size: {
         default:

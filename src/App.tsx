@@ -120,6 +120,12 @@ function AppContent() {
   const { organization, isLoaded: isOrgLoaded } = useOrganization();
   const [authReady, setAuthReady] = useState(false);
 
+  /**
+   * Synchronizes Clerk authentication state with the application's API layer.
+   * - Fetches JWT token from Clerk and stores it for API requests
+   * - Syncs organization ID for multi-tenant data isolation
+   * - Refreshes token every 50 seconds when signed in
+   */
   useEffect(() => {
     const syncAuth = async () => {
       if (isAuthLoaded && isOrgLoaded) {
@@ -141,12 +147,13 @@ function AppContent() {
     syncAuth();
 
     // Refresh token every 50 seconds if signed in
+    // This ensures the JWT doesn't expire during active sessions
     let interval: NodeJS.Timeout;
     if (isSignedIn) {
       interval = setInterval(syncAuth, 50000);
     }
     return () => clearInterval(interval);
-  }, [isSignedIn, isAuthLoaded, isOrgLoaded, getToken, organization]);
+  }, [isSignedIn, isAuthLoaded, isOrgLoaded, getToken, organization?.id]);
 
   if (!isAuthLoaded || !isOrgLoaded || !authReady) {
     return (

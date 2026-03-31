@@ -83,7 +83,7 @@ export function Projects() {
             <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">Organize tasks into projects for better workflow management.</p>
           </div>
           <div className="flex items-center gap-3">
-            <Button className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-teal-200 dark:shadow-none" onClick={() => setShowAddModal(true)}>
+            <Button variant="brand" onClick={() => setShowAddModal(true)}>
               <PlusCircle className="w-4 h-4" /> Create Project
             </Button>
           </div>
@@ -113,7 +113,7 @@ export function Projects() {
             <div className="col-span-full p-12 text-center">
               <FolderOpen className="w-16 h-16 text-slate-300 dark:text-slate-700 mx-auto mb-4 opacity-50" />
               <p className="text-slate-500 dark:text-slate-400 font-medium mb-4">No projects found</p>
-              <Button className="bg-teal-600 hover:bg-teal-700 text-white" onClick={() => setShowAddModal(true)}>
+              <Button variant="brand" onClick={() => setShowAddModal(true)}>
                 <PlusCircle className="w-4 h-4 mr-2" /> Create your first project
               </Button>
             </div>

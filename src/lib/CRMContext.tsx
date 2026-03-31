@@ -110,6 +110,15 @@ const PRELOAD_RESOURCES = [
   "task_tags", "task_tag_links",
 ]
 
+/**
+ * CRMContext provides a unified data layer for the CRM application.
+ * 
+ * Authentication Integration:
+ * - Uses Clerk's useUser() hook to get the authenticated user ID
+ * - Uses Clerk's useSession() hook to get the current session for Supabase client
+ * - All data operations are scoped to the current user's ID for ownership tracking
+ * - Supabase RLS policies use auth.uid() (from Clerk JWT) to filter data
+ */
 export function CRMProvider({ children }: { children: React.ReactNode }) {
   const { user, isLoaded: userLoaded } = useUser()
   const { session } = useSession()

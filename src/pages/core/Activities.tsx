@@ -35,7 +35,7 @@ const TYPE_META: Record<
 }
 
 export function Activities() {
-  const { user } = useUser()
+  const { user, isLoaded: userLoaded } = useUser()
   const {
     data: activities,
     addItems: addActivities,
@@ -91,7 +91,7 @@ export function Activities() {
     setShowLogModal(false)
   }
 
-  if (!activitiesLoaded || !contactsLoaded) {
+  if (!userLoaded || !activitiesLoaded || !contactsLoaded) {
     return <PageSkeleton />
   }
 

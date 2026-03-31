@@ -178,7 +178,11 @@ export function SalesOrders() {
     currentPage * itemsPerPage
   )
 
-  const { user } = useUser()
+  const { user, isLoaded: userLoaded } = useUser()
+
+  if (!userLoaded || !isLoaded) {
+    return <PageSkeleton />
+  }
 
   const handleCreateSuccess = (order: SalesOrder) => {
     refresh()

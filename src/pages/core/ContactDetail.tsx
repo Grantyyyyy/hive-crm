@@ -54,7 +54,7 @@ export function ContactDetail() {
   const [, navigate] = useLocation()
   const contactId = params?.id ?? ""
 
-  const { user } = useUser()
+  const { user, isLoaded: userLoaded } = useUser()
   const {
     data: contacts,
     updateItem: updateContact,
@@ -183,7 +183,7 @@ export function ContactDetail() {
     return 30
   }
 
-  if (!contactsLoaded || !activitiesLoaded || !dealsLoaded || !tasksLoaded) {
+  if (!userLoaded || !contactsLoaded || !activitiesLoaded || !dealsLoaded || !tasksLoaded) {
     return <PageSkeleton />
   }
 

@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from "react"
-import { Pagination } from "@/components/ui/Pagination"
+import { DataTable } from "@/components/reusables/DataTable"
 import { useLocation } from "wouter"
 import {
   BarChart3,
@@ -354,7 +354,7 @@ export function Deals() {
             </Button>
 
             <Button
-              className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-teal-200 dark:shadow-none"
+              variant="brand"
               onClick={() => setShowModal(true)}
             >
               <PlusCircle className="w-4 h-4" /> Create Deal
@@ -388,107 +388,100 @@ export function Deals() {
         </div>
 
         {viewMode === "list" ? (
-          /* ── List View ───────────────────────────────────────────── */
-          <div className="bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden animate-in fade-in duration-300">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left table-auto">
-                <thead>
-                  <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Deal Title</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Contact</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Health</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Value</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Stage</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight">Expected Close</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                  {filtered.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="px-6 py-20 text-center">
-                        <div className="flex flex-col items-center gap-3">
-                          <BarChart3 className="w-10 h-10 text-slate-300 dark:text-slate-700" />
-                          <p className="text-slate-500 dark:text-slate-400 font-medium">No deals found.</p>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    paginatedDeals.map((d) => {
-                      const style = STAGE_STYLE[d.stage] || STAGE_STYLE.discovery
-                      return (
-                        <tr
-                          key={d.id}
-                          className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all cursor-pointer group border-l-4 border-transparent hover:border-teal-600 hover:shadow-xl hover:shadow-teal-600/5 relative z-0 hover:z-10"
-                          onClick={() => navigate(`/deals/${d.id}`)}
-                        >
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-6 h-6 rounded bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center text-teal-600 group-hover:bg-teal-600 group-hover:text-white transition-colors">
-                                <DollarSign className="w-3.5 h-3.5" />
-                              </div>
-                              <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{d.title}</p>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <p className="text-[13px] font-semibold text-slate-600 dark:text-slate-400">
-                              {contactMap.get(d.contactId) || "Unknown"}
-                            </p>
-                          </td>
-                          <td className="px-6 py-4">
-                            <DealHealthBadge lastActivityDate={getLastActivityDate(d.id, activities)} />
-                          </td>
-                          <td className="px-6 py-4">
-                            <p className="text-[13px] font-extrabold text-slate-900 dark:text-white">{formatCurrency(d.value)}</p>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className={cn(
-                              "flex items-center gap-2 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest w-fit border border-transparent shadow-sm",
-                              style.bg,
-                              style.text
-                            )}>
-                              {STAGE_LABELS[d.stage]}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                              <Calendar className="w-3.5 h-3.5" />
-                              <p className="text-[11px] font-bold tracking-tight">
-                                {d.expectedCloseDate ? new Date(d.expectedCloseDate).toLocaleDateString() : '—'}
-                              </p>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-all"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setPendingDelete(d)
-                              }}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </td>
-                        </tr>
-                      )
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination */}
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              totalItems={totalDeals}
-              itemsPerPage={itemsPerPage}
-              itemLabel="deals"
-            />
-          </div>
+          <DataTable
+            data={paginatedDeals}
+            onRowClick={(d: Deal) => navigate(`/deals/${d.id}`)}
+            className="animate-in fade-in duration-300"
+            pagination={{
+              currentPage,
+              totalPages,
+              onPageChange: setCurrentPage,
+              totalItems: totalDeals,
+              itemsPerPage,
+              itemLabel: "deals"
+            }}
+            emptyState={{
+              icon: <BarChart3 className="w-10 h-10" />,
+              title: "No deals found."
+            }}
+            columns={[
+              {
+                header: "Deal Title",
+                render: (d: Deal) => (
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center text-teal-600 group-hover:bg-teal-600 group-hover:text-white transition-colors">
+                      <DollarSign className="w-3.5 h-3.5" />
+                    </div>
+                    <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{d.title}</p>
+                  </div>
+                )
+              },
+              {
+                header: "Contact",
+                render: (d: Deal) => (
+                  <p className="text-[13px] font-semibold text-slate-600 dark:text-slate-400">
+                    {(contactMap as any).get(d.contactId) || "Unknown"}
+                  </p>
+                )
+              },
+              {
+                header: "Health",
+                render: (d: Deal) => (
+                  <DealHealthBadge lastActivityDate={getLastActivityDate(d.id, activities)} />
+                )
+              },
+              {
+                header: "Value",
+                render: (d: Deal) => (
+                  <p className="text-[13px] font-extrabold text-slate-900 dark:text-white">{formatCurrency(d.value)}</p>
+                )
+              },
+              {
+                header: "Stage",
+                render: (d: Deal) => {
+                  const style = STAGE_STYLE[d.stage] || STAGE_STYLE.discovery
+                  return (
+                    <div className={cn(
+                      "flex items-center gap-2 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest w-fit border border-transparent shadow-sm",
+                      style.bg,
+                      style.text
+                    )}>
+                      {STAGE_LABELS[d.stage]}
+                    </div>
+                  )
+                }
+              },
+              {
+                header: "Expected Close",
+                render: (d: Deal) => (
+                  <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                    <Calendar className="w-3.5 h-3.5" />
+                    <p className="text-[11px] font-bold tracking-tight">
+                      {d.expectedCloseDate ? new Date(d.expectedCloseDate).toLocaleDateString() : '—'}
+                    </p>
+                  </div>
+                )
+              },
+              {
+                header: "Actions",
+                headerClassName: "text-right",
+                align: "right",
+                render: (d: Deal) => (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-all"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setPendingDelete(d)
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )
+              }
+            ]}
+          />
         ) : (
           /* ── Board View ──────────────────────────────────────────── */
           <div className="animate-in fade-in duration-300">

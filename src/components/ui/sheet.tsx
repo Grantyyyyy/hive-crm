@@ -27,7 +27,7 @@ function Sheet({ open, onOpenChange, children }: SheetProps) {
         className="fixed inset-0 bg-slate-900/40 animate-backdrop-in"
         onClick={() => onOpenChange(false)}
       />
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white dark:bg-slate-950 shadow-2xl animate-sheet-in overflow-hidden flex flex-col font-sans border-l border-slate-200 dark:border-slate-800">
+      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-3xl bg-white dark:bg-slate-950 shadow-2xl animate-sheet-in overflow-hidden flex flex-col font-sans border-l border-slate-200 dark:border-slate-800">
         {children}
       </div>
     </div>

@@ -63,7 +63,7 @@ export function SalesOrderDetail() {
   const [, navigate] = useLocation()
   const orderId = params?.id ?? ""
   const ctx = useCRMContext()
-  const { user } = useUser()
+  const { user, isLoaded: userLoaded } = useUser()
 
   const { data: orders, isLoaded, deleteItem, updateItem } = useCRMResource<SalesOrder>("orders")
 
@@ -175,7 +175,7 @@ export function SalesOrderDetail() {
   }
 
 
-  if (!isLoaded) return <PageSkeleton />
+  if (!userLoaded || !isLoaded) return <PageSkeleton />
 
   if (!order) {
     return (

@@ -55,7 +55,11 @@ export function Quotes() {
     currentPage * itemsPerPage
   )
 
-  const { user } = useUser()
+  const { user, isLoaded: userLoaded } = useUser()
+
+  if (!userLoaded || !isLoaded) {
+    return <PageSkeleton />
+  }
 
   const handleCreateSuccess = (quote: Quote) => {
     refresh()

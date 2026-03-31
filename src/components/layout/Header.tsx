@@ -4,6 +4,7 @@ import { useUser, useClerk } from "@clerk/clerk-react";
 import { useTheme } from "@/lib/ThemeProvider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useLocation } from "wouter";
+import { getUserInitials } from "@/lib/helpers";
 
 export function Header() {
   const { user } = useUser();
@@ -11,9 +12,7 @@ export function Header() {
   const { theme, toggleTheme } = useTheme();
   const [, setLocation] = useLocation();
 
-  const initials = user?.firstName && user?.lastName
-    ? `${user.firstName[0]}${user.lastName[0]}`
-    : user?.username?.slice(0, 2).toUpperCase() || "AR";
+  const initials = getUserInitials(user);
 
   return (
     <header className="h-16 shrink-0 flex items-center justify-between px-8 bg-bg-surface/80 backdrop-blur-md border-b border-border sticky top-0 z-30">
@@ -40,7 +39,7 @@ export function Header() {
           {theme === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
         </Button>
         <div className="h-8 w-[1px] bg-border mx-2"></div>
-        
+
         <Popover>
           <PopoverTrigger asChild>
             <button className="flex items-center gap-3 pl-2 group outline-none">
@@ -55,7 +54,7 @@ export function Header() {
               <p className="text-xs text-text-muted truncate">{user?.primaryEmailAddress?.emailAddress}</p>
             </div>
             <div className="space-y-1">
-              <button 
+              <button
                 onClick={() => setLocation("/settings/profile")}
                 className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-text-secondary hover:bg-bg-elevated hover:text-accent transition-all text-left"
               >
@@ -67,7 +66,7 @@ export function Header() {
                 Account Settings
               </button>
               <div className="h-[1px] bg-border my-2"></div>
-              <button 
+              <button
                 onClick={() => signOut()}
                 className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-red/80 hover:bg-red/10 hover:text-red transition-all text-left"
               >

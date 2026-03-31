@@ -127,8 +127,8 @@ export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, us
       onOpenChange(val)
       if (!val) setActiveTab('activity')
     }}>
-      <SheetContent className="sm:max-w-2xl p-0 flex flex-col h-full bg-slate-50 dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800">
-        <SheetHeader className="px-8 pt-8 pb-4 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 shadow-sm relative">
+      <SheetContent className="sm:max-w-3xl p-0 flex flex-col h-full bg-slate-50 dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800">
+        <SheetHeader className="px-8 pt-8 pb-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/60 dark:border-slate-800/60 shadow-sm relative z-10">
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
@@ -159,7 +159,7 @@ export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, us
             {/* Quick Badges Row */}
             <div className="flex items-center gap-3">
               <div className={cn(
-                "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[11px] font-black uppercase tracking-wider",
+                "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[11px] font-black uppercase tracking-wider shadow-sm transition-all",
                 task.priority === 'urgent' ? "bg-red/5 border-red/20 text-red" :
                   task.priority === 'high' ? "bg-red/5 border-red/20 text-red" :
                     task.priority === 'medium' ? "bg-amber/5 border-amber/20 text-amber" :
@@ -168,39 +168,39 @@ export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, us
                 <Target className="w-3 h-3" />
                 {task.priority} Priority
               </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 text-[11px] font-black uppercase tracking-wider">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 text-[11px] font-black uppercase tracking-wider shadow-sm transition-all">
                 <Calendar className="w-3 h-3" />
                 Due: {new Date(task.dueDate).toLocaleDateString()}
               </div>
             </div>
 
-            {/* Premium Tab Navigation */}
-            <div className="flex items-center gap-1 mt-2">
+            {/* Premium Tab Navigation - Segmented Control Style */}
+            <div className="flex items-center gap-1 mt-2 p-1 bg-slate-100/50 dark:bg-slate-800/50 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
               {[
-                { id: 'activity', icon: Clock, label: 'Activity', badge: activityCount > 0 ? activityCount : null },
                 { id: 'overview', icon: Info, label: 'Overview' },
                 { id: 'subtasks', icon: CheckSquare, label: 'Subtasks', badge: subtaskCount > 0 ? `${completedSubtasks}/${subtaskCount}` : null },
                 { id: 'comments', icon: MessageSquare, label: 'Comments', badge: commentCount > 0 ? commentCount : null },
-                { id: 'time', icon: Clock, label: 'Time', badge: timeEntryCount > 0 ? formatDuration(totalTrackedTime) : null, disabled: isTaskCompleted }
+                { id: 'time', icon: Clock, label: 'Time', badge: timeEntryCount > 0 ? formatDuration(totalTrackedTime) : null, disabled: isTaskCompleted },
+                { id: 'activity', icon: Clock, label: 'Activity', badge: activityCount > 0 ? activityCount : null },
               ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => !tab.disabled && setActiveTab(tab.id as Tab)}
                   className={cn(
-                    "flex-1 flex items-center justify-center gap-2 px-4 py-3 text-xs font-bold uppercase tracking-widest transition-all relative border-b-2",
+                    "flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all rounded-lg relative",
                     activeTab === tab.id
-                      ? "text-indigo-600 border-indigo-600 bg-indigo-50/50 dark:bg-indigo-900/10"
+                      ? "text-indigo-600 bg-white dark:bg-slate-900 shadow-sm border border-slate-200/60 dark:border-slate-800/60"
                       : tab.disabled
-                        ? "text-slate-300 border-transparent cursor-not-allowed opacity-50"
-                        : "text-slate-400 border-transparent hover:text-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800"
+                        ? "text-slate-300 cursor-not-allowed opacity-50"
+                        : "text-slate-500 hover:text-slate-700 hover:bg-white/50 dark:hover:bg-slate-800/50"
                   )}
                 >
-                  <tab.icon className="w-4 h-4" />
+                  <tab.icon className="w-3.5 h-3.5" />
                   {tab.label}
                   {tab.badge && (
                     <span className={cn(
-                      "ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-black",
-                      activeTab === tab.id ? "bg-indigo-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+                      "ml-1.5 px-1.5 py-0.5 rounded text-[9px] font-black",
+                      activeTab === tab.id ? "bg-indigo-600 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-500"
                     )}>
                       {tab.badge}
                     </span>

@@ -287,3 +287,27 @@ export function debounce<T extends (...args: any[]) => any>(
     timeout = setTimeout(later, wait)
   }
 }
+
+// ── Clerk User Helpers ────────────────────────────────────────────────────────
+
+/**
+ * Returns the current user's display initials.
+ * Uses firstName + lastName initials, or first 2 chars of username, or "?" as fallback.
+ */
+export function getUserInitials(user: {
+  firstName?: string | null;
+  lastName?: string | null;
+  username?: string | null;
+} | null | undefined): string {
+  if (!user) return "?";
+
+  if (user.firstName && user.lastName) {
+    return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+  }
+
+  if (user.username) {
+    return user.username.slice(0, 2).toUpperCase();
+  }
+
+  return "?";
+}

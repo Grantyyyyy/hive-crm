@@ -64,7 +64,7 @@ export function QuoteDetail() {
   const [, navigate] = useLocation()
   const quoteId = params?.id ?? ""
   const ctx = useCRMContext()
-  const { user } = useUser()
+  const { user, isLoaded: userLoaded } = useUser()
 
   const { data: quotes, isLoaded, deleteItem } = useCRMResource<Quote>("quotes")
 
@@ -157,7 +157,7 @@ export function QuoteDetail() {
     }
   }
 
-  if (!isLoaded) return <PageSkeleton />
+  if (!userLoaded || !isLoaded) return <PageSkeleton />
 
   if (!quote) {
     return (

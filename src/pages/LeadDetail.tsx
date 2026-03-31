@@ -56,7 +56,7 @@ export function LeadDetail() {
   const [, navigate] = useLocation()
   const leadId = params?.id ?? ""
 
-  const { user } = useUser()
+  const { user, isLoaded: userLoaded } = useUser()
   const {
     data: leads,
     updateItem: updateLead,
@@ -155,7 +155,7 @@ export function LeadDetail() {
     return "bg-rose-500"
   }
 
-  if (!leadsLoaded || !activitiesLoaded || !tasksLoaded) {
+  if (!userLoaded || !leadsLoaded || !activitiesLoaded || !tasksLoaded) {
     return <PageSkeleton />
   }
 

@@ -39,7 +39,7 @@ export function Tasks() {
           </div>
           <div className="flex items-center gap-3">
             <Button
-              className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-teal-200 dark:shadow-none"
+              variant="brand"
               onClick={() => setShowAddModal(true)}
             >
               <PlusCircle className="w-4 h-4" /> New Task

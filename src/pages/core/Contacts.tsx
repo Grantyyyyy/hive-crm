@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/sheet"
 import { ContactForm } from "@/components/crmComponent/ContactForm"
 import { useCRMResource } from "@/lib/hooks"
-import type { Contact, Activity } from "@/lib/types"
+import type { Contact, Activity, Deal } from "@/lib/types"
 import { PageSkeleton } from "@/components/ui/page-skeleton"
 import { exportToCSV, debounce, calculateRelationshipScore, getRelationshipLabel } from "@/lib/helpers"
 import { cn } from "@/lib/utils"
@@ -42,6 +42,8 @@ export function Contacts() {
   } = useCRMResource<Contact>('contacts')
 
   const { data: activities } = useCRMResource<Activity>('activities')
+
+  const { data: deals } = useCRMResource<Deal>('deals')
 
   const [search, setSearch] = useState('')
   const [searchInput, setSearchInput] = useState('')
@@ -69,7 +71,11 @@ export function Contacts() {
           .filter(a => a.contactId === contact.id)
           .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
         const lastActivity = contactActivities[0] ?? null
-        const hasActiveDeals = false // Would need deals data for full implementation
+        const hasActiveDeals = deals.some(
+          d => d.contactId === contact.id &&
+            d.stage !== 'won' &&
+            d.stage !== 'lost'
+        )
         const score = calculateRelationshipScore(
           contactActivities.length,
           lastActivity?.createdAt ?? null,
@@ -91,7 +97,7 @@ export function Contacts() {
           (c.company?.toLowerCase().includes(q) ?? false)
       )
       .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
-  }, [contacts, search, activities])
+  }, [contacts, search, activities, deals])
 
   const totalItems = filtered.length
   const totalPages = Math.ceil(totalItems / itemsPerPage)

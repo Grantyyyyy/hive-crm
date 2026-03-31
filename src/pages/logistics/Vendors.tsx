@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react"
+import { useLocation } from "wouter"
 import {
   Search,
   PlusCircle,
@@ -115,6 +116,7 @@ function VendorStatusDropdown({
 }
 
 export function Vendors() {
+  const [, navigate] = useLocation()
   const {
     data: vendors,
     addItems,
@@ -279,7 +281,8 @@ export function Vendors() {
                   paginatedVendors.map((vendor) => (
                     <tr
                       key={vendor.id}
-                      className="group hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-all"
+                      onClick={() => navigate(`/vendors/${vendor.id}`)}
+                      className="group hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-all cursor-pointer"
                     >
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-3 min-w-0">

@@ -222,17 +222,14 @@ export function Projects() {
           )}
         </div>
 
-        {/* Pagination */}
-        {filteredProjects.length > itemsPerPage && (
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-            totalItems={filteredProjects.length}
-            itemsPerPage={itemsPerPage}
-            itemLabel="projects"
-          />
-        )}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          totalItems={filteredProjects.length}
+          itemsPerPage={itemsPerPage}
+          itemLabel="projects"
+        />
       </div>
 
       <AddProjectModal

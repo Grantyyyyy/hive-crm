@@ -1,33 +1,31 @@
 import { useState, useMemo } from "react"
 import { useParams, useLocation } from "wouter"
-import { toast } from "sonner"
 import {
   FolderOpen,
-  PlusCircle,
   ArrowLeft,
-  LayoutGrid,
-  LayoutList,
-  Check,
-  Repeat2,
+  PlusCircle,
+  ListTodo,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  TrendingUp,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { isOverdue } from "@/lib/helpers"
+import { isOverdue, priorityWeight } from "@/lib/helpers"
 import type { Task, Project } from "@/lib/types"
-import { AddTaskModal } from "@/components/crmComponent/AddTaskModal"
-import { EditTaskModal } from "@/components/crmComponent/EditTaskModal"
-import { KanbanBoard } from "@/components/crmComponent/KanbanBoard"
 import { useCRMResource } from "@/lib/hooks"
 import { useUser } from "@clerk/clerk-react"
 import { PageSkeleton } from "@/components/ui/page-skeleton"
-import { DeleteModal } from "@/components/ui/delete-modal"
+import { TaskView } from "@/components/crmComponent/TaskView"
+import { AddTaskModal } from "@/components/crmComponent/AddTaskModal"
 
 export function ProjectDetail() {
   const { id } = useParams<{ id: string }>()
   const [, setLocation] = useLocation()
-  const { user, isLoaded: clerkLoaded } = useUser()
+  const { isLoaded: clerkLoaded } = useUser()
   const { data: projects, isLoaded: projectsLoaded } = useCRMResource<Project>('projects')
-  const { data: tasks, isLoaded: tasksLoaded, addItems, updateItem, deleteItem } = useCRMResource<Task>('tasks')
+  const { data: tasks, isLoaded: tasksLoaded } = useCRMResource<Task>('tasks')
 
   const isLoaded = clerkLoaded && projectsLoaded && tasksLoaded
 
@@ -37,10 +35,50 @@ export function ProjectDetail() {
     return tasks?.filter(t => t.projectId === id) || []
   }, [tasks, id])
 
-  const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table')
-  const [showAddModal, setShowAddModal] = useState(false)
-  const [editingTask, setEditingTask] = useState<Task | null>(null)
-  const [pendingDelete, setPendingDelete] = useState<Task | null>(null)
+  const [activeTab, setActiveTab] = useState<'tasks' | 'analytics'>('tasks')
+  const [showAddTaskModal, setShowAddTaskModal] = useState(false)
+
+  const analytics = useMemo(() => {
+    const total = projectTasks.length
+    if (total === 0) return null
+
+    const completed = projectTasks.filter(t => t.status === 'completed').length
+    const inProgress = projectTasks.filter(t => t.status === 'in-progress').length
+    const open = projectTasks.filter(t => t.status === 'open').length
+    const overdue = projectTasks.filter(t => isOverdue(t)).length
+    const completionPct = Math.round((completed / total) * 100)
+    const inProgressPct = Math.round((inProgress / total) * 100)
+
+    const totalSeconds = projectTasks.reduce(
+      (acc, t) => acc + (t.trackedSeconds ?? 0), 0
+    )
+    const totalHours = (totalSeconds / 3600).toFixed(1)
+
+    // Priority breakdown
+    const priorities = ['urgent', 'high', 'medium', 'low'] as const
+    const priorityCounts = priorities.map(p => ({
+      priority: p,
+      count: projectTasks.filter(t => t.priority === p).length,
+    })).filter(x => x.count > 0).sort((a, b) => priorityWeight(b.priority) - priorityWeight(a.priority))
+
+    // Team breakdown
+    const memberMap = new Map<string, number>()
+    projectTasks.forEach(t => {
+      (t.assignedTo ?? []).forEach(uid => {
+        memberMap.set(uid, (memberMap.get(uid) ?? 0) + 1)
+      })
+    })
+    const members = Array.from(memberMap.entries())
+      .map(([id, count]) => ({ id, count }))
+      .sort((a, b) => b.count - a.count)
+    const maxMemberCount = members[0]?.count ?? 1
+
+    return {
+      total, completed, inProgress, open, overdue,
+      completionPct, inProgressPct,
+      totalHours, priorityCounts, members, maxMemberCount,
+    }
+  }, [projectTasks])
 
   const stats = useMemo(() => {
     const total = projectTasks.length
@@ -60,213 +98,380 @@ export function ProjectDetail() {
       <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
 
         {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setLocation('/projects')}
-              className="h-10 w-10 shrink-0"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: `${project.color}20` }}
-                >
-                  <FolderOpen className="w-5 h-5" style={{ color: project.color }} />
-                </div>
-                <h1 className="text-3xl font-bold tracking-tight text-text-primary">{project.name}</h1>
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setLocation('/projects')}
+                className="h-8 w-8"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Work Organization</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: `${project.color}20` }}
+              >
+                <FolderOpen className="w-5 h-5" style={{ color: project.color }} />
               </div>
-              {project.description && (
-                <p className="text-text-muted ml-13">{project.description}</p>
-              )}
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight text-text-primary">{project.name}</h1>
+                {project.description && (
+                  <p className="text-text-muted mt-1 font-medium">{project.description}</p>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 bg-bg-surface border border-border rounded-md p-1">
-              <Button
-                variant={viewMode === 'table' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('table')}
-                className="h-8 px-2"
-                title="Table View"
-              >
-                <LayoutList className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'kanban' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('kanban')}
-                className="h-8 px-2"
-                title="Kanban Board"
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </Button>
-            </div>
-            <Button variant="default" onClick={() => setShowAddModal(true)}>
-              <PlusCircle className="w-4 h-4" /> Add Task
+            <Button
+              className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-teal-200 dark:shadow-none"
+              onClick={() => setShowAddTaskModal(true)}
+            >
+              <PlusCircle className="w-4 h-4" /> New Task
             </Button>
+            <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md p-1 shadow-sm">
+              <button
+                onClick={() => setActiveTab('tasks')}
+                className={cn(
+                  "h-8 px-3 rounded text-sm font-bold transition-colors",
+                  activeTab === 'tasks'
+                    ? "bg-teal-600 text-white"
+                    : "text-slate-500 hover:text-slate-900"
+                )}
+              >
+                Tasks
+              </button>
+              <button
+                onClick={() => setActiveTab('analytics')}
+                className={cn(
+                  "h-8 px-3 rounded text-sm font-bold transition-colors flex items-center gap-1.5",
+                  activeTab === 'analytics'
+                    ? "bg-teal-600 text-white"
+                    : "text-slate-500 hover:text-slate-900"
+                )}
+              >
+                Analytics
+                <span className="ml-1.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                  {projectTasks.length}
+                </span>
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="bg-bg-surface rounded-lg border border-border p-4">
-            <p className="text-sm text-text-muted font-medium">Total Tasks</p>
-            <p className="text-3xl font-bold text-text-primary mt-1">{stats.total}</p>
-          </div>
-          <div className="bg-bg-surface rounded-lg border border-border p-4">
-            <p className="text-sm text-text-muted font-medium">Open</p>
-            <p className="text-3xl font-bold text-text-primary mt-1">{stats.open}</p>
-          </div>
-          <div className="bg-bg-surface rounded-lg border border-border p-4">
-            <p className="text-sm text-text-muted font-medium">Completed</p>
-            <p className="text-3xl font-bold text-green mt-1">{stats.completed}</p>
-          </div>
-          <div className="bg-bg-surface rounded-lg border border-border p-4">
-            <p className="text-sm text-text-muted font-medium">Overdue</p>
-            <p className={cn(
-              "text-3xl font-bold mt-1",
-              stats.overdue > 0 ? "text-red" : "text-text-muted"
-            )}>{stats.overdue}</p>
-          </div>
-          <div className="bg-bg-surface rounded-lg border border-border p-4">
-            <p className="text-sm text-text-muted font-medium">Progress</p>
-            <div className="flex items-end gap-2 mt-1">
-              <p className="text-3xl font-bold text-text-primary">{stats.progress}%</p>
+        {activeTab === 'tasks' && (
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="bg-bg-surface rounded-2xl border border-border p-5 shadow-sm hover:shadow-md transition-all">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center">
+                  <ListTodo className="w-4 h-4 text-indigo-600" />
+                </div>
+                <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">Total Tasks</p>
+              </div>
+              <p className="text-3xl font-bold text-text-primary">{stats.total}</p>
             </div>
-            <div className="h-2 bg-bg-elevated rounded-full overflow-hidden mt-2">
-              <div
-                className="h-full rounded-full transition-all"
-                style={{ width: `${stats.progress}%`, backgroundColor: project.color }}
-              />
+
+            <div className="bg-bg-surface rounded-2xl border border-border p-5 shadow-sm hover:shadow-md transition-all">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
+                  <Clock className="w-4 h-4 text-blue-600" />
+                </div>
+                <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">Open</p>
+              </div>
+              <p className="text-3xl font-bold text-text-primary">{stats.open}</p>
+            </div>
+
+            <div className="bg-bg-surface rounded-2xl border border-border p-5 shadow-sm hover:shadow-md transition-all">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                </div>
+                <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">Completed</p>
+              </div>
+              <p className="text-3xl font-bold text-emerald-600">{stats.completed}</p>
+            </div>
+
+            <div className="bg-bg-surface rounded-2xl border border-border p-5 shadow-sm hover:shadow-md transition-all">
+              <div className="flex items-center gap-3 mb-2">
+                <div className={cn(
+                  "w-8 h-8 rounded-lg flex items-center justify-center",
+                  stats.overdue > 0 ? "bg-rose-50 dark:bg-rose-900/20" : "bg-slate-50 dark:bg-slate-900/20"
+                )}>
+                  <AlertCircle className={cn("w-4 h-4", stats.overdue > 0 ? "text-rose-600" : "text-slate-400")} />
+                </div>
+                <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">Overdue</p>
+              </div>
+              <p className={cn(
+                "text-3xl font-bold",
+                stats.overdue > 0 ? "text-rose-600" : "text-text-muted"
+              )}>{stats.overdue}</p>
+            </div>
+
+            <div className="bg-bg-surface rounded-2xl border border-border p-5 shadow-sm hover:shadow-md transition-all">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center" style={{ backgroundColor: `${project.color}20` }}>
+                  <TrendingUp className="w-4 h-4" style={{ color: project.color }} />
+                </div>
+                <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">Progress</p>
+              </div>
+              <div className="flex items-end justify-between gap-2">
+                <p className="text-3xl font-bold text-text-primary">{stats.progress}%</p>
+              </div>
+              <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mt-3">
+                <div
+                  className="h-full rounded-full transition-all duration-700"
+                  style={{ width: `${stats.progress}%`, backgroundColor: project.color }}
+                />
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Tasks Section */}
-        {viewMode === 'table' ? (
-          <div className="bg-bg-surface rounded-lg border border-border overflow-hidden">
-            <div className="divide-y border-border">
-              {projectTasks.length === 0 ? (
-                <div className="p-12 text-center">
-                  <FolderOpen className="w-16 h-16 text-text-muted mx-auto mb-4 opacity-50" />
-                  <p className="text-text-muted font-medium mb-4">No tasks in this project yet</p>
-                  <Button variant="default" onClick={() => setShowAddModal(true)}>
-                    <PlusCircle className="w-4 h-4 mr-2" /> Add Task
-                  </Button>
+        {activeTab === 'tasks' && (
+          <TaskView fixedProjectId={id} hideHeader={true} />
+        )}
+
+        {/* Analytics Tab */}
+        {activeTab === 'analytics' && (
+          <div className="space-y-6">
+            {!analytics ? (
+              <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-6">
+                <div className="text-center py-16 text-slate-400 dark:text-slate-500">
+                  <p className="text-lg font-semibold">No tasks yet</p>
+                  <p className="text-sm mt-1 font-medium">
+                    Add tasks to this project to see analytics.
+                  </p>
                 </div>
-              ) : (
-                projectTasks.map(task => (
-                  <div
-                    key={task.id}
-                    className="flex items-center gap-4 px-4 py-3 hover:bg-bg-surface transition-all group cursor-pointer"
-                    onClick={() => setEditingTask(task)}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className={cn(
-                          "text-sm font-bold truncate",
-                          task.status === 'completed' ? "text-text-muted line-through" : "text-text-primary"
-                        )}>
-                          {task.title}
-                        </span>
-                        {task.recurrencePattern && (
-                          <Repeat2 className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                        )}
-                      </div>
-                      <p className="text-xs text-text-muted mt-0.5">
-                        Due: {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <span className={cn(
-                        "px-2 py-1 rounded text-[10px] uppercase font-bold",
-                        task.priority === 'urgent' || task.priority === 'high' ? 'text-red bg-red-50' :
-                          task.priority === 'medium' ? 'text-amber bg-yellow-50' :
-                            'text-green bg-green-50'
-                      )}>
-                        {task.priority}
-                      </span>
-                      <span className={cn(
-                        "px-2 py-1 rounded text-[10px] uppercase font-bold",
-                        task.status === 'completed' ? 'text-green bg-green-100' :
-                          task.status === 'in-progress' ? 'text-accent bg-accent/10' :
-                            'text-text-secondary bg-bg-elevated'
-                      )}>
-                        {task.status === 'in-progress' ? 'In Progress' : task.status === 'completed' ? 'Done' : 'To Do'}
-                      </span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          updateItem(task.id, {
-                            status: task.status === 'completed' ? 'open' : 'completed',
-                            completedAt: task.status === 'completed' ? undefined : new Date().toISOString()
-                          })
+              </div>
+            ) : (
+              <>
+                {/* ROW 1 — STAT CARDS */}
+                <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+                  {/* Card 1 — Completion rate */}
+                  <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-6">
+                    <p className="text-3xl font-bold text-slate-900 dark:text-white">
+                      {analytics.completionPct}%
+                    </p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mt-1">
+                      Completion rate
+                    </p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+                      {analytics.completed} of {analytics.total} tasks done
+                    </p>
+                    <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 mt-4">
+                      <div
+                        className="h-2 rounded-full transition-all duration-500"
+                        style={{
+                          width: `${analytics.completionPct}%`,
+                          backgroundColor: analytics.completionPct >= 75 ? '#059669' : analytics.completionPct >= 40 ? '#d97706' : '#dc2626'
                         }}
-                        className={cn(
-                          "w-6 h-6 rounded flex items-center justify-center border transition-all",
-                          task.status === 'completed'
-                            ? "bg-green border-green text-white"
-                            : "border-slate-200 dark:border-slate-800 hover:border-teal-600"
-                        )}
-                      >
-                        {task.status === 'completed' && <Check className="w-4 h-4" />}
-                      </button>
+                      />
                     </div>
                   </div>
-                ))
-              )}
-            </div>
+
+                  {/* Card 2 — Time tracked */}
+                  <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-6">
+                    <p className="text-3xl font-bold text-slate-900 dark:text-white">
+                      {analytics.totalHours}h
+                    </p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mt-1">
+                      Time tracked
+                    </p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+                      across {analytics.total} tasks
+                    </p>
+                    <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 mt-4">
+                      <div
+                        className="h-2 rounded-full transition-all duration-500"
+                        style={{ width: '100%', backgroundColor: '#4f46e5' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Card 3 — Overdue tasks */}
+                  <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-6">
+                    <p className={cn(
+                      "text-3xl font-bold",
+                      analytics.overdue > 0 ? "text-red-600 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"
+                    )}>
+                      {analytics.overdue}
+                    </p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mt-1">
+                      Overdue
+                    </p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+                      {analytics.overdue === 0 ? "All tasks on track" : `${analytics.overdue} past due date`}
+                    </p>
+                    <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 mt-4">
+                      <div
+                        className="h-2 rounded-full transition-all duration-500"
+                        style={{
+                          width: analytics.overdue > 0 ? '100%' : '0%',
+                          backgroundColor: analytics.overdue > 0 ? '#dc2626' : '#059669'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Card 4 — Total tasks */}
+                  <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-6">
+                    <p className="text-3xl font-bold text-slate-900 dark:text-white">
+                      {analytics.total}
+                    </p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mt-1">
+                      Total tasks
+                    </p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+                      {analytics.open} open · {analytics.inProgress} in progress
+                    </p>
+                    <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 mt-4">
+                      <div
+                        className="h-2 rounded-full transition-all duration-500"
+                        style={{ width: '100%', backgroundColor: project.color }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* ROW 2 — TWO COLUMNS */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* LEFT CARD — Priority distribution */}
+                  <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-6">
+                    <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4">
+                      Priority breakdown
+                    </h3>
+                    <div className="space-y-3">
+                      {analytics.priorityCounts.map(({ priority, count }) => {
+                        const pct = Math.round((count / analytics.total) * 100)
+                        const colors: Record<string, string> = {
+                          urgent: '#dc2626',
+                          high: '#f97316',
+                          medium: '#f59e0b',
+                          low: '#94a3b8',
+                        }
+                        return (
+                          <div key={priority} className="flex items-center gap-3">
+                            <span
+                              className="w-2 h-2 rounded-full"
+                              style={{ backgroundColor: colors[priority] }}
+                            />
+                            <span className="text-sm font-medium text-slate-600 dark:text-slate-400 w-16 capitalize">
+                              {priority}
+                            </span>
+                            <span className="text-sm font-bold text-slate-900 dark:text-white w-8 text-right">
+                              {count}
+                            </span>
+                            <div className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-full h-2">
+                              <div
+                                className="h-2 rounded-full transition-all duration-500"
+                                style={{ width: `${pct}%`, backgroundColor: colors[priority] }}
+                              />
+                            </div>
+                            <span className="text-xs font-bold text-slate-400 w-10 text-right">
+                              {pct}%
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* RIGHT CARD — Team member breakdown */}
+                  <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-6">
+                    <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4">
+                      Team breakdown
+                    </h3>
+                    {analytics.members.length === 0 ? (
+                      <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+                        No assignees on project tasks yet
+                      </p>
+                    ) : (
+                      <div className="space-y-3">
+                        {analytics.members.map(({ id: memberId, count }) => {
+                          const barWidth = Math.round((count / analytics.maxMemberCount) * 100)
+                          const shortId = (id: string) => id.length > 12 ? id.slice(0, 6) + '...' + id.slice(-4) : id
+                          return (
+                            <div key={memberId} className="flex items-center gap-3">
+                              <div
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold uppercase"
+                                style={{ backgroundColor: project.color + '22', color: project.color }}
+                              >
+                                {shortId(memberId)}
+                              </div>
+                              <span className="text-sm font-medium text-slate-600 dark:text-slate-400 w-24">
+                                {shortId(memberId)}
+                              </span>
+                              <span className="text-sm font-bold text-slate-900 dark:text-white w-16 text-right">
+                                {count} tasks
+                              </span>
+                              <div className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-full h-2">
+                                <div
+                                  className="h-2 rounded-full transition-all duration-500"
+                                  style={{ width: `${barWidth}%`, backgroundColor: project.color }}
+                                />
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* ROW 3 — COMPLETION PROGRESS TIMELINE */}
+                <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-6">
+                  <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4">
+                    Completion progress
+                  </h3>
+                  <div className="w-full h-4 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 flex">
+                    <div
+                      style={{ width: `${analytics.completionPct}%`, backgroundColor: '#059669' }}
+                      className="h-full transition-all duration-500"
+                    />
+                    <div
+                      style={{ width: `${analytics.inProgressPct}%`, backgroundColor: '#4f46e5' }}
+                      className="h-full transition-all duration-500"
+                    />
+                  </div>
+                  <div className="flex items-center gap-6 mt-4">
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#059669' }} />
+                      <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                        Completed {analytics.completed}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#4f46e5' }} />
+                      <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                        In progress {analytics.inProgress}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-full bg-slate-200 dark:bg-slate-700" />
+                      <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                        Open {analytics.open}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
-        ) : (
-          <KanbanBoard
-            tasks={projectTasks}
-            onUpdate={updateItem}
-            onEdit={setEditingTask}
-          />
         )}
       </div>
 
       <AddTaskModal
-        open={showAddModal}
-        onOpenChange={setShowAddModal}
-        onSave={(task) => {
-          addItems([{ ...task, projectId: id }])
-          toast.success(`Task "${task.title}" added to project`)
-        }}
-        userId={user?.id ?? ""}
-      />
-
-      <EditTaskModal
-        task={editingTask}
-        open={!!editingTask}
-        onOpenChange={(open) => !open && setEditingTask(null)}
-        onUpdate={updateItem}
-        onDelete={deleteItem}
-        user={user}
-      />
-
-      <DeleteModal
-        open={!!pendingDelete}
-        onOpenChange={(open) => { if (!open) setPendingDelete(null) }}
-        title="Delete Task"
-        description={
-          <>
-            Are you sure you want to delete{" "}
-            <strong className="text-text-primary font-bold">{pendingDelete?.title}</strong>?
-            {" "}This action cannot be undone.
-          </>
-        }
-        onDelete={() => {
-          if (pendingDelete) deleteItem(pendingDelete.id)
-          setPendingDelete(null)
-        }}
-        cancelText="Cancel"
-        deleteText="Delete Task"
+        open={showAddTaskModal}
+        onOpenChange={setShowAddTaskModal}
+        fixedProjectId={id}
+        onSave={() => { }}
+        userId={project.ownerId}
       />
     </div>
   )

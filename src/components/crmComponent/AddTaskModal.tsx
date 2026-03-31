@@ -15,9 +15,10 @@ interface AddTaskModalProps {
   onSave: (task: Task) => void
   userId: string
   fixedEntity?: { type: 'contact' | 'deal' | 'lead'; id: string; name: string }
+  fixedProjectId?: string
 }
 
-export function AddTaskModal({ open, onOpenChange, onSave, userId, fixedEntity }: AddTaskModalProps) {
+export function AddTaskModal({ open, onOpenChange, onSave, userId, fixedEntity, fixedProjectId }: AddTaskModalProps) {
   // Use hooks to get live data from Supabase for the form dropdowns
   const { data: contacts } = useCRMResource<Contact>('contacts')
   const { data: deals } = useCRMResource<Deal>('deals')
@@ -47,6 +48,7 @@ export function AddTaskModal({ open, onOpenChange, onSave, userId, fixedEntity }
             leads={leads}
             projects={projects ?? []}
             fixedEntity={fixedEntity}
+            fixedProjectId={fixedProjectId}
             userId={userId}
           />
         </div>

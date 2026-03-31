@@ -11,10 +11,12 @@ import { SubtasksList } from "./SubtasksList"
 import { CommentsList } from "./CommentsList"
 import { TimeTracker } from "./TimeTracker"
 import { useCRMResource } from "@/lib/hooks"
-import type { Contact, Deal, Lead, Task, Project } from "@/lib/types"
+import type { Contact, Deal, Lead, Task, Project, TaskActivity } from "@/lib/types"
 import { Button } from "@/components/ui/button"
-import { Repeat2, Info, CheckSquare, MessageSquare, Trash2, Calendar, Target, Clock } from "lucide-react"
+import { Repeat2, Info, CheckSquare, MessageSquare, Trash2, Calendar, Target, Clock, Plus, Pencil, RotateCcw, UserPlus, Paperclip, CheckCircle2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { relativeTime } from "@/lib/helpers"
+import { useMemo } from "react"
 
 interface EditTaskModalProps {
   task: Task | null
@@ -25,14 +27,27 @@ interface EditTaskModalProps {
   user: any // Accepting the Clerk user object for rich metadata
 }
 
-type Tab = 'overview' | 'subtasks' | 'comments' | 'time'
+type Tab = 'activity' | 'overview' | 'subtasks' | 'comments' | 'time'
 
 export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, user }: EditTaskModalProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('overview')
+  const [activeTab, setActiveTab] = useState<Tab>('activity')
   const { data: contacts } = useCRMResource<Contact>('contacts')
   const { data: deals } = useCRMResource<Deal>('deals')
   const { data: leads } = useCRMResource<Lead>('leads')
   const { data: projects } = useCRMResource<Project>('projects')
+
+  // Note: task_activities table exists in schema but may not be in CRMContext TABLE_MAP yet
+  // When added, activities will load automatically
+  const { data: allActivities, error: activitiesError } = useCRMResource<TaskActivity>('task_activities')
+
+  const taskActivities = useMemo(() => {
+    if (!allActivities || activitiesError) return []
+    return allActivities
+      .filter(a => a.taskId === task?.id)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  }, [task, allActivities, activitiesError])
+
+  const activityCount = taskActivities.length
 
   if (!task) return null
 
@@ -110,7 +125,7 @@ export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, us
   return (
     <Sheet open={open} onOpenChange={(val) => {
       onOpenChange(val)
-      if (!val) setActiveTab('overview')
+      if (!val) setActiveTab('activity')
     }}>
       <SheetContent className="sm:max-w-2xl p-0 flex flex-col h-full bg-slate-50 dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800">
         <SheetHeader className="px-8 pt-8 pb-4 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 shadow-sm relative">
@@ -162,6 +177,7 @@ export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, us
             {/* Premium Tab Navigation */}
             <div className="flex items-center gap-1 mt-2">
               {[
+                { id: 'activity', icon: Clock, label: 'Activity', badge: activityCount > 0 ? activityCount : null },
                 { id: 'overview', icon: Info, label: 'Overview' },
                 { id: 'subtasks', icon: CheckSquare, label: 'Subtasks', badge: subtaskCount > 0 ? `${completedSubtasks}/${subtaskCount}` : null },
                 { id: 'comments', icon: MessageSquare, label: 'Comments', badge: commentCount > 0 ? commentCount : null },
@@ -196,6 +212,56 @@ export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, us
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto">
+          {activeTab === 'activity' && (
+            <div className="px-8 py-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-6">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-4">Activity Log</h3>
+                {taskActivities.length === 0 ? (
+                  <div className="py-8 text-center">
+                    <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">
+                      {activitiesError ? 'Activity log not configured' : 'No activity recorded yet'}
+                    </p>
+                    {activitiesError && (
+                      <p className="text-xs text-slate-500 dark:text-slate-600 mt-2">
+                        Task activities table needs to be added to CRMContext
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {taskActivities.map((activity) => (
+                      <div key={activity.id} className="flex gap-3">
+                        <div className="flex-shrink-0 w-7 h-7 rounded-full
+                                        bg-slate-100 dark:bg-slate-800
+                                        flex items-center justify-center">
+                          {activity.type === 'created' && <Plus className="w-3.5 h-3.5 text-indigo-500" />}
+                          {activity.type === 'updated' && <Pencil className="w-3.5 h-3.5 text-slate-400" />}
+                          {activity.type === 'completed' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+                          {activity.type === 'reopened' && <RotateCcw className="w-3.5 h-3.5 text-amber-500" />}
+                          {activity.type === 'assigned' && <UserPlus className="w-3.5 h-3.5 text-blue-500" />}
+                          {activity.type === 'comment' && <MessageSquare className="w-3.5 h-3.5 text-slate-400" />}
+                          {activity.type === 'attachment' && <Paperclip className="w-3.5 h-3.5 text-slate-400" />}
+                        </div>
+                        <div className="flex-1 min-w-0 pb-4 border-b
+                                        border-slate-100 dark:border-slate-800
+                                        last:border-0 last:pb-0">
+                          <p className="text-sm text-slate-700 dark:text-slate-300
+                                        font-medium leading-snug">
+                            {activity.description}
+                          </p>
+                          <p className="text-xs text-slate-400 dark:text-slate-500
+                                        mt-0.5 font-medium">
+                            {activity.userName} · {relativeTime(activity.createdAt)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {activeTab === 'overview' && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
               <TaskForm

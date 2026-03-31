@@ -28,6 +28,7 @@ interface TaskFormProps {
   leads: Lead[]
   projects: Project[]
   fixedEntity?: { type: 'contact' | 'deal' | 'lead'; id: string }
+  fixedProjectId?: string
   userId: string
 }
 
@@ -40,6 +41,7 @@ export function TaskForm({
   leads,
   projects,
   fixedEntity,
+  fixedProjectId,
   userId
 }: TaskFormProps) {
   const [title, setTitle] = useState(initialData?.title ?? "")
@@ -51,7 +53,7 @@ export function TaskForm({
     fixedEntity?.type ?? initialData?.entityType ?? "none"
   )
   const [entityId, setEntityId] = useState(fixedEntity?.id ?? initialData?.entityId ?? "")
-  const [projectId, setProjectId] = useState(initialData?.projectId ?? "")
+  const [projectId, setProjectId] = useState(fixedProjectId ?? initialData?.projectId ?? "")
   const [assignedTo, setAssignedTo] = useState<string[]>(initialData?.assignedTo ?? [])
   const [estimatedHours, setEstimatedHours] = useState(String(initialData?.estimatedHours ?? ""))
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(initialData?.tags ?? [])
@@ -261,8 +263,12 @@ export function TaskForm({
               <FolderOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
               <select
                 value={projectId}
+                disabled={!!fixedProjectId}
                 onChange={(e) => setProjectId(e.target.value)}
-                className="w-full h-12 pl-12 pr-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-sm"
+                className={cn(
+                  "w-full h-12 pl-12 pr-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-sm",
+                  !!fixedProjectId && "opacity-75 cursor-not-allowed bg-slate-50 dark:bg-slate-800/50"
+                )}
               >
                 <option value="">None</option>
                 {projects.map(p => (

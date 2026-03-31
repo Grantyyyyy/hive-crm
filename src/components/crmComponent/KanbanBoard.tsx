@@ -9,6 +9,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  useDroppable,
   type DragStartEvent,
   type DragEndEvent,
 } from "@dnd-kit/core"
@@ -38,22 +39,29 @@ interface SortableTaskCardProps {
   onEdit: (task: Task) => void
   onStatusChange: (e: React.MouseEvent, task: Task, status: Task['status']) => void
   tags?: TaskTag[]
+  isDragging?: boolean
 }
 
-function SortableTaskCard({ task, onEdit, onStatusChange, tags }: SortableTaskCardProps) {
+function SortableTaskCard({ task, onEdit, onStatusChange, tags, isDragging }: SortableTaskCardProps) {
   const {
     attributes,
     listeners,
     setNodeRef,
     transform,
     transition,
-    isDragging,
   } = useSortable({ id: task.id })
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+  }
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!isDragging) {
+      onEdit(task)
+    }
   }
 
   const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'completed'
@@ -88,7 +96,7 @@ function SortableTaskCard({ task, onEdit, onStatusChange, tags }: SortableTaskCa
       style={style}
       {...attributes}
       {...listeners}
-      onClick={() => onEdit(task)}
+      onClick={handleClick}
       className={cn(
         "group relative bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all cursor-pointer hover:border-teal-600/30",
         isDragging && "z-50 shadow-xl ring-2 ring-teal-500 border-transparent rotate-1",
@@ -166,11 +174,41 @@ function SortableTaskCard({ task, onEdit, onStatusChange, tags }: SortableTaskCa
   )
 }
 
+function DroppableColumn({ 
+  id, 
+  items, 
+  children 
+}: { 
+  id: string
+  items: string[]
+  children: React.ReactNode 
+}) {
+  const { setNodeRef } = useDroppable({ id })
+
+  return (
+    <SortableContext
+      id={id}
+      items={items}
+      strategy={verticalListSortingStrategy}
+    >
+      <div 
+        ref={setNodeRef}
+        className={cn(
+          "flex-1 flex flex-col gap-3 min-h-[500px] p-2 rounded-md border-2 border-dashed transition-colors",
+          "border-slate-200 dark:border-slate-800/50 hover:border-teal-200 dark:hover:border-teal-900/50"
+        )}
+      >
+        {children}
+      </div>
+    </SortableContext>
+  )
+}
+
 export function KanbanBoard({ tasks, onUpdate, onEdit, onAddTask, tagsMap }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null)
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 10 } })
   )
 
   const tasksByStatus = useMemo(() => {
@@ -258,15 +296,10 @@ export function KanbanBoard({ tasks, onUpdate, onEdit, onAddTask, tagsMap }: Kan
             </div>
 
             {/* Droppable Area */}
-            <SortableContext
+            <DroppableColumn
               id={column.id}
               items={tasksByStatus[column.id].map(t => t.id)}
-              strategy={verticalListSortingStrategy}
             >
-              <div className={cn(
-                "flex-1 flex flex-col gap-3 min-h-[500px] p-2 rounded-md border-2 border-dashed transition-colors",
-                "border-slate-200 dark:border-slate-800/50 hover:border-teal-200 dark:hover:border-teal-900/50"
-              )}>
                 {tasksByStatus[column.id].length === 0 ? (
                   <div className="flex items-center justify-center h-32 text-slate-400 text-sm font-medium">
                     No tasks
@@ -279,6 +312,7 @@ export function KanbanBoard({ tasks, onUpdate, onEdit, onAddTask, tagsMap }: Kan
                       onEdit={onEdit}
                       onStatusChange={handleStatusChange}
                       tags={tagsMap?.[task.id]}
+                      isDragging={activeId === task.id}
                     />
                   ))
                 )}
@@ -290,8 +324,7 @@ export function KanbanBoard({ tasks, onUpdate, onEdit, onAddTask, tagsMap }: Kan
                   <PlusCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
                   <span className="text-sm font-semibold">Add Task</span>
                 </button>
-              </div>
-            </SortableContext>
+            </DroppableColumn>
           </div>
         ))}
       </div>
@@ -304,6 +337,7 @@ export function KanbanBoard({ tasks, onUpdate, onEdit, onAddTask, tagsMap }: Kan
               onEdit={() => { }}
               onStatusChange={() => { }}
               tags={tagsMap?.[activeTask.id]}
+              isDragging={true}
             />
           </div>
         ) : null}

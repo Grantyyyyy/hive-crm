@@ -27,6 +27,7 @@ export const TABLE_MAP: Record<string, string> = {
   projects: "projects",
   task_tags: "task_tags",
   task_tag_links: "task_tag_links",
+  task_activities: "task_activities",
 }
 
 // ── Case converters ──────────────────────────────────────────────────────────
@@ -226,12 +227,20 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         }
 
         const snakePatch = toSnake(op.patch)
-        if (op.resource === 'tasks') {
-          ['activities', 'tags', 'time_entries'].forEach(f => delete snakePatch[f])
+        const isTask = op.resource === 'tasks'
+        let nestedData: any = {}
+
+        if (isTask) {
+          // Extract nested relational data before sending to 'tasks' table
+          ['activities', 'tags', 'time_entries'].forEach(f => {
+            if (snakePatch[f] !== undefined) {
+              nestedData[f] = op.patch[f] // Keep original camelCase data for easier secondary processing
+              delete snakePatch[f]
+            }
+          })
         }
 
         if (action === "insert") {
-          // Identify which columns the resource supports to avoid SQL errors
           const noUserIdTables = ['task_tags', 'task_tag_links', 'task_subtasks', 'task_comments']
           const ownerIdTables = ['tasks', 'task_tags', 'projects', 'leads', 'contacts', 'deals']
 
@@ -247,7 +256,12 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
             console.error(`[CRMContext] Insert failed for ${op.resource}:`, error)
             errors.push({ resource: op.resource, error })
           } else {
-            const created = toCamel(data?.[0] || {})
+            const resultItem = data?.[0]
+            if (isTask && resultItem) {
+              // Handle secondary relational inserts for tasks
+              await handleTaskRelations(client, resultItem.id, nestedData)
+            }
+            const created = toCamel(resultItem || {})
             successes.push({ ...op, action, patch: created })
           }
         } else if (action === "update") {
@@ -255,7 +269,13 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           if (error) {
             console.error(`[CRMContext] Update failed for ${op.resource}:${op.id}:`, error)
             errors.push({ resource: op.resource, id: op.id, error })
-          } else successes.push({ ...op, action })
+          } else {
+            if (isTask) {
+              // Sync relational data (tags etc) if provided in the patch
+              await handleTaskRelations(client, op.id as string, nestedData, true)
+            }
+            successes.push({ ...op, action })
+          }
         }
       }
 
@@ -329,27 +349,70 @@ export async function insertRows<T extends { id: string }>(
   })
 
   const { data: result, error } = await client.from(tableName).insert(rows).select()
-  if (error) throw error
+  if (error) {
+    console.error(`[CRMContext] Batch insert failed for ${resourceName}:`, error)
+    throw error
+  }
 
   const mapped = (result ?? []).map(toCamel) as T[]
 
+  // Task-specific post-processing for relations
   if (resourceName === 'tasks') {
     for (let i = 0; i < newItems.length; i++) {
       const item = newItems[i] as any
       const resultItem = mapped[i]
-      if (item.tags && Array.isArray(item.tags) && item.tags.length > 0 && resultItem) {
-        const links = item.tags.map((tagId: string) => ({
-          task_id: resultItem.id,
-          tag_id: tagId,
-          // task_tag_links likely inherits security or has no owner_id
-        }))
-        await client.from('task_tag_links').insert(links)
-      }
+      if (!resultItem) continue
+
+      await handleTaskRelations(client, resultItem.id, {
+        activities: item.activities,
+        tags: item.tags,
+        time_entries: item.timeEntries
+      })
     }
   }
 
   ctx.setResourceData(resourceName, (prev: T[]) => [...mapped, ...prev])
   return mapped
+}
+
+/**
+ * Shared helper to manage task-related records in secondary tables
+ */
+async function handleTaskRelations(client: any, taskId: string, data: any, isUpdate = false) {
+  // 1. Handle Tags (Sync)
+  if (data.tags !== undefined) {
+    if (isUpdate) {
+      await client.from('task_tag_links').delete().eq('task_id', taskId)
+    }
+    const tags = data.tags || []
+    if (tags.length > 0) {
+      const links = tags.map((tagId: string) => ({ task_id: taskId, tag_id: tagId }))
+      await client.from('task_tag_links').insert(links)
+    }
+  }
+
+  // 2. Handle Activities / Logs (Additive/Managed)
+  if (data.activities && Array.isArray(data.activities) && data.activities.length > 0) {
+    const activities = data.activities.map((a: any) => {
+      const row = toSnake(a)
+      row.task_id = taskId
+      if (row.id && row.id.length < 10) delete row.id // Clean temporary IDs
+      return row
+    })
+    await client.from('task_activities').insert(activities)
+  }
+
+  // 3. Handle Time Entries (Additive)
+  const timeEntries = data.timeEntries || data.time_entries
+  if (timeEntries && Array.isArray(timeEntries) && timeEntries.length > 0) {
+    const entries = timeEntries.map((e: any) => {
+      const row = toSnake(e)
+      row.task_id = taskId
+      if (row.id && row.id.length < 10) delete row.id
+      return row
+    })
+    await client.from('task_time_entries').insert(entries)
+  }
 }
 
 export async function updateRow<T extends { id: string }>(
@@ -363,12 +426,27 @@ export async function updateRow<T extends { id: string }>(
 
   const tableName = TABLE_MAP[resourceName]
   const snakePatch = toSnake(updates)
-  if (resourceName === 'tasks') {
-    ['activities', 'tags', 'time_entries'].forEach(f => delete snakePatch[f])
+  const isTask = resourceName === 'tasks'
+  let nestedData: any = {}
+
+  if (isTask) {
+    ['activities', 'tags', 'time_entries'].forEach(f => {
+      if (snakePatch[f] !== undefined) {
+        nestedData[f] = (updates as any)[f]
+        delete snakePatch[f]
+      }
+    })
   }
 
   const { error } = await client.from(tableName).update(snakePatch).eq("id", id)
-  if (error) throw error
+  if (error) {
+    console.error(`[CRMContext] Update failed for ${resourceName}:${id}:`, error)
+    throw error
+  }
+
+  if (isTask) {
+    await handleTaskRelations(client, id, nestedData, true)
+  }
 
   ctx.setResourceData(resourceName, (prev: T[]) =>
     prev.map((item) => (item.id === id ? { ...item, ...updates } : item))

@@ -1,57 +1,227 @@
-import { UserProfile } from "@clerk/clerk-react";
-import { User, Shield, Bell } from "lucide-react";
+import { useState, useEffect, useRef } from "react"
+import { useUser } from "@clerk/clerk-react"
+import { Camera, Save, Info } from "lucide-react"
+import { toast } from "sonner"
+import { PageSkeleton } from "@/components/ui/page-skeleton"
 
 export function ProfilePage() {
-  return (
-    <div className="p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-text-primary">Profile Settings</h1>
-        <p className="text-text-muted mt-2">Manage your account credentials and personal information.</p>
-      </div>
+  const { user, isLoaded } = useUser()
 
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Navigation Sidebar */}
-        <div className="w-full lg:w-64 shrink-0 space-y-1">
-          <nav className="flex flex-col space-y-1">
-            <button className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-xl bg-accent/10 text-accent transition-all ring-1 ring-accent/20">
-              <User className="w-4 h-4" />
-              General
-            </button>
-            <button className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-xl text-text-muted hover:bg-bg-surface hover:text-text-primary transition-all">
-              <Shield className="w-4 h-4" />
-              Security
-            </button>
-            <button className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-xl text-text-muted hover:bg-bg-surface hover:text-text-primary transition-all">
-              <Bell className="w-4 h-4" />
-              Notifications
-            </button>
-          </nav>
+  const [firstName, setFirstName] = useState(user?.firstName ?? '')
+  const [lastName, setLastName] = useState(user?.lastName ?? '')
+  const [saving, setSaving] = useState(false)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Sync state when user loads (Clerk loads async)
+  useEffect(() => {
+    if (user) {
+      setFirstName(user.firstName ?? '')
+      setLastName(user.lastName ?? '')
+    }
+  }, [user])
+
+  // Dirty check for save button
+  const isDirty = firstName.trim() !== (user?.firstName ?? '')
+    || lastName.trim() !== (user?.lastName ?? '')
+
+  const handleSaveName = async () => {
+    if (!user) return
+    setSaving(true)
+    try {
+      await user.update({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+      })
+      toast.success('Profile updated', {
+        description: 'Your name has been saved.'
+      })
+    } catch (err: unknown) {
+      toast.error('Update failed', {
+        description: (err as Error).message
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !user) return
+    setUploadingAvatar(true)
+    try {
+      await user.setProfileImage({ file })
+      toast.success('Avatar updated', {
+        description: 'Your profile photo has been changed.'
+      })
+    } catch (err: unknown) {
+      toast.error('Upload failed', {
+        description: (err as Error).message
+      })
+    } finally {
+      setUploadingAvatar(false)
+      e.target.value = ''
+    }
+  }
+
+  const initials = ((firstName?.[0] ?? '') + (lastName?.[0] ?? '')).toUpperCase() || '?'
+
+  if (!isLoaded) return <PageSkeleton />
+
+  return (
+    <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen">
+      <div className="mx-auto p-4 md:p-8 max-w-[1600px] animate-fade-in space-y-8">
+
+        {/* Page Header */}
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 mb-1">
+              Settings
+            </p>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Profile
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">
+              Manage your personal information.
+            </p>
+          </div>
         </div>
 
-        {/* Clerk UserProfile */}
-        <div className="flex-1 max-w-4xl">
-          <div className="rounded-2xl border border-border bg-bg-surface shadow-xl shadow-accent/5 overflow-hidden">
-            <UserProfile
-              appearance={{
-                elements: {
-                  rootBox: "w-full",
-                  card: "shadow-none border-none bg-transparent w-full",
-                  navbar: "hidden", // We use our own navbar
-                  pageScrollBox: "p-0",
-                  headerTitle: "hidden",
-                  headerSubtitle: "hidden",
-                  profileSectionTitle: "text-lg font-semibold text-text-primary border-b border-border pb-4 mb-6",
-                  formButtonPrimary: "bg-accent hover:bg-accent/90 text-sm font-bold h-10 rounded-xl transition-all",
-                  formFieldInput: "flex h-11 w-full rounded-xl border border-border bg-bg-elevated px-4 py-2 text-sm ring-offset-bg-surface file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all",
-                  userPreviewMainIdentifier: "text-text-primary font-semibold",
-                  userPreviewSecondaryIdentifier: "text-text-muted",
-                  identityPreviewText: "text-text-primary",
-                }
-              }}
-            />
+        {/* Two-column layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+          {/* LEFT COLUMN — Avatar Card */}
+          <div className="lg:col-span-1">
+            <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none overflow-hidden p-6">
+              <div className="flex flex-col items-center">
+                {/* Avatar */}
+                {user.imageUrl ? (
+                  <img
+                    src={user.imageUrl}
+                    alt="Avatar"
+                    className="w-24 h-24 rounded-full object-cover ring-4 ring-white dark:ring-slate-800"
+                  />
+                ) : (
+                  <div className="w-24 h-24 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-2xl font-bold">
+                    {initials}
+                  </div>
+                )}
+
+                {/* Change Avatar Button */}
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  onChange={handleAvatarChange}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-wider hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                  {uploadingAvatar ? 'Uploading...' : 'Change photo'}
+                </button>
+                <p className="text-xs text-slate-400 dark:text-slate-500 text-center mt-2">
+                  JPG, PNG or GIF · max 10MB
+                </p>
+
+                {/* Divider */}
+                <div className="border-t border-slate-100 dark:border-slate-800 my-6 w-full" />
+
+                {/* User Metadata */}
+                <div className="w-full space-y-4">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">
+                      Member Since
+                    </p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {user.createdAt?.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) ?? '—'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">
+                      Last Sign In
+                    </p>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {user.lastSignInAt?.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) ?? '—'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN — Personal Info & Email Cards */}
+          <div className="lg:col-span-2 space-y-6">
+
+            {/* CARD 1 — Personal Information */}
+            <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none overflow-hidden p-6">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4 block">
+                Personal Information
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5 block">
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5 block">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end mt-6">
+                <button
+                  onClick={handleSaveName}
+                  disabled={!isDirty || saving}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-10 px-5 text-xs font-bold uppercase tracking-wider shadow-lg shadow-indigo-200 dark:shadow-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  {saving ? 'Saving...' : 'Save changes'}
+                </button>
+              </div>
+            </div>
+
+            {/* CARD 2 — Email Address */}
+            <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none overflow-hidden p-6">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-4 block">
+                Email Address
+              </h2>
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5 block">
+                  Primary Email
+                </label>
+                <input
+                  type="text"
+                  value={user.primaryEmailAddress?.emailAddress ?? '—'}
+                  disabled
+                  className="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-sm font-medium cursor-not-allowed"
+                />
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-2 flex items-center gap-1.5">
+                  <Info className="w-3.5 h-3.5 flex-shrink-0" />
+                  Email changes are managed through your account security settings. Contact your administrator to update.
+                </p>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }

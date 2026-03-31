@@ -106,6 +106,10 @@ function AutomationRunner() {
       runOnce.current = true
       runScheduledJobs(adapter, ctx).catch(console.error)
     }
+    const interval = setInterval(() => {
+      runScheduledJobs(adapter, ctx).catch(console.error)
+    }, 60_000)
+    return () => clearInterval(interval)
   }, [dataReady, adapter, ctx])
 
   return null

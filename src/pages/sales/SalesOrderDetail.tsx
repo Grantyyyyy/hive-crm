@@ -28,6 +28,7 @@ import {
   fulfillOrderStock,
   releaseOrderStock,
   returnShippedOrderStock,
+  cancelOrderWithStockReversal,
   sendShippingNotification
 } from "@/services/orderService"
 import { useUser } from "@clerk/clerk-react"
@@ -119,13 +120,22 @@ export function SalesOrderDetail() {
     if (!order || isUpdatingStatus) return
     setIsUpdatingStatus(true)
     try {
-      await updateItem(order.id, {
-        status: 'cancelled',
-        updatedAt: new Date().toISOString()
-      })
-      toast.success('Order Cancelled', {
-        description: `#${order.orderNumber} has been cancelled.`
-      })
+      const { itemsReversed, type } =
+        await cancelOrderWithStockReversal(
+          order, ctx,
+          user?.id ?? 'system',
+          user?.fullName ?? 'Unknown'
+        )
+
+      // Build toast description based on what happened
+      let description = `#${order.orderNumber} has been cancelled.`
+      if (type === 'return' && itemsReversed > 0) {
+        description += ` Stock returned for ${itemsReversed} item${itemsReversed !== 1 ? 's' : ''}.`
+      } else if (type === 'release' && itemsReversed > 0) {
+        description += ` Reservation released for ${itemsReversed} item${itemsReversed !== 1 ? 's' : ''}.`
+      }
+
+      toast.success('Order Cancelled', { description })
     } catch (e: unknown) {
       toast.error('Failed to cancel order', {
         description: (e as Error).message

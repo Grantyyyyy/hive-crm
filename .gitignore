@@ -24,6 +24,8 @@ dist-ssr
 *.sw?
 
 .env
+.env.local.example
+.env
 .agents
 .codex
 .qwen

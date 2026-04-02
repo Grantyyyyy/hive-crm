@@ -1,8 +1,8 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 
 export function Fonts() {
-  const [selectedFont, setSelectedFont] = useState('Inter')
+  const [selectedFont, setSelectedFont] = useState('DM Sans')
 
   const fontOptions = [
     {
@@ -55,6 +55,38 @@ export function Fonts() {
     },
   ]
 
+  // Apply the selected font globally when it changes
+  useEffect(() => {
+    const font = fontOptions.find(f => f.name === selectedFont)
+    if (font) {
+      // Create or update a global style element
+      let styleEl = document.getElementById('global-font-style') as HTMLStyleElement
+      if (!styleEl) {
+        styleEl = document.createElement('style')
+        styleEl.id = 'global-font-style'
+        document.head.appendChild(styleEl)
+      }
+
+      // Apply font to all elements with high specificity
+      styleEl.textContent = `
+        *, *::before, *::after, html, body, #root, .font-sans {
+          font-family: ${font.family} !important;
+        }
+      `
+
+      // Store in localStorage for persistence
+      localStorage.setItem('selectedFont', selectedFont)
+    }
+  }, [selectedFont])
+
+  // Load saved font preference on mount
+  useEffect(() => {
+    const savedFont = localStorage.getItem('selectedFont')
+    if (savedFont && fontOptions.some(f => f.name === savedFont)) {
+      setSelectedFont(savedFont)
+    }
+  }, [])
+
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen">
       <div className="mx-auto p-4 md:p-8 max-w-[1400px] animate-fade-in space-y-8">
@@ -79,7 +111,7 @@ export function Fonts() {
               className={cn(
                 "p-4 rounded-md border-2 text-left transition-all",
                 selectedFont === font.name
-                  ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20"
+                  ? "border-teal-600 bg-teal-50 dark:bg-teal-900/20"
                   : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
               )}
               style={{ fontFamily: font.family }}
@@ -87,7 +119,7 @@ export function Fonts() {
               <div className="flex items-center gap-2 mb-2">
                 <div className={cn(
                   "w-2 h-2 rounded-full",
-                  selectedFont === font.name ? "bg-indigo-600" : "bg-slate-300 dark:bg-slate-600"
+                  selectedFont === font.name ? "bg-teal-600" : "bg-slate-300 dark:bg-slate-600"
                 )} />
                 <span className="font-bold text-slate-900 dark:text-white">{font.name}</span>
               </div>
@@ -150,7 +182,7 @@ export function Fonts() {
 
               {/* Buttons */}
               <div className="flex flex-wrap gap-3 mb-6">
-                <button className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-colors shadow-lg shadow-indigo-200 dark:shadow-none">
+                <button className="px-5 py-2.5 bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-colors shadow-lg shadow-teal-200 dark:shadow-none">
                   Primary Button
                 </button>
                 <button className="px-5 py-2.5 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
@@ -163,7 +195,7 @@ export function Fonts() {
 
               {/* Status Badges */}
               <div className="flex flex-wrap gap-2 mb-6">
-                <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 text-[10px] font-black uppercase tracking-widest rounded-lg">
+                <span className="px-3 py-1 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 text-[10px] font-black uppercase tracking-widest rounded-lg">
                   Active
                 </span>
                 <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-lg">
@@ -186,14 +218,14 @@ export function Fonts() {
                   <input
                     type="text"
                     placeholder="Enter text..."
-                    className="w-full px-4 py-3 border border-slate-200 dark:border-slate-800 rounded-xl text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-600/10 focus:border-indigo-600 transition-all"
+                    className="w-full px-4 py-3 border border-slate-200 dark:border-slate-800 rounded-xl text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 transition-all"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
                     Dropdown
                   </label>
-                  <select className="w-full px-4 py-3 border border-slate-200 dark:border-slate-800 rounded-xl text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-4 focus:ring-indigo-600/10 focus:border-indigo-600 transition-all">
+                  <select className="w-full px-4 py-3 border border-slate-200 dark:border-slate-800 rounded-xl text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 transition-all">
                     <option>Select an option</option>
                     <option>Option One</option>
                     <option>Option Two</option>
@@ -233,7 +265,7 @@ export function Fonts() {
                     <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                       <td className="px-6 py-4 text-sm font-bold text-slate-900 dark:text-white">Client Meeting</td>
                       <td className="px-6 py-4">
-                        <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 text-[10px] font-black uppercase tracking-widest rounded-lg">
+                        <span className="px-3 py-1 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 text-[10px] font-black uppercase tracking-widest rounded-lg">
                           Active
                         </span>
                       </td>
@@ -252,29 +284,42 @@ export function Fonts() {
         </div>
 
         {/* Recommendation */}
-        <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-md p-6">
-          <h3 className="text-sm font-bold text-indigo-900 dark:text-indigo-200 uppercase tracking-widest mb-3">Recommendation</h3>
-          <p className="text-sm text-indigo-800 dark:text-indigo-300 mb-4">
+        <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 rounded-md p-6">
+          <h3 className="text-sm font-bold text-teal-900 dark:text-teal-200 uppercase tracking-widest mb-3">Recommendation</h3>
+          <p className="text-sm text-teal-800 dark:text-teal-300 mb-4">
             <strong className="font-bold">Plus Jakarta Sans</strong> is recommended for CRM applications because:
           </p>
-          <ul className="space-y-2 text-sm text-indigo-800 dark:text-indigo-300">
+          <ul className="space-y-2 text-sm text-teal-800 dark:text-teal-300">
             <li className="flex items-start gap-2">
-              <span className="text-indigo-600 dark:text-indigo-400 mt-1">✓</span>
+              <span className="text-teal-600 dark:text-teal-400 mt-1">✓</span>
               <span>Excellent readability at all sizes, crucial for data-heavy interfaces</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-indigo-600 dark:text-indigo-400 mt-1">✓</span>
+              <span className="text-teal-600 dark:text-teal-400 mt-1">✓</span>
               <span>Modern, professional appearance that builds trust</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-indigo-600 dark:text-indigo-400 mt-1">✓</span>
+              <span className="text-teal-600 dark:text-teal-400 mt-1">✓</span>
               <span>Great character distinction (0 vs O, 1 vs l vs I)</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-indigo-600 dark:text-indigo-400 mt-1">✓</span>
+              <span className="text-teal-600 dark:text-teal-400 mt-1">✓</span>
               <span>Free, open-source, and widely supported via Google Fonts</span>
             </li>
           </ul>
+        </div>
+
+        {/* Reset Font Button */}
+        <div className="flex justify-end">
+          <button
+            onClick={() => {
+              setSelectedFont('DM Sans')
+              localStorage.removeItem('selectedFont')
+            }}
+            className="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+          >
+            Reset to DM Sans (Default)
+          </button>
         </div>
 
       </div>

@@ -46,6 +46,7 @@ import { runScheduledJobs } from "@/services/scheduledJobs";
 import type { JobAdapter } from "@/services/types";
 import { setAuthToken, setOrganizationId } from "@/lib/api";
 import React, { useEffect, useRef, useMemo, useState } from "react";
+import { FontProvider } from "@/components/FontProvider";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -106,10 +107,13 @@ function AutomationRunner() {
       runOnce.current = true
       runScheduledJobs(adapter, ctx).catch(console.error)
     }
-    const interval = setInterval(() => {
-      runScheduledJobs(adapter, ctx).catch(console.error)
-    }, 60_000)
-    return () => clearInterval(interval)
+    // Only start interval when data is ready
+    if (dataReady) {
+      const interval = setInterval(() => {
+        runScheduledJobs(adapter, ctx).catch(console.error)
+      }, 60_000)
+      return () => clearInterval(interval)
+    }
   }, [dataReady, adapter, ctx])
 
   return null
@@ -164,120 +168,122 @@ function AppContent() {
   }
 
   return (
-    <Router>
-      <div className="min-h-screen flex flex-col bg-background font-sans antialiased text-foreground">
-        <Toaster position="top-center" richColors />
-        <Navbar />
-        <main className="flex-[1_0_auto] flex flex-col">
-          <AutomationRunner />
-          <Switch>
-            <Route path="/" component={LandingPage} />
-            <Route path="/sign-in" component={SignInPage} />
-            <Route path="/sign-up" component={SignUpPage} />
-            <Route path="/dashboard">
-              {() => <Protected component={Dashboard} />}
-            </Route>
-            <Route path="/tasks">
-              {() => <Protected component={Tasks} />}
-            </Route>
-            <Route path="/projects">
-              {() => <Protected component={Projects} />}
-            </Route>
-            <Route path="/projects/:id">
-              {() => <Protected component={ProjectDetail} />}
-            </Route>
-            <Route path="/workload">
-              {() => <Protected component={Workload} />}
-            </Route>
-            <Route path="/orders">
-              {() => <Protected component={SalesOrders} />}
-            </Route>
-            <Route path="/orders/:id">
-              {() => <Protected component={SalesOrderDetail} />}
-            </Route>
-            <Route path="/quotes">
-              {() => <Protected component={Quotes} />}
-            </Route>
-            <Route path="/quotes/:id">
-              {() => <Protected component={QuoteDetail} />}
-            </Route>
-            <Route path="/purchase-orders">
-              {() => <Protected component={PurchaseOrders} />}
-            </Route>
-            <Route path="/purchase-orders/:id">
-              {() => <Protected component={PurchaseOrderDetail} />}
-            </Route>
-            <Route path="/purchase-requests">
-              {() => <Protected component={PurchaseRequests} />}
-            </Route>
-            <Route path="/purchase-requests/:id">
-              {() => <Protected component={PurchaseRequestDetail} />}
-            </Route>
-            <Route path="/leads">
-              {() => <Protected component={Leads} />}
-            </Route>
-            <Route path="/leads/:id">
-              {() => <Protected component={LeadDetail} />}
-            </Route>
-            <Route path="/contacts">
-              {() => <Protected component={Contacts} />}
-            </Route>
-            <Route path="/contacts/:id">
-              {() => <Protected component={ContactDetail} />}
-            </Route>
-            <Route path="/deals">
-              {() => <Protected component={Deals} />}
-            </Route>
-            <Route path="/deals/:id">
-              {() => <Protected component={DealDetail} />}
-            </Route>
-            <Route path="/activities">
-              {() => <Protected component={Activities} />}
-            </Route>
-            <Route path="/inventory">
-              {() => <Protected component={Inventory} />}
-            </Route>
-            <Route path="/inventory/:id">
-              {() => <Protected component={InventoryDetail} />}
-            </Route>
-            <Route path="/reports">
-              {() => <Protected component={Reports} />}
-            </Route>
-            <Route path="/vendors">
-              {() => <Protected component={Vendors} />}
-            </Route>
-            <Route path="/vendors/:id">
-              {() => <Protected component={VendorDetail} />}
-            </Route>
-            <Route path="/settings/users">
-              {() => <Protected component={Users} />}
-            </Route>
-            <Route path="/settings/roles">
-              {() => <Protected component={Roles} />}
-            </Route>
-            <Route path="/settings/profile">
-              {() => <Protected component={ProfilePage} />}
-            </Route>
-            <Route path="/in-progress">
-              {() => <Protected component={InProgress} />}
-            </Route>
-            <Route path="/design">
-              {() => <Design />}
-            </Route>
-            <Route path="/fonts">
-              {() => <Fonts />}
-            </Route>
+    <FontProvider>
+      <Router>
+        <div className="min-h-screen flex flex-col bg-background font-sans antialiased text-foreground">
+          <Toaster position="top-center" richColors />
+          <Navbar />
+          <main className="flex-[1_0_auto] flex flex-col">
+            <AutomationRunner />
+            <Switch>
+              <Route path="/" component={LandingPage} />
+              <Route path="/sign-in" component={SignInPage} />
+              <Route path="/sign-up" component={SignUpPage} />
+              <Route path="/dashboard">
+                {() => <Protected component={Dashboard} />}
+              </Route>
+              <Route path="/tasks">
+                {() => <Protected component={Tasks} />}
+              </Route>
+              <Route path="/projects">
+                {() => <Protected component={Projects} />}
+              </Route>
+              <Route path="/projects/:id">
+                {() => <Protected component={ProjectDetail} />}
+              </Route>
+              <Route path="/workload">
+                {() => <Protected component={Workload} />}
+              </Route>
+              <Route path="/orders">
+                {() => <Protected component={SalesOrders} />}
+              </Route>
+              <Route path="/orders/:id">
+                {() => <Protected component={SalesOrderDetail} />}
+              </Route>
+              <Route path="/quotes">
+                {() => <Protected component={Quotes} />}
+              </Route>
+              <Route path="/quotes/:id">
+                {() => <Protected component={QuoteDetail} />}
+              </Route>
+              <Route path="/purchase-orders">
+                {() => <Protected component={PurchaseOrders} />}
+              </Route>
+              <Route path="/purchase-orders/:id">
+                {() => <Protected component={PurchaseOrderDetail} />}
+              </Route>
+              <Route path="/purchase-requests">
+                {() => <Protected component={PurchaseRequests} />}
+              </Route>
+              <Route path="/purchase-requests/:id">
+                {() => <Protected component={PurchaseRequestDetail} />}
+              </Route>
+              <Route path="/leads">
+                {() => <Protected component={Leads} />}
+              </Route>
+              <Route path="/leads/:id">
+                {() => <Protected component={LeadDetail} />}
+              </Route>
+              <Route path="/contacts">
+                {() => <Protected component={Contacts} />}
+              </Route>
+              <Route path="/contacts/:id">
+                {() => <Protected component={ContactDetail} />}
+              </Route>
+              <Route path="/deals">
+                {() => <Protected component={Deals} />}
+              </Route>
+              <Route path="/deals/:id">
+                {() => <Protected component={DealDetail} />}
+              </Route>
+              <Route path="/activities">
+                {() => <Protected component={Activities} />}
+              </Route>
+              <Route path="/inventory">
+                {() => <Protected component={Inventory} />}
+              </Route>
+              <Route path="/inventory/:id">
+                {() => <Protected component={InventoryDetail} />}
+              </Route>
+              <Route path="/reports">
+                {() => <Protected component={Reports} />}
+              </Route>
+              <Route path="/vendors">
+                {() => <Protected component={Vendors} />}
+              </Route>
+              <Route path="/vendors/:id">
+                {() => <Protected component={VendorDetail} />}
+              </Route>
+              <Route path="/settings/users">
+                {() => <Protected component={Users} />}
+              </Route>
+              <Route path="/settings/roles">
+                {() => <Protected component={Roles} />}
+              </Route>
+              <Route path="/settings/profile">
+                {() => <Protected component={ProfilePage} />}
+              </Route>
+              <Route path="/in-progress">
+                {() => <Protected component={InProgress} />}
+              </Route>
+              <Route path="/design">
+                {() => <Design />}
+              </Route>
+              <Route path="/fonts">
+                {() => <Fonts />}
+              </Route>
 
-            {/* Fallback route */}
-            <Route>
-              <div className="flex-1 flex items-center justify-center">
-                <h1 className="text-2xl font-bold">404 - Page Not Found</h1>
-              </div>
-            </Route>
-          </Switch>
-        </main>
-      </div>
-    </Router>
+              {/* Fallback route */}
+              <Route>
+                <div className="flex-1 flex items-center justify-center">
+                  <h1 className="text-2xl font-bold">404 - Page Not Found</h1>
+                </div>
+              </Route>
+            </Switch>
+          </main>
+        </div>
+      </Router>
+    </FontProvider>
   );
 }
 

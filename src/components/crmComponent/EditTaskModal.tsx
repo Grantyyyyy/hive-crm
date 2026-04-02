@@ -17,6 +17,7 @@ import { Repeat2, Info, CheckSquare, MessageSquare, Trash2, Calendar, Target, Cl
 import { cn } from "@/lib/utils"
 import { relativeTime } from "@/lib/helpers"
 import { useMemo } from "react"
+import { DeleteModal } from "@/components/ui/delete-modal"
 
 interface EditTaskModalProps {
   task: Task | null
@@ -31,13 +32,13 @@ type Tab = 'activity' | 'overview' | 'subtasks' | 'comments' | 'time'
 
 export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, user }: EditTaskModalProps) {
   const [activeTab, setActiveTab] = useState<Tab>('activity')
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
   const { data: contacts } = useCRMResource<Contact>('contacts')
   const { data: deals } = useCRMResource<Deal>('deals')
   const { data: leads } = useCRMResource<Lead>('leads')
   const { data: projects } = useCRMResource<Project>('projects')
 
-  // Note: task_activities table exists in schema but may not be in CRMContext TABLE_MAP yet
-  // When added, activities will load automatically
+  // Task activities are fetched from the task_activities table
   const { data: allActivities, error: activitiesError } = useCRMResource<TaskActivity>('task_activities')
 
   const taskActivities = useMemo(() => {
@@ -58,10 +59,15 @@ export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, us
     onOpenChange(false)
   }
 
-  const handleDelete = async () => {
-    if (window.confirm("Are you sure you want to permanently delete this task?")) {
+  const handleDelete = () => {
+    setShowDeleteModal(true)
+  }
+
+  const confirmDelete = () => {
+    if (task) {
       onDelete(task.id)
       onOpenChange(false)
+      setShowDeleteModal(false)
     }
   }
 
@@ -332,6 +338,13 @@ export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, us
           )}
         </div>
       </SheetContent>
+      <DeleteModal
+        open={showDeleteModal}
+        onOpenChange={setShowDeleteModal}
+        title="Delete Task"
+        description="Are you sure you want to permanently delete this task? This action cannot be undone."
+        onDelete={confirmDelete}
+      />
     </Sheet>
   )
 }

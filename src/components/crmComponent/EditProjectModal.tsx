@@ -8,6 +8,8 @@ import {
 import { ProjectForm } from "./ProjectForm"
 import { Button } from "@/components/ui/button"
 import type { Project } from "@/lib/types"
+import { useState } from "react"
+import { DeleteModal } from "@/components/ui/delete-modal"
 
 interface EditProjectModalProps {
   project: Project | null
@@ -18,6 +20,7 @@ interface EditProjectModalProps {
 }
 
 export function EditProjectModal({ project, open, onOpenChange, onUpdate, onDelete }: EditProjectModalProps) {
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
   if (!project) return null
 
   const handleSave = (updated: Project) => {
@@ -26,9 +29,14 @@ export function EditProjectModal({ project, open, onOpenChange, onUpdate, onDele
   }
 
   const handleDelete = () => {
-    if (window.confirm("Delete this project? This will not delete associated tasks.")) {
+    setShowDeleteModal(true)
+  }
+
+  const confirmDelete = () => {
+    if (project) {
       onDelete(project.id)
       onOpenChange(false)
+      setShowDeleteModal(false)
     }
   }
 
@@ -60,6 +68,13 @@ export function EditProjectModal({ project, open, onOpenChange, onUpdate, onDele
           />
         </div>
       </SheetContent>
+      <DeleteModal
+        open={showDeleteModal}
+        onOpenChange={setShowDeleteModal}
+        title="Delete Project"
+        description="Are you sure you want to delete this project? This will not delete associated tasks, but the project grouping will be lost."
+        onDelete={confirmDelete}
+      />
     </Sheet>
   )
 }

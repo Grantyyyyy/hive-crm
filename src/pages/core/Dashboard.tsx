@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { ConfirmModal } from "@/components/ui/confirm-modal"
 import { formatCurrency } from "@/lib/helpers"
 import type { Deal, Activity as ActivityT } from "@/lib/types"
 import { useCRMResource } from "@/lib/hooks"
@@ -23,6 +24,7 @@ export function Dashboard() {
   const { data: deals, isLoaded: dealsLoaded, refresh: refreshDeals } = useCRMResource<Deal>('deals')
   const { data: activities, isLoaded: activitiesLoaded, refresh: refreshActivities } = useCRMResource<ActivityT>('activities')
   const [seeding, setSeeding] = useState(false)
+  const [showConfirmSeed, setShowConfirmSeed] = useState(false)
 
   const openDeals = useMemo(
     () => deals.filter((d) => !["won", "lost"].includes(d.stage)),
@@ -44,7 +46,12 @@ export function Dashboard() {
 
   const hasData = deals.length > 0 || activities.length > 0
 
-  const handleLoadDemoData = async () => {
+  const handleLoadDemoData = () => {
+    setShowConfirmSeed(true)
+  }
+
+  const confirmLoadDemoData = async () => {
+    setShowConfirmSeed(false)
     setSeeding(true)
     try {
       await seedApi.seed()
@@ -341,6 +348,16 @@ export function Dashboard() {
         </div>
 
       </div>
+      <ConfirmModal
+        open={showConfirmSeed}
+        onOpenChange={setShowConfirmSeed}
+        title="Load Demo Data"
+        description="This will populate your organization with sample contacts, deals, and tasks. High-level dashboard stats will be updated accordingly."
+        confirmLabel="Load Data"
+        onConfirm={confirmLoadDemoData}
+        loading={seeding}
+        variant="amber"
+      />
     </div>
   )
 }

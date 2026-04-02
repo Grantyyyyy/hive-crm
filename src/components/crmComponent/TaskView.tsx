@@ -2,7 +2,6 @@ import React, { useState, useMemo } from "react"
 import {
   Search,
   PlusCircle,
-  MoreVertical,
   Edit2,
   Trash2,
   GripVertical,
@@ -87,11 +86,11 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
   const [activeTab, setActiveTab] = useState<'list' | 'kanban'>('list')
   const [activeFilter, setActiveFilter] = useState<'my' | 'team' | 'upcoming'>('my')
   const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'in-progress' | 'completed'>('all')
-  
+
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [pendingDelete, setPendingDelete] = useState<Task | null>(null)
-  
+
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set())
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
@@ -118,7 +117,7 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
   }, [allTags, tagLinks])
 
   const filteredTasks = useMemo(() => {
-    const today = new Date(); today.setHours(0,0,0,0)
+    const today = new Date(); today.setHours(0, 0, 0, 0)
     let result = (tasks ?? []).filter(t => {
       const matchesStatus = statusFilter === 'all' || t.status === statusFilter
       const matchesProject = fixedProjectId ? t.projectId === fixedProjectId : true
@@ -150,17 +149,17 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
     const { active, over } = e
     setActiveDragId(null)
     if (!over) return
-    
+
     const taskId = String(active.id)
     const overId = String(over.id)
-    
+
     let newStatus: TaskStatus | undefined
     if (statusOrder.includes(overId as any)) {
       newStatus = overId as TaskStatus
     } else {
       newStatus = (tasks ?? []).find(t => t.id === overId)?.status
     }
-    
+
     if (newStatus) {
       const task = (tasks ?? []).find(t => t.id === taskId)
       if (task && task.status !== newStatus) {
@@ -181,10 +180,10 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
         const groupTasks = tasksByStatus[status as TaskStatus] || []
         const isAllSelected = groupTasks.length > 0 && groupTasks.every(t => selectedTaskIds.has(t.id))
         const isPartial = groupTasks.some(t => selectedTaskIds.has(t.id)) && !isAllSelected
-        
+
         return (
           <div className="flex justify-center">
-            <button 
+            <button
               onClick={(e) => {
                 e.stopPropagation();
                 const next = new Set(selectedTaskIds)
@@ -205,8 +204,8 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
       headerClassName: "w-[50px]",
       render: (task) => (
         <div className="flex justify-center">
-          <input 
-            type="checkbox" 
+          <input
+            type="checkbox"
             checked={selectedTaskIds.has(task.id)}
             onClick={(e) => e.stopPropagation()}
             onChange={() => {
@@ -238,8 +237,8 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
         const p = getPriorityStyles(task.priority)
         return (
           <div className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest", p.bg, p.color, p.border)}>
-             <p.icon className="w-3 h-3" />
-             {p.label}
+            <p.icon className="w-3 h-3" />
+            {p.label}
           </div>
         )
       }
@@ -290,7 +289,7 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen font-sans">
       <div className={cn("mx-auto animate-fade-in space-y-6", !hideHeader ? "p-4 md:p-8" : "p-0")}>
-        
+
         {!hideHeader && (
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
             <div>
@@ -305,72 +304,72 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
         )}
 
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800">
-           <div className="flex items-center gap-12">
-             {[
-               { id: 'list', label: 'All Tasks' },
-               { id: 'kanban', label: 'Kanban Board' },
-             ].map((t) => {
-               const isActive = activeTab === t.id
-               return (
-                 <button key={t.id} onClick={() => setActiveTab(t.id as any)} className={cn("pb-4 font-bold text-sm tracking-wide transition-all relative px-1 hover:text-slate-900", isActive ? "text-teal-600" : "text-slate-500")}>
-                    <span className="uppercase text-[11px] tracking-[0.1em] font-black">{t.label}</span>
-                    {isActive && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-teal-600 rounded-t-full shadow-[0_0_12px_rgba(20,184,166,0.6)]" />}
-                 </button>
-               )
-             })}
-           </div>
-           
-           <div className="flex-1 w-full lg:max-w-md pb-3">
+          <div className="flex items-center gap-12">
+            {[
+              { id: 'list', label: 'All Tasks' },
+              { id: 'kanban', label: 'Kanban Board' },
+            ].map((t) => {
+              const isActive = activeTab === t.id
+              return (
+                <button key={t.id} onClick={() => setActiveTab(t.id as any)} className={cn("pb-4 font-bold text-sm tracking-wide transition-all relative px-1 hover:text-slate-900", isActive ? "text-teal-600" : "text-slate-500")}>
+                  <span className="uppercase text-[11px] tracking-[0.1em] font-black">{t.label}</span>
+                  {isActive && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-teal-600 rounded-t-full shadow-[0_0_12px_rgba(20,184,166,0.6)]" />}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="flex-1 w-full lg:max-w-md pb-3">
             <div className="relative group/search">
-               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within/search:text-teal-600 transition-colors" />
-               <input placeholder="Search records..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-semibold focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 outline-none transition-all shadow-xs" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within/search:text-teal-600 transition-colors" />
+              <input placeholder="Search records..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-semibold focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 outline-none transition-all shadow-xs" />
             </div>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-6 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex items-center gap-4">
-               <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-950 p-1 rounded-md border border-slate-200 dark:border-slate-800 h-9">
-                  {[
-                    { id: 'my', label: 'My Work' },
-                    { id: 'team', label: 'Teams' },
-                    { id: 'upcoming', label: 'Upcoming' },
-                  ].map(f => (
-                    <button 
-                      key={f.id} 
-                      onClick={() => setActiveFilter(f.id as any)}
-                      className={cn(
-                        "px-4 h-7 text-[10px] font-black uppercase tracking-widest rounded transition-all",
-                        activeFilter === f.id ? "bg-white text-teal-600 shadow-xs border border-slate-200 dark:bg-slate-900 dark:border-slate-800" : "text-slate-500 hover:text-slate-800"
-                      )}
-                    >
-                      {f.label}
-                    </button>
-                  ))}
-               </div>
-               <div className="h-6 w-[1px] bg-slate-200 dark:bg-slate-800 mx-2" />
-               <div className="flex items-center gap-2">
-                 {[
-                   { id: 'all', label: 'All Stages' },
-                   { id: 'open', label: 'To Do' },
-                   { id: 'in-progress', label: 'In Progress' },
-                   { id: 'completed', label: 'Completed' },
-                 ].map(s => (
-                   <button 
-                     key={s.id} 
-                     onClick={() => setStatusFilter(s.id as any)}
-                     className={cn(
-                       "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border",
-                       statusFilter === s.id ? "bg-teal-600 border-teal-600 text-white shadow-sm" : "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-500 hover:border-teal-500 hover:text-teal-600"
-                     )}
-                   >
-                     {s.label}
-                   </button>
-                 ))}
-               </div>
+            <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-950 p-1 rounded-md border border-slate-200 dark:border-slate-800 h-9">
+              {[
+                { id: 'my', label: 'My Work' },
+                { id: 'team', label: 'Teams' },
+                { id: 'upcoming', label: 'Upcoming' },
+              ].map(f => (
+                <button
+                  key={f.id}
+                  onClick={() => setActiveFilter(f.id as any)}
+                  className={cn(
+                    "px-4 h-7 text-[10px] font-black uppercase tracking-widest rounded transition-all",
+                    activeFilter === f.id ? "bg-white text-teal-600 shadow-xs border border-slate-200 dark:bg-slate-900 dark:border-slate-800" : "text-slate-500 hover:text-slate-800"
+                  )}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+            <div className="h-6 w-[1px] bg-slate-200 dark:bg-slate-800 mx-2" />
+            <div className="flex items-center gap-2">
+              {[
+                { id: 'all', label: 'All Stages' },
+                { id: 'open', label: 'To Do' },
+                { id: 'in-progress', label: 'In Progress' },
+                { id: 'completed', label: 'Completed' },
+              ].map(s => (
+                <button
+                  key={s.id}
+                  onClick={() => setStatusFilter(s.id as any)}
+                  className={cn(
+                    "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border",
+                    statusFilter === s.id ? "bg-teal-600 border-teal-600 text-white shadow-sm" : "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-500 hover:border-teal-500 hover:text-teal-600"
+                  )}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="flex items-center gap-2">
-             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{filteredTasks.length} RECORDS FOUND</span>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{filteredTasks.length} RECORDS FOUND</span>
           </div>
         </div>
 
@@ -378,9 +377,9 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
           <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 rounded-md p-3 animate-fade-in shadow-sm flex items-center justify-between">
             <span className="text-sm font-bold text-teal-700 dark:text-teal-400 uppercase tracking-widest">{selectedTaskIds.size} SELECTED</span>
             <div className="flex items-center gap-2">
-                <button onClick={() => { Array.from(selectedTaskIds).forEach(id => updateItem(id, { status: 'completed' })); setSelectedTaskIds(new Set()); }} className="h-8 px-4 text-[10px] font-black uppercase tracking-widest bg-white border border-slate-200 rounded-md hover:bg-slate-50">Complete</button>
-                <button onClick={() => { Array.from(selectedTaskIds).forEach(id => deleteItem(id)); setSelectedTaskIds(new Set()); }} className="h-8 px-4 text-[10px] font-black uppercase tracking-widest bg-red-600 text-white rounded-md hover:bg-red-700">Delete Items</button>
-                <button onClick={() => setSelectedTaskIds(new Set())} className="h-8 px-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600">Cancel</button>
+              <button onClick={() => { Array.from(selectedTaskIds).forEach(id => updateItem(id, { status: 'completed' })); setSelectedTaskIds(new Set()); }} className="h-8 px-4 text-[10px] font-black uppercase tracking-widest bg-white border border-slate-200 rounded-md hover:bg-slate-50">Complete</button>
+              <button onClick={() => { Array.from(selectedTaskIds).forEach(id => deleteItem(id)); setSelectedTaskIds(new Set()); }} className="h-8 px-4 text-[10px] font-black uppercase tracking-widest bg-red-600 text-white rounded-md hover:bg-red-700">Delete Items</button>
+              <button onClick={() => setSelectedTaskIds(new Set())} className="h-8 px-4 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600">Cancel</button>
             </div>
           </div>
         )}
@@ -388,12 +387,12 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
         <div className="min-h-[500px]">
           {filteredTasks.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-40 px-8 text-center max-w-2xl mx-auto">
-               <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 uppercase tracking-[0.1em]">No Results Found</h3>
-               <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-10 font-medium leading-relaxed">Try adjusting filters to expand your search context.</p>
-               <div className="flex items-center gap-4">
-                  <Button variant="ghost" onClick={() => { setSearch(""); setStatusFilter("all"); setActiveFilter("my"); }} className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-slate-900">Reset Workspace</Button>
-                  <Button onClick={() => setShowAddModal(true)} className="rounded-xl h-11 px-8 bg-teal-600 hover:bg-teal-700 text-xs font-black uppercase tracking-widest">Create Task</Button>
-               </div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 uppercase tracking-[0.1em]">No Results Found</h3>
+              <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-10 font-medium leading-relaxed">Try adjusting filters to expand your search context.</p>
+              <div className="flex items-center gap-4">
+                <Button variant="ghost" onClick={() => { setSearch(""); setStatusFilter("all"); setActiveFilter("my"); }} className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-slate-900">Reset Workspace</Button>
+                <Button onClick={() => setShowAddModal(true)} className="rounded-xl h-11 px-8 bg-teal-600 hover:bg-teal-700 text-xs font-black uppercase tracking-widest">Create Task</Button>
+              </div>
             </div>
           ) : activeTab === 'list' ? (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={(e) => setActiveDragId(String(e.active.id))} onDragEnd={handleDragEnd}>
@@ -402,7 +401,7 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
                   const groupTasks = tasksByStatus[status] || []
                   if (groupTasks.length === 0 && statusFilter !== 'all') return null
                   if (statusFilter !== 'all' && statusFilter !== status) return null
-                  
+
                   const s = getStatusStyles(status)
                   return (
                     <div key={status} className="space-y-4">
@@ -412,7 +411,7 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
                       )}>
                         <div className="flex items-center gap-3">
                           <div className={cn("p-1.5 rounded-lg bg-white/80 dark:bg-slate-900/80 shadow-sm border", s.border)}>
-                             <s.icon className={cn("w-3.5 h-3.5", s.color)} />
+                            <s.icon className={cn("w-3.5 h-3.5", s.color)} />
                           </div>
                           <span className={cn("text-[10px] font-black uppercase tracking-[0.2em]", s.color)}>
                             {s.label}
@@ -421,9 +420,9 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
                             {groupTasks.length} Records
                           </span>
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className={cn("h-8 w-8 rounded-lg hover:bg-white/80 dark:hover:bg-slate-900/80", s.color)}
                           onClick={() => setShowAddModal(true)}
                         >
@@ -470,7 +469,7 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
             </DndContext>
           ) : (
             <div className="animate-in fade-in duration-500">
-               <KanbanBoard tasks={filteredTasks} onUpdate={updateItem} onEdit={setEditingTask} tagsMap={taskTagsMap} onAddTask={() => setShowAddModal(true)} />
+              <KanbanBoard tasks={filteredTasks} onUpdate={updateItem} onEdit={setEditingTask} tagsMap={taskTagsMap} onAddTask={() => setShowAddModal(true)} />
             </div>
           )}
         </div>

@@ -343,6 +343,136 @@ export async function returnShippedOrderStock(
 }
 
 /**
+ * Atomically cancels an order and reverses stock changes based on order state.
+ * - If stockReserved: releases reservation (type: 'release')
+ * - If stockDeducted: returns physical stock (type: 'return')
+ * - If neither: no inventory changes (type: 'none')
+ */
+export async function cancelOrderWithStockReversal(
+  order: SalesOrder,
+  ctx: CRMContextValue,
+  userId: string,
+  userName: string
+): Promise<{ itemsReversed: number; type: 'release' | 'return' | 'none' }> {
+  // Determine reversal type based on order state
+  const reversalType = order.stockDeducted
+    ? 'return'
+    : order.stockReserved
+      ? 'release'
+      : 'none'
+
+  if (reversalType === 'none') {
+    return { itemsReversed: 0, type: 'none' }
+  }
+
+  const inventory = ctx.getResource<InventoryItem>('inventory').data
+  let itemsReversed = 0
+
+  for (const lineItem of order.items) {
+    if (!lineItem.inventoryItemId) continue
+
+    const invItem = inventory.find(i => i.id === lineItem.inventoryItemId)
+    if (!invItem) continue
+
+    if (reversalType === 'release') {
+      // CASE 1: Release reservation (pending order)
+      const currentReserved = invItem.reservedQuantity || 0
+      const newReserved = Math.max(0, currentReserved - lineItem.quantity)
+
+      await ctx.runAtomicUpdate([{
+        resource: 'inventory',
+        action: 'update',
+        id: invItem.id,
+        patch: {
+          reservedQuantity: newReserved,
+          stockLevel: recalculateStockLevel(invItem.stockQuantity, newReserved, invItem.reorderThreshold)
+        }
+      }])
+
+      // Create release transaction
+      const auditAdapter: OrderAuditAdapter = {
+        getInventoryTransactions: () => ctx.getResource<InventoryTransaction>('inventory_transactions').data,
+        insertInventoryTransaction: async (tx) => {
+          const { insertRows } = await import('../lib/CRMContext')
+          return insertRows<InventoryTransaction>(ctx, 'inventory_transactions', [tx as any]).then(rows => rows[0])
+        }
+      }
+
+      await createReleaseTransaction({
+        inventoryItemId: invItem.id,
+        inventoryItemName: invItem.name,
+        reservedChange: -lineItem.quantity,
+        reservedBefore: currentReserved,
+        reservedAfter: newReserved,
+        referenceId: order.id,
+        referenceNumber: order.orderNumber,
+        reason: `Order cancelled — reservation released`,
+        userId,
+        userName
+      }, auditAdapter as any)
+
+    } else if (reversalType === 'return') {
+      // CASE 2: Return physical stock (shipped order)
+      const newPhysical = invItem.stockQuantity + lineItem.quantity
+
+      await ctx.runAtomicUpdate([{
+        resource: 'inventory',
+        action: 'update',
+        id: invItem.id,
+        patch: {
+          stockQuantity: newPhysical,
+          stockLevel: recalculateStockLevel(
+            newPhysical,
+            invItem.reservedQuantity ?? 0,
+            invItem.reorderThreshold
+          )
+        }
+      }])
+
+      // Create return transaction
+      const auditAdapter: OrderAuditAdapter = {
+        getInventoryTransactions: () => ctx.getResource<InventoryTransaction>('inventory_transactions').data,
+        insertInventoryTransaction: async (tx) => {
+          const { insertRows } = await import('../lib/CRMContext')
+          return insertRows<InventoryTransaction>(ctx, 'inventory_transactions', [tx as any]).then(rows => rows[0])
+        }
+      }
+
+      await createReturnTransaction({
+        inventoryItemId: invItem.id,
+        inventoryItemName: invItem.name,
+        quantityBefore: invItem.stockQuantity,
+        quantityAfter: newPhysical,
+        quantityChange: lineItem.quantity,
+        reservedBefore: invItem.reservedQuantity ?? 0,
+        reservedAfter: invItem.reservedQuantity ?? 0,
+        referenceId: order.id,
+        referenceNumber: order.orderNumber,
+        reason: `Stock return from cancelled order ${order.orderNumber}`,
+        userId,
+        userName
+      }, auditAdapter as any)
+    }
+
+    itemsReversed++
+  }
+
+  // Update order status and flags atomically
+  const orderPatch = reversalType === 'return'
+    ? { status: 'cancelled', stockDeducted: false }
+    : { status: 'cancelled', stockReserved: false }
+
+  await ctx.runAtomicUpdate([{
+    resource: 'orders',
+    action: 'update',
+    id: order.id,
+    patch: orderPatch
+  }])
+
+  return { itemsReversed, type: reversalType }
+}
+
+/**
  * Sends a shipping notification email stub.
  */
 export function sendShippingNotification(order: SalesOrder) {

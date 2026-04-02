@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
   Dialog,
+  DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -11,7 +13,7 @@ import type { Lead, ContactSource, DealStage } from "@/lib/types"
 import { SOURCE_LABELS, STAGE_LABELS } from "@/lib/types"
 import { formatCurrency } from "@/lib/helpers"
 import { leadsApi } from "@/lib/api"
-import { Check } from "lucide-react"
+import { Check, UserPlus } from "lucide-react"
 import { DatePicker } from "@/components/ui/date-picker"
 
 interface ConvertLeadModalProps {
@@ -53,7 +55,7 @@ export function ConvertLeadModal({ open, onOpenChange, lead, onConverted }: Conv
           value: Number(dealValue),
         } : undefined,
       })
-      
+
       if (response.success && response.data?.contact?.id) {
         onOpenChange(false)
         onConverted(response.data.contact.id)
@@ -65,123 +67,137 @@ export function ConvertLeadModal({ open, onOpenChange, lead, onConverted }: Conv
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <div className="bg-[var(--bg-surface)] border-[var(--border)] rounded-none shadow-none text-[var(--text-primary)] font-mono sm:max-w-[560px]">
-        <DialogHeader>
-          <DialogTitle className="text-[14px] font-serif font-normal">Convert Lead</DialogTitle>
-        </DialogHeader>
-        
-        <div className="px-6 pb-6 space-y-6">
-          {/* Section 1: Contact */}
-          <div className="space-y-4">
-            <h3 className="text-[11px] uppercase tracking-[0.12em] text-[var(--text-muted)] border-b border-[var(--border)] pb-2">Create Contact</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label htmlFor="conv-name" className="text-[11px] uppercase tracking-widest text-[var(--text-muted)]">Name</Label>
-                <Input id="conv-name" value={name} onChange={(e) => setName(e.target.value)} className="rounded-none border-[var(--border)] focus-visible:border-[var(--accent)] focus-visible:ring-0 shadow-none h-9 bg-[var(--bg-elevated)]" />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="conv-email" className="text-[11px] uppercase tracking-widest text-[var(--text-muted)]">Email</Label>
-                <Input id="conv-email" value={email} onChange={(e) => setEmail(e.target.value)} className="rounded-none border-[var(--border)] focus-visible:border-[var(--accent)] focus-visible:ring-0 shadow-none h-9 bg-[var(--bg-elevated)]" />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="conv-phone" className="text-[11px] uppercase tracking-widest text-[var(--text-muted)]">Phone</Label>
-                <Input id="conv-phone" value={phone} onChange={(e) => setPhone(e.target.value)} className="rounded-none border-[var(--border)] focus-visible:border-[var(--accent)] focus-visible:ring-0 shadow-none h-9 bg-[var(--bg-elevated)]" />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="conv-company" className="text-[11px] uppercase tracking-widest text-[var(--text-muted)]">Company</Label>
-                <Input id="conv-company" value={company} onChange={(e) => setCompany(e.target.value)} className="rounded-none border-[var(--border)] focus-visible:border-[var(--accent)] focus-visible:ring-0 shadow-none h-9 bg-[var(--bg-elevated)]" />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="conv-source" className="text-[11px] uppercase tracking-widest text-[var(--text-muted)]">Source</Label>
-              <select
-                id="conv-source"
-                value={source}
-                onChange={(e) => setSource(e.target.value as ContactSource)}
-                className="flex h-9 w-full rounded-none border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-1 text-[13px] text-[var(--text-primary)] shadow-none focus-visible:outline-none focus-visible:border-[var(--accent)] transition-colors"
-              >
-                {(Object.entries(SOURCE_LABELS) as [ContactSource, string][]).map(([val, label]) => (
-                  <option key={val} value={val}>{label}</option>
-                ))}
-              </select>
-            </div>
+      <DialogContent className="sm:max-w-[560px] rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 shadow-xl">
+        <div className="flex flex-col gap-6">
+          {/* Icon Section */}
+          <div className="w-10 h-10 rounded-full bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center">
+            <UserPlus className="w-5 h-5 text-teal-600 dark:text-teal-400" />
           </div>
 
-          {/* Section 2: Deal */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-[var(--border)] pb-2">
-              <h3 className="text-[11px] uppercase tracking-[0.12em] text-[var(--text-muted)]">Create Deal (optional)</h3>
-              <button
-                type="button"
-                onClick={() => setCreateDeal(!createDeal)}
-                className={`w-10 h-5 rounded-full relative transition-colors ${createDeal ? "bg-[var(--accent)]" : "bg-[var(--bg-elevated)] border border-[var(--border)]"}`}
-              >
-                <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${createDeal ? "left-[22px]" : "left-0.5"}`} />
-              </button>
-            </div>
-            {createDeal && (
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <Label htmlFor="conv-deal-title" className="text-[11px] uppercase tracking-widest text-[var(--text-muted)]">Deal Title</Label>
-                  <Input id="conv-deal-title" value={dealTitle} onChange={(e) => setDealTitle(e.target.value)} className="rounded-none border-[var(--border)] focus-visible:border-[var(--accent)] focus-visible:ring-0 shadow-none h-9 bg-[var(--bg-elevated)]" />
+          {/* Text Section */}
+          <DialogHeader className="p-0 text-left space-y-2">
+            <DialogTitle className="text-lg font-semibold text-slate-900 dark:text-white">
+              Convert Lead
+            </DialogTitle>
+            <DialogDescription className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+              Convert this lead into a contact and optionally create a deal.
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Form Content */}
+          <div className="space-y-6">
+            {/* Section 1: Contact */}
+            <div className="space-y-4">
+              <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 border-b border-slate-200 dark:border-slate-800 pb-2">Create Contact</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="conv-name" className="text-xs font-bold text-slate-700 dark:text-slate-300">Name</Label>
+                  <Input id="conv-name" value={name} onChange={(e) => setName(e.target.value)} className="h-11 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600" />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Label htmlFor="conv-deal-value" className="text-[11px] uppercase tracking-widest text-[var(--text-muted)]">Value ($)</Label>
-                    <Input id="conv-deal-value" type="number" min="0" value={dealValue} onChange={(e) => setDealValue(e.target.value)} placeholder="10000" className="rounded-none border-[var(--border)] focus-visible:border-[var(--accent)] focus-visible:ring-0 shadow-none h-9 bg-[var(--bg-elevated)]" />
+                <div className="space-y-2">
+                  <Label htmlFor="conv-email" className="text-xs font-bold text-slate-700 dark:text-slate-300">Email</Label>
+                  <Input id="conv-email" value={email} onChange={(e) => setEmail(e.target.value)} className="h-11 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="conv-phone" className="text-xs font-bold text-slate-700 dark:text-slate-300">Phone</Label>
+                  <Input id="conv-phone" value={phone} onChange={(e) => setPhone(e.target.value)} className="h-11 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="conv-company" className="text-xs font-bold text-slate-700 dark:text-slate-300">Company</Label>
+                  <Input id="conv-company" value={company} onChange={(e) => setCompany(e.target.value)} className="h-11 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="conv-source" className="text-xs font-bold text-slate-700 dark:text-slate-300">Source</Label>
+                <select
+                  id="conv-source"
+                  value={source}
+                  onChange={(e) => setSource(e.target.value as ContactSource)}
+                  className="flex h-11 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 transition-colors"
+                >
+                  {(Object.entries(SOURCE_LABELS) as [ContactSource, string][]).map(([val, label]) => (
+                    <option key={val} value={val}>{label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Section 2: Deal */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+                <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Create Deal (optional)</h3>
+                <button
+                  type="button"
+                  onClick={() => setCreateDeal(!createDeal)}
+                  className={`w-11 h-6 rounded-full relative transition-colors ${createDeal ? "bg-teal-600" : "bg-slate-200 dark:bg-slate-700"}`}
+                >
+                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform shadow-sm ${createDeal ? "left-[26px]" : "left-1"}`} />
+                </button>
+              </div>
+              {createDeal && (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="conv-deal-title" className="text-xs font-bold text-slate-700 dark:text-slate-300">Deal Title</Label>
+                    <Input id="conv-deal-title" value={dealTitle} onChange={(e) => setDealTitle(e.target.value)} className="h-11 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600" />
                   </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="conv-deal-stage" className="text-[11px] uppercase tracking-widest text-[var(--text-muted)]">Stage</Label>
-                    <select
-                      id="conv-deal-stage"
-                      value={dealStage}
-                      onChange={(e) => setDealStage(e.target.value as DealStage)}
-                      className="flex h-9 w-full rounded-none border border-[var(--border)] bg-[var(--bg-elevated)] px-3 py-1 text-[13px] text-[var(--text-primary)] shadow-none focus-visible:outline-none focus-visible:border-[var(--accent)] transition-colors"
-                    >
-                      {(Object.entries(STAGE_LABELS) as [DealStage, string][]).map(([val, label]) => (
-                        <option key={val} value={val}>{label}</option>
-                      ))}
-                    </select>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="conv-deal-value" className="text-xs font-bold text-slate-700 dark:text-slate-300">Value ($)</Label>
+                      <Input id="conv-deal-value" type="number" min="0" value={dealValue} onChange={(e) => setDealValue(e.target.value)} placeholder="10000" className="h-11 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="conv-deal-stage" className="text-xs font-bold text-slate-700 dark:text-slate-300">Stage</Label>
+                      <select
+                        id="conv-deal-stage"
+                        value={dealStage}
+                        onChange={(e) => setDealStage(e.target.value as DealStage)}
+                        className="flex h-11 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3 py-2 text-sm focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 transition-colors"
+                      >
+                        {(Object.entries(STAGE_LABELS) as [DealStage, string][]).map(([val, label]) => (
+                          <option key={val} value={val}>{label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="conv-deal-close" className="text-xs font-bold text-slate-700 dark:text-slate-300">Expected Close Date</Label>
+                    <DatePicker
+                      value={dealCloseDate}
+                      onChange={setDealCloseDate}
+                      className="h-11 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950"
+                    />
                   </div>
                 </div>
-                <div className="space-y-1">
-                  <Label htmlFor="conv-deal-close" className="text-[11px] uppercase tracking-widest text-[var(--text-muted)]">Expected Close Date</Label>
-                  <DatePicker 
-                    value={dealCloseDate} 
-                    onChange={setDealCloseDate} 
-                    className="h-12 py-3 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900" 
-                  />
+              )}
+            </div>
+
+            {/* Section 3: Summary */}
+            <div className="border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl space-y-2">
+              <div className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-3">Conversion Summary</div>
+              <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                Converting <strong>{lead.name}</strong> will:
+              </div>
+              <div className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-400">
+                <Check className="w-3.5 h-3.5" /> Create a contact record
+              </div>
+              {createDeal && dealValue && (
+                <div className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-400">
+                  <Check className="w-3.5 h-3.5" /> Create a deal for {formatCurrency(Number(dealValue))}
                 </div>
+              )}
+              <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                <Check className="w-3.5 h-3.5" /> Mark this lead as converted (read-only)
               </div>
-            )}
-          </div>
-
-          {/* Section 3: Summary */}
-          <div className="border border-[var(--border)] bg-[var(--bg-elevated)] p-4 space-y-2">
-            <div className="text-[11px] uppercase tracking-[0.12em] text-[var(--text-muted)] mb-3">Conversion Summary</div>
-            <div className="text-[13px] text-[var(--text-primary)] leading-relaxed">
-              Converting <strong>{lead.name}</strong> will:
-            </div>
-            <div className="flex items-center gap-2 text-[13px] text-[var(--green)]">
-              <Check className="w-3.5 h-3.5" /> Create a contact record
-            </div>
-            {createDeal && dealValue && (
-              <div className="flex items-center gap-2 text-[13px] text-[var(--green)]">
-                <Check className="w-3.5 h-3.5" /> Create a deal for {formatCurrency(Number(dealValue))}
-              </div>
-            )}
-            <div className="flex items-center gap-2 text-[13px] text-[var(--text-muted)]">
-              <Check className="w-3.5 h-3.5" /> Mark this lead as converted (read-only)
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-3">
+          {/* Actions Section */}
+          <div className="flex gap-3 pt-2">
             <Button
               type="button"
-              variant="outlineNeutral"
+              variant="ghost"
               onClick={() => onOpenChange(false)}
-              className="flex-1"
+              className="h-10 px-5 rounded-full text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               Cancel
             </Button>
@@ -189,13 +205,13 @@ export function ConvertLeadModal({ open, onOpenChange, lead, onConverted }: Conv
               type="button"
               variant="default"
               onClick={handleConvert}
-              className="flex-1"
+              className="h-10 px-5 rounded-full text-sm font-semibold bg-teal-700 hover:bg-teal-800 text-white shadow-md transition-all"
             >
               Convert
             </Button>
           </div>
         </div>
-      </div>
+      </DialogContent>
     </Dialog>
   )
 }

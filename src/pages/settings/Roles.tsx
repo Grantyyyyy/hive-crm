@@ -1,20 +1,47 @@
-import { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useUser } from '@clerk/clerk-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { rolesApi, type Role, type Permission } from '@/lib/api';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useCRMContext } from '@/lib/CRMContext';
+import {
+  fetchRoles,
+  fetchPermissions,
+  createRole,
+  updateRole,
+  deleteRole,
+  type Role,
+} from '@/lib/settingsService';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Shield, PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
+import { 
+  Shield, 
+  PlusCircle, 
+  Edit, 
+  Trash2, 
+  Loader2, 
+  Search, 
+  Lock, 
+  ChevronRight,
+  Settings
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PageSkeleton } from "@/components/ui/page-skeleton";
+import { toast } from 'sonner';
+import { DeleteModal } from "@/components/ui/delete-modal";
+
+// ── Main Page ─────────────────────────────────────────────────────────────────
 
 export function Roles() {
-  const { user } = useUser();
+  const { user, isLoaded: userLoaded } = useUser();
+  const { getClient, userId } = useCRMContext();
   const queryClient = useQueryClient();
+
+  // State
+  const [search, setSearch] = useState("");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
@@ -25,11 +52,17 @@ export function Roles() {
     permissionIds: [] as string[],
   });
 
+  // Delete Modal State
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
+
+  // Queries
   const { data: rolesData, isLoading: rolesLoading, error: rolesError } = useQuery({
     queryKey: ['roles'],
     queryFn: async () => {
-      const response = await rolesApi.list();
-      return response.data as Role[];
+      const client = await getClient();
+      if (!client) throw new Error('Not authenticated');
+      return fetchRoles(client);
     },
     enabled: !!user,
   });
@@ -37,39 +70,59 @@ export function Roles() {
   const { data: permissionsData } = useQuery({
     queryKey: ['permissions'],
     queryFn: async () => {
-      const response = await rolesApi.permissions();
-      return response.data as Record<string, Permission[]>;
+      const client = await getClient();
+      if (!client) throw new Error('Not authenticated');
+      return fetchPermissions(client);
     },
     enabled: !!user,
   });
 
+  // Mutations
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      return rolesApi.create(data);
+      const client = await getClient();
+      if (!client) throw new Error('Not authenticated');
+      return createRole(client, data, userId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
+      toast.success('Role created successfully');
       resetForm();
     },
+    onError: (error) => {
+      toast.error('Failed to create role', { description: error.message });
+    }
   });
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
-      return rolesApi.update(id, data);
+      const client = await getClient();
+      if (!client) throw new Error('Not authenticated');
+      return updateRole(client, id, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
+      toast.success('Role updated successfully');
       resetForm();
     },
+    onError: (error) => {
+      toast.error('Failed to update role', { description: error.message });
+    }
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      return rolesApi.delete(id);
+      const client = await getClient();
+      if (!client) throw new Error('Not authenticated');
+      return deleteRole(client, id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
+      toast.success('Role deleted');
     },
+    onError: (error) => {
+      toast.error('Failed to delete role', { description: error.message });
+    }
   });
 
   const resetForm = () => {
@@ -114,29 +167,40 @@ export function Roles() {
   };
 
   const handleDelete = (role: Role) => {
-    if (window.confirm(`Are you sure you want to delete the role "${role.name}"?`)) {
-      deleteMutation.mutate(role.id);
+    setRoleToDelete(role);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteRole = () => {
+    if (roleToDelete) {
+      deleteMutation.mutate(roleToDelete.id, {
+        onSuccess: () => {
+          setShowDeleteModal(false);
+          setRoleToDelete(null);
+        }
+      });
     }
   };
 
-  const getRoleColor = (color: string) => {
-    return { backgroundColor: color };
-  };
-
-  if (rolesLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-      </div>
+  // Filter Logic
+  const filteredRoles = useMemo(() => {
+    if (!rolesData) return [];
+    return rolesData.filter(role => 
+      role.name.toLowerCase().includes(search.toLowerCase()) ||
+      role.description?.toLowerCase().includes(search.toLowerCase())
     );
+  }, [rolesData, search]);
+
+  if (!userLoaded || rolesLoading) {
+    return <PageSkeleton />;
   }
 
   if (rolesError) {
     return (
-      <div className="p-6">
-        <Card className="border-red-200 bg-red-50">
+      <div className="p-6 md:p-8">
+        <Card className="border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-900">
           <CardContent className="pt-6">
-            <p className="text-red-600">Error loading roles: {(rolesError as Error).message}</p>
+            <p className="text-red-600 dark:text-red-400 font-medium">Error loading roles: {(rolesError as Error).message}</p>
           </CardContent>
         </Card>
       </div>
@@ -144,46 +208,73 @@ export function Roles() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Roles</h1>
-          <p className="text-sm text-slate-500 mt-1">Manage roles and their permissions</p>
+    <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen font-sans">
+      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
+        
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-slate-500 mb-1">Access Control</p>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Roles & Permissions</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">Define roles and granular permissions to control user access across modules.</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="default"
+              onClick={() => setShowCreateDialog(true)}
+              className="shadow-md shadow-indigo-100 dark:shadow-none"
+            >
+              <PlusCircle className="w-4 h-4 mr-2" /> Create Role
+            </Button>
+          </div>
         </div>
-        <Button className="bg-indigo-600 hover:bg-indigo-700" onClick={() => setShowCreateDialog(true)}>
-          <PlusCircle className="w-4 h-4" />
-          Create Role
-        </Button>
-      </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {rolesData?.map((role) => (
-          <Card key={role.id} className="relative">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-lg flex items-center justify-center"
-                    style={getRoleColor(role.color)}
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+          <input
+            placeholder="Search by role name or description..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-slate-400 outline-none transition-all"
+          />
+        </div>
+
+        {/* Grid */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {filteredRoles.map((role) => (
+            <div 
+              key={role.id} 
+              className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 dark:hover:shadow-indigo-500/5 transition-all duration-300"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-4">
+                  <div 
+                    className="size-12 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform duration-300"
+                    style={{ backgroundColor: role.color, color: '#fff' }}
                   >
-                    <Shield className="w-5 h-5 text-white" />
+                    <Shield className="w-6 h-6" />
                   </div>
                   <div>
-                    <CardTitle className="text-base">{role.name}</CardTitle>
-                    {role.isSystem && (
-                      <Badge variant="outline" className="text-xs mt-1">System</Badge>
-                    )}
+                    <h3 className="font-bold text-slate-900 dark:text-white text-lg flex items-center gap-2">
+                       {role.name}
+                       {role.isSystem && (
+                         <Badge variant="secondary" className="text-[9px] uppercase tracking-tighter bg-slate-100 dark:bg-slate-800 text-slate-500 border-none">System</Badge>
+                       )}
+                    </h3>
+                    <p className="text-xs text-slate-400 font-medium">{role._count?.users || 0} users assigned</p>
                   </div>
                 </div>
+
                 {!role.isSystem && (
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(role)}>
-                      <Edit className="w-4 h-4" />
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => handleEdit(role)}>
+                      <Edit className="w-4 h-4 text-slate-400" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 rounded-lg text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20"
                       onClick={() => handleDelete(role)}
                       disabled={deleteMutation.isPending}
                     >
@@ -192,218 +283,215 @@ export function Roles() {
                   </div>
                 )}
               </div>
-            </CardHeader>
-            <CardContent>
+
               {role.description && (
-                <p className="text-sm text-slate-500 mb-3">{role.description}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 line-clamp-2 min-h-[40px]">
+                  {role.description}
+                </p>
               )}
-              <div className="flex flex-wrap gap-1 mb-3">
-                {role.permissions?.slice(0, 5).map((perm) => (
-                  <Badge key={perm.id} variant="secondary" className="text-xs">
-                    {perm.module}.{perm.action}
-                  </Badge>
-                ))}
-                {(role.permissions?.length || 0) > 5 && (
-                  <Badge variant="secondary" className="text-xs">
-                    +{(role.permissions?.length || 0) - 5} more
-                  </Badge>
-                )}
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between text-xs font-bold uppercase tracking-widest text-slate-400">
+                  <span>Permissions</span>
+                  <span>{role.permissions?.length || 0} Modules</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {role.permissions?.slice(0, 4).map((perm) => (
+                    <Badge key={perm.id} variant="outline" className="text-[10px] py-0.5 px-2 font-bold bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-800">
+                      {perm.module}.{perm.action}
+                    </Badge>
+                  ))}
+                  {(role.permissions?.length || 0) > 4 && (
+                    <Badge variant="outline" className="text-[10px] py-0.5 px-2 font-bold">
+                      +{(role.permissions?.length || 0) - 4} more
+                    </Badge>
+                  )}
+                  {(!role.permissions || role.permissions.length === 0) && (
+                    <span className="text-xs text-slate-400 italic">No permissions defined</span>
+                  )}
+                </div>
               </div>
-              <div className="text-sm text-slate-500">
-                {role._count?.users || 0} user(s) assigned
+
+              <div 
+                className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-indigo-600 dark:text-indigo-400 cursor-pointer group/link hover:text-indigo-700"
+                onClick={() => handleEdit(role)}
+              >
+                <span>{role.isSystem ? 'View Configuration' : 'Edit Capabilities'}</span>
+                <ChevronRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
               </div>
-            </CardContent>
-          </Card>
-        ))}
+            </div>
+          ))}
+        </div>
+
+        {filteredRoles.length === 0 && (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 py-20 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="size-16 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
+                <Lock className="w-8 h-8 text-slate-300" />
+              </div>
+              <div>
+                <p className="text-slate-900 dark:text-white font-bold text-lg">No roles found</p>
+                <p className="text-slate-500 text-sm mt-1">Try adjusting your search or create a new custom role.</p>
+              </div>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowCreateDialog(true)}
+                className="mt-4"
+              >
+                <PlusCircle className="w-4 h-4 mr-2" /> Create Your First Role
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {(!rolesData || rolesData.length === 0) && (
-        <Card>
-          <CardContent className="pt-6 text-center py-8">
-            <Shield className="w-12 h-12 mx-auto text-slate-300 mb-4" />
-            <p className="text-slate-500">No custom roles yet.</p>
-            <p className="text-sm text-slate-400 mt-1">Create a role to get started.</p>
-          </CardContent>
-        </Card>
-      )}
-
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent onClose={() => setShowCreateDialog(false)} className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Create New Role</DialogTitle>
+      {/* Create/Edit Dialog */}
+      <Dialog 
+        open={showCreateDialog || showEditDialog} 
+        onOpenChange={(v) => !v && resetForm()}
+      >
+        <DialogContent className="max-w-2xl rounded-3xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+          <DialogHeader className="p-8 pb-4">
+            <DialogTitle className="text-2xl font-bold">
+              {editingRole ? 'Update Role' : 'Define New Role'}
+            </DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit}>
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
+          
+          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-8 pb-8">
+            <div className="space-y-8">
+              {/* Basic Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Role Name</Label>
+                  <Label htmlFor="name" className="text-xs font-black uppercase tracking-wider text-slate-500">Role Identity</Label>
                   <Input
                     id="name"
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="e.g., Sales Rep"
+                    placeholder="e.g., Senior Analyst"
                     required
+                    className="h-12 rounded-xl"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="color">Color</Label>
+                  <Label htmlFor="color" className="text-xs font-black uppercase tracking-wider text-slate-500">Brand Color</Label>
                   <div className="flex gap-2">
-                    <input
-                      type="color"
-                      value={formData.color}
-                      onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
-                      className="w-10 h-10 rounded cursor-pointer"
-                    />
+                    <div 
+                      className="size-12 rounded-xl border-4 border-white dark:border-slate-800 shadow-sm overflow-hidden"
+                      style={{ backgroundColor: formData.color }}
+                    >
+                      <input
+                        type="color"
+                        value={formData.color}
+                        onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
+                        className="opacity-0 w-full h-full cursor-pointer"
+                      />
+                    </div>
                     <Input
                       value={formData.color}
                       onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
-                      className="flex-1"
+                      className="flex-1 h-12 rounded-xl font-mono uppercase"
                     />
                   </div>
                 </div>
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description" className="text-xs font-black uppercase tracking-wider text-slate-500">Functional Description</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Describe what this role is for..."
-                  rows={2}
+                  placeholder="Summarize the core responsibilities and access level for this role..."
+                  rows={3}
+                  className="rounded-xl resize-none"
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Permissions</Label>
-                <div className="space-y-4 max-h-64 overflow-y-auto border rounded-lg p-4">
+
+              {/* Permissions Grid */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-black uppercase tracking-wider text-slate-500">Granular Capabilities</Label>
+                  <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-900">
+                    {formData.permissionIds.length} SELECTED
+                  </span>
+                </div>
+                
+                <div className="space-y-6 border border-slate-100 dark:border-slate-800 rounded-3xl p-6 bg-slate-50/50 dark:bg-slate-900/30">
                   {Object.entries(permissionsData || {}).map(([module, permissions]) => (
-                    <div key={module}>
-                      <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 capitalize">
-                        {module}
+                    <div key={module} className="space-y-3">
+                      <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
+                        <Settings className="w-3 h-3" /> {module}
                       </h4>
                       <div className="grid grid-cols-2 gap-2">
                         {permissions.map((permission) => (
-                          <label
+                          <div
                             key={permission.id}
+                            onClick={() => togglePermission(permission.id)}
                             className={cn(
-                              "flex items-center gap-2 p-2 rounded border cursor-pointer transition-colors",
+                              "flex items-center justify-between p-3 rounded-2xl border cursor-pointer transition-all duration-200",
                               formData.permissionIds.includes(permission.id)
-                                ? "bg-indigo-50 border-indigo-200 dark:bg-indigo-900/20 dark:border-indigo-800"
-                                : "border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                ? "bg-white dark:bg-indigo-900/20 border-indigo-600 shadow-sm"
+                                : "bg-white/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 hover:border-slate-300"
                             )}
                           >
-                            <input
-                              type="checkbox"
-                              checked={formData.permissionIds.includes(permission.id)}
-                              onChange={() => togglePermission(permission.id)}
-                              className="rounded"
-                            />
-                            <span className="text-sm capitalize">{permission.action}</span>
-                          </label>
+                            <span className={cn(
+                              "text-xs font-bold capitalize",
+                              formData.permissionIds.includes(permission.id) ? "text-indigo-600 dark:text-indigo-400" : "text-slate-600 dark:text-slate-400"
+                            )}>
+                              {permission.action}
+                            </span>
+                            <div className={cn(
+                              "size-4 rounded-full border-2 transition-all flex items-center justify-center",
+                              formData.permissionIds.includes(permission.id) 
+                                ? "bg-indigo-600 border-indigo-600" 
+                                : "border-slate-300 dark:border-slate-700"
+                            )}>
+                              {formData.permissionIds.includes(permission.id) && <div className="size-1.5 rounded-full bg-white" />}
+                            </div>
+                          </div>
                         ))}
                       </div>
                     </div>
                   ))}
                 </div>
-                <p className="text-sm text-slate-500">{formData.permissionIds.length} permission(s) selected</p>
               </div>
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={resetForm}>Cancel</Button>
-              <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700" disabled={createMutation.isPending}>
-                {createMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating...</> : 'Create Role'}
-              </Button>
-            </DialogFooter>
           </form>
+
+          <DialogFooter className="p-8 pt-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 gap-3">
+            <Button type="button" variant="outlineNeutral" onClick={resetForm} className="h-12 rounded-2xl px-8 font-bold">
+              Dismiss
+            </Button>
+            <Button 
+              type="submit" 
+              onClick={handleSubmit}
+              className="h-12 rounded-2xl px-10 bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200 dark:shadow-none font-bold"
+              disabled={createMutation.isPending || updateMutation.isPending}
+            >
+              {(createMutation.isPending || updateMutation.isPending) ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Processing...</>
+              ) : (
+                editingRole ? 'Save Changes' : 'Establish Role'
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent onClose={() => setShowEditDialog(false)} className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Role</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit}>
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="editName">Role Name</Label>
-                  <Input
-                    id="editName"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="editColor">Color</Label>
-                  <div className="flex gap-2">
-                    <input
-                      type="color"
-                      value={formData.color}
-                      onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
-                      className="w-10 h-10 rounded cursor-pointer"
-                    />
-                    <Input
-                      value={formData.color}
-                      onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
-                      className="flex-1"
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="editDescription">Description</Label>
-                <Textarea
-                  id="editDescription"
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  rows={2}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Permissions</Label>
-                <div className="space-y-4 max-h-64 overflow-y-auto border rounded-lg p-4">
-                  {Object.entries(permissionsData || {}).map(([module, permissions]) => (
-                    <div key={module}>
-                      <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 capitalize">
-                        {module}
-                      </h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        {permissions.map((permission) => (
-                          <label
-                            key={permission.id}
-                            className={cn(
-                              "flex items-center gap-2 p-2 rounded border cursor-pointer transition-colors",
-                              formData.permissionIds.includes(permission.id)
-                                ? "bg-indigo-50 border-indigo-200 dark:bg-indigo-900/20 dark:border-indigo-800"
-                                : "border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
-                            )}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={formData.permissionIds.includes(permission.id)}
-                              onChange={() => togglePermission(permission.id)}
-                              className="rounded"
-                            />
-                            <span className="text-sm capitalize">{permission.action}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-sm text-slate-500">{formData.permissionIds.length} permission(s) selected</p>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={resetForm}>Cancel</Button>
-              <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700" disabled={updateMutation.isPending}>
-                {updateMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</> : 'Save Changes'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      {/* Delete Role Modal */}
+      <DeleteModal
+        open={showDeleteModal}
+        onOpenChange={setShowDeleteModal}
+        title="Delete Role"
+        description={
+          <>
+            Are you sure you want to delete the role <span className="font-semibold text-slate-900 dark:text-white">"{roleToDelete?.name}"</span>? 
+            This action cannot be undone and may affect users assigned to this role.
+          </>
+        }
+        onDelete={confirmDeleteRole}
+        loading={deleteMutation.isPending}
+      />
     </div>
   );
 }

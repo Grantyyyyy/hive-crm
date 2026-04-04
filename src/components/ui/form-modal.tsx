@@ -13,7 +13,7 @@ export interface FormModalProps {
   title: string
   description: string
   placeholder?: string
-  submitLabel?: string
+
   onSubmit: (value: string) => void
   icon?: React.ReactNode
   accentColor?: 'indigo' | 'blue' | 'slate'
@@ -25,7 +25,7 @@ export function FormModal({
   title,
   description,
   placeholder = "Enter your email...",
-  submitLabel = "Subscribe",
+
   onSubmit,
   icon,
   accentColor = 'indigo',

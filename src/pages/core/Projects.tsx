@@ -16,7 +16,7 @@ import { AddProjectModal } from "@/components/crmComponent/AddProjectModal"
 import { EditProjectModal } from "@/components/crmComponent/EditProjectModal"
 import { useCRMResource } from "@/lib/hooks"
 import { useUser } from "@clerk/clerk-react"
-import { PageSkeleton } from "@/components/ui/page-skeleton"
+import { ListSkeleton } from "@/components/ui/skeletons"
 import { DeleteModal } from "@/components/ui/delete-modal"
 
 export function Projects() {
@@ -68,7 +68,7 @@ export function Projects() {
   }
 
   if (!isLoaded) {
-    return <PageSkeleton />
+    return <ListSkeleton />
   }
 
   return (

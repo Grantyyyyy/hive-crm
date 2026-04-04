@@ -14,7 +14,7 @@ import { useLocation } from "wouter"
 import { cn } from "@/lib/utils"
 import type { Quote, QuoteStatus } from "@/lib/types"
 import { AddQuoteModal } from "@/components/crmComponent/AddQuoteModal"
-import { PageSkeleton } from "@/components/ui/page-skeleton"
+import { ListSkeleton } from "@/components/ui/skeletons"
 import { toast } from "sonner"
 import { sendQuoteEmail, acceptQuote, reserveStockForQuote } from "@/services/quoteService"
 import { useUser } from "@clerk/clerk-react"
@@ -58,7 +58,7 @@ export function Quotes() {
   const { user, isLoaded: userLoaded } = useUser()
 
   if (!userLoaded || !isLoaded) {
-    return <PageSkeleton />
+    return <ListSkeleton />
   }
 
   const handleCreateSuccess = (quote: Quote) => {
@@ -94,7 +94,7 @@ export function Quotes() {
   }
 
   if (!isLoaded) {
-    return <PageSkeleton />
+    return <ListSkeleton />
   }
 
   return (

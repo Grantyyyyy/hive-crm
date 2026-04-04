@@ -18,7 +18,7 @@ import { EditTaskModal } from "@/components/crmComponent/EditTaskModal"
 import { KanbanBoard } from "@/components/crmComponent/KanbanBoard"
 import { useCRMResource } from "@/lib/hooks"
 import { useUser } from "@clerk/clerk-react"
-import { PageSkeleton } from "@/components/ui/page-skeleton"
+import { ListSkeleton } from "@/components/ui/skeletons"
 import { DataTable, type Column } from "@/components/reusables/DataTable"
 import { getPriorityStyles, getStatusStyles, type TaskStatus } from "../../lib/task-utils"
 import { formatRelative } from "date-fns"
@@ -284,7 +284,7 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
     onViewToggle: () => setActiveTab(activeTab === 'list' ? 'kanban' : 'list'),
   })
 
-  if (!isLoaded) return <PageSkeleton />
+  if (!isLoaded) return <ListSkeleton />
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen font-sans">

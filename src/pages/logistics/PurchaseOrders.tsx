@@ -19,7 +19,7 @@ import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
 import { toast } from "sonner"
 import type { Quote, SalesOrder, InventoryItem, PurchaseRequest, Task } from "@/lib/types"
 import { useUser } from "@clerk/clerk-react"
-
+import { ListSkeleton } from "@/components/ui/skeletons"
 export function PurchaseOrders() {
   const { user, isLoaded: userLoaded } = useUser()
   const {
@@ -146,11 +146,7 @@ export function PurchaseOrders() {
   )
 
   if (!userLoaded || !isLoaded) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-r-transparent" />
-      </div>
-    )
+    return <ListSkeleton />
   }
 
   return (

@@ -20,7 +20,7 @@ import {
 import { ContactForm } from "@/components/crmComponent/ContactForm"
 import { useCRMResource } from "@/lib/hooks"
 import type { Contact, Activity, Deal } from "@/lib/types"
-import { PageSkeleton } from "@/components/ui/page-skeleton"
+import { ListSkeleton } from "@/components/ui/skeletons"
 import { exportToCSV, debounce, calculateRelationshipScore, getRelationshipLabel } from "@/lib/helpers"
 import { cn } from "@/lib/utils"
 
@@ -107,7 +107,7 @@ export function Contacts() {
   )
 
   if (!isLoaded) {
-    return <PageSkeleton />
+    return <ListSkeleton />
   }
 
   if (error) {

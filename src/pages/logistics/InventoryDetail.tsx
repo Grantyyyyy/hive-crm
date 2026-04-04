@@ -16,7 +16,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { PageSkeleton } from "@/components/ui/page-skeleton"
+import { DetailSkeleton } from "@/components/ui/skeletons"
 import { StockAdjustmentModal } from "@/components/ui/stock-adjustment-modal"
 import { useCRMResource } from "@/lib/hooks"
 import { useCRMContext } from "@/lib/CRMContext"
@@ -106,7 +106,7 @@ export function InventoryDetail() {
     toast.success("Stock Adjusted", { description: `${item.name}: ${item.stockQuantity} → ${newQuantity}` })
   }
 
-  if (!userLoaded || !isLoaded) return <PageSkeleton />
+  if (!userLoaded || !isLoaded) return <DetailSkeleton />
 
   if (!item) {
     return (

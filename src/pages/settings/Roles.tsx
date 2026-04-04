@@ -29,7 +29,7 @@ import {
   Settings
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { PageSkeleton } from "@/components/ui/page-skeleton";
+import { ListSkeleton } from "@/components/ui/skeletons";
 import { toast } from 'sonner';
 import { DeleteModal } from "@/components/ui/delete-modal";
 
@@ -192,7 +192,7 @@ export function Roles() {
   }, [rolesData, search]);
 
   if (!userLoaded || rolesLoading) {
-    return <PageSkeleton />;
+    return <ListSkeleton />;
   }
 
   if (rolesError) {

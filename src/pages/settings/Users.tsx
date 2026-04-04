@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { PageSkeleton } from "@/components/ui/page-skeleton";
+import { ListSkeleton } from "@/components/ui/skeletons";
 import { Pagination } from "@/components/ui/Pagination";
 import { DeleteModal } from "@/components/ui/delete-modal";
 
@@ -355,7 +355,7 @@ export function Users() {
   };
 
   if (!userLoaded || usersLoading) {
-    return <PageSkeleton />;
+    return <ListSkeleton />;
   }
 
   if (usersError) {

@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/sheet"
 import { LeadForm } from "@/components/crmComponent/LeadForm"
 import { useCRMResource } from "@/lib/hooks"
-import { PageSkeleton } from "@/components/ui/page-skeleton"
+import { ListSkeleton } from "@/components/ui/skeletons"
 import { DeleteModal } from "@/components/ui/delete-modal"
 import type { Lead, LeadStatus, LeadSource } from "@/lib/types"
 import { LEAD_STATUSES, LEAD_STATUS_LABELS } from "@/lib/types"
@@ -99,7 +99,7 @@ export function Leads() {
   )
 
   if (!isLoaded) {
-    return <PageSkeleton />
+    return <ListSkeleton />
   }
 
   function handleSaveLead(lead: Lead) {

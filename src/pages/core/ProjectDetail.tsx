@@ -16,7 +16,7 @@ import { isOverdue, priorityWeight } from "@/lib/helpers"
 import type { Task, Project } from "@/lib/types"
 import { useCRMResource } from "@/lib/hooks"
 import { useUser } from "@clerk/clerk-react"
-import { PageSkeleton } from "@/components/ui/page-skeleton"
+import { DetailSkeleton } from "@/components/ui/skeletons"
 import { TaskView } from "@/components/crmComponent/TaskView"
 import { AddTaskModal } from "@/components/crmComponent/AddTaskModal"
 
@@ -85,7 +85,7 @@ export function ProjectDetail() {
   }, [projectTasks])
 
   if (!isLoaded || !project) {
-    return <PageSkeleton />
+    return <DetailSkeleton />
   }
 
   return (

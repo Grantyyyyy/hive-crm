@@ -2,7 +2,7 @@ import { useState, useRef } from "react"
 import { useUser } from "@clerk/clerk-react"
 import { Camera, Save, Info } from "lucide-react"
 import { toast } from "sonner"
-import { PageSkeleton } from "@/components/ui/page-skeleton"
+import { DetailSkeleton } from "@/components/ui/skeletons"
 import { getUserInitials } from "@/lib/helpers"
 
 export function ProfilePage() {
@@ -60,7 +60,7 @@ export function ProfilePage() {
 
   const initials = getUserInitials(user)
 
-  if (!isLoaded) return <PageSkeleton />
+  if (!isLoaded) return <DetailSkeleton />
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen">

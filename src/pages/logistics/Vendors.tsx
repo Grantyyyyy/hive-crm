@@ -4,7 +4,6 @@ import {
   Search,
   PlusCircle,
   Download,
-  Loader2,
   MoreVertical,
   Building2,
   Mail,
@@ -27,6 +26,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { VendorForm } from "@/components/crmComponent/VendorForm"
+import { ListSkeleton } from "@/components/ui/skeletons"
 
 function VendorStatusDropdown({
   vendor,
@@ -181,12 +181,7 @@ export function Vendors() {
   }
 
   if (!isLoaded) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-8">
-        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin mb-4" />
-        <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 text-center">Initializing Directory...</h2>
-      </div>
-    )
+    return <ListSkeleton />
   }
 
   return (

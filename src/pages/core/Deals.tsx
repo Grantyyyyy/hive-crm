@@ -40,7 +40,7 @@ import { DealForm } from "@/components/crmComponent/DealForm"
 import { LostReasonModal } from "@/components/crmComponent/LostReasonModal"
 import { formatCurrency, getDealHealth } from "@/lib/helpers"
 import { useCRMResource } from "@/lib/hooks"
-import { PageSkeleton } from "@/components/ui/page-skeleton"
+import { ListSkeleton } from "@/components/ui/skeletons"
 import type { Deal, DealStage, Contact } from "@/lib/types"
 import { STAGE_LABELS, DEAL_STAGES } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -291,7 +291,7 @@ export function Deals() {
   }, [deals, updateItem])
 
   if (!isLoaded) {
-    return <PageSkeleton />
+    return <ListSkeleton />
   }
 
   function handleAddDeal(deal: Deal) {

@@ -1,6 +1,6 @@
 import { useMemo } from "react"
 import { useCRMResource } from "@/lib/hooks"
-import { PageSkeleton } from "@/components/ui/page-skeleton"
+import { DashboardSkeleton } from "@/components/ui/skeletons"
 import type { Task } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { isOverdue, getTasksDueSoon } from "@/lib/helpers"
@@ -89,7 +89,7 @@ export function Workload() {
   }, [tasks])
 
   if (!isLoaded) {
-    return <PageSkeleton />
+    return <DashboardSkeleton />
   }
 
   return (

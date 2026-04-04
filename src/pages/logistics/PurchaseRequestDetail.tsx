@@ -21,7 +21,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { PageSkeleton } from "@/components/ui/page-skeleton"
+import { DetailSkeleton } from "@/components/ui/skeletons"
 import { DeleteModal } from "@/components/ui/delete-modal"
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
@@ -337,7 +337,7 @@ export function PurchaseRequestDetail() {
 
   // ---------- render guards ----------
 
-  if (!isLoaded) return <PageSkeleton />
+  if (!isLoaded) return <DetailSkeleton />
 
   if (!request) {
     return (

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react"
-import { PageSkeleton } from "@/components/ui/page-skeleton"
+import { ListSkeleton } from "@/components/ui/skeletons"
 import { Link } from "wouter"
 import {
   Activity as ActivityIcon,
@@ -92,7 +92,7 @@ export function Activities() {
   }
 
   if (!userLoaded || !activitiesLoaded || !contactsLoaded) {
-    return <PageSkeleton />
+    return <ListSkeleton />
   }
 
   return (

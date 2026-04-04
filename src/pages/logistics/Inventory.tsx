@@ -13,6 +13,7 @@ import { AddInventorySheet } from "@/components/logisticsComponent/AddInventoryS
 import { useCRMResource } from "@/lib/hooks"
 import { cn } from "@/lib/utils"
 import type { InventoryItem, StockLevel, InventoryStatus } from "@/lib/types"
+import { ListSkeleton } from "@/components/ui/skeletons"
 
 export function Inventory() {
   const [, navigate] = useLocation()
@@ -57,11 +58,7 @@ export function Inventory() {
   )
 
   if (!isLoaded) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-r-transparent" />
-      </div>
-    )
+    return <ListSkeleton />
   }
 
   return (

@@ -20,7 +20,7 @@ import type { JobAdapter } from "@/services/types"
 import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
 import { toast } from "sonner"
 import type { Quote, SalesOrder, InventoryItem, PurchaseOrder, Task } from "@/lib/types"
-
+import { ListSkeleton } from "@/components/ui/skeletons"
 export function PurchaseRequests() {
   const {
     data: requests,
@@ -197,11 +197,7 @@ export function PurchaseRequests() {
   )
 
   if (!isLoaded) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-r-transparent" />
-      </div>
-    )
+    return <ListSkeleton />
   }
 
   return (

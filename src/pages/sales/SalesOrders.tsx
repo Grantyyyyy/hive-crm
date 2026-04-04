@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils"
 import type { SalesOrder, SalesOrderStatus } from "@/lib/types"
 import { AddSalesOrderModal } from "@/components/crmComponent/AddSalesOrderModal"
 import { InvoiceModal } from "@/components/crmComponent/InvoiceModal"
-import { PageSkeleton } from "@/components/ui/page-skeleton"
+import { ListSkeleton } from "@/components/ui/skeletons"
 import { toast } from "sonner"
 import {
   fulfillOrderStock,
@@ -181,7 +181,7 @@ export function SalesOrders() {
   const { user, isLoaded: userLoaded } = useUser()
 
   if (!userLoaded || !isLoaded) {
-    return <PageSkeleton />
+    return <ListSkeleton />
   }
 
   const handleCreateSuccess = (order: SalesOrder) => {
@@ -225,7 +225,7 @@ export function SalesOrders() {
   }
 
   if (!isLoaded) {
-    return <PageSkeleton />
+    return <ListSkeleton />
   }
 
   return (

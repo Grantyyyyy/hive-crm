@@ -18,7 +18,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { PageSkeleton } from "@/components/ui/page-skeleton"
+import { DetailSkeleton } from "@/components/ui/skeletons"
 import { DeleteModal } from "@/components/ui/delete-modal"
 import { ConfirmModal } from "@/components/ui/confirm-modal"
 import { toast } from "sonner"
@@ -157,7 +157,7 @@ export function QuoteDetail() {
     }
   }
 
-  if (!userLoaded || !isLoaded) return <PageSkeleton />
+  if (!userLoaded || !isLoaded) return <DetailSkeleton />
 
   if (!quote) {
     return (

@@ -35,7 +35,7 @@ import { STAGE_LABELS } from "@/lib/types"
 import { AddTaskModal } from "@/components/crmComponent/AddTaskModal"
 import { EditTaskModal } from "@/components/crmComponent/EditTaskModal"
 import { useCRMResource } from "@/lib/hooks"
-import { PageSkeleton } from "@/components/ui/page-skeleton"
+import { DetailSkeleton } from "@/components/ui/skeletons"
 import { DeleteModal } from "@/components/ui/delete-modal"
 import { toast } from "sonner"
 
@@ -197,7 +197,7 @@ export function DealDetail() {
   }
 
   if (!userLoaded || !dealsLoaded || !contactsLoaded || !activitiesLoaded || !tasksLoaded) {
-    return <PageSkeleton />
+    return <DetailSkeleton />
   }
 
   if (!deal) {

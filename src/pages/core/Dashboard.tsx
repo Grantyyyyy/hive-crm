@@ -17,7 +17,7 @@ import { formatCurrency } from "@/lib/helpers"
 import type { Deal, Activity as ActivityT } from "@/lib/types"
 import { useCRMResource } from "@/lib/hooks"
 import { seedApi } from "@/lib/api"
-import { PageSkeleton } from "@/components/ui/page-skeleton"
+import { DashboardSkeleton } from "@/components/ui/skeletons"
 
 export function Dashboard() {
   const { isLoaded: contactsLoaded, refresh: refreshContacts } = useCRMResource('contacts')
@@ -66,7 +66,7 @@ export function Dashboard() {
   }
 
   if (!contactsLoaded || !dealsLoaded || !activitiesLoaded) {
-    return <PageSkeleton />
+    return <DashboardSkeleton />
   }
 
   if (!hasData) {

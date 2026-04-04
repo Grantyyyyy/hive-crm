@@ -49,11 +49,6 @@ export function ProjectDetail() {
     const completionPct = Math.round((completed / total) * 100)
     const inProgressPct = Math.round((inProgress / total) * 100)
 
-    const totalSeconds = projectTasks.reduce(
-      (acc, t) => acc + (t.trackedSeconds ?? 0), 0
-    )
-    const totalHours = (totalSeconds / 3600).toFixed(1)
-
     // Priority breakdown
     const priorities = ['urgent', 'high', 'medium', 'low'] as const
     const priorityCounts = priorities.map(p => ({
@@ -76,7 +71,7 @@ export function ProjectDetail() {
     return {
       total, completed, inProgress, open, overdue,
       completionPct, inProgressPct,
-      totalHours, priorityCounts, members, maxMemberCount,
+      priorityCounts, members, maxMemberCount,
     }
   }, [projectTasks])
 
@@ -252,7 +247,7 @@ export function ProjectDetail() {
             ) : (
               <>
                 {/* ROW 1 — STAT CARDS */}
-                <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Card 1 — Completion rate */}
                   <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-6">
                     <p className="text-3xl font-bold text-slate-900 dark:text-white">
@@ -275,24 +270,7 @@ export function ProjectDetail() {
                     </div>
                   </div>
 
-                  {/* Card 2 — Time tracked */}
-                  <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-6">
-                    <p className="text-3xl font-bold text-slate-900 dark:text-white">
-                      {analytics.totalHours}h
-                    </p>
-                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mt-1">
-                      Time tracked
-                    </p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
-                      across {analytics.total} tasks
-                    </p>
-                    <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 mt-4">
-                      <div
-                        className="h-2 rounded-full transition-all duration-500"
-                        style={{ width: '100%', backgroundColor: '#4f46e5' }}
-                      />
-                    </div>
-                  </div>
+
 
                   {/* Card 3 — Overdue tasks */}
                   <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-6">

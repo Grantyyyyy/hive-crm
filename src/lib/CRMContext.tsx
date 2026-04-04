@@ -241,7 +241,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
 
         if (isTask) {
           // Extract nested relational data before sending to 'tasks' table
-          ['activities', 'tags', 'time_entries'].forEach(f => {
+          ['activities', 'tags'].forEach(f => {
             if (snakePatch[f] !== undefined) {
               nestedData[f] = op.patch[f] // Keep original camelCase data for easier secondary processing
               delete snakePatch[f]
@@ -339,7 +339,7 @@ export async function insertRows<T extends { id: string }>(
   const rows = newItems.map((item) => {
     const row = toSnake(item)
     if (resourceName === 'tasks') {
-      ['activities', 'tags', 'time_entries'].forEach(f => delete row[f])
+      ['activities', 'tags'].forEach(f => delete row[f])
     }
 
     const noUserIdTables = ['task_tags', 'task_tag_links', 'task_subtasks', 'task_comments']
@@ -374,8 +374,7 @@ export async function insertRows<T extends { id: string }>(
 
       await handleTaskRelations(client, resultItem.id, {
         activities: item.activities,
-        tags: item.tags,
-        time_entries: item.timeEntries
+        tags: item.tags
       })
     }
   }
@@ -411,17 +410,6 @@ async function handleTaskRelations(client: any, taskId: string, data: any, isUpd
     await client.from('task_activities').insert(activities)
   }
 
-  // 3. Handle Time Entries (Additive)
-  const timeEntries = data.timeEntries || data.time_entries
-  if (timeEntries && Array.isArray(timeEntries) && timeEntries.length > 0) {
-    const entries = timeEntries.map((e: any) => {
-      const row = toSnake(e)
-      row.task_id = taskId
-      if (row.id && row.id.length < 10) delete row.id
-      return row
-    })
-    await client.from('task_time_entries').insert(entries)
-  }
 }
 
 export async function updateRow<T extends { id: string }>(
@@ -439,7 +427,7 @@ export async function updateRow<T extends { id: string }>(
   let nestedData: any = {}
 
   if (isTask) {
-    ['activities', 'tags', 'time_entries'].forEach(f => {
+    ['activities', 'tags'].forEach(f => {
       if (snakePatch[f] !== undefined) {
         nestedData[f] = (updates as any)[f]
         delete snakePatch[f]

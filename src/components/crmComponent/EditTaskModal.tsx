@@ -9,7 +9,6 @@ import {
 import { TaskForm } from "./TaskForm"
 import { SubtasksList } from "./SubtasksList"
 import { CommentsList } from "./CommentsList"
-import { TimeTracker } from "./TimeTracker"
 import { useCRMResource } from "@/lib/hooks"
 import type { Contact, Deal, Lead, Task, Project, TaskActivity } from "@/lib/types"
 import { Button } from "@/components/ui/button"
@@ -28,8 +27,7 @@ interface EditTaskModalProps {
   user: any // Accepting the Clerk user object for rich metadata
 }
 
-type Tab = 'activity' | 'overview' | 'subtasks' | 'comments' | 'time'
-
+type Tab = 'activity' | 'overview' | 'subtasks' | 'comments'
 export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, user }: EditTaskModalProps) {
   const [activeTab, setActiveTab] = useState<Tab>('activity')
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -124,10 +122,6 @@ export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, us
   const subtaskCount = task.subtasks?.length || 0
   const completedSubtasks = task.subtasks?.filter(s => s.completed).length || 0
   const commentCount = task.comments?.length || 0
-  const timeEntryCount = task.timeEntries?.length || 0
-  const totalTrackedTime = task.trackedSeconds || 0
-  const isTaskCompleted = task.status === 'completed'
-
   return (
     <Sheet open={open} onOpenChange={(val) => {
       onOpenChange(val)
@@ -186,19 +180,16 @@ export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, us
                 { id: 'overview', icon: Info, label: 'Overview' },
                 { id: 'subtasks', icon: CheckSquare, label: 'Subtasks', badge: subtaskCount > 0 ? `${completedSubtasks}/${subtaskCount}` : null },
                 { id: 'comments', icon: MessageSquare, label: 'Comments', badge: commentCount > 0 ? commentCount : null },
-                { id: 'time', icon: Clock, label: 'Time', badge: timeEntryCount > 0 ? formatDuration(totalTrackedTime) : null, disabled: isTaskCompleted },
                 { id: 'activity', icon: Clock, label: 'Activity', badge: activityCount > 0 ? activityCount : null },
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => !tab.disabled && setActiveTab(tab.id as Tab)}
+                  onClick={() => setActiveTab(tab.id as Tab)}
                   className={cn(
                     "flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all rounded-lg relative",
                     activeTab === tab.id
                       ? "text-indigo-600 bg-white dark:bg-slate-900 shadow-sm border border-slate-200/60 dark:border-slate-800/60"
-                      : tab.disabled
-                        ? "text-slate-300 cursor-not-allowed opacity-50"
-                        : "text-slate-500 hover:text-slate-700 hover:bg-white/50 dark:hover:bg-slate-800/50"
+                      : "text-slate-500 hover:text-slate-700 hover:bg-white/50 dark:hover:bg-slate-800/50"
                   )}
                 >
                   <tab.icon className="w-3.5 h-3.5" />
@@ -310,32 +301,7 @@ export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, us
             </div>
           )}
 
-          {activeTab === 'time' && !isTaskCompleted && (
-            <div className="px-8 py-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <TimeTracker
-                taskId={task.id}
-                taskTitle={task.title}
-                initialEntries={task.timeEntries || []}
-                initialTrackedSeconds={task.trackedSeconds || 0}
-                onEntriesChange={(updatedEntries, newTotal) => {
-                  onUpdate(task.id, {
-                    timeEntries: updatedEntries,
-                    trackedSeconds: newTotal
-                  })
-                }}
-              />
-            </div>
-          )}
 
-          {activeTab === 'time' && isTaskCompleted && (
-            <div className="px-8 py-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-6 text-center">
-                <Clock className="w-10 h-10 mx-auto text-amber-500 mb-3" />
-                <p className="text-sm font-bold text-amber-700 dark:text-amber-400 uppercase tracking-widest mb-1">Task Completed</p>
-                <p className="text-xs text-amber-600 dark:text-amber-500">Time tracking is disabled for completed tasks</p>
-              </div>
-            </div>
-          )}
         </div>
       </SheetContent>
       <DeleteModal
@@ -349,14 +315,4 @@ export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, us
   )
 }
 
-function formatDuration(totalSeconds: number): string {
-  const hours = Math.floor(totalSeconds / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
 
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`
-  } else if (minutes > 0) {
-    return `${minutes}m`
-  }
-  return `${Math.floor(totalSeconds / 60)}s`
-}

@@ -127,17 +127,6 @@ export interface TaskTagLink {
   createdAt: string
 }
 
-export interface TaskTimeEntry {
-  id: string
-  taskId: string
-  userId: string
-  userName: string
-  startTime: string
-  endTime?: string
-  durationSeconds: number
-  description?: string
-}
-
 export interface Task {
   id: string
   title: string
@@ -168,9 +157,7 @@ export interface Task {
   comments?: TaskComment[]
   activities?: TaskActivity[]
   tags?: string[]  // Array of tag IDs
-  timeEntries?: TaskTimeEntry[]
   estimatedHours?: number
-  trackedSeconds?: number
   createdAt: string
   updatedAt: string
 }

@@ -62,12 +62,6 @@ export function Workload() {
       const upcoming = getTasksDueSoon(memberTasks, 7)
         .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
         .slice(0, 5)
-
-      const totalSeconds = memberTasks.reduce(
-        (acc, t) => acc + (t.trackedSeconds ?? 0), 0
-      )
-      const trackedHours = (totalSeconds / 3600).toFixed(1)
-
       return {
         memberId,
         open,
@@ -76,7 +70,6 @@ export function Workload() {
         total,
         byPriority,
         upcoming,
-        trackedHours,
       }
     })
   }, [tasks, memberIds])
@@ -347,22 +340,7 @@ export function Workload() {
                     )}
                   </div>
 
-                  <div className="border-t border-slate-100 dark:border-slate-800 my-4" />
 
-                  {/* Tracked Hours Section */}
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">
-                      Tracked Hours
-                    </p>
-                    <div className="flex items-baseline gap-2">
-                      <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                        {member.trackedHours} h
-                      </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                        across {member.total} task{member.total !== 1 ? 's' : ''}
-                      </p>
-                    </div>
-                  </div>
                 </div>
               )
             })}

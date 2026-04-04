@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import {
   Type,
   AlignLeft,
@@ -62,6 +62,8 @@ export function TaskForm({
   const [recurrenceInterval, setRecurrenceInterval] = useState(initialData?.recurrenceInterval ?? 1)
   const [recurrenceEndDate, setRecurrenceEndDate] = useState(initialData?.recurrenceEndDate ? initialData.recurrenceEndDate.split('T')[0] : "")
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const recurrenceOptionsRef = useRef<HTMLDivElement>(null)
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
@@ -369,7 +371,15 @@ export function TaskForm({
             </div>
             <button
               type="button"
-              onClick={() => setRecurrencePattern(recurrencePattern ? undefined : 'weekly')}
+              onClick={() => {
+                const newPattern = recurrencePattern ? undefined : 'weekly';
+                setRecurrencePattern(newPattern);
+                if (newPattern) {
+                  setTimeout(() => {
+                    recurrenceOptionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                  }, 150);
+                }
+              }}
               className={cn(
                 "px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border-2 transition-all",
                 recurrencePattern
@@ -382,7 +392,7 @@ export function TaskForm({
           </div>
 
           {recurrencePattern && (
-            <div className="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-6 animate-in zoom-in-95 duration-200">
+            <div ref={recurrenceOptionsRef} className="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-6 animate-in zoom-in-95 duration-200">
               <div className="grid grid-cols-5 gap-2">
                 {(['daily', 'weekly', 'monthly', 'yearly', 'custom'] as const).map((pattern) => (
                   <button

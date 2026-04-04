@@ -29,7 +29,7 @@ interface EditTaskModalProps {
 
 type Tab = 'activity' | 'overview' | 'subtasks' | 'comments'
 export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, user }: EditTaskModalProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('activity')
+  const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const { data: contacts } = useCRMResource<Contact>('contacts')
   const { data: deals } = useCRMResource<Deal>('deals')

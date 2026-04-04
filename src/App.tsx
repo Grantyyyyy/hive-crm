@@ -37,6 +37,7 @@ import { Inventory } from "@/pages/logistics/Inventory";
 import { InventoryDetail } from "@/pages/logistics/InventoryDetail";
 import { Reports } from "@/pages/logistics/Reports";
 import { Design } from "@/pages/Design";
+import { DialogsPreview } from "@/pages/DialogsPreview";
 import { Fonts } from "@/pages/Fonts";
 import { Toaster } from "sonner";
 import { CRMProvider, useCRMContext, updateRow, insertRows } from "@/lib/CRMContext";
@@ -271,6 +272,9 @@ function AppContent() {
               </Route>
               <Route path="/fonts">
                 {() => <Fonts />}
+              </Route>
+              <Route path="/dialogs">
+                {() => <DialogsPreview />}
               </Route>
 
               {/* Fallback route */}

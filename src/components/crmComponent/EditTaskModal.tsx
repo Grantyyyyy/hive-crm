@@ -53,7 +53,49 @@ export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, us
   const userId = user?.id || ""
 
   const handleSave = (updated: Task) => {
-    onUpdate(task.id, updated)
+    const activities: any[] = []
+    const userMeta = {
+      userId: user?.id || "",
+      userName: user?.fullName || "User",
+      userAvatar: user?.imageUrl,
+      createdAt: new Date().toISOString()
+    }
+
+    // Detect changes and log them
+    if (updated.status !== task.status) {
+      const type = updated.status === 'completed' ? 'completed' : (task.status === 'completed' ? 'reopened' : 'updated')
+      activities.push({
+        id: crypto.randomUUID(),
+        taskId: task.id,
+        type,
+        description: updated.status === 'completed' ? 'Task marked as completed' :
+                     task.status === 'completed' ? 'Task re-opened' :
+                     `Status changed to ${updated.status}`,
+        ...userMeta
+      })
+    }
+
+    if (updated.priority !== task.priority) {
+      activities.push({
+        id: crypto.randomUUID(),
+        taskId: task.id,
+        type: 'updated',
+        description: `Priority set to ${updated.priority}`,
+        ...userMeta
+      })
+    }
+
+    if (JSON.stringify(updated.assignedTo) !== JSON.stringify(task.assignedTo)) {
+      activities.push({
+        id: crypto.randomUUID(),
+        taskId: task.id,
+        type: 'assigned',
+        description: 'Task assignment updated',
+        ...userMeta
+      })
+    }
+
+    onUpdate(task.id, { ...updated, activities } as any)
     onOpenChange(false)
   }
 
@@ -78,19 +120,57 @@ export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, us
       createdAt: new Date().toISOString()
     }
     const subtasks = task.subtasks ? [...task.subtasks, newSubtask] : [newSubtask]
-    onUpdate(task.id, { subtasks })
+
+    const activity = {
+      id: crypto.randomUUID(),
+      taskId: task.id,
+      type: 'updated',
+      description: `Added subtask: ${title}`,
+      userId: user?.id || "",
+      userName: user?.fullName || "User",
+      userAvatar: user?.imageUrl,
+      createdAt: new Date().toISOString()
+    }
+
+    onUpdate(task.id, { subtasks, activities: [activity] } as any)
   }
 
   const handleToggleSubtask = (id: string, completed: boolean) => {
+    const subtask = task.subtasks?.find(s => s.id === id)
     const subtasks = task.subtasks?.map(s =>
       s.id === id ? { ...s, completed, completedAt: completed ? new Date().toISOString() : undefined } : s
     )
-    onUpdate(task.id, { subtasks })
+
+    const activity = {
+      id: crypto.randomUUID(),
+      taskId: task.id,
+      type: 'updated',
+      description: completed ? `Checked subtask: ${subtask?.title}` : `Unchecked subtask: ${subtask?.title}`,
+      userId: user?.id || "",
+      userName: user?.fullName || "User",
+      userAvatar: user?.imageUrl,
+      createdAt: new Date().toISOString()
+    }
+
+    onUpdate(task.id, { subtasks, activities: [activity] } as any)
   }
 
   const handleDeleteSubtask = (id: string) => {
+    const subtask = task.subtasks?.find(s => s.id === id)
     const subtasks = task.subtasks?.filter(s => s.id !== id)
-    onUpdate(task.id, { subtasks })
+
+    const activity = {
+      id: crypto.randomUUID(),
+      taskId: task.id,
+      type: 'updated',
+      description: `Removed subtask: ${subtask?.title}`,
+      userId: user?.id || "",
+      userName: user?.fullName || "User",
+      userAvatar: user?.imageUrl,
+      createdAt: new Date().toISOString()
+    }
+
+    onUpdate(task.id, { subtasks, activities: [activity] } as any)
   }
 
   const handleAddComment = (content: string) => {
@@ -100,23 +180,45 @@ export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, us
       content,
       authorId: userId,
       authorName: user?.fullName || "You",
-      authorAvatar: user?.imageUrl, // Use the real avatar
+      authorAvatar: user?.imageUrl,
       createdAt: new Date().toISOString()
     }
     const comments = task.comments ? [...task.comments, newComment] : [newComment]
-    onUpdate(task.id, { comments })
+
+    const activity = {
+      id: crypto.randomUUID(),
+      taskId: task.id,
+      type: 'comment',
+      description: 'Added a comment',
+      userId: user?.id || "",
+      userName: user?.fullName || "User",
+      userAvatar: user?.imageUrl,
+      createdAt: new Date().toISOString()
+    }
+
+    onUpdate(task.id, { comments, activities: [activity] } as any)
   }
 
   const handleDeleteComment = (id: string) => {
     const comments = task.comments?.filter(c => c.id !== id)
-    onUpdate(task.id, { comments })
+    const activity = {
+      id: crypto.randomUUID(),
+      taskId: task.id,
+      type: 'comment',
+      description: 'Deleted a comment',
+      userId: user?.id || "",
+      userName: user?.fullName || "User",
+      userAvatar: user?.imageUrl,
+      createdAt: new Date().toISOString()
+    }
+    onUpdate(task.id, { comments, activities: [activity] } as any)
   }
 
   const handleUpdateComment = (id: string, content: string) => {
     const comments = task.comments?.map(c =>
       c.id === id ? { ...c, content, updatedAt: new Date().toISOString() } : c
     )
-    onUpdate(task.id, { comments })
+    onUpdate(task.id, { comments } as any)
   }
 
   const subtaskCount = task.subtasks?.length || 0

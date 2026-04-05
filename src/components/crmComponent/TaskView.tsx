@@ -163,7 +163,21 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
     if (newStatus) {
       const task = (tasks ?? []).find(t => t.id === taskId)
       if (task && task.status !== newStatus) {
-        updateItem(taskId, { status: newStatus, completedAt: newStatus === 'completed' ? new Date().toISOString() : undefined })
+        const statusActivity = {
+          id: crypto.randomUUID(),
+          taskId: task.id,
+          type: 'updated' as const,
+          description: `Status changed to ${newStatus}`,
+          userId: user?.id || "",
+          userName: user?.fullName || "User",
+          userAvatar: user?.imageUrl,
+          createdAt: new Date().toISOString()
+        }
+        updateItem(taskId, {
+          status: newStatus,
+          completedAt: newStatus === 'completed' ? new Date().toISOString() : undefined,
+          activities: [statusActivity]
+        } as any)
       }
     }
   }
@@ -475,7 +489,25 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
         </div>
       </div>
 
-      <AddTaskModal open={showAddModal} onOpenChange={setShowAddModal} fixedProjectId={fixedProjectId} onSave={(task) => addItems([{ ...task, projectId: fixedProjectId || task.projectId }])} userId={user?.id ?? ""} />
+      <AddTaskModal
+        open={showAddModal}
+        onOpenChange={setShowAddModal}
+        fixedProjectId={fixedProjectId}
+        onSave={(task) => {
+          const creationActivity = {
+            id: crypto.randomUUID(),
+            taskId: task.id,
+            type: 'created' as const,
+            description: 'Task created',
+            userId: user?.id || "",
+            userName: user?.fullName || "User",
+            userAvatar: user?.imageUrl, // Use the real avatar
+            createdAt: new Date().toISOString()
+          }
+          addItems([{ ...task, activities: [creationActivity], projectId: fixedProjectId || task.projectId }])
+        }}
+        userId={user?.id ?? ""}
+      />
       <EditTaskModal task={editingTask} open={!!editingTask} onOpenChange={(open) => !open && setEditingTask(null)} onUpdate={updateItem} onDelete={deleteItem} user={user} />
       <DeleteModal open={!!pendingDelete} onOpenChange={(open) => !open && setPendingDelete(null)} title="Delete Task" description={<p>Action cannot be undone.</p>} onDelete={() => { if (pendingDelete) deleteItem(pendingDelete.id); setPendingDelete(null); }} />
     </div>

@@ -1,4 +1,5 @@
 import { useState, useRef } from "react"
+import { useUser } from "@clerk/clerk-react"
 import {
   Type,
   AlignLeft,
@@ -44,6 +45,7 @@ export function TaskForm({
   fixedProjectId,
   userId
 }: TaskFormProps) {
+  const { user: clerkUser } = useUser()
   const [title, setTitle] = useState(initialData?.title ?? "")
   const [description, setDescription] = useState(initialData?.description ?? "")
   const [dueDate, setDueDate] = useState(initialData?.dueDate ? initialData.dueDate.split('T')[0] : "")
@@ -101,6 +103,20 @@ export function TaskForm({
       recurrenceEndDate: recurrencePattern && recurrenceEndDate ? new Date(recurrenceEndDate).toISOString() : undefined,
       nextOccurrence: recurrencePattern ? calculateNextOccurrence(dueDate, recurrencePattern, recurrenceInterval) : undefined,
       tags: selectedTagIds.length > 0 ? selectedTagIds : undefined
+    }
+
+    // Attach a "created" activity log when this is a brand-new task
+    if (!initialData) {
+      ;(task as any).activities = [{
+        id: crypto.randomUUID(),
+        taskId: task.id,
+        type: 'created',
+        description: 'Task created',
+        userId: clerkUser?.id || userId,
+        userName: clerkUser?.fullName || 'User',
+        userAvatar: clerkUser?.imageUrl,
+        createdAt: now,
+      }]
     }
 
     onSave(task)

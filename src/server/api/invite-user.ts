@@ -34,6 +34,7 @@ export default async function handler(req: Request, res: Response) {
           name: name,
         },
         redirect_url: `${process.env.VITE_APP_URL || 'http://localhost:5173'}/sign-up`,
+        ignore_existing: true,
       }),
     });
 
@@ -57,6 +58,7 @@ export default async function handler(req: Request, res: Response) {
 
     return res.status(200).json({
       success: true,
+      clerkUserId: invitation.id,
       invitationId: invitation.id,
       email: invitation.email_address,
       message: 'Invitation sent successfully. User will set their password via email link.',

@@ -324,6 +324,8 @@ export interface ClerkInviteResponse {
 /**
  * Invite a user via Clerk API and create local app_users record.
  * This sends an invitation email to the user with a link to set their password.
+ * The app_users record is created with a placeholder clerk_user_id that will be
+ * updated to the real Clerk user ID when the user accepts the invitation and signs in.
  */
 export async function inviteUser(
   client: SupabaseClient,
@@ -349,11 +351,14 @@ export async function inviteUser(
     throw new Error(result.error || 'Failed to send invitation');
   }
 
-  // Step 2: Create local app_users record with real Clerk user ID
+  // Step 2: Create local app_users record with a placeholder clerk_user_id
+  // This will be updated to the real Clerk user ID when the user accepts the invitation
+  const placeholderId = `manual_invite_${result.invitationId || result.clerkUserId}`;
+
   const { data: created, error } = await client
     .from('app_users')
     .insert({
-      clerk_user_id: result.clerkUserId,
+      clerk_user_id: placeholderId,
       email: data.email,
       name: data.name,
       role_id: data.roleId || null,
@@ -366,7 +371,7 @@ export async function inviteUser(
 
   return {
     appUser: toAppUser(created),
-    clerkUserId: result.clerkUserId,
+    clerkUserId: placeholderId,
   };
 }
 

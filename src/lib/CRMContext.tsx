@@ -6,8 +6,8 @@ import React, {
   useRef,
   useState,
 } from "react"
-import { useSession, useUser } from "@clerk/clerk-react"
-import { createClerkSupabaseClient } from "./supabaseClient"
+import { useAuth } from "./AuthContext"
+import { supabase } from "./supabaseClient"
 
 // ── Table mapping ────────────────────────────────────────────────────────────
 
@@ -97,7 +97,7 @@ export interface CRMContextValue {
   userId: string
   getResource: <T>(name: string) => ResourceState<T>
   setResourceData: <T>(name: string, updater: (prev: T[]) => T[]) => void
-  getClient: () => Promise<ReturnType<typeof createClerkSupabaseClient> | null>
+  getClient: () => Promise<typeof supabase | null>
   runAtomicUpdate: (ops: AtomicOp[]) => Promise<AtomicOp[]>
 }
 
@@ -112,17 +112,14 @@ const PRELOAD_RESOURCES = [
 
 /**
  * CRMContext provides a unified data layer for the CRM application.
- * 
+ *
  * Authentication Integration:
- * - Uses Clerk's useUser() hook to get the authenticated user ID
- * - Uses Clerk's useSession() hook to get the current session for Supabase client
+ * - Uses useAuth() from AuthContext to get the authenticated user ID
  * - All data operations are scoped to the current user's ID for ownership tracking
- * - Supabase RLS policies use auth.uid() (from Clerk JWT) to filter data
+ * - Supabase RLS policies use auth.uid() to filter data
  */
 export function CRMProvider({ children }: { children: React.ReactNode }) {
-  const { user, isLoaded: userLoaded } = useUser()
-  const { session } = useSession()
-  const userId = user?.id ?? ""
+  const { userId, isLoaded } = useAuth()
 
   // Single map holding arrays for every resource
   const [store, setStore] = useState<Record<string, ResourceState<any>>>(() =>
@@ -136,11 +133,9 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
 
   // ── Supabase client factory ────────────────────────────────────────────────
   const getClient = useCallback(async () => {
-    if (!session) return null
-    const token = await session.getToken({ template: "supabase" })
-    if (!token) return null
-    return createClerkSupabaseClient(token)
-  }, [session])
+    if (!userId) return null
+    return supabase
+  }, [userId])
 
   // ── Fetch a single resource ────────────────────────────────────────────────
   const fetchResource = useCallback(
@@ -178,9 +173,9 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
 
   // ── Pre-fetch all primary resources once the user is ready ─────────────────
   useEffect(() => {
-    if (!userLoaded || !userId || !session) return
+    if (!isLoaded || !userId) return
     PRELOAD_RESOURCES.forEach((r) => fetchResource(r))
-  }, [userLoaded, userId, session, fetchResource])
+  }, [isLoaded, userId, fetchResource])
 
   // ── Reset cache on user change (sign-out / switch account) ────────────────
   useEffect(() => {
@@ -198,12 +193,12 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   const getResource = useCallback(
     <T,>(name: string): ResourceState<T> => {
       // Lazily fetch resources that weren't in the preload list
-      if (!fetchedRef.current.has(name) && userId && session) {
+      if (!fetchedRef.current.has(name) && userId) {
         fetchResource(name)
       }
       return (store[name] ?? { data: [], isLoaded: false }) as ResourceState<T>
     },
-    [store, fetchResource, userId, session]
+    [store, fetchResource, userId]
   )
   const setResourceData = useCallback(
     <T,>(name: string, updater: (prev: T[]) => T[]) => {

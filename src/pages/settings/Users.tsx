@@ -18,15 +18,15 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import { 
-  UserPlus, 
-  Shield, 
-  Trash2, 
-  Loader2, 
-  Mail, 
-  CheckCircle2, 
-  Search, 
-  MoreVertical, 
+import {
+  UserPlus,
+  Shield,
+  Trash2,
+  Loader2,
+  Mail,
+  CheckCircle2,
+  Search,
+  MoreVertical,
   User as UserIcon,
   Filter
 } from 'lucide-react';
@@ -73,7 +73,7 @@ function UserActionsMenu({ u, currentUserClerkId, onChangeRole, onRemove, remove
     setOpen(v => !v);
   };
 
-  const isSelf = u.clerkUserId === currentUserClerkId;
+  const isSelf = u.authUserId === currentUserClerkId;
 
   if (isSelf) return null;
 
@@ -148,7 +148,7 @@ export function Users() {
   const { user, isLoaded: userLoaded } = useUser();
   const { getClient, userId } = useCRMContext();
   const queryClient = useQueryClient();
-  
+
   // Page State
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>('all');
@@ -290,8 +290,8 @@ export function Users() {
   const filteredUsers = useMemo(() => {
     if (!usersData) return [];
     return usersData.filter(u => {
-      const matchesSearch = !search || 
-        u.name?.toLowerCase().includes(search.toLowerCase()) || 
+      const matchesSearch = !search ||
+        u.name?.toLowerCase().includes(search.toLowerCase()) ||
         u.email?.toLowerCase().includes(search.toLowerCase());
       const matchesRole = roleFilter === 'all' || u.role?.name?.toLowerCase() === roleFilter.toLowerCase();
       return matchesSearch && matchesRole;
@@ -373,7 +373,7 @@ export function Users() {
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen font-sans">
       <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
-        
+
         {/* Header Region */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
           <div>
@@ -421,7 +421,7 @@ export function Users() {
               </button>
             ))}
           </div>
-          
+
           <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
 
           <Button variant="outlineNeutral" className="h-10 px-4">
@@ -465,7 +465,7 @@ export function Users() {
                           <div>
                             <p className="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
                               {u.name}
-                              {u.clerkUserId === user?.id && (
+                              {u.authUserId === user?.id && (
                                 <Badge variant="secondary" className="text-[9px] uppercase tracking-tighter h-4 px-1 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400 border-indigo-100 dark:border-indigo-800">You</Badge>
                               )}
                             </p>
@@ -481,7 +481,7 @@ export function Users() {
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex justify-end items-center gap-2">
-                          {u.clerkUserId !== user?.id && (
+                          {u.authUserId !== user?.id && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -491,8 +491,8 @@ export function Users() {
                               <Shield className="w-3.5 h-3.5 mr-1" /> Role
                             </Button>
                           )}
-                          <UserActionsMenu 
-                            u={u} 
+                          <UserActionsMenu
+                            u={u}
                             currentUserClerkId={user?.id}
                             onChangeRole={() => openRoleDialog(u)}
                             onRemove={() => handleRemoveUser(u)}
@@ -689,8 +689,8 @@ export function Users() {
                   ? (inviteUserMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />)
                   : (addUserMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <UserPlus className="w-4 h-4 mr-2" />)
                 }
-                {inviteMode 
-                  ? (inviteUserMutation.isPending ? 'Sending...' : 'Send Invitation') 
+                {inviteMode
+                  ? (inviteUserMutation.isPending ? 'Sending...' : 'Send Invitation')
                   : (addUserMutation.isPending ? 'Adding...' : 'Add User')
                 }
               </Button>
@@ -706,7 +706,7 @@ export function Users() {
         title="Remove User"
         description={
           <>
-            Are you sure you want to remove <span className="font-semibold text-slate-900 dark:text-white">{userToDelete?.name}</span>? 
+            Are you sure you want to remove <span className="font-semibold text-slate-900 dark:text-white">{userToDelete?.name}</span>?
             This action will revoke their access to the organization immediately.
           </>
         }

@@ -42,6 +42,7 @@ import { Fonts } from "@/pages/Fonts";
 import { Toaster } from "sonner";
 import { CRMProvider, useCRMContext, updateRow, insertRows } from "@/lib/CRMContext";
 import { useCRMResource } from "@/lib/hooks";
+import { AuthProvider } from "@/lib/AuthContext";
 import type { Quote, SalesOrder, InventoryItem, PurchaseRequest, PurchaseOrder, InventoryTransaction, Task } from "@/lib/types";
 import { runScheduledJobs } from "@/services/scheduledJobs";
 import type { JobAdapter } from "@/services/types";
@@ -295,9 +296,11 @@ export function App() {
   return (
     <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
       <ThemeProvider>
-        <CRMProvider>
-          <AppContent />
-        </CRMProvider>
+        <AuthProvider>
+          <CRMProvider>
+            <AppContent />
+          </CRMProvider>
+        </AuthProvider>
       </ThemeProvider>
     </ClerkProvider>
   );

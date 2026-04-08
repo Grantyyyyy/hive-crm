@@ -2,7 +2,7 @@
  * Settings Service - Supabase-based users, roles, and permissions management.
  * Replaces the old localhost:3001 REST API calls with direct Supabase queries.
  */
-import { createClerkSupabaseClient } from './supabaseClient'
+import { supabase } from './supabaseClient'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -28,7 +28,7 @@ export interface Role {
 
 export interface AppUser {
   id: string
-  clerkUserId: string
+  authUserId: string | null
   email: string
   name: string
   username?: string
@@ -41,7 +41,7 @@ export interface AppUser {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-type SupabaseClient = ReturnType<typeof createClerkSupabaseClient>
+type SupabaseClient = typeof supabase
 
 function toRole(row: any, permissions?: Permission[], userCount?: number): Role {
   return {
@@ -61,7 +61,7 @@ function toRole(row: any, permissions?: Permission[], userCount?: number): Role 
 function toAppUser(row: any, role?: Role): AppUser {
   return {
     id: row.id,
-    clerkUserId: row.clerk_user_id,
+    authUserId: row.auth_user_id,
     email: row.email,
     name: row.name,
     username: row.username,
@@ -229,14 +229,14 @@ export async function fetchAppUsers(client: SupabaseClient): Promise<AppUser[]> 
 
 export async function upsertCurrentUser(
   client: SupabaseClient,
-  clerkUser: { id: string; email: string; fullName: string; username?: string },
+  supabaseUser: { id: string; email: string; fullName: string; username?: string },
   ownerId: string,
 ): Promise<AppUser> {
-  // First, check if user already exists by exact clerk_user_id
+  // First, check if user already exists by exact auth_user_id
   const { data: existingById } = await client
     .from('app_users')
     .select('*')
-    .eq('clerk_user_id', clerkUser.id)
+    .eq('auth_user_id', supabaseUser.id)
     .maybeSingle()
 
   if (existingById) {
@@ -244,9 +244,9 @@ export async function upsertCurrentUser(
     const { data: updated, error } = await client
       .from('app_users')
       .update({
-        email: clerkUser.email,
-        name: clerkUser.fullName,
-        username: clerkUser.username || null,
+        email: supabaseUser.email,
+        name: supabaseUser.fullName,
+        username: supabaseUser.username || null,
         updated_at: new Date().toISOString(),
       })
       .eq('id', existingById.id)
@@ -260,18 +260,18 @@ export async function upsertCurrentUser(
   const { data: existingByEmail } = await client
     .from('app_users')
     .select('*')
-    .eq('email', clerkUser.email)
-    .like('clerk_user_id', 'manual_%')
+    .eq('email', supabaseUser.email)
+    .like('auth_user_id', 'manual_%')
     .maybeSingle()
 
   if (existingByEmail) {
-    // Claim this manual profile with the real clerk_user_id
+    // Claim this manual profile with the real auth_user_id
     const { data: claimed, error } = await client
       .from('app_users')
       .update({
-        clerk_user_id: clerkUser.id,
-        name: clerkUser.fullName,
-        username: clerkUser.username || null,
+        auth_user_id: supabaseUser.id,
+        name: supabaseUser.fullName,
+        username: supabaseUser.username || null,
         updated_at: new Date().toISOString(),
       })
       .eq('id', existingByEmail.id)
@@ -285,10 +285,10 @@ export async function upsertCurrentUser(
   const { data: created, error } = await client
     .from('app_users')
     .insert({
-      clerk_user_id: clerkUser.id,
-      email: clerkUser.email,
-      name: clerkUser.fullName,
-      username: clerkUser.username || null,
+      auth_user_id: supabaseUser.id,
+      email: supabaseUser.email,
+      name: supabaseUser.fullName,
+      username: supabaseUser.username || null,
       owner_id: ownerId,
     })
     .select()
@@ -310,11 +310,11 @@ export async function updateUserRole(
 }
 
 /**
- * Response from Clerk invitation API
+ * Response from user invitation API
  */
-export interface ClerkInviteResponse {
+export interface InviteResponse {
   success: boolean;
-  clerkUserId: string;
+  authUserId: string;
   email: string;
   firstName: string;
   lastName: string;
@@ -322,17 +322,17 @@ export interface ClerkInviteResponse {
 }
 
 /**
- * Invite a user via Clerk API and create local app_users record.
+ * Invite a user via API and create local app_users record.
  * This sends an invitation email to the user with a link to set their password.
- * The app_users record is created with a placeholder clerk_user_id that will be
- * updated to the real Clerk user ID when the user accepts the invitation and signs in.
+ * The app_users record is created with a placeholder auth_user_id that will be
+ * updated to the real Supabase user ID when the user accepts the invitation and signs in.
  */
 export async function inviteUser(
   client: SupabaseClient,
   data: { name: string; email: string; roleId?: string },
   ownerId: string,
-): Promise<{ appUser: AppUser; clerkUserId: string }> {
-  // Step 1: Call Clerk API to create user and send invitation
+): Promise<{ appUser: AppUser; authUserId: string }> {
+  // Step 1: Call the invitation API
   const inviteResponse = await fetch('/api/invite-user', {
     method: 'POST',
     headers: {
@@ -351,14 +351,14 @@ export async function inviteUser(
     throw new Error(result.error || 'Failed to send invitation');
   }
 
-  // Step 2: Create local app_users record with a placeholder clerk_user_id
-  // This will be updated to the real Clerk user ID when the user accepts the invitation
-  const placeholderId = `manual_invite_${result.invitationId || result.clerkUserId}`;
+  // Step 2: Create local app_users record with a placeholder auth_user_id
+  // This will be updated to the real Supabase user ID when the user accepts the invitation
+  const placeholderId = `manual_invite_${result.invitationId || result.authUserId}`;
 
   const { data: created, error } = await client
     .from('app_users')
     .insert({
-      clerk_user_id: placeholderId,
+      auth_user_id: placeholderId,
       email: data.email,
       name: data.name,
       role_id: data.roleId || null,
@@ -371,7 +371,7 @@ export async function inviteUser(
 
   return {
     appUser: toAppUser(created),
-    clerkUserId: placeholderId,
+    authUserId: placeholderId,
   };
 }
 
@@ -380,13 +380,13 @@ export async function addUser(
   data: { name: string; email: string; roleId?: string },
   ownerId: string,
 ): Promise<AppUser> {
-  // Use a placeholder clerk_user_id for manually added users
+  // Use a placeholder auth_user_id for manually added users
   const placeholderId = `manual_${crypto.randomUUID()}`
 
   const { data: created, error } = await client
     .from('app_users')
     .insert({
-      clerk_user_id: placeholderId,
+      auth_user_id: placeholderId,
       email: data.email,
       name: data.name,
       role_id: data.roleId || null,

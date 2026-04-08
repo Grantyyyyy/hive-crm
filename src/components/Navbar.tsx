@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { SignedOut } from "@clerk/clerk-react";
+import { SignedOut } from "@/lib/AuthContext";
 import { BarChart3, Moon, Sun } from "lucide-react";
 import { useTheme } from "@/lib/ThemeProvider";
 import { Button } from "./ui/button";

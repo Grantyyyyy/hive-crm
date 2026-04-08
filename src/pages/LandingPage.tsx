@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { SignedIn, SignedOut } from "@clerk/clerk-react";
+import { SignedIn, SignedOut } from "@/lib/AuthContext";
 import {
   BarChart3,
   Users,

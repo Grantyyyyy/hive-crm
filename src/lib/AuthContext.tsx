@@ -1,19 +1,12 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react"
-import { useAuth as useClerkAuth, useUser as useClerkUser, useClerk as useClerkInstance } from "@clerk/clerk-react"
-
-// We use `any` for user/session during the transition because the actual type
-// will switch from Clerk → Supabase in Phase 3. Consumers only access fields
-// through the typed hooks below (useAuth, useUser), so this is safe.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type TransitionalUser = any
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type TransitionalSession = any
+import { supabase } from "./supabaseClient"
+import type { Session, User } from "@supabase/supabase-js"
 
 // ── Context value ─────────────────────────────────────────────────────────────
 
 interface AuthContextValue {
-  user: TransitionalUser | null
-  session: TransitionalSession | null
+  user: User | null
+  session: Session | null
   isLoaded: boolean
   isSignedIn: boolean
   userId: string
@@ -26,49 +19,70 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 // ── Provider ──────────────────────────────────────────────────────────────────
 
 /**
- * AuthProvider — wraps the app and provides authentication state.
+ * AuthProvider — wraps the app and provides authentication state from Supabase.
  *
- * TRANSITION NOTE: During Phases 1–2, this sources auth state from Clerk
- * (since users still sign in via Clerk). In Phase 3, the internal source
- * will be swapped to Supabase Auth. The context interface stays identical,
- * so consuming components require zero changes.
+ * Uses Supabase's getSession() + onAuthStateChange for real-time auth tracking.
+ * The exported hooks mirror Clerk's interface so swapping required zero changes
+ * in consuming components.
+ *
+ * Mapping:
+ *   AuthContext.user        → Supabase User
+ *   AuthContext.session     → Supabase Session
+ *   AuthContext.isLoaded    → Auth init complete
+ *   AuthContext.isSignedIn  → !!session && !!user
+ *   AuthContext.userId      → user.id
+ *   AuthContext.signOut()   → supabase.auth.signOut()
+ *   AuthContext.getToken()  → session.access_token
  */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const clerkAuth = useClerkAuth()
-  const { user, isLoaded: userLoaded } = useClerkUser()
-  const clerk = useClerkInstance()
-
+  const [session, setSession] = useState<Session | null>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
-    if (clerkAuth.isLoaded && userLoaded) {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      setSession(initialSession)
+      setUser(initialSession?.user ?? null)
       setIsLoaded(true)
-    }
-  }, [clerkAuth.isLoaded, userLoaded])
+    })
+
+    // Listen for auth state changes (sign-in, sign-out, token refresh, etc.)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession)
+      setUser(newSession?.user ?? null)
+      setIsLoaded(true)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
 
   const signOut = useCallback(async () => {
-    await clerk.signOut()
-  }, [clerk])
+    await supabase.auth.signOut()
+    // onAuthStateChange will fire and update state
+  }, [])
 
   const getToken = useCallback(async (): Promise<string | null> => {
-    if (!clerkAuth.isSignedIn) return null
-    return clerkAuth.getToken()
-  }, [clerkAuth])
+    if (!session) return null
+    return session.access_token
+  }, [session])
 
-  const isSignedIn = clerkAuth.isSignedIn ?? false
+  const isSignedIn = !!session && !!user
   const userId = user?.id ?? ""
 
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
-      session: null, // Clerk manages session via cookies; not needed during transition
+      session,
       isLoaded,
       isSignedIn,
       userId,
       signOut,
       getToken,
     }),
-    [user, isLoaded, isSignedIn, userId, signOut, getToken]
+    [user, session, isLoaded, isSignedIn, userId, signOut, getToken]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
@@ -94,9 +108,9 @@ export function useAuth(): Pick<AuthContextValue, "isLoaded" | "isSignedIn" | "u
 
 /**
  * useUser — mirrors Clerk's useUser() hook.
- * Returns the current user object and isLoaded state.
+ * Returns the Supabase User object and isLoaded state.
  */
-export function useUser(): { user: TransitionalUser | null; isLoaded: boolean } {
+export function useUser(): { user: User | null; isLoaded: boolean } {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error("useUser must be used within an AuthProvider")
   return { user: ctx.user, isLoaded: ctx.isLoaded }
@@ -104,10 +118,9 @@ export function useUser(): { user: TransitionalUser | null; isLoaded: boolean } 
 
 /**
  * useSession — mirrors Clerk's useSession() hook.
- * Returns the current session object (null during transition since Clerk
- * manages sessions via cookies, not a JS session object).
+ * Returns the Supabase Session object.
  */
-export function useSession(): { session: TransitionalSession | null } {
+export function useSession(): { session: Session | null } {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error("useSession must be used within an AuthProvider")
   return { session: ctx.session }

@@ -1,4 +1,4 @@
-import { ClerkProvider, useAuth, useOrganization } from "@clerk/clerk-react";
+import { useAuth } from "@/lib/AuthContext";
 import { Router, Route, Switch } from "wouter";
 import { ThemeProvider } from "@/lib/ThemeProvider";
 import { LandingPage } from "@/pages/LandingPage";
@@ -42,19 +42,13 @@ import { Fonts } from "@/pages/Fonts";
 import { Toaster } from "sonner";
 import { CRMProvider, useCRMContext, updateRow, insertRows } from "@/lib/CRMContext";
 import { useCRMResource } from "@/lib/hooks";
-import { AuthProvider } from "@/lib/AuthContext";
+import { AuthProvider, useUser } from "@/lib/AuthContext";
 import type { Quote, SalesOrder, InventoryItem, PurchaseRequest, PurchaseOrder, InventoryTransaction, Task } from "@/lib/types";
 import { runScheduledJobs } from "@/services/scheduledJobs";
 import type { JobAdapter } from "@/services/types";
-import { setAuthToken, setOrganizationId } from "@/lib/api";
+import { setAuthToken, subscribeAuth } from "@/lib/api";
 import React, { useEffect, useRef, useMemo, useState } from "react";
 import { FontProvider } from "@/components/FontProvider";
-
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-
-if (!PUBLISHABLE_KEY) {
-  throw new Error("Missing Publishable Key. Please set VITE_CLERK_PUBLISHABLE_KEY in .env.local");
-}
 
 function Protected({ component: Component }: { component: React.ComponentType }) {
   return (
@@ -109,7 +103,6 @@ function AutomationRunner() {
       runOnce.current = true
       runScheduledJobs(adapter, ctx).catch(console.error)
     }
-    // Only start interval when data is ready
     if (dataReady) {
       const interval = setInterval(() => {
         runScheduledJobs(adapter, ctx).catch(console.error)
@@ -122,49 +115,65 @@ function AutomationRunner() {
 }
 
 function AppContent() {
-  const { getToken, isSignedIn, isLoaded: isAuthLoaded } = useAuth();
-  const { organization, isLoaded: isOrgLoaded } = useOrganization();
+  const { isSignedIn, isLoaded: authLoaded, getToken, userId } = useAuth();
+  const { user } = useUser();
   const [authReady, setAuthReady] = useState(false);
 
   /**
-   * Synchronizes Clerk authentication state with the application's API layer.
-   * - Fetches JWT token from Clerk and stores it for API requests
-   * - Syncs organization ID for multi-tenant data isolation
-   * - Refreshes token every 50 seconds when signed in
+   * Synchronizes Supabase auth state with the app's API layer.
+   * - Stores the Supabase access token for API requests
+   * - Supabase auto-refreshes sessions, so no manual refresh interval needed
    */
   useEffect(() => {
-    const syncAuth = async () => {
-      if (isAuthLoaded && isOrgLoaded) {
-        if (isSignedIn) {
-          try {
-            const token = await getToken();
-            setAuthToken(token);
-            setOrganizationId(organization?.id || null);
-          } catch (e) {
-            console.error('Failed to sync auth:', e);
-          }
-        } else {
-          setAuthToken(null);
-          setOrganizationId(null);
-        }
-        setAuthReady(true);
+    if (authLoaded) {
+      if (isSignedIn) {
+        // Cache the token for the legacy API layer
+        getToken().then(token => {
+          if (token) setAuthToken(token);
+        });
+      } else {
+        setAuthToken(null);
       }
-    };
-    syncAuth();
-
-    // Refresh token every 50 seconds if signed in
-    // This ensures the JWT doesn't expire during active sessions
-    let interval: NodeJS.Timeout;
-    if (isSignedIn) {
-      interval = setInterval(syncAuth, 50000);
+      setAuthReady(true);
     }
-    return () => clearInterval(interval);
-  }, [isSignedIn, isAuthLoaded, isOrgLoaded, getToken, organization?.id]);
+  }, [isSignedIn, authLoaded, getToken]);
 
-  if (!isAuthLoaded || !isOrgLoaded || !authReady) {
+  /**
+   * Subscribe to Supabase session changes and propagate token to the API layer.
+   */
+  useEffect(() => {
+    return subscribeAuth(({ token }) => {
+      if (token) setAuthToken(token);
+    });
+  }, []);
+
+  /**
+   * Sync the current Supabase user into app_users on first load.
+   */
+  useEffect(() => {
+    if (!user || !userId) return;
+    import("@/lib/settingsService").then(async ({ upsertCurrentUser }) => {
+      try {
+        const { supabase } = await import("@/lib/supabaseClient");
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const client = supabase;
+        await upsertCurrentUser(client, {
+          id: user.id,
+          email: user.email || "",
+          fullName: user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? "User",
+          username: user.user_metadata?.user_name ?? undefined,
+        }, userId);
+      } catch (e) {
+        console.error("Failed to sync current user:", e);
+      }
+    });
+  }, [user, userId]);
+
+  if (!authLoaded || !authReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-r-transparent"></div>
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-600 border-r-transparent"></div>
       </div>
     );
   }
@@ -294,15 +303,13 @@ function AppContent() {
 
 export function App() {
   return (
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-      <ThemeProvider>
-        <AuthProvider>
-          <CRMProvider>
-            <AppContent />
-          </CRMProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </ClerkProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <CRMProvider>
+          <AppContent />
+        </CRMProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

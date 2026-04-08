@@ -20,7 +20,7 @@ import { ListSkeleton } from "@/components/ui/skeletons"
 import { DeleteModal } from "@/components/ui/delete-modal"
 
 export function Projects() {
-  const { user, isLoaded: clerkLoaded } = useUser()
+  const { user, isLoaded: userLoaded } = useUser()
   const [, setLocation] = useLocation()
   const {
     data: projects,
@@ -31,7 +31,7 @@ export function Projects() {
   } = useCRMResource<Project>('projects')
 
   const { data: tasks } = useCRMResource<Task>('tasks')
-  const isLoaded = clerkLoaded && projectsLoaded
+  const isLoaded = userLoaded && projectsLoaded
 
   // UI State
   const [search, setSearch] = useState("")

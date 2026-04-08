@@ -288,21 +288,23 @@ export function debounce<T extends (...args: any[]) => any>(
   }
 }
 
-// ── Clerk User Helpers ────────────────────────────────────────────────────────
+// ── User Display Helpers ──────────────────────────────────────────────────────
 
 /**
  * Returns the current user's display initials.
  * Uses firstName + lastName initials, or first 2 chars of username, or "?" as fallback.
  */
 export function getUserInitials(user: {
-  user_metadata?: { first_name?: string; last_name?: string; user_name?: string };
+  user_metadata?: { full_name?: string; user_name?: string };
   email?: string | null;
 } | null | undefined): string {
   if (!user) return "?";
 
   const meta = user.user_metadata;
-  if (meta?.first_name && meta?.last_name) {
-    return `${meta.first_name[0]}${meta.last_name[0]}`.toUpperCase();
+  if (meta?.full_name) {
+    const parts = meta.full_name.trim().split(/\s+/);
+    if (parts.length >= 2) return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+    if (parts.length === 1 && parts[0].length >= 2) return parts[0].slice(0, 2).toUpperCase();
   }
 
   if (meta?.user_name) {

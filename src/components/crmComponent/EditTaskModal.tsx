@@ -24,7 +24,7 @@ interface EditTaskModalProps {
   onOpenChange: (open: boolean) => void
   onUpdate: (id: string, updates: Partial<Task>) => void
   onDelete: (id: string) => void
-  user: any // Accepting the Clerk user object for rich metadata
+  user: any // Accepting the user object for rich metadata
 }
 
 type Tab = 'activity' | 'overview' | 'subtasks' | 'comments'

@@ -23,11 +23,11 @@ import { AddTaskModal } from "@/components/crmComponent/AddTaskModal"
 export function ProjectDetail() {
   const { id } = useParams<{ id: string }>()
   const [, setLocation] = useLocation()
-  const { isLoaded: clerkLoaded } = useUser()
+  const { isLoaded: userLoaded } = useUser()
   const { data: projects, isLoaded: projectsLoaded } = useCRMResource<Project>('projects')
   const { data: tasks, isLoaded: tasksLoaded } = useCRMResource<Task>('tasks')
 
-  const isLoaded = clerkLoaded && projectsLoaded && tasksLoaded
+  const isLoaded = userLoaded && projectsLoaded && tasksLoaded
 
   const project = useMemo(() => projects?.find(p => p.id === id), [projects, id])
 

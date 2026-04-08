@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req: Request, res: Response) {
   // Only allow POST requests
@@ -6,62 +7,56 @@ export default async function handler(req: Request, res: Response) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { email, name } = req.body;
+  const { email, name, role } = req.body;
 
   if (!email || !name) {
     return res.status(400).json({ error: 'Email and name are required' });
   }
 
-  const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY;
+  const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!CLERK_SECRET_KEY) {
-    console.error('CLERK_SECRET_KEY not configured');
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    console.error('Supabase credentials not configured for invitations');
     return res.status(500).json({ error: 'Server configuration error' });
   }
 
   try {
-    // Send invitation via Clerk's Invitations API
-    // This creates the user when they accept and prompts them to set a password
-    const inviteResponse = await fetch('https://api.clerk.com/v1/invitations', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${CLERK_SECRET_KEY}`,
-        'Content-Type': 'application/json',
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
       },
-      body: JSON.stringify({
-        email_address: email,
-        public_metadata: {
-          name: name,
-        },
-        redirect_url: `${process.env.VITE_APP_URL || 'http://localhost:5173'}/sign-up`,
-        ignore_existing: true,
-      }),
     });
 
-    if (!inviteResponse.ok) {
-      const error = await inviteResponse.json().catch(() => ({ errors: [] }));
+    // Send invitation via Supabase admin API
+    // inviteUserByEmail returns 422 if the user is already registered — handled below
+    const { data, error } = await supabase.auth.admin.inviteUserByEmail(email, {
+      redirectTo: `${process.env.APP_URL || process.env.VITE_APP_URL || 'http://localhost:5173'}/sign-up`,
+      data: {
+        full_name: name,
+        role: role || 'User',
+      },
+    });
 
-      // Check if user already exists
-      if (inviteResponse.status === 422) {
+    if (error) {
+      if (error.message?.includes('already registered') || error.status === 422) {
         return res.status(409).json({
           error: 'User with this email already exists',
-          exists: true
+          exists: true,
         });
       }
-
-      throw new Error(error.errors?.[0]?.message || 'Failed to send invitation');
+      throw error;
     }
 
-    const invitation = await inviteResponse.json();
-
-    console.log(`✓ Sent Clerk invitation to ${email} (ID: ${invitation.id})`);
+    console.log(`✓ Sent Supabase invitation to ${email} (ID: ${data.user?.id})`);
 
     return res.status(200).json({
       success: true,
-      clerkUserId: invitation.id,
-      invitationId: invitation.id,
-      email: invitation.email_address,
-      message: 'Invitation sent successfully. User will set their password via email link.',
+      authUserId: data.user?.id,
+      invitationId: data.user?.id,
+      email: data.user?.email,
+      message: 'Invitation sent successfully. User will receive an email to set their password.',
     });
   } catch (error) {
     console.error('Error creating user invitation:', error);

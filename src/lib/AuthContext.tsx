@@ -45,6 +45,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(initialSession)
       setUser(initialSession?.user ?? null)
       setIsLoaded(true)
+    }).catch((err) => {
+      console.error('Failed to get initial session:', err)
+      setIsLoaded(true)
     })
 
     // Listen for auth state changes (sign-in, sign-out, token refresh, etc.)
@@ -60,9 +63,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut()
-    // onAuthStateChange will fire and update state
-  }, [])
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error('Sign out failed:', err);
+    }
+    // onAuthStateChange will fire and update state; force-clear local state regardless
+    setSession(null);
+    setUser(null);
+    setIsLoaded(true);
+  }, []);
 
   const getToken = useCallback(async (): Promise<string | null> => {
     if (!session) return null
@@ -124,27 +134,6 @@ export function useSession(): { session: Session | null } {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error("useSession must be used within an AuthProvider")
   return { session: ctx.session }
-}
-
-/**
- * useOrganization — placeholder to mirror Clerk's useOrganization().
- * Supabase Auth doesn't have orgs natively; org logic lives in app_users table.
- * Returns null for now — will be removed in a later phase.
- */
-export function useOrganization(): { organization: null; isLoaded: boolean } {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error("useOrganization must be used within an AuthProvider")
-  return { organization: null, isLoaded: ctx.isLoaded }
-}
-
-/**
- * useClerk — placeholder to mirror Clerk's useClerk() hook.
- * Returns signOut for now — will be removed in a later phase.
- */
-export function useClerk(): { signOut: () => Promise<void> } {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error("useClerk must be used within an AuthProvider")
-  return { signOut: ctx.signOut }
 }
 
 /**

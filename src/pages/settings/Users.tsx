@@ -40,13 +40,13 @@ import { DeleteModal } from "@/components/ui/delete-modal";
 
 interface UserActionsMenuProps {
   u: AppUser;
-  currentUserClerkId?: string;
+  currentUserId?: string;
   onChangeRole: () => void;
   onRemove: () => void;
   removePending: boolean;
 }
 
-function UserActionsMenu({ u, currentUserClerkId, onChangeRole, onRemove, removePending }: UserActionsMenuProps) {
+function UserActionsMenu({ u, currentUserId, onChangeRole, onRemove, removePending }: UserActionsMenuProps) {
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0 });
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -73,7 +73,7 @@ function UserActionsMenu({ u, currentUserClerkId, onChangeRole, onRemove, remove
     setOpen(v => !v);
   };
 
-  const isSelf = u.authUserId === currentUserClerkId;
+  const isSelf = u.authUserId === currentUserId;
 
   if (isSelf) return null;
 
@@ -212,7 +212,7 @@ export function Users() {
     },
   });
 
-  // Sync current Clerk user into app_users on load
+  // Sync current user into app_users on load
   useEffect(() => {
     if (!user || !userId) return;
     (async () => {
@@ -493,7 +493,7 @@ export function Users() {
                           )}
                           <UserActionsMenu
                             u={u}
-                            currentUserClerkId={user?.id}
+                            currentUserId={user?.id}
                             onChangeRole={() => openRoleDialog(u)}
                             onRemove={() => handleRemoveUser(u)}
                             removePending={removeUserMutation.isPending}

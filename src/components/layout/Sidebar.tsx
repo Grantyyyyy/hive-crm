@@ -1,5 +1,7 @@
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useUser, useAuth } from "@/lib/AuthContext";
+import { supabase } from "@/lib/supabaseClient";
 import {
   LayoutDashboard,
   Users,
@@ -36,12 +38,35 @@ interface SidebarProps {
 export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: SidebarProps) {
   const [location] = useLocation();
   const { user } = useUser();
-  const { signOut } = useAuth();
+  const { userId, signOut } = useAuth();
+  const [roleName, setRoleName] = useState<string | null>(null);
+
+  // Fetch role name from app_users + roles tables
+  useEffect(() => {
+    if (!userId) {
+      setRoleName(null);
+      return;
+    }
+    let cancelled = false;
+    supabase
+      .from('app_users')
+      .select('roles(name)')
+      .eq('auth_user_id', userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled && (data as any)?.roles) {
+          setRoleName((data as any).roles.name);
+        } else if (!cancelled) {
+          setRoleName(null);
+        }
+      });
+    return () => { cancelled = true; };
+  }, [userId]);
 
   const displayName = user?.user_metadata?.full_name
     ?? user?.email?.split("@")[0]
     ?? "User";
-  const displayRole = user?.user_metadata?.role ?? "User";
+  const displayRole = roleName ?? "Member";
   const initials = (user?.email ?? "U").slice(0, 2).toUpperCase();
 
   const groups = [

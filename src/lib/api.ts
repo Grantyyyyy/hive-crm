@@ -33,34 +33,27 @@ interface SingleResponse<T> {
   message?: string;
 }
 
-let cachedOrgId: string | null = null;
 let cachedToken: string | null = null;
 let tokenResolveQueue: Array<() => void> = [];
 
-type AuthListener = (data: { token: string | null; orgId: string | null }) => void;
+type AuthListener = (data: { token: string | null }) => void;
 let authListeners: AuthListener[] = [];
 
 const notifyAuthListeners = () => {
-  const data = { token: cachedToken, orgId: cachedOrgId };
+  const data = { token: cachedToken };
   authListeners.forEach(listener => listener(data));
 };
 
 export const subscribeAuth = (listener: AuthListener) => {
   authListeners.push(listener);
   // Initial notification for the new subscriber
-  listener({ token: cachedToken, orgId: cachedOrgId });
+  listener({ token: cachedToken });
   return () => {
     authListeners = authListeners.filter(l => l !== listener);
   };
 };
 
-export { cachedToken, cachedOrgId };
-
-export const setOrganizationId = (orgId: string | null) => {
-  if (cachedOrgId === orgId) return;
-  cachedOrgId = orgId;
-  notifyAuthListeners();
-};
+export { cachedToken };
 
 export const setAuthToken = (token: string | null) => {
   if (cachedToken === token) return;
@@ -90,13 +83,6 @@ function getAuthHeaders(): Record<string, string> {
 
   if (cachedToken) {
     headers['Authorization'] = `Bearer ${cachedToken}`;
-  } else {
-    console.warn('No auth token available');
-  }
-  if (cachedOrgId) {
-    headers['x-clerk-org-id'] = cachedOrgId;
-  } else {
-    console.warn('No org ID available');
   }
 
   return headers;
@@ -105,7 +91,7 @@ function getAuthHeaders(): Record<string, string> {
 async function request<T>(path: string, options: RequestInit = {}, params?: ApiOptions): Promise<T> {
   await waitForToken();
   const url = new URL(`${API_BASE}${path}`);
-  
+
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined) {
@@ -115,11 +101,6 @@ async function request<T>(path: string, options: RequestInit = {}, params?: ApiO
   }
 
   const authHeaders = getAuthHeaders();
-  console.log('API Request:', options.method || 'GET', url.toString(), { 
-    hasToken: !!authHeaders['Authorization'],
-    hasOrgId: !!authHeaders['x-clerk-org-id'],
-    tokenPrefix: authHeaders['Authorization']?.substring(0, 20) + '...'
-  });
 
   const response = await fetch(url.toString(), {
     ...options,
@@ -289,17 +270,17 @@ export interface Permission {
 export const usersApi = {
   list: () => request<SingleResponse<User[]>>('/api/users'),
   getOne: (id: string) => request<SingleResponse<User>>(`/api/users/${id}`),
-  updateRole: (userId: string, roleId: string) => 
-    request<SingleResponse<User>>(`/api/users/${userId}/role`, { 
-      method: 'PATCH', 
-      body: JSON.stringify({ roleId }) 
+  updateRole: (userId: string, roleId: string) =>
+    request<SingleResponse<User>>(`/api/users/${userId}/role`, {
+      method: 'PATCH',
+      body: JSON.stringify({ roleId })
     }),
-  invite: (email: string, roleId: string) => 
-    request<SingleResponse<{ invitationId: string; email: string; status: string }>>('/api/users/invite', { 
-      method: 'POST', 
-      body: JSON.stringify({ email, roleId }) 
+  invite: (email: string, roleId: string) =>
+    request<SingleResponse<{ invitationId: string; email: string; status: string }>>('/api/users/invite', {
+      method: 'POST',
+      body: JSON.stringify({ email, roleId })
     }),
-  remove: (userId: string) => 
+  remove: (userId: string) =>
     request<SingleResponse<null>>(`/api/users/${userId}`, { method: 'DELETE' }),
   members: () => request<SingleResponse<any[]>>('/api/users/members'),
 };
@@ -307,17 +288,17 @@ export const usersApi = {
 export const rolesApi = {
   list: () => request<SingleResponse<Role[]>>('/api/roles'),
   getOne: (id: string) => request<SingleResponse<Role>>(`/api/roles/${id}`),
-  create: (data: { name: string; description?: string; color?: string; permissionIds?: string[] }) => 
-    request<SingleResponse<Role>>('/api/roles', { 
-      method: 'POST', 
-      body: JSON.stringify(data) 
+  create: (data: { name: string; description?: string; color?: string; permissionIds?: string[] }) =>
+    request<SingleResponse<Role>>('/api/roles', {
+      method: 'POST',
+      body: JSON.stringify(data)
     }),
-  update: (id: string, data: { name?: string; description?: string; color?: string; permissionIds?: string[] }) => 
-    request<SingleResponse<Role>>(`/api/roles/${id}`, { 
-      method: 'PATCH', 
-      body: JSON.stringify(data) 
+  update: (id: string, data: { name?: string; description?: string; color?: string; permissionIds?: string[] }) =>
+    request<SingleResponse<Role>>(`/api/roles/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data)
     }),
-  delete: (id: string) => 
+  delete: (id: string) =>
     request<SingleResponse<null>>(`/api/roles/${id}`, { method: 'DELETE' }),
   permissions: () => request<SingleResponse<Record<string, Permission[]>>>('/api/roles/permissions'),
   modules: () => request<SingleResponse<string[]>>('/api/roles/modules'),

@@ -22,18 +22,3 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 export function createSupabaseBrowserClient() {
   return createBrowserClient(supabaseUrl, supabaseAnonKey)
 }
-
-/**
- * Creates an authenticated Supabase client using a Clerk JWT
- * @deprecated Use createSupabaseBrowserClient() or the base `supabase` export instead.
- * This will be removed once the Clerk → Supabase Auth migration is complete.
- */
-export function createClerkSupabaseClient(token: string) {
-  return createClient(supabaseUrl, supabaseAnonKey, {
-    global: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  })
-}

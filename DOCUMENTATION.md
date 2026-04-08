@@ -2,7 +2,7 @@
 
 **Version:** 1.0.0  
 **Last Updated:** March 28, 2026  
-**Stack:** React 19 + TypeScript + Vite + Supabase + Clerk Auth + Tailwind CSS v4
+**Stack:** React 19 + TypeScript + Vite + Supabase (Auth + Database) + Tailwind CSS v4
 
 ---
 
@@ -63,7 +63,7 @@ Enterprise CRM is a comprehensive Customer Relationship Management system built 
 │  ┌───────────────────────────────────────────────────────────┐  │
 │  │                    React SPA (Vite)                       │  │
 │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐   │  │
-│  │  │   Clerk     │  │   Wouter    │  │  TanStack Query │   │  │
+│  │  │  Supabase   │  │   Wouter    │  │  TanStack Query │   │  │
 │  │  │   Auth      │  │   Router    │  │  (State Cache)  │   │  │
 │  │  └─────────────┘  └─────────────┘  └─────────────────┘   │  │
 │  │  ┌─────────────────────────────────────────────────────┐  │  │
@@ -81,16 +81,13 @@ Enterprise CRM is a comprehensive Customer Relationship Management system built 
 │  │  PostgreSQL │  │   Auth RLS  │  │    Real-time Subs       │ │
 │  │  Database   │  │   Policies  │  │    (Future Ready)       │ │
 │  └─────────────┘  └─────────────┘  └─────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-                              ▲
-                              │ JWT Verification
-                              │
-┌─────────────────────────────────────────────────────────────────┐
-│                      Clerk (Authentication)                     │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐ │
-│  │   Sign In   │  │   Session   │  │   Organization Mgmt     │ │
-│  │   Sign Up   │  │   Tokens    │  │   User Management       │ │
-│  └─────────────┘  └─────────────┘  └─────────────────────────┘ │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │                    Auth (Supabase)                        │  │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐   │  │
+│  │  │   Sign In   │  │   Session   │  │   User Mgmt     │   │  │
+│  │  │   Sign Up   │  │   Tokens    │  │   Invite Users  │   │  │
+│  │  └─────────────┘  └─────────────┘  └─────────────────┘   │  │
+│  └───────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -193,7 +190,7 @@ User Action → Component → useCRMResource → CRMContext → Supabase
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| **Clerk** | 5.61.3 | User authentication & org management |
+| **Supabase Auth** | 2.100.0 | User authentication & session management |
 | **Supabase** | 2.100.0 | PostgreSQL database with RLS |
 
 ### 3.4 UI & Styling
@@ -224,7 +221,6 @@ User Action → Component → useCRMResource → CRMContext → Supabase
 
 - **Node.js:** v18 or newer
 - **pnpm:** v8+ (recommended) or npm
-- **Clerk Account:** [dashboard.clerk.com](https://dashboard.clerk.com)
 - **Supabase Account:** [supabase.com](https://supabase.com)
 
 ### 4.2 Environment Setup
@@ -232,12 +228,17 @@ User Action → Component → useCRMResource → CRMContext → Supabase
 Create a `.env.local` file in the project root:
 
 ```env
-# Clerk Authentication
-VITE_CLERK_PUBLISHABLE_KEY=pk_test_your_key_here
-
 # Supabase
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your_anon_key
+
+# Supabase service role key — ONLY for serverless functions and dev API.
+# NEVER expose this in frontend code.
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+# App URL (used in invitation email redirects)
+APP_URL=http://localhost:5173
+VITE_APP_URL=http://localhost:5173
 
 # Optional: Backend API URL (if using separate API server)
 VITE_API_URL=http://localhost:3001
@@ -274,18 +275,17 @@ Run the SQL migration files in your Supabase SQL Editor in this order:
 6. `supabase_tasks_recurrence.sql` - Task recurrence
 7. `supabase_tasks_enhanced.sql` - Additional task features
 
-### 4.5 Clerk Configuration
+### 4.5 Supabase Auth Configuration
 
-1. **Create Application:** Go to Clerk Dashboard → Create Application
-2. **Configure OAuth:** Enable email/password and social providers
+1. **Create Project:** Go to Supabase Dashboard → New Project
+2. **Configure Auth:** Enable Email provider under Authentication → Providers
 3. **Set Redirect URLs:**
    - Sign In: `http://localhost:5173/sign-in`
    - Sign Up: `http://localhost:5173/sign-up`
    - Dashboard: `http://localhost:5173/dashboard`
-4. **Enable Organizations:** Settings → Organizations → Enable
-5. **Configure JWT Template:** 
-   - Create template named `supabase`
-   - Add custom claim: `sub: {{user.id}}`
+4. **Configure Site URL:** Authentication → URL Configuration → Site URL → `http://localhost:5173`
+5. **Set up Invitation Emails:** Auth → Email Templates → Invite → Customize template
+6. **Copy Keys:** Project Settings → API → Copy `URL` and `anon public` key to `.env.local`
 
 ---
 
@@ -919,12 +919,11 @@ CREATE TABLE purchase_orders (
 
 ### 8.1 Authentication
 
-All API calls require authentication via Clerk JWT tokens. Tokens are automatically attached to requests by the `CRMContext`.
+All API calls require authentication via Supabase JWT tokens. Tokens are automatically attached to requests by the `CRMContext`.
 
 **Headers:**
 ```
 Authorization: Bearer <jwt_token>
-x-clerk-org-id: <organization_id>
 Content-Type: application/json
 ```
 
@@ -1268,45 +1267,47 @@ dark:shadow-none
 
 ## 11. Authentication & Authorization
 
-### 11.1 Clerk Integration
+### 11.1 Supabase Auth Integration
 
 **Setup:**
-1. User visits app → Clerk checks for existing session
+1. User visits app → Supabase checks for existing session
 2. No session → Redirect to `/sign-in` or `/sign-up`
-3. Successful auth → Clerk sets cookies and JWT
-4. App receives JWT → Exchanges for Supabase token
+3. Successful auth → Supabase issues JWT
+4. App receives token via `useAuth()` → Token passed to Supabase client
+5. Supabase RLS policies enforce access control
 
 **Token Flow:**
 ```
 User Login
     ↓
-Clerk Issues JWT
+Supabase Issues JWT
     ↓
 App receives token via useAuth()
     ↓
-Token passed to Supabase client
+Token passed to Supabase client & API layer
     ↓
 Supabase RLS policies enforce access
 ```
 
-### 11.2 Organization Management
+### 11.2 Role-Based Access Control
 
-Clerk Organizations enable multi-tenancy:
+User roles are managed through the `app_users` and `roles` tables:
 
 ```typescript
-const { organization } = useOrganization();
-const orgId = organization?.id;
+const { userId } = useAuth();
 
-// Include in API calls
-headers: {
-  'x-clerk-org-id': orgId
-}
+// Fetch user role
+const { data } = await supabase
+  .from('app_users')
+  .select('roles(name)')
+  .eq('auth_user_id', userId)
+  .maybeSingle();
 ```
 
 **Data Isolation:**
-- All records include `owner_id` (Clerk user ID)
-- Future: Add `organization_id` for org-level isolation
+- All records include `owner_id` (Supabase user ID)
 - RLS policies filter by `auth.uid()`
+- Role-based UI gating via `app_users.role_id` → `roles` relationship
 
 ### 11.3 Protected Routes
 
@@ -2035,14 +2036,15 @@ describe('calculateLeadScore', () => {
 
 **Error:**
 ```
-Error: Missing Publishable Key. Please set VITE_CLERK_PUBLISHABLE_KEY in .env.local
+Error: Missing Supabase anon key. Please set VITE_SUPABASE_ANON_KEY in .env.local
 ```
 
 **Solution:**
 1. Check `.env.local` exists in project root
-2. Verify key format: `VITE_CLERK_PUBLISHABLE_KEY=pk_test_...`
-3. Restart dev server after changes
-4. Clear browser cache
+2. Verify key format: `VITE_SUPABASE_ANON_KEY=eyJ...`
+3. Verify `VITE_SUPABASE_URL` is set correctly
+4. Restart dev server after changes
+5. Clear browser cache
 
 #### "Not Authenticated"
 
@@ -2052,14 +2054,14 @@ Error: Not authenticated
 ```
 
 **Causes:**
-- Clerk session expired
+- Supabase session expired
 - Token refresh failed
-- Organization not selected
+- Invalid credentials
 
 **Solution:**
 1. Sign out and sign back in
-2. Check Clerk Dashboard for session issues
-3. Verify organization is active
+2. Check Supabase Dashboard → Authentication → Users
+3. Verify `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are correct
 
 #### "Failed to fetch resource"
 
@@ -2135,7 +2137,6 @@ console.log('Context state:', ctx);
 ### 16.4 Getting Help
 
 **Resources:**
-- **Clerk Docs:** https://clerk.com/docs
 - **Supabase Docs:** https://supabase.com/docs
 - **React Docs:** https://react.dev
 - **Tailwind Docs:** https://tailwindcss.com/docs
@@ -2152,9 +2153,11 @@ console.log('Context state:', ctx);
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `VITE_CLERK_PUBLISHABLE_KEY` | ✅ | Clerk publishable key |
 | `VITE_SUPABASE_URL` | ✅ | Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | ✅ | Supabase anon key |
+| `VITE_SUPABASE_ANON_KEY` | ✅ | Supabase anon key (safe for frontend) |
+| `SUPABASE_SERVICE_ROLE_KEY` | ✅ (server only) | Service role key — NEVER expose in frontend |
+| `APP_URL` | ✅ | App URL for invitation email redirects |
+| `VITE_APP_URL` | ✅ | App URL for frontend |
 | `VITE_API_URL` | ❌ | Backend API URL (if used) |
 
 ## Appendix B: Keyboard Shortcuts

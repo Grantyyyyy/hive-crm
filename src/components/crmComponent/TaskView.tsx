@@ -67,7 +67,7 @@ function SortableRow({ item, children, onClick, className }: any) {
 }
 
 export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideHeader = false }: TaskViewProps) {
-  const { user, isLoaded: clerkLoaded } = useUser()
+  const { user, isLoaded: userLoaded } = useUser()
   const {
     data: tasks,
     isLoaded: tasksLoaded,
@@ -80,7 +80,7 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
   const { data: tagLinks } = useCRMResource<TaskTagLink>('task_tag_links')
   const { data: projects } = useCRMResource<Project>('projects')
 
-  const isLoaded = clerkLoaded && tasksLoaded
+  const isLoaded = userLoaded && tasksLoaded
 
   const [search, setSearch] = useState("")
   const [activeTab, setActiveTab] = useState<'list' | 'kanban'>('list')

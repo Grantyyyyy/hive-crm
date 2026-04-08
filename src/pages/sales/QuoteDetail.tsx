@@ -32,7 +32,7 @@ import {
   reserveStockForQuote,
   releaseQuoteStock,
 } from "@/services/quoteService"
-import { useUser } from "@clerk/clerk-react"
+import { useUser } from "@/lib/AuthContext"
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -89,7 +89,7 @@ export function QuoteDetail() {
     if (!quote || isSending) return
     setIsSending(true)
     try {
-      await reserveStockForQuote(quote, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
+      await reserveStockForQuote(quote, ctx, user?.id || 'system', user?.user_metadata?.full_name || 'Unknown User')
       sendQuoteEmail(quote)
       toast.success("Quote Sent & Stock Reserved", { description: "Email dispatched. Inventory items are now 'Soft Reserved'." })
     } catch (e: unknown) {
@@ -129,7 +129,7 @@ export function QuoteDetail() {
     if (!quote || isExpiring) return
     setIsExpiring(true)
     try {
-      await releaseQuoteStock(quote, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
+      await releaseQuoteStock(quote, ctx, user?.id || 'system', user?.user_metadata?.full_name || 'Unknown User')
       toast.success("Quote Expired", { description: "Reservation released back to available stock." })
       setExpireOpen(false)
     } catch (e: unknown) {
@@ -145,7 +145,7 @@ export function QuoteDetail() {
     try {
       // Release reservation before deletion if stock is held
       if (quote.stockReserved) {
-        await releaseQuoteStock(quote, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
+        await releaseQuoteStock(quote, ctx, user?.id || 'system', user?.user_metadata?.full_name || 'Unknown User')
       }
       await deleteItem(quote.id)
       navigate("/quotes")

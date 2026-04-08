@@ -1,32 +1,42 @@
-import { useState, useRef } from "react"
-import { useUser } from "@clerk/clerk-react"
-import { Camera, Save, Info } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
+import { useUser } from "@/lib/AuthContext"
+import { supabase } from "@/lib/supabaseClient"
+import { Camera, Save, Info, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { DetailSkeleton } from "@/components/ui/skeletons"
-import { getUserInitials } from "@/lib/helpers"
 
 export function ProfilePage() {
   const { user, isLoaded } = useUser()
 
-  // Initialize form state from user data
-  const [firstName, setFirstName] = useState(user?.firstName ?? '')
-  const [lastName, setLastName] = useState(user?.lastName ?? '')
+  // Parse name from Supabase user_metadata
+  const fullName = user?.user_metadata?.full_name ?? ""
+  const nameParts = fullName.split(" ")
+  const [firstName, setFirstName] = useState(nameParts[0] ?? "")
+  const [lastName, setLastName] = useState(nameParts.slice(1).join(" ") ?? "")
   const [saving, setSaving] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Dirty check for save button
-  const isDirty = firstName.trim() !== (user?.firstName ?? '')
-    || lastName.trim() !== (user?.lastName ?? '')
+  // Re-sync form when user data changes
+  useEffect(() => {
+    const parts = (user?.user_metadata?.full_name ?? "").split(" ")
+    setFirstName(parts[0] ?? "")
+    setLastName(parts.slice(1).join(" ") ?? "")
+  }, [user?.user_metadata?.full_name])
+
+  const isDirty = firstName.trim() !== (nameParts[0] ?? "")
+    || lastName.trim() !== (nameParts.slice(1).join(" ") ?? "")
 
   const handleSaveName = async () => {
     if (!user) return
     setSaving(true)
     try {
-      await user.update({
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          full_name: `${firstName.trim()} ${lastName.trim()}`.trim(),
+        },
       })
+      if (error) throw error
       toast.success('Profile updated', {
         description: 'Your name has been saved.'
       })
@@ -44,7 +54,23 @@ export function ProfilePage() {
     if (!file || !user) return
     setUploadingAvatar(true)
     try {
-      await user.setProfileImage({ file })
+      const fileExt = file.name.split(".").pop()
+      const fileName = `${user.id}.${fileExt}`
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(fileName, file, { upsert: true })
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(fileName)
+
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: { avatar_url: publicUrl },
+      })
+      if (updateError) throw updateError
+
       toast.success('Avatar updated', {
         description: 'Your profile photo has been changed.'
       })
@@ -58,7 +84,8 @@ export function ProfilePage() {
     }
   }
 
-  const initials = getUserInitials(user)
+  const avatarUrl = user?.user_metadata?.avatar_url as string | undefined
+  const initials = (user?.email ?? "U").slice(0, 2).toUpperCase()
 
   if (!isLoaded) return <DetailSkeleton />
 
@@ -89,9 +116,9 @@ export function ProfilePage() {
             <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none overflow-hidden p-6">
               <div className="flex flex-col items-center">
                 {/* Avatar */}
-                {user && user.imageUrl ? (
+                {avatarUrl ? (
                   <img
-                    src={user.imageUrl}
+                    src={avatarUrl}
                     alt="Avatar"
                     className="w-24 h-24 rounded-full object-cover ring-4 ring-white dark:ring-slate-800"
                   />
@@ -131,7 +158,9 @@ export function ProfilePage() {
                       Member Since
                     </p>
                     <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                      {user?.createdAt?.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) ?? '—'}
+                      {user?.created_at
+                        ? new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+                        : '—'}
                     </p>
                   </div>
                   <div>
@@ -139,7 +168,9 @@ export function ProfilePage() {
                       Last Sign In
                     </p>
                     <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                      {user?.lastSignInAt?.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) ?? '—'}
+                      {user?.last_sign_in_at
+                        ? new Date(user.last_sign_in_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+                        : '—'}
                     </p>
                   </div>
                 </div>
@@ -185,7 +216,7 @@ export function ProfilePage() {
                   disabled={!isDirty || saving}
                   className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-10 px-5 text-xs font-bold uppercase tracking-wider shadow-lg shadow-indigo-200 dark:shadow-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
                 >
-                  <Save className="w-3.5 h-3.5" />
+                  {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
                   {saving ? 'Saving...' : 'Save changes'}
                 </button>
               </div>
@@ -202,7 +233,7 @@ export function ProfilePage() {
                 </label>
                 <input
                   type="text"
-                  value={user?.primaryEmailAddress?.emailAddress ?? '—'}
+                  value={user?.email ?? '—'}
                   disabled
                   className="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-sm font-medium cursor-not-allowed"
                 />

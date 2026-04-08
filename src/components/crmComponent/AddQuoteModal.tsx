@@ -11,7 +11,7 @@ import { sendQuoteEmail, reserveStockForQuote } from "@/services/quoteService"
 import { generateNumber } from "@/services/types"
 import { FileText, X } from "lucide-react"
 import { toast } from "sonner"
-import { useUser } from "@clerk/clerk-react"
+import { useUser } from "@/lib/AuthContext"
 
 interface AddQuoteModalProps {
   open: boolean
@@ -37,7 +37,7 @@ export function AddQuoteModal({ open, onOpenChange, onSuccess }: AddQuoteModalPr
       // 2. If 'sent', trigger atomic reservation
       if (newQuote.status === 'sent') {
         sendQuoteEmail(newQuote)
-        await reserveStockForQuote(newQuote, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
+        await reserveStockForQuote(newQuote, ctx, user?.id || 'system', user?.user_metadata?.full_name || 'Unknown User')
       }
 
       onOpenChange(false)

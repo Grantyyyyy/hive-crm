@@ -17,7 +17,7 @@ import { AddTaskModal } from "@/components/crmComponent/AddTaskModal"
 import { EditTaskModal } from "@/components/crmComponent/EditTaskModal"
 import { KanbanBoard } from "@/components/crmComponent/KanbanBoard"
 import { useCRMResource } from "@/lib/hooks"
-import { useUser } from "@clerk/clerk-react"
+import { useUser } from "@/lib/AuthContext"
 import { ListSkeleton } from "@/components/ui/skeletons"
 import { DataTable, type Column } from "@/components/reusables/DataTable"
 import { getPriorityStyles, getStatusStyles, type TaskStatus } from "../../lib/task-utils"
@@ -169,8 +169,8 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
           type: 'updated' as const,
           description: `Status changed to ${newStatus}`,
           userId: user?.id || "",
-          userName: user?.fullName || "User",
-          userAvatar: user?.imageUrl,
+          userName: user?.user_metadata?.full_name || "User",
+          userAvatar: user?.user_metadata?.avatar_url,
           createdAt: new Date().toISOString()
         }
         updateItem(taskId, {
@@ -500,8 +500,8 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
             type: 'created' as const,
             description: 'Task created',
             userId: user?.id || "",
-            userName: user?.fullName || "User",
-            userAvatar: user?.imageUrl, // Use the real avatar
+            userName: user?.user_metadata?.full_name || "User",
+            userAvatar: user?.user_metadata?.avatar_url, // Use the real avatar
             createdAt: new Date().toISOString()
           }
           addItems([{ ...task, activities: [creationActivity], projectId: fixedProjectId || task.projectId }])

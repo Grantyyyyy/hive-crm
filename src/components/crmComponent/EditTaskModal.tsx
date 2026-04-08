@@ -56,8 +56,8 @@ export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, us
     const activities: any[] = []
     const userMeta = {
       userId: user?.id || "",
-      userName: user?.fullName || "User",
-      userAvatar: user?.imageUrl,
+      userName: user?.user_metadata?.full_name || "User",
+      userAvatar: user?.user_metadata?.avatar_url,
       createdAt: new Date().toISOString()
     }
 
@@ -69,8 +69,8 @@ export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, us
         taskId: task.id,
         type,
         description: updated.status === 'completed' ? 'Task marked as completed' :
-                     task.status === 'completed' ? 'Task re-opened' :
-                     `Status changed to ${updated.status}`,
+          task.status === 'completed' ? 'Task re-opened' :
+            `Status changed to ${updated.status}`,
         ...userMeta
       })
     }
@@ -127,8 +127,8 @@ export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, us
       type: 'updated',
       description: `Added subtask: ${title}`,
       userId: user?.id || "",
-      userName: user?.fullName || "User",
-      userAvatar: user?.imageUrl,
+      userName: user?.user_metadata?.full_name || "User",
+      userAvatar: user?.user_metadata?.avatar_url,
       createdAt: new Date().toISOString()
     }
 
@@ -147,8 +147,8 @@ export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, us
       type: 'updated',
       description: completed ? `Checked subtask: ${subtask?.title}` : `Unchecked subtask: ${subtask?.title}`,
       userId: user?.id || "",
-      userName: user?.fullName || "User",
-      userAvatar: user?.imageUrl,
+      userName: user?.user_metadata?.full_name || "User",
+      userAvatar: user?.user_metadata?.avatar_url,
       createdAt: new Date().toISOString()
     }
 
@@ -165,8 +165,8 @@ export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, us
       type: 'updated',
       description: `Removed subtask: ${subtask?.title}`,
       userId: user?.id || "",
-      userName: user?.fullName || "User",
-      userAvatar: user?.imageUrl,
+      userName: user?.user_metadata?.full_name || "User",
+      userAvatar: user?.user_metadata?.avatar_url,
       createdAt: new Date().toISOString()
     }
 
@@ -179,8 +179,8 @@ export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, us
       taskId: task.id,
       content,
       authorId: userId,
-      authorName: user?.fullName || "You",
-      authorAvatar: user?.imageUrl,
+      authorName: user?.user_metadata?.full_name || "You",
+      authorAvatar: user?.user_metadata?.avatar_url,
       createdAt: new Date().toISOString()
     }
     const comments = task.comments ? [...task.comments, newComment] : [newComment]
@@ -191,8 +191,8 @@ export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, us
       type: 'comment',
       description: 'Added a comment',
       userId: user?.id || "",
-      userName: user?.fullName || "User",
-      userAvatar: user?.imageUrl,
+      userName: user?.user_metadata?.full_name || "User",
+      userAvatar: user?.user_metadata?.avatar_url,
       createdAt: new Date().toISOString()
     }
 
@@ -207,8 +207,8 @@ export function EditTaskModal({ task, open, onOpenChange, onUpdate, onDelete, us
       type: 'comment',
       description: 'Deleted a comment',
       userId: user?.id || "",
-      userName: user?.fullName || "User",
-      userAvatar: user?.imageUrl,
+      userName: user?.user_metadata?.full_name || "User",
+      userAvatar: user?.user_metadata?.avatar_url,
       createdAt: new Date().toISOString()
     }
     onUpdate(task.id, { comments, activities: [activity] } as any)

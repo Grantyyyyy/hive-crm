@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@/lib/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCRMContext } from '@/lib/CRMContext';
 import {
@@ -17,14 +17,14 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Shield, 
-  PlusCircle, 
-  Edit, 
-  Trash2, 
-  Loader2, 
-  Search, 
-  Lock, 
+import {
+  Shield,
+  PlusCircle,
+  Edit,
+  Trash2,
+  Loader2,
+  Search,
+  Lock,
   ChevronRight,
   Settings
 } from 'lucide-react';
@@ -185,7 +185,7 @@ export function Roles() {
   // Filter Logic
   const filteredRoles = useMemo(() => {
     if (!rolesData) return [];
-    return rolesData.filter(role => 
+    return rolesData.filter(role =>
       role.name.toLowerCase().includes(search.toLowerCase()) ||
       role.description?.toLowerCase().includes(search.toLowerCase())
     );
@@ -210,7 +210,7 @@ export function Roles() {
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen font-sans">
       <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
-        
+
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
           <div>
@@ -243,13 +243,13 @@ export function Roles() {
         {/* Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredRoles.map((role) => (
-            <div 
-              key={role.id} 
+            <div
+              key={role.id}
               className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 dark:hover:shadow-indigo-500/5 transition-all duration-300"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-4">
-                  <div 
+                  <div
                     className="size-12 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform duration-300"
                     style={{ backgroundColor: role.color, color: '#fff' }}
                   >
@@ -257,10 +257,10 @@ export function Roles() {
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-900 dark:text-white text-lg flex items-center gap-2">
-                       {role.name}
-                       {role.isSystem && (
-                         <Badge variant="secondary" className="text-[9px] uppercase tracking-tighter bg-slate-100 dark:bg-slate-800 text-slate-500 border-none">System</Badge>
-                       )}
+                      {role.name}
+                      {role.isSystem && (
+                        <Badge variant="secondary" className="text-[9px] uppercase tracking-tighter bg-slate-100 dark:bg-slate-800 text-slate-500 border-none">System</Badge>
+                      )}
                     </h3>
                     <p className="text-xs text-slate-400 font-medium">{role._count?.users || 0} users assigned</p>
                   </div>
@@ -271,9 +271,9 @@ export function Roles() {
                     <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => handleEdit(role)}>
                       <Edit className="w-4 h-4 text-slate-400" />
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="h-8 w-8 rounded-lg text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20"
                       onClick={() => handleDelete(role)}
                       disabled={deleteMutation.isPending}
@@ -312,7 +312,7 @@ export function Roles() {
                 </div>
               </div>
 
-              <div 
+              <div
                 className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-indigo-600 dark:text-indigo-400 cursor-pointer group/link hover:text-indigo-700"
                 onClick={() => handleEdit(role)}
               >
@@ -333,8 +333,8 @@ export function Roles() {
                 <p className="text-slate-900 dark:text-white font-bold text-lg">No roles found</p>
                 <p className="text-slate-500 text-sm mt-1">Try adjusting your search or create a new custom role.</p>
               </div>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setShowCreateDialog(true)}
                 className="mt-4"
               >
@@ -346,8 +346,8 @@ export function Roles() {
       </div>
 
       {/* Create/Edit Dialog */}
-      <Dialog 
-        open={showCreateDialog || showEditDialog} 
+      <Dialog
+        open={showCreateDialog || showEditDialog}
         onOpenChange={(v) => !v && resetForm()}
       >
         <DialogContent className="max-w-2xl rounded-3xl max-h-[90vh] overflow-hidden flex flex-col p-0">
@@ -356,7 +356,7 @@ export function Roles() {
               {editingRole ? 'Update Role' : 'Define New Role'}
             </DialogTitle>
           </DialogHeader>
-          
+
           <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-8 pb-8">
             <div className="space-y-8">
               {/* Basic Info */}
@@ -375,7 +375,7 @@ export function Roles() {
                 <div className="space-y-2">
                   <Label htmlFor="color" className="text-xs font-black uppercase tracking-wider text-slate-500">Brand Color</Label>
                   <div className="flex gap-2">
-                    <div 
+                    <div
                       className="size-12 rounded-xl border-4 border-white dark:border-slate-800 shadow-sm overflow-hidden"
                       style={{ backgroundColor: formData.color }}
                     >
@@ -415,7 +415,7 @@ export function Roles() {
                     {formData.permissionIds.length} SELECTED
                   </span>
                 </div>
-                
+
                 <div className="space-y-6 border border-slate-100 dark:border-slate-800 rounded-3xl p-6 bg-slate-50/50 dark:bg-slate-900/30">
                   {Object.entries(permissionsData || {}).map(([module, permissions]) => (
                     <div key={module} className="space-y-3">
@@ -442,8 +442,8 @@ export function Roles() {
                             </span>
                             <div className={cn(
                               "size-4 rounded-full border-2 transition-all flex items-center justify-center",
-                              formData.permissionIds.includes(permission.id) 
-                                ? "bg-indigo-600 border-indigo-600" 
+                              formData.permissionIds.includes(permission.id)
+                                ? "bg-indigo-600 border-indigo-600"
                                 : "border-slate-300 dark:border-slate-700"
                             )}>
                               {formData.permissionIds.includes(permission.id) && <div className="size-1.5 rounded-full bg-white" />}
@@ -462,8 +462,8 @@ export function Roles() {
             <Button type="button" variant="outlineNeutral" onClick={resetForm} className="h-12 rounded-2xl px-8 font-bold">
               Dismiss
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               onClick={handleSubmit}
               className="h-12 rounded-2xl px-10 bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200 dark:shadow-none font-bold"
               disabled={createMutation.isPending || updateMutation.isPending}
@@ -485,7 +485,7 @@ export function Roles() {
         title="Delete Role"
         description={
           <>
-            Are you sure you want to delete the role <span className="font-semibold text-slate-900 dark:text-white">"{roleToDelete?.name}"</span>? 
+            Are you sure you want to delete the role <span className="font-semibold text-slate-900 dark:text-white">"{roleToDelete?.name}"</span>?
             This action cannot be undone and may affect users assigned to this role.
           </>
         }

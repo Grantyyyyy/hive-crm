@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@/lib/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCRMContext } from '@/lib/CRMContext';
 import {
@@ -221,9 +221,9 @@ export function Users() {
       try {
         await upsertCurrentUser(client, {
           id: user.id,
-          email: user.primaryEmailAddress?.emailAddress || '',
-          fullName: user.fullName || user.firstName || 'User',
-          username: user.username || undefined,
+          email: user.email || '',
+          fullName: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+          username: user.user_metadata?.user_name || undefined,
         }, userId);
       } catch (e) {
         console.error('Failed to sync current user:', e);

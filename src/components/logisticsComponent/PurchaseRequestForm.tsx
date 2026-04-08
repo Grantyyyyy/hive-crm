@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import type { PurchaseRequest, PurchaseRequestStatus, InventoryItem, Vendor } from "@/lib/types"
 import { generateId } from "@/lib/helpers"
-import { useUser } from "@clerk/clerk-react"
+import { useUser } from "@/lib/AuthContext"
 
 interface PurchaseRequestFormProps {
   onSave: (request: PurchaseRequest) => void
@@ -105,7 +105,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
       id: initialData?.id ?? generateId(),
       requestNumber,
       requesterId: user?.id ?? "unknown",
-      requesterName: user?.fullName ?? "Unknown User",
+      requesterName: user?.user_metadata?.full_name ?? "Unknown User",
       amount: totalEstimate,
       status,
       date: new Date(date).toISOString(),
@@ -216,7 +216,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                 </span>
               )}
             </div>
-            
+
             <div className="relative group">
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 min-w-4 h-4 text-slate-400 pointer-events-none group-focus-within:text-indigo-500 transition-colors" />
@@ -232,16 +232,16 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
 
               {/* Search Results Dropdown */}
               {showResults && searchTerm.length >= 1 && (
-                <div 
+                <div
                   className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden max-h-[320px] divide-y divide-slate-50 dark:divide-slate-800 flex flex-col animate-in fade-in slide-in-from-top-2 duration-200"
                   onMouseLeave={() => setShowResults(false)}
                 >
                   <div className="overflow-y-auto flex-1">
                     {inventoryItems
-                      .filter(item => 
-                        item.status === 'active' && 
-                        (item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         item.sku.toLowerCase().includes(searchTerm.toLowerCase()))
+                      .filter(item =>
+                        item.status === 'active' &&
+                        (item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          item.sku.toLowerCase().includes(searchTerm.toLowerCase()))
                       )
                       .map((item) => {
                         const atp = item.stockQuantity - (item.reservedQuantity || 0)
@@ -279,16 +279,16 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                         )
                       })}
                   </div>
-                  {inventoryItems.filter(item => 
-                    item.status === 'active' && 
-                    (item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                     item.sku.toLowerCase().includes(searchTerm.toLowerCase()))
+                  {inventoryItems.filter(item =>
+                    item.status === 'active' &&
+                    (item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      item.sku.toLowerCase().includes(searchTerm.toLowerCase()))
                   ).length === 0 && (
-                    <div className="px-5 py-8 text-center bg-slate-50/50 dark:bg-slate-800/50">
-                      <p className="text-sm font-bold text-slate-400">No matching items found</p>
-                      <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-black">Check spelling or try SKU</p>
-                    </div>
-                  )}
+                      <div className="px-5 py-8 text-center bg-slate-50/50 dark:bg-slate-800/50">
+                        <p className="text-sm font-bold text-slate-400">No matching items found</p>
+                        <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-black">Check spelling or try SKU</p>
+                      </div>
+                    )}
                 </div>
               )}
             </div>
@@ -415,7 +415,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
       <div className="px-8 py-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
         <div className="flex flex-col">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Requester</span>
-          <span className="text-sm font-bold text-slate-900 dark:text-white mt-1">{user?.fullName}</span>
+          <span className="text-sm font-bold text-slate-900 dark:text-white mt-1">{user?.user_metadata?.full_name}</span>
         </div>
         <div className="flex items-center gap-3">
           <Button

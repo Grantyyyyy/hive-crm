@@ -15,7 +15,7 @@ import type { Project, Task } from "@/lib/types"
 import { AddProjectModal } from "@/components/crmComponent/AddProjectModal"
 import { EditProjectModal } from "@/components/crmComponent/EditProjectModal"
 import { useCRMResource } from "@/lib/hooks"
-import { useUser } from "@clerk/clerk-react"
+import { useUser } from "@/lib/AuthContext"
 import { ListSkeleton } from "@/components/ui/skeletons"
 import { DeleteModal } from "@/components/ui/delete-modal"
 

@@ -1,18 +1,17 @@
 import { Search, Bell, HelpCircle, Sun, Moon, User, LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useUser, useClerk } from "@clerk/clerk-react";
+import { useUser, useAuth } from "@/lib/AuthContext";
 import { useTheme } from "@/lib/ThemeProvider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useLocation } from "wouter";
-import { getUserInitials } from "@/lib/helpers";
 
 export function Header() {
   const { user } = useUser();
-  const { signOut } = useClerk();
+  const { signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [, setLocation] = useLocation();
 
-  const initials = getUserInitials(user);
+  const initials = (user?.email ?? "U").slice(0, 2).toUpperCase();
 
   return (
     <header className="h-16 shrink-0 flex items-center justify-between px-8 bg-bg-surface/80 backdrop-blur-md border-b border-border sticky top-0 z-30">
@@ -50,8 +49,8 @@ export function Header() {
           </PopoverTrigger>
           <PopoverContent className="w-64 p-2" align="end">
             <div className="px-3 py-2 border-b border-border mb-2">
-              <p className="text-sm font-bold text-text-primary truncate">{user?.fullName || "User"}</p>
-              <p className="text-xs text-text-muted truncate">{user?.primaryEmailAddress?.emailAddress}</p>
+              <p className="text-sm font-bold text-text-primary truncate">{user?.user_metadata?.full_name ?? "User"}</p>
+              <p className="text-xs text-text-muted truncate">{user?.email}</p>
             </div>
             <div className="space-y-1">
               <button

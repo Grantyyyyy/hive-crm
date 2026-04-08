@@ -17,7 +17,7 @@ import { AddQuoteModal } from "@/components/crmComponent/AddQuoteModal"
 import { ListSkeleton } from "@/components/ui/skeletons"
 import { toast } from "sonner"
 import { sendQuoteEmail, acceptQuote, reserveStockForQuote } from "@/services/quoteService"
-import { useUser } from "@clerk/clerk-react"
+import { useUser } from "@/lib/AuthContext"
 
 export function Quotes() {
   const ctx = useCRMContext()
@@ -70,7 +70,7 @@ export function Quotes() {
 
   const handleMarkSent = async (quote: Quote) => {
     try {
-      await reserveStockForQuote(quote, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
+      await reserveStockForQuote(quote, ctx, user?.id || 'system', user?.user_metadata?.full_name || 'Unknown User')
       sendQuoteEmail(quote)
       refresh()
       toast.success("Quote Sent", { description: "Stock reserved and email dispatched." })

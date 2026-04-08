@@ -1,5 +1,5 @@
 import { useState, useRef } from "react"
-import { useUser } from "@clerk/clerk-react"
+import { useUser } from "@/lib/AuthContext"
 import {
   Type,
   AlignLeft,
@@ -45,7 +45,7 @@ export function TaskForm({
   fixedProjectId,
   userId
 }: TaskFormProps) {
-  const { user: clerkUser } = useUser()
+  const { user } = useUser()
   const [title, setTitle] = useState(initialData?.title ?? "")
   const [description, setDescription] = useState(initialData?.description ?? "")
   const [dueDate, setDueDate] = useState(initialData?.dueDate ? initialData.dueDate.split('T')[0] : "")
@@ -107,14 +107,14 @@ export function TaskForm({
 
     // Attach a "created" activity log when this is a brand-new task
     if (!initialData) {
-      ;(task as any).activities = [{
+      ; (task as any).activities = [{
         id: crypto.randomUUID(),
         taskId: task.id,
         type: 'created',
         description: 'Task created',
-        userId: clerkUser?.id || userId,
-        userName: clerkUser?.fullName || 'User',
-        userAvatar: clerkUser?.imageUrl,
+        userId: user?.id || userId,
+        userName: user?.user_metadata?.full_name || 'User',
+        userAvatar: user?.user_metadata?.avatar_url,
         createdAt: now,
       }]
     }

@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { Activity, ActivityType, Contact } from "@/lib/types"
 import { useCRMResource } from "@/lib/hooks"
-import { useUser } from "@clerk/clerk-react"
+import { useUser } from "@/lib/AuthContext"
 import { ActivityForm } from "@/components/crmComponent/ActivityForm"
 import {
   Sheet,
@@ -233,13 +233,13 @@ export function Activities() {
                                 <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
                                   <div className="flex items-center gap-2">
                                     <div className="w-5 h-5 rounded-full bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center ring-1 ring-white dark:ring-slate-950 overflow-hidden shrink-0 shadow-sm">
-                                      {user?.imageUrl ? (
-                                        <img src={user.imageUrl} className="w-full h-full object-cover" alt="User" />
+                                      {user?.user_metadata?.avatar_url ? (
+                                        <img src={user.user_metadata?.avatar_url} className="w-full h-full object-cover" alt="User" />
                                       ) : (
                                         <span className="text-[8px] font-black text-orange-700">ME</span>
                                       )}
                                     </div>
-                                    <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 max-w-[100px] truncate">{user?.firstName || "Me"}</span>
+                                    <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 max-w-[100px] truncate">{user?.user_metadata?.first_name || "Me"}</span>
                                     <span className="text-slate-300 dark:text-slate-700 text-[10px]">•</span>
                                     {activity.contactId ? (
                                       <Link href={`/contacts/${activity.contactId}`}>

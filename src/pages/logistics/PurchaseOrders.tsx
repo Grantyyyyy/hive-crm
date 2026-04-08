@@ -18,7 +18,7 @@ import type { JobAdapter } from "@/services/types"
 import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
 import { toast } from "sonner"
 import type { Quote, SalesOrder, InventoryItem, PurchaseRequest, Task } from "@/lib/types"
-import { useUser } from "@clerk/clerk-react"
+import { useUser } from "@/lib/AuthContext"
 import { ListSkeleton } from "@/components/ui/skeletons"
 export function PurchaseOrders() {
   const { user, isLoaded: userLoaded } = useUser()
@@ -59,7 +59,7 @@ export function PurchaseOrders() {
   const handleReceive = async (order: PurchaseOrder) => {
     try {
       await updateRow<PurchaseOrder>(ctx, 'purchase_orders', order.id, { status: 'received' })
-      await restockFromPO({ ...order, status: 'received' }, adapter, user?.id, user?.fullName || 'Unknown User')
+      await restockFromPO({ ...order, status: 'received' }, adapter, user?.id, user?.user_metadata?.full_name || 'Unknown User')
       refresh()
       toast.success("Order Received", { description: "Inventory has been restocked automatically." })
     } catch (e: any) {

@@ -1,4 +1,4 @@
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "@/lib/AuthContext";
 
 /**
  * Returns the current user's ID, or an empty string if not authenticated.
@@ -16,16 +16,16 @@ export function useUserId(): string {
 export function getUserInitials(user: NonNullable<Parameters<typeof import("@/lib/helpers").getUserInitials>[0]>): string {
   if (!user) return "?";
 
-  if (user.firstName && user.lastName) {
-    return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+  if (user.user_metadata?.first_name && user.user_metadata?.last_name) {
+    return `${user.user_metadata.first_name[0]}${user.user_metadata.last_name[0]}`.toUpperCase();
   }
 
-  if (user.username) {
-    return user.username.slice(0, 2).toUpperCase();
+  if (user.user_metadata?.user_name) {
+    return user.user_metadata.user_name.slice(0, 2).toUpperCase();
   }
 
-  if ((user as any).primaryEmailAddress?.emailAddress) {
-    return (user as any).primaryEmailAddress.emailAddress.slice(0, 2).toUpperCase();
+  if (user.email) {
+    return user.email.slice(0, 2).toUpperCase();
   }
 
   return "?";
@@ -38,12 +38,12 @@ export function getUserInitials(user: NonNullable<Parameters<typeof import("@/li
 export function getUserDisplayName(user: NonNullable<Parameters<typeof import("@/lib/helpers").getUserInitials>[0]>): string {
   if (!user) return "Guest User";
 
-  if (user.firstName && user.lastName) {
-    return `${user.firstName} ${user.lastName}`;
+  if (user.user_metadata?.first_name && user.user_metadata?.last_name) {
+    return `${user.user_metadata.first_name} ${user.user_metadata.last_name}`;
   }
 
-  if (user.username) {
-    return user.username;
+  if (user.user_metadata?.user_name) {
+    return user.user_metadata.user_name;
   }
 
   return "Guest User";

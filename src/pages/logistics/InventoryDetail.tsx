@@ -24,7 +24,7 @@ import type { InventoryItem, SalesOrder, Quote, InventoryTransaction } from "@/l
 import { recalculateStockLevel } from "@/services/inventoryService"
 import { createAdjustmentTransaction } from "@/services/inventoryTransactionService"
 import { toast } from "sonner"
-import { useUser } from "@clerk/clerk-react"
+import { useUser } from "@/lib/AuthContext"
 
 export function InventoryDetail() {
   const [, params] = useRoute("/inventory/:id")
@@ -67,7 +67,7 @@ export function InventoryDetail() {
     if (!item) return
 
     const userId = user?.id || 'system'
-    const userName = user?.fullName || 'Unknown User'
+    const userName = user?.user_metadata?.full_name || 'Unknown User'
 
     // Build atomic update
     await ctx.runAtomicUpdate([{

@@ -29,7 +29,7 @@ import {
   sendShippingNotification,
   generateInvoice
 } from "@/services/orderService"
-import { useUser } from "@clerk/clerk-react"
+import { useUser } from "@/lib/AuthContext"
 
 // ── Actions dropdown ──────────────────────────────────────────────────────────
 
@@ -193,7 +193,7 @@ export function SalesOrders() {
 
   const handleShipOrder = async (order: SalesOrder) => {
     try {
-      await fulfillOrderStock(order, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
+      await fulfillOrderStock(order, ctx, user?.id || 'system', user?.user_metadata?.full_name || 'Unknown User')
       sendShippingNotification(order)
       refresh()
       toast.success("Order Marked as Shipped", { description: `#${order.orderNumber} — stock physical/reserved updated.` })
@@ -216,7 +216,7 @@ export function SalesOrders() {
 
   const handleCancelOrder = async (order: SalesOrder) => {
     try {
-      await releaseOrderStock(order, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
+      await releaseOrderStock(order, ctx, user?.id || 'system', user?.user_metadata?.full_name || 'Unknown User')
       refresh()
       toast.success("Order Cancelled", { description: `#${order.orderNumber} — stock reservation released.` })
     } catch (e: unknown) {

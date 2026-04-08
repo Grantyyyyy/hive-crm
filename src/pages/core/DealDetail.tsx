@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react"
 import { useLocation, useRoute, Link } from "wouter"
-import { useUser } from "@clerk/clerk-react"
+import { useUser } from "@/lib/AuthContext"
 import {
   ArrowLeft,
   DollarSign,

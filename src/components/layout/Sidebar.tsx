@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { UserButton, useUser } from "@clerk/clerk-react";
+import { useUser, useAuth } from "@/lib/AuthContext";
 import {
   LayoutDashboard,
   Users,
@@ -19,9 +19,11 @@ import {
   PanelLeftOpen,
   Building2,
   FolderOpen,
+  LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 
 interface SidebarProps {
@@ -34,7 +36,13 @@ interface SidebarProps {
 export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: SidebarProps) {
   const [location] = useLocation();
   const { user } = useUser();
+  const { signOut } = useAuth();
 
+  const displayName = user?.user_metadata?.full_name
+    ?? user?.email?.split("@")[0]
+    ?? "User";
+  const displayRole = user?.user_metadata?.role ?? "User";
+  const initials = (user?.email ?? "U").slice(0, 2).toUpperCase();
 
   const groups = [
     {
@@ -83,6 +91,53 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
     mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
   );
 
+  // ── User avatar + sign-out popover (non-collapsed) ──────────────────────
+  const UserMenu = () => (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className="flex items-center gap-3 w-full p-1 rounded-xl hover:bg-bg-elevated/50 transition-colors cursor-pointer">
+          <div className="w-9 h-9 shrink-0 rounded-lg bg-accent-dim border border-accent/20 flex items-center justify-center text-accent font-bold text-xs">
+            {initials}
+          </div>
+          {!collapsed && (
+            <div className="flex flex-col min-w-0 flex-1 text-left">
+              <span className="text-sm font-semibold text-text-primary truncate">
+                {displayName}
+              </span>
+              <span className="text-[11px] text-text-muted font-medium truncate uppercase tracking-tight">
+                {displayRole}
+              </span>
+            </div>
+          )}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-2" align="start" side="top">
+        <div className="px-3 py-2 border-b border-border mb-2">
+          <p className="text-sm font-bold text-text-primary truncate">{displayName}</p>
+          <p className="text-xs text-text-muted truncate">{user?.email}</p>
+        </div>
+        <button
+          onClick={() => { signOut(); }}
+          className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-red/80 hover:bg-red/10 hover:text-red transition-all text-left"
+        >
+          <LogOut className="w-4 h-4" />
+          Sign Out
+        </button>
+      </PopoverContent>
+    </Popover>
+  );
+
+  // ── Compact avatar for collapsed sidebar ────────────────────────────────
+  const CompactUserAvatar = () => (
+    <button
+      onClick={() => signOut()}
+      className="w-9 h-9 shrink-0 rounded-lg bg-accent-dim border border-accent/20 flex items-center justify-center text-accent font-bold text-xs hover:ring-2 hover:ring-accent/30 transition-all cursor-pointer"
+      title={`Sign out (${displayName})`}
+    >
+      {initials}
+    </button>
+  );
+
   return (
     <>
       {/* Mobile Backdrop */}
@@ -103,7 +158,7 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
             {!collapsed && (
               <div className="flex flex-col min-w-0">
                 <span className="text-[15px] font-bold text-text-primary truncate leading-tight">
-                  CRM & Inventory
+                  CRM &amp; Inventory
                 </span>
                 <span className="text-[11px] text-text-muted font-medium truncate uppercase tracking-wider">
                   Enterprise Suite
@@ -173,44 +228,22 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
         {/* Bottom Section - User Profile */}
         <div className="p-4 border-t border-border shrink-0">
           {!collapsed ? (
-            <div className="flex items-center gap-3 p-2 rounded-xl bg-bg-elevated border border-border">
-              <div className="w-9 h-9 shrink-0">
-                <UserButton
-                  appearance={{
-                    elements: {
-                      userButtonAvatarBox: "w-9 h-9 rounded-lg"
-                    }
-                  }}
-                  afterSignOutUrl="/"
-                />
-              </div>
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-sm font-semibold text-text-primary truncate">
-                  {user?.fullName || user?.username || "Guest User"}
-                </span>
-                <span className="text-[11px] text-text-muted font-medium truncate uppercase tracking-tight">
-                  {user?.publicMetadata?.role as string || "Admin"}
-                </span>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 min-w-0">
+                <UserMenu />
               </div>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setCollapsed(true)}
-                className="p-1.5 h-8 w-8 text-text-muted"
+                className="p-1.5 h-8 w-8 text-text-muted shrink-0"
               >
                 <PanelLeftClose className="w-4 h-4" />
               </Button>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-4 py-2">
-              <UserButton
-                appearance={{
-                  elements: {
-                    userButtonAvatarBox: "w-9 h-9 rounded-lg"
-                  }
-                }}
-                afterSignOutUrl="/"
-              />
+              <CompactUserAvatar />
               <Button
                 variant="ghost"
                 size="icon"

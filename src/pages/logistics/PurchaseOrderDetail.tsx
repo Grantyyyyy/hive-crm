@@ -28,7 +28,7 @@ import type { PurchaseOrder, PurchaseOrderStatus, Quote, SalesOrder, InventoryIt
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { restockFromPO, sendPOToVendor } from "@/services/procurementService"
-import { useUser } from "@clerk/clerk-react"
+import { useUser } from "@/lib/AuthContext"
 import type { JobAdapter } from "@/services/types"
 
 function relativeTime(iso: string): string {
@@ -132,7 +132,7 @@ export function PurchaseOrderDetail() {
     if (!order) return
     try {
       await updateRow<PurchaseOrder>(ctx, 'purchase_orders', order.id, { status: 'received' })
-      await restockFromPO({ ...order, status: 'received' }, adapter, user?.id, user?.fullName || 'Unknown User')
+      await restockFromPO({ ...order, status: 'received' }, adapter, user?.id, user?.user_metadata?.full_name || 'Unknown User')
       refresh()
       toast.success("Order Received", { description: "Inventory has been restocked automatically." })
     } catch (e: any) {

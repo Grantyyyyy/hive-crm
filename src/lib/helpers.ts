@@ -295,18 +295,22 @@ export function debounce<T extends (...args: any[]) => any>(
  * Uses firstName + lastName initials, or first 2 chars of username, or "?" as fallback.
  */
 export function getUserInitials(user: {
-  firstName?: string | null;
-  lastName?: string | null;
-  username?: string | null;
+  user_metadata?: { first_name?: string; last_name?: string; user_name?: string };
+  email?: string | null;
 } | null | undefined): string {
   if (!user) return "?";
 
-  if (user.firstName && user.lastName) {
-    return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+  const meta = user.user_metadata;
+  if (meta?.first_name && meta?.last_name) {
+    return `${meta.first_name[0]}${meta.last_name[0]}`.toUpperCase();
   }
 
-  if (user.username) {
-    return user.username.slice(0, 2).toUpperCase();
+  if (meta?.user_name) {
+    return meta.user_name.slice(0, 2).toUpperCase();
+  }
+
+  if (user.email) {
+    return user.email.slice(0, 2).toUpperCase();
   }
 
   return "?";

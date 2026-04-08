@@ -31,7 +31,7 @@ import {
   cancelOrderWithStockReversal,
   sendShippingNotification
 } from "@/services/orderService"
-import { useUser } from "@clerk/clerk-react"
+import { useUser } from "@/lib/AuthContext"
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -85,7 +85,7 @@ export function SalesOrderDetail() {
     if (!order || isShipping) return
     setIsShipping(true)
     try {
-      await fulfillOrderStock(order, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
+      await fulfillOrderStock(order, ctx, user?.id || 'system', user?.user_metadata?.full_name || 'Unknown User')
       sendShippingNotification(order)
       toast.success("Order Marked as Shipped", { description: `#${order.orderNumber} — stock physical/reserved updated.` })
     } catch (e: unknown) {
@@ -124,7 +124,7 @@ export function SalesOrderDetail() {
         await cancelOrderWithStockReversal(
           order, ctx,
           user?.id ?? 'system',
-          user?.fullName ?? 'Unknown'
+          user?.user_metadata?.full_name ?? 'Unknown'
         )
 
       // Build toast description based on what happened
@@ -158,7 +158,7 @@ export function SalesOrderDetail() {
       }
       // Release reservation if held
       if (order.stockReserved) {
-        await releaseOrderStock(order, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
+        await releaseOrderStock(order, ctx, user?.id || 'system', user?.user_metadata?.full_name || 'Unknown User')
       }
       await deleteItem(order.id)
       navigate("/orders")
@@ -174,7 +174,7 @@ export function SalesOrderDetail() {
     if (!order || isReturning) return
     setIsReturning(true)
     try {
-      await returnShippedOrderStock(order, ctx, user?.id || 'system', user?.fullName || 'Unknown User')
+      await returnShippedOrderStock(order, ctx, user?.id || 'system', user?.user_metadata?.full_name || 'Unknown User')
       toast.success("Order Returned", { description: `#${order.orderNumber} — stock returned to inventory.` })
       setReturnOpen(false)
     } catch (e: unknown) {

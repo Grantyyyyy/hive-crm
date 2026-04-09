@@ -273,7 +273,7 @@ export function SalesOrders() {
               <Download className="w-4 h-4" /> Export
             </Button>
             <Button
-              variant="default"
+              variant="brand"
               onClick={() => setIsAddModalOpen(true)}
             >
               <PlusCircle className="w-4 h-4" /> Create Order

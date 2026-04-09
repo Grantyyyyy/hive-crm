@@ -5,6 +5,8 @@ import {
   Search,
   Filter,
   MoreVertical,
+  Download,
+  PlusCircle,
   Image as ImageIcon
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -74,10 +76,10 @@ export function Inventory() {
           </div>
           <div className="flex items-center gap-3">
             <Button variant="outlineNeutral">
-              Export
+              <Download className="w-4 h-4" /> Export
             </Button>
-            <Button variant="default" onClick={() => setShowAddModal(true)}>
-              Create Product
+            <Button variant="brand" onClick={() => setShowAddModal(true)}>
+              <PlusCircle className="w-4 h-4" /> Create Product
             </Button>
           </div>
         </div>

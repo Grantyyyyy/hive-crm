@@ -280,11 +280,11 @@ export function Roles() {
           <div className="flex items-center gap-3">
             {canCreate && (
               <Button
-                variant="default"
+                variant="brand"
                 onClick={() => setShowCreateDialog(true)}
                 className="shadow-md shadow-teal-100 dark:shadow-none"
               >
-                <PlusCircle className="w-4 h-4 mr-2" /> Create Role
+                <PlusCircle className="w-4 h-4" /> Create Role
               </Button>
             )}
           </div>

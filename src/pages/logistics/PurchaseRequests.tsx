@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo } from "react"
 import {
   PlusCircle,
   Search,
@@ -12,7 +12,6 @@ import { Pagination } from "@/components/ui/Pagination"
 import { useCRMResource } from "@/lib/hooks"
 import { cn } from "@/lib/utils"
 import type { PurchaseRequest, PurchaseRequestStatus, InventoryTransaction } from "@/lib/types"
-import { generateId } from "@/lib/helpers"
 import { AddPurchaseRequestModal } from "@/components/logisticsComponent/AddPurchaseRequestModal"
 import { PurchaseRequestReviewModal } from "@/components/logisticsComponent/PurchaseRequestReviewModal"
 import { approvePurchaseRequest } from "@/services/procurementService"
@@ -24,7 +23,6 @@ import { ListSkeleton } from "@/components/ui/skeletons"
 export function PurchaseRequests() {
   const {
     data: requests,
-    addItems: addRequests,
     refresh,
     isLoaded
   } = useCRMResource<PurchaseRequest>('purchase_requests')
@@ -99,81 +97,6 @@ export function PurchaseRequests() {
     }
   }
 
-  // Seed dummy data if empty
-  useEffect(() => {
-    if (isLoaded && requests.length === 0) {
-      const dummyRequests: PurchaseRequest[] = [
-        {
-          id: generateId(),
-          requestNumber: "PR-2023-001",
-          requesterId: "u1",
-          requesterName: "Sarah Chen",
-          amount: 1500.00,
-          status: 'pending_review',
-          date: "2023-10-25T10:00:00Z",
-          department: "Marketing",
-          items: [{
-            id: generateId(),
-            name: 'Premium Widget',
-            quantity: 100,
-            estimatedPrice: 15.00,
-            inventoryItemId: 'inv-1',
-          }],
-          priority: 'high',
-          justification: 'Stock replenishment',
-          urgent: false,
-          createdAt: "2023-10-25T10:00:00Z",
-          updatedAt: "2023-10-25T10:00:00Z"
-        },
-        {
-          id: generateId(),
-          requestNumber: "PR-2023-002",
-          requesterId: "u2",
-          requesterName: "Michael Ross",
-          amount: 850.50,
-          status: 'approved',
-          date: "2023-10-22T14:30:00Z",
-          department: "IT",
-          items: [{
-            id: generateId(),
-            name: 'Cloud Server',
-            quantity: 1,
-            estimatedPrice: 850.50,
-            inventoryItemId: 'inv-2',
-          }],
-          priority: 'medium',
-          justification: 'Annual renewal',
-          urgent: false,
-          createdAt: "2023-10-22T14:30:00Z",
-          updatedAt: "2023-10-22T14:30:00Z"
-        },
-        {
-          id: generateId(),
-          requestNumber: "PR-2023-003",
-          requesterId: "u3",
-          requesterName: "Jessica Pearson",
-          amount: 12000.00,
-          status: 'pending_review',
-          date: "2023-10-20T09:15:00Z",
-          department: "Ops",
-          items: [{
-            id: generateId(),
-            name: 'Industrial Drill',
-            quantity: 2,
-            estimatedPrice: 6000.00,
-            inventoryItemId: 'inv-3',
-          }],
-          priority: 'urgent',
-          justification: 'Replace broken units',
-          urgent: true,
-          createdAt: "2023-10-20T09:15:00Z",
-          updatedAt: "2023-10-20T09:15:00Z"
-        }
-      ]
-      addRequests(dummyRequests)
-    }
-  }, [isLoaded, requests.length, addRequests])
-
   // Filter logic
   const filteredRequests = useMemo(() => {
     let result = requests.filter(request => {
@@ -212,11 +135,11 @@ export function PurchaseRequests() {
             <p className="text-slate-500 dark:text-slate-400 mt-1 font-bold text-sm">Internal procurement workflow and budget approvals.</p>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outlineNeutral" className="rounded-xl border-slate-200 dark:border-slate-800 font-bold text-xs uppercase tracking-widest h-11 px-6">
+            <Button variant="outlineNeutral">
               <Download className="w-4 h-4" /> Export
             </Button>
             <Button
-              variant="default"
+              variant="brand"
               onClick={() => setIsAddModalOpen(true)}
             >
               <PlusCircle className="w-4 h-4" /> Create Request

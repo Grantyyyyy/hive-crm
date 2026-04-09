@@ -397,11 +397,11 @@ export function Users() {
           <div className="flex items-center gap-3">
             {canCreate && (
               <Button
-                variant="default"
+                variant="brand"
                 onClick={() => setShowAddDialog(true)}
                 className="shadow-md shadow-teal-100 dark:shadow-none"
               >
-                <UserPlus className="w-4 h-4" /> Add User
+                <UserPlus className="w-4 h-4" /> Create User
               </Button>
             )}
           </div>

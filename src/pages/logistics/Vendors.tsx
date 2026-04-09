@@ -197,13 +197,13 @@ export function Vendors() {
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <Button variant="outlineNeutral">
-              <Download className="w-4 h-4 mr-2" /> Export
+              <Download className="w-4 h-4" /> Export
             </Button>
             <Button
-              variant="default"
+              variant="brand"
               onClick={() => setShowSheet(true)}
             >
-              <PlusCircle className="w-4 h-4 mr-2" /> Register Partner
+              <PlusCircle className="w-4 h-4" /> Register Partner
             </Button>
           </div>
         </div>

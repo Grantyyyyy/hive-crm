@@ -18,14 +18,14 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <div className="flex min-h-screen bg-bg-base text-text-primary font-sans">
-      <Sidebar 
-        mobileOpen={mobileOpen} 
-        setMobileOpen={setMobileOpen} 
+      <Sidebar
+        mobileOpen={mobileOpen}
+        setMobileOpen={setMobileOpen}
         collapsed={collapsed}
         setCollapsed={setCollapsed}
       />
-      
-      <div 
+
+      <div
         className={cn(
           "flex-1 flex flex-col min-w-0 transition-[padding] ease-in-out duration-300",
           collapsed ? "md:pl-[72px]" : "md:pl-[260px]"
@@ -35,7 +35,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         <div className="hidden md:block">
           <Header />
         </div>
-        
+
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto">
           {children}

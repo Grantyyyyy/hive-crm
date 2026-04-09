@@ -138,12 +138,11 @@ export function Quotes() {
             <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">Manage and track customer price estimates and validities.</p>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outlineNeutral" className="rounded-xl border-2 transition-all active:scale-95">
+            <Button variant="outlineNeutral">
               <Download className="w-4 h-4" /> Export
             </Button>
             <Button
-              variant="default"
-              className="bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-600/20 rounded-xl px-6 transition-all active:scale-95"
+              variant="brand"
               onClick={() => setIsAddModalOpen(true)}
             >
               <PlusCircle className="w-4 h-4" /> Create Quote

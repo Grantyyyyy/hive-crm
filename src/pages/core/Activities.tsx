@@ -110,7 +110,7 @@ export function Activities() {
             <Button variant="outlineNeutral">
               <Download className="w-4 h-4" /> Export
             </Button>
-            <Button variant="default" onClick={() => setShowLogModal(true)}>
+            <Button variant="brand" onClick={() => setShowLogModal(true)}>
               <PlusCircle className="w-4 h-4" /> Log Activity
             </Button>
           </div>

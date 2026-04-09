@@ -198,21 +198,21 @@ export function PurchaseRequests() {
         </div>
 
         {/* Table */}
-        <div className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left table-auto">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
-                  <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-tight text-slate-500">Request ID</th>
-                  <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-tight text-slate-500">Requester</th>
-                  <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-tight text-slate-500">Department</th>
-                  <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-tight text-slate-500 text-right">Estimated Amount</th>
-                  <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-tight text-slate-500 text-center">Priority</th>
-                  <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-tight text-slate-500 text-center">Status</th>
-                  <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-tight text-slate-500 text-right">Actions</th>
+                <tr className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
+                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Request ID</th>
+                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Requester</th>
+                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Department</th>
+                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Estimated Amount</th>
+                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Priority</th>
+                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-center">Status</th>
+                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
                 {paginatedRequests.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="py-24 text-center">

@@ -445,18 +445,18 @@ export function Users() {
         </div>
 
         {/* Main Table Container */}
-        <div className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left table-auto">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
-                  <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-tight text-slate-500">Member</th>
-                  <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-tight text-slate-500">Email Address</th>
-                  <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-tight text-slate-500">Role</th>
-                  <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-tight text-slate-500 text-right">Actions</th>
+                <tr className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
+                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Member</th>
+                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Email Address</th>
+                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Role</th>
+                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
                 {paginatedUsers.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="py-20 text-center">
@@ -470,9 +470,9 @@ export function Users() {
                   paginatedUsers.map((u) => (
                     <tr
                       key={u.id}
-                      className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors group"
+                      className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors cursor-pointer group border-l-2 border-l-transparent hover:border-l-teal-500"
                     >
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="size-9 rounded-full bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center text-teal-600 dark:text-teal-400 text-sm font-bold uppercase shadow-sm">
                             {u.name?.charAt(0) || 'U'}
@@ -488,13 +488,13 @@ export function Users() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 hidden md:table-cell">
+                      <td className="px-6 py-4 hidden md:table-cell">
                         <span className="text-[13px] font-medium text-slate-600 dark:text-slate-400">{u.email}</span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-4">
                         <UserRoleBadge roleName={u.role?.name} />
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-6 py-4 text-right">
                         <div className="flex justify-end items-center gap-2">
                           {canUpdate && u.authUserId !== user?.id && (
                             <Button

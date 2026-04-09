@@ -252,11 +252,11 @@ export function Vendors() {
         </div>
 
         {/* Content Table */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden animate-in fade-in duration-500">
+        <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden animate-in fade-in duration-500">
           <div className="overflow-x-auto">
             <table className="w-full text-left table-auto">
               <thead>
-                <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+                <tr className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Company</th>
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Category</th>
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Contact</th>
@@ -265,7 +265,7 @@ export function Vendors() {
                   <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
                 {paginatedVendors.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-20 text-center">
@@ -277,7 +277,7 @@ export function Vendors() {
                     <tr
                       key={vendor.id}
                       onClick={() => navigate(`/vendors/${vendor.id}`)}
-                      className="group hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-all cursor-pointer"
+                      className="group hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-all cursor-pointer border-l-2 border-l-transparent hover:border-l-teal-500"
                     >
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-3 min-w-0">

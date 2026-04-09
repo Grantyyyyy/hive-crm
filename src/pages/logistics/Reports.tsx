@@ -339,7 +339,7 @@ export function Reports() {
             <h4 className="font-bold text-lg mb-6 text-slate-900 dark:text-white">Performance Metrics</h4>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
-                <thead className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-800">
+                <thead className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-800">
                   <tr>
                     <th className="pb-4 font-semibold">Category</th>
                     <th className="pb-4 font-semibold">Volume</th>
@@ -348,7 +348,7 @@ export function Reports() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50 text-sm">
-                  <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                  <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors">
                     <td className="py-4 font-bold text-slate-900 dark:text-white">Delivered Orders</td>
                     <td className="py-4 text-slate-500 dark:text-slate-400">{fmtCurrency(deliveredRevenue)}</td>
                     <td className="py-4 font-medium text-slate-600 dark:text-slate-300">{filteredOrders.filter(o => o.status === "delivered").length} orders</td>
@@ -359,7 +359,7 @@ export function Reports() {
                       </span>
                     </td>
                   </tr>
-                  <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                  <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors">
                     <td className="py-4 font-bold text-slate-900 dark:text-white">Accepted Quotes</td>
                     <td className="py-4 text-slate-500 dark:text-slate-400">{acceptedQuotes} of {filteredQuotes.length}</td>
                     <td className="py-4 font-medium text-teal-600 dark:text-teal-500">{fmtPct(conversionRate)}</td>
@@ -370,7 +370,7 @@ export function Reports() {
                       </span>
                     </td>
                   </tr>
-                  <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                  <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors">
                     <td className="py-4 font-bold text-slate-900 dark:text-white">Won Deals</td>
                     <td className="py-4 text-slate-500 dark:text-slate-400">{wonDeals.length} won</td>
                     <td className="py-4 font-medium text-slate-600 dark:text-slate-300">{fmtPct(winRate)} win rate</td>
@@ -381,7 +381,7 @@ export function Reports() {
                       </span>
                     </td>
                   </tr>
-                  <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                  <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors">
                     <td className="py-4 font-bold text-slate-900 dark:text-white">New Leads</td>
                     <td className="py-4 text-slate-500 dark:text-slate-400">{filteredLeads.length} leads</td>
                     <td className="py-4 font-medium text-slate-600 dark:text-slate-300">{filteredLeads.filter(l => l.status === "qualified").length} qualified</td>

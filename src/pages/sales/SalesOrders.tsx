@@ -319,20 +319,20 @@ export function SalesOrders() {
         </div>
 
         {/* Main Table Container */}
-        <div className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left table-auto">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
-                  <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-tight text-slate-500">Order ID</th>
-                  <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-tight text-slate-500">Customer</th>
-                  <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-tight text-slate-500">Total Value</th>
-                  <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-tight text-slate-500">Fulfillment</th>
-                  <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-tight text-slate-500">Order Date</th>
-                  <th className="px-4 py-2.5 text-[11px] font-bold uppercase tracking-tight text-slate-500 text-right">Actions</th>
+                <tr className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
+                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Order ID</th>
+                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Customer</th>
+                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Total Value</th>
+                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Fulfillment</th>
+                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Order Date</th>
+                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
                 {paginatedOrders.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="py-20 text-center">
@@ -349,10 +349,10 @@ export function SalesOrders() {
                       onClick={() => navigate(`/orders/${order.id}`)}
                       className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors cursor-pointer group"
                     >
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-4">
                         <span className="text-[13px] font-bold text-teal-600 dark:text-teal-400">#{order.orderNumber}</span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <div className="size-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 text-[10px] font-black uppercase shadow-sm">
                             {order.customerName.split(' ').map(n => n[0]).join('').slice(0, 2)}
@@ -360,20 +360,20 @@ export function SalesOrders() {
                           <span className="text-[13px] font-medium text-slate-900 dark:text-white truncate max-w-[140px]">{order.customerName}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-4">
                         <span className="text-[13px] font-semibold text-slate-800 dark:text-slate-200">
                           {new Intl.NumberFormat('en-US', { style: 'currency', currency: order.currency || 'USD', minimumFractionDigits: 2 }).format(order.totalValue)}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-4">
                         <StatusBadge status={order.status} />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-6 py-4">
                         <span className="text-[13px] text-slate-600 dark:text-slate-400">
                           {new Date(order.orderDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-6 py-4 text-right">
                         <div className="flex justify-end items-center gap-2">
                           {/* Quick action inline buttons for common next-step */}
                           {order.status === 'pending' && (

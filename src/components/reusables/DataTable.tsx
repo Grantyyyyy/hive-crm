@@ -53,18 +53,18 @@ export function DataTable<T extends { id: string | number }>({
 }: DataTableProps<T>) {
   return (
     <div className={cn(
-      "bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col",
+      "bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col",
       className
     )}>
       <div className="overflow-x-auto">
         <table className={cn("w-full text-left table-auto", tableClassName)}>
           <thead>
-            <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
+            <tr className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
               {columns.map((col, index) => (
                 <th
                   key={index}
                   className={cn(
-                    "px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-tight",
+                    "px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest",
                     col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left',
                     col.headerClassName
                   )}
@@ -74,7 +74,7 @@ export function DataTable<T extends { id: string | number }>({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+          <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
             {isLoading ? (
               <tr>
                 <td colSpan={columns.length} className="px-6 py-20 text-center">
@@ -112,7 +112,7 @@ export function DataTable<T extends { id: string | number }>({
                     item={item}
                     onClick={() => onRowClick?.(item)}
                     className={cn(
-                      "hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all group border-l-4 border-transparent hover:border-teal-600 hover:shadow-xl hover:shadow-teal-600/5 relative z-0 hover:z-10",
+                      "hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-all group border-l-2 border-l-transparent hover:border-l-teal-500 relative z-0 hover:z-10",
                       onRowClick && "cursor-pointer",
                       rowClassName
                     )}

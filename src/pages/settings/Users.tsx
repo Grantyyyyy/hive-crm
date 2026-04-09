@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useUser } from '@/lib/AuthContext';
+import { usePermission } from '@/lib/usePermission';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCRMContext } from '@/lib/CRMContext';
 import {
@@ -44,9 +45,11 @@ interface UserActionsMenuProps {
   onChangeRole: () => void;
   onRemove: () => void;
   removePending: boolean;
+  canUpdate: boolean;
+  canDelete: boolean;
 }
 
-function UserActionsMenu({ u, currentUserId, onChangeRole, onRemove, removePending }: UserActionsMenuProps) {
+function UserActionsMenu({ u, currentUserId, onChangeRole, onRemove, removePending, canUpdate, canDelete }: UserActionsMenuProps) {
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0 });
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -87,28 +90,32 @@ function UserActionsMenu({ u, currentUserId, onChangeRole, onRemove, removePendi
         <MoreVertical className="w-4 h-4" />
       </button>
 
-      {open && (
+      {open && (canUpdate || canDelete) && (
         <div
           ref={menuRef}
           style={{ position: "fixed", top: coords.top, left: coords.left, zIndex: 9999 }}
           className="w-52 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/60 dark:shadow-slate-900/60 py-2 overflow-hidden"
           onClick={e => e.stopPropagation()}
         >
-          <button
-            onClick={(e) => { e.stopPropagation(); setOpen(false); onChangeRole(); }}
-            className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
-          >
-            <Shield className="w-4 h-4 shrink-0" />
-            Change Role
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); setOpen(false); onRemove(); }}
-            disabled={removePending}
-            className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors disabled:opacity-50"
-          >
-            <Trash2 className="w-4 h-4 shrink-0" />
-            Remove User
-          </button>
+          {canUpdate && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setOpen(false); onChangeRole(); }}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+            >
+              <Shield className="w-4 h-4 shrink-0" />
+              Change Role
+            </button>
+          )}
+          {canDelete && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setOpen(false); onRemove(); }}
+              disabled={removePending}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors disabled:opacity-50"
+            >
+              <Trash2 className="w-4 h-4 shrink-0" />
+              Remove User
+            </button>
+          )}
         </div>
       )}
     </>
@@ -148,6 +155,12 @@ export function Users() {
   const { user, isLoaded: userLoaded } = useUser();
   const { getClient, userId } = useCRMContext();
   const queryClient = useQueryClient();
+  const { can, hasFullAccess, isLoaded: permLoaded } = usePermission();
+
+  // Derived permission flags (default to true until loaded for smooth UX)
+  const canCreate = permLoaded && (hasFullAccess || can('users', 'create'));
+  const canUpdate = permLoaded && (hasFullAccess || can('users', 'update'));
+  const canDelete = permLoaded && (hasFullAccess || can('users', 'delete'));
 
   // Page State
   const [search, setSearch] = useState("");
@@ -201,8 +214,8 @@ export function Users() {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
       setAddForm({ name: '', email: '', roleId: '' });
       setShowAddDialog(false);
-      toast.success('User added!', {
-        description: 'User will appear once they sign in.',
+      toast.success('User created!', {
+        description: 'The account is ready. They can sign in immediately with password: "password"',
       });
     },
     onError: (error) => {
@@ -382,13 +395,15 @@ export function Users() {
             <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">Manage and track your organization members and their access levels.</p>
           </div>
           <div className="flex items-center gap-3">
-            <Button
-              variant="default"
-              onClick={() => setShowAddDialog(true)}
-              className="shadow-md shadow-indigo-100 dark:shadow-none"
-            >
-              <UserPlus className="w-4 h-4 mr-2" /> Add User
-            </Button>
+            {canCreate && (
+              <Button
+                variant="default"
+                onClick={() => setShowAddDialog(true)}
+                className="shadow-md shadow-indigo-100 dark:shadow-none"
+              >
+                <UserPlus className="w-4 h-4 mr-2" /> Add User
+              </Button>
+            )}
           </div>
         </div>
 
@@ -481,7 +496,7 @@ export function Users() {
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex justify-end items-center gap-2">
-                          {u.authUserId !== user?.id && (
+                          {canUpdate && u.authUserId !== user?.id && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -497,6 +512,8 @@ export function Users() {
                             onChangeRole={() => openRoleDialog(u)}
                             onRemove={() => handleRemoveUser(u)}
                             removePending={removeUserMutation.isPending}
+                            canUpdate={canUpdate}
+                            canDelete={canDelete}
                           />
                         </div>
                       </td>

@@ -91,6 +91,69 @@ app.post('/api/invite-user', async (req, res) => {
   }
 });
 
+// Create user endpoint — creates account with default password immediately
+app.post('/api/create-user', async (req, res) => {
+  const { email, name, role, password = 'password' } = req.body;
+
+  if (!email || !name) {
+    return res.status(400).json({ error: 'Email and name are required' });
+  }
+
+  const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    console.error('❌ Supabase credentials not configured');
+    return res.status(500).json({ error: 'Server configuration error' });
+  }
+
+  try {
+    console.log(`👤 Creating user account for ${email}...`);
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+
+    const { data, error } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        full_name: name,
+        role: role || 'User',
+      },
+    });
+
+    if (error) {
+      if (error.message?.includes('already registered') || error.status === 422) {
+        return res.status(409).json({
+          error: 'User with this email already exists',
+          exists: true,
+        });
+      }
+      throw error;
+    }
+
+    console.log(`✅ Created Supabase user: ${email} (ID: ${data.user?.id})`);
+
+    return res.status(200).json({
+      success: true,
+      authUserId: data.user?.id,
+      email: data.user?.email,
+      message: `User created successfully with default password: ${password}`,
+    });
+  } catch (error) {
+    console.error('❌ Error creating user:', error);
+    return res.status(500).json({
+      error: error instanceof Error ? error.message : 'Failed to create user',
+      details: error instanceof Error ? error.stack : undefined,
+    });
+  }
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -104,6 +167,7 @@ app.listen(PORT, () => {
 ║                                                           ║
 ║   Endpoints:                                              ║
 ║   - POST /api/invite-user  - Send Supabase invitation     ║
+║   - POST /api/create-user  - Create user with password    ║
 ║   - GET  /api/health       - Health check                 ║
 ║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝

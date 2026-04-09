@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { useUser, useAuth } from "@/lib/AuthContext";
+import { usePermission } from "@/lib/usePermission";
 import { supabase } from "@/lib/supabaseClient";
 import {
   LayoutDashboard,
@@ -39,6 +40,7 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
   const [location] = useLocation();
   const { user } = useUser();
   const { userId, signOut } = useAuth();
+  const { can, hasFullAccess, isLoaded: permLoaded } = usePermission();
   const [roleName, setRoleName] = useState<string | null>(null);
 
   // Fetch role name from app_users + roles tables
@@ -69,46 +71,64 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
   const displayRole = roleName ?? "Member";
   const initials = (user?.email ?? "U").slice(0, 2).toUpperCase();
 
-  const groups = [
+  // Define nav groups with permission requirements
+  const navGroups = useMemo(() => [
     {
       title: "Core CRM",
       links: [
         { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-        { href: "/tasks", label: "Tasks", icon: CheckSquare },
-        { href: "/projects", label: "Projects", icon: FolderOpen },
-        { href: "/workload", label: "Workload", icon: UserCog },
-        { href: "/leads", label: "Leads", icon: UserSearch },
-        { href: "/contacts", label: "Contacts", icon: Users },
-        { href: "/deals", label: "Deals", icon: Handshake },
-        { href: "/activities", label: "Activities", icon: Activity },
+        { href: "/tasks", label: "Tasks", icon: CheckSquare, perm: "tasks" as const },
+        { href: "/projects", label: "Projects", icon: FolderOpen, perm: "projects" as const },
+        { href: "/workload", label: "Workload", icon: UserCog, perm: "projects" as const },
+        { href: "/leads", label: "Leads", icon: UserSearch, perm: "leads" as const },
+        { href: "/contacts", label: "Contacts", icon: Users, perm: "contacts" as const },
+        { href: "/deals", label: "Deals", icon: Handshake, perm: "deals" as const },
+        { href: "/activities", label: "Activities", icon: Activity, perm: "activities" as const },
       ]
     },
     {
       title: "Sales Ops",
       links: [
-        { href: "/quotes", label: "Quotes", icon: FileText },
-        { href: "/orders", label: "Orders", icon: ShoppingBag },
+        { href: "/quotes", label: "Quotes", icon: FileText, perm: "quotes" as const },
+        { href: "/orders", label: "Orders", icon: ShoppingBag, perm: "orders" as const },
       ]
     },
     {
       title: "Logistics",
       links: [
-        { href: "/inventory", label: "Inventory", icon: Package },
-        { href: "/purchase-orders", label: "P. Orders", icon: ScrollText },
-        { href: "/purchase-requests", label: "P. Requests", icon: Layers },
-        { href: "/vendors", label: "Vendors", icon: Building2 },
-        { href: "/reports", label: "Reports", icon: BarChart3 },
+        { href: "/inventory", label: "Inventory", icon: Package, perm: "inventory" as const },
+        { href: "/purchase-orders", label: "P. Orders", icon: ScrollText, perm: "purchase_orders" as const },
+        { href: "/purchase-requests", label: "P. Requests", icon: Layers, perm: "purchase_requests" as const },
+        { href: "/vendors", label: "Vendors", icon: Building2, perm: "vendors" as const },
+        { href: "/reports", label: "Reports", icon: BarChart3, perm: "reports" as const },
       ]
     },
     {
       title: "Settings",
       links: [
         { href: "/settings/profile", label: "Profile", icon: UserCog },
-        { href: "/settings/users", label: "Users", icon: Users },
-        { href: "/settings/roles", label: "Roles", icon: Shield },
+        { href: "/settings/users", label: "Users", icon: Users, perm: "users" as const },
+        { href: "/settings/roles", label: "Roles", icon: Shield, perm: "roles" as const },
       ]
-    }
-  ];
+    },
+  ], [])
+
+  // Filter nav links based on permissions (only hide if permissions are loaded and user doesn't have full access)
+  const groups = useMemo(() => {
+    return navGroups.map(group => ({
+      ...group,
+      links: group.links.filter(link => {
+        // No perm required — always visible (dashboard, profile)
+        if (!link.perm) return true
+        // Permissions not loaded yet — hide until we know (prevents flashing)
+        if (!permLoaded) return false
+        // Full access bypass
+        if (hasFullAccess) return true
+        // Check for read permission on the module
+        return can(link.perm!, "read")
+      }),
+    })).filter(group => group.links.length > 0) // drop empty groups
+  }, [navGroups, permLoaded, hasFullAccess, can])
 
   const sidebarClass = cn(
     "fixed inset-y-0 left-0 z-50 flex flex-col bg-bg-surface border-r border-border transition-[width] duration-300 ease-in-out",

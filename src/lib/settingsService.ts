@@ -73,6 +73,65 @@ function toAppUser(row: any, role?: Role): AppUser {
   }
 }
 
+// ── Permission Enforcement ────────────────────────────────────────────────
+
+/**
+ * Throws if the currently authenticated user does NOT have the specified
+ * module:action permission. Call this at the start of any sensitive function.
+ */
+export async function assertPermission(
+  client: SupabaseClient,
+  module: string,
+  action: string,
+): Promise<void> {
+  // Get current auth user ID
+  const { data: session } = await client.auth.getSession()
+  const authUserId = session.session?.user?.id
+  if (!authUserId) throw new Error('Unauthorized')
+
+  // Look up the user's role and permissions
+  const { data: appUser } = await client
+    .from('app_users')
+    .select('role_id')
+    .eq('auth_user_id', authUserId)
+    .maybeSingle()
+
+  if (!appUser?.role_id) throw new Error('Unauthorized')
+
+  // Get the permission ID for this module:action
+  const { data: requiredPerm } = await client
+    .from('permissions')
+    .select('id')
+    .eq('module', module)
+    .eq('action', action)
+    .maybeSingle()
+
+  if (!requiredPerm) throw new Error(`Unknown permission: ${module}:${action}`)
+
+  // Check if the user's role has ALL permissions (full access)
+  const { count: totalPerms } = await client
+    .from('permissions')
+    .select('*', { count: 'exact', head: true })
+
+  const { count: userPermCount } = await client
+    .from('role_permissions')
+    .select('*', { count: 'exact', head: true })
+    .eq('role_id', appUser.role_id)
+
+  // Full access: role has every permission
+  if (totalPerms !== null && userPermCount !== null && userPermCount >= totalPerms) return
+
+  // Otherwise check for the specific permission
+  const hasPerm = await client
+    .from('role_permissions')
+    .select('permission_id')
+    .eq('role_id', appUser.role_id)
+    .eq('permission_id', requiredPerm.id)
+    .maybeSingle()
+
+  if (!hasPerm) throw new Error(`Forbidden: requires ${module}:${action}`)
+}
+
 // ── Roles Service ────────────────────────────────────────────────────────────
 
 export async function fetchRoles(client: SupabaseClient): Promise<Role[]> {
@@ -123,6 +182,7 @@ export async function createRole(
   data: { name: string; description?: string; color?: string; permissionIds?: string[] },
   ownerId: string,
 ): Promise<Role> {
+  await assertPermission(client, 'roles', 'create')
   const { data: role, error } = await client
     .from('roles')
     .insert({
@@ -153,6 +213,7 @@ export async function updateRole(
   id: string,
   data: { name?: string; description?: string; color?: string; permissionIds?: string[] },
 ): Promise<Role> {
+  await assertPermission(client, 'roles', 'update')
   const updates: any = { updated_at: new Date().toISOString() }
   if (data.name !== undefined) updates.name = data.name
   if (data.description !== undefined) updates.description = data.description
@@ -183,6 +244,7 @@ export async function updateRole(
 }
 
 export async function deleteRole(client: SupabaseClient, id: string): Promise<void> {
+  await assertPermission(client, 'roles', 'delete')
   const { error } = await client.from('roles').delete().eq('id', id)
   if (error) throw error
 }
@@ -302,6 +364,7 @@ export async function updateUserRole(
   userId: string,
   roleId: string,
 ): Promise<void> {
+  await assertPermission(client, 'users', 'update')
   const { error } = await client
     .from('app_users')
     .update({ role_id: roleId, updated_at: new Date().toISOString() })
@@ -332,6 +395,7 @@ export async function inviteUser(
   data: { name: string; email: string; roleId?: string },
   ownerId: string,
 ): Promise<{ appUser: AppUser; authUserId: string }> {
+  await assertPermission(client, 'users', 'create')
   // Step 1: Call the invitation API
   const inviteResponse = await fetch('/api/invite-user', {
     method: 'POST',
@@ -380,13 +444,35 @@ export async function addUser(
   data: { name: string; email: string; roleId?: string },
   ownerId: string,
 ): Promise<AppUser> {
-  // Use a placeholder auth_user_id for manually added users
-  const placeholderId = `manual_${crypto.randomUUID()}`
+  await assertPermission(client, 'users', 'create')
 
+  // Step 1: Create real Auth account via dev-api
+  const createResponse = await fetch('/api/create-user', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      email: data.email,
+      name: data.name,
+      role: data.roleId,
+      password: 'password', // Default password
+    }),
+  });
+
+  const result = await createResponse.json();
+
+  if (!createResponse.ok) {
+    throw new Error(result.error || 'Failed to create user account');
+  }
+
+  const authUserId = result.authUserId;
+
+  // Step 2: Create local app_users record with the real auth_user_id
   const { data: created, error } = await client
     .from('app_users')
     .insert({
-      auth_user_id: placeholderId,
+      auth_user_id: authUserId,
       email: data.email,
       name: data.name,
       role_id: data.roleId || null,
@@ -394,11 +480,13 @@ export async function addUser(
     })
     .select()
     .single()
+
   if (error) throw error
   return toAppUser(created)
 }
 
 export async function removeUser(client: SupabaseClient, userId: string): Promise<void> {
+  await assertPermission(client, 'users', 'delete')
   const { error } = await client.from('app_users').delete().eq('id', userId)
   if (error) throw error
 }

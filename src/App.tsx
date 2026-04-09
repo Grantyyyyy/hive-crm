@@ -42,7 +42,8 @@ import { Fonts } from "@/pages/Fonts";
 import { Toaster } from "sonner";
 import { CRMProvider, useCRMContext, updateRow, insertRows } from "@/lib/CRMContext";
 import { useCRMResource } from "@/lib/hooks";
-import { AuthProvider, useUser } from "@/lib/AuthContext";
+import { AuthProvider, useUser } from "@/lib/AuthContext"
+import { RequirePermission } from "@/components/RequirePermission";
 import type { Quote, SalesOrder, InventoryItem, PurchaseRequest, PurchaseOrder, InventoryTransaction, Task } from "@/lib/types";
 import { runScheduledJobs } from "@/services/scheduledJobs";
 import type { JobAdapter } from "@/services/types";
@@ -54,6 +55,14 @@ function Protected({ component: Component }: { component: React.ComponentType })
   return (
     <AppLayout>
       <ProtectedRoute component={Component} />
+    </AppLayout>
+  );
+}
+
+function PermissionProtected({ module, action = "read", component: Component }: { module: string, action?: string, component: React.ComponentType }) {
+  return (
+    <AppLayout>
+      <RequirePermission module={module} action={action} component={Component} />
     </AppLayout>
   );
 }
@@ -194,82 +203,82 @@ function AppContent() {
                 {() => <Protected component={Dashboard} />}
               </Route>
               <Route path="/tasks">
-                {() => <Protected component={Tasks} />}
+                {() => <PermissionProtected module="tasks" component={Tasks} />}
               </Route>
               <Route path="/projects">
-                {() => <Protected component={Projects} />}
+                {() => <PermissionProtected module="projects" component={Projects} />}
               </Route>
               <Route path="/projects/:id">
-                {() => <Protected component={ProjectDetail} />}
+                {() => <PermissionProtected module="projects" component={ProjectDetail} />}
               </Route>
               <Route path="/workload">
-                {() => <Protected component={Workload} />}
+                {() => <PermissionProtected module="projects" component={Workload} />}
               </Route>
               <Route path="/orders">
-                {() => <Protected component={SalesOrders} />}
+                {() => <PermissionProtected module="orders" component={SalesOrders} />}
               </Route>
               <Route path="/orders/:id">
-                {() => <Protected component={SalesOrderDetail} />}
+                {() => <PermissionProtected module="orders" component={SalesOrderDetail} />}
               </Route>
               <Route path="/quotes">
-                {() => <Protected component={Quotes} />}
+                {() => <PermissionProtected module="quotes" component={Quotes} />}
               </Route>
               <Route path="/quotes/:id">
-                {() => <Protected component={QuoteDetail} />}
+                {() => <PermissionProtected module="quotes" component={QuoteDetail} />}
               </Route>
               <Route path="/purchase-orders">
-                {() => <Protected component={PurchaseOrders} />}
+                {() => <PermissionProtected module="purchase_orders" component={PurchaseOrders} />}
               </Route>
               <Route path="/purchase-orders/:id">
-                {() => <Protected component={PurchaseOrderDetail} />}
+                {() => <PermissionProtected module="purchase_orders" component={PurchaseOrderDetail} />}
               </Route>
               <Route path="/purchase-requests">
-                {() => <Protected component={PurchaseRequests} />}
+                {() => <PermissionProtected module="purchase_requests" component={PurchaseRequests} />}
               </Route>
               <Route path="/purchase-requests/:id">
-                {() => <Protected component={PurchaseRequestDetail} />}
+                {() => <PermissionProtected module="purchase_requests" component={PurchaseRequestDetail} />}
               </Route>
               <Route path="/leads">
-                {() => <Protected component={Leads} />}
+                {() => <PermissionProtected module="leads" component={Leads} />}
               </Route>
               <Route path="/leads/:id">
-                {() => <Protected component={LeadDetail} />}
+                {() => <PermissionProtected module="leads" component={LeadDetail} />}
               </Route>
               <Route path="/contacts">
-                {() => <Protected component={Contacts} />}
+                {() => <PermissionProtected module="contacts" component={Contacts} />}
               </Route>
               <Route path="/contacts/:id">
-                {() => <Protected component={ContactDetail} />}
+                {() => <PermissionProtected module="contacts" component={ContactDetail} />}
               </Route>
               <Route path="/deals">
-                {() => <Protected component={Deals} />}
+                {() => <PermissionProtected module="deals" component={Deals} />}
               </Route>
               <Route path="/deals/:id">
-                {() => <Protected component={DealDetail} />}
+                {() => <PermissionProtected module="deals" component={DealDetail} />}
               </Route>
               <Route path="/activities">
-                {() => <Protected component={Activities} />}
+                {() => <PermissionProtected module="activities" component={Activities} />}
               </Route>
               <Route path="/inventory">
-                {() => <Protected component={Inventory} />}
+                {() => <PermissionProtected module="inventory" component={Inventory} />}
               </Route>
               <Route path="/inventory/:id">
-                {() => <Protected component={InventoryDetail} />}
+                {() => <PermissionProtected module="inventory" component={InventoryDetail} />}
               </Route>
               <Route path="/reports">
-                {() => <Protected component={Reports} />}
+                {() => <PermissionProtected module="reports" component={Reports} />}
               </Route>
               <Route path="/vendors">
-                {() => <Protected component={Vendors} />}
+                {() => <PermissionProtected module="vendors" component={Vendors} />}
               </Route>
               <Route path="/vendors/:id">
-                {() => <Protected component={VendorDetail} />}
+                {() => <PermissionProtected module="vendors" component={VendorDetail} />}
               </Route>
               <Route path="/settings/users">
-                {() => <Protected component={Users} />}
+                {() => <PermissionProtected module="users" component={Users} />}
               </Route>
               <Route path="/settings/roles">
-                {() => <Protected component={Roles} />}
+                {() => <PermissionProtected module="roles" component={Roles} />}
               </Route>
               <Route path="/settings/profile">
                 {() => <Protected component={ProfilePage} />}

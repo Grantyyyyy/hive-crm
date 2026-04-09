@@ -51,7 +51,7 @@ const fmtCurrency = (v: number) =>
 
 const fmtPct = (v: number) => `${v.toFixed(1)}%`
 
-const COLORS = ["#0d9488", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6"]
+const COLORS = ["#0d9488", "#14b8a6", "#f59e0b", "#ef4444", "#06b6d4"]
 
 function getMonthKey(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-US", { month: "short", year: "2-digit" })
@@ -215,7 +215,7 @@ export function Reports() {
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Total Revenue */}
-          <div className="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="flex justify-between items-start mb-4">
               <div className="p-2 bg-teal-50 dark:bg-teal-900/20 rounded-xl text-teal-600 dark:text-teal-400">
                 <Banknote className="w-5 h-5" />
@@ -232,9 +232,9 @@ export function Reports() {
           </div>
 
           {/* Pipeline Value */}
-          <div className="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="flex justify-between items-start mb-4">
-              <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-blue-600 dark:text-blue-400">
+              <div className="p-2 bg-teal-50 dark:bg-teal-900/20 rounded-xl text-teal-600 dark:text-teal-400">
                 <TrendingUp className="w-5 h-5" />
               </div>
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-lg shadow-sm">
@@ -246,7 +246,7 @@ export function Reports() {
           </div>
 
           {/* Win Rate */}
-          <div className="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="flex justify-between items-start mb-4">
               <div className="p-2 bg-teal-50 dark:bg-teal-900/20 rounded-xl text-teal-600 dark:text-teal-400">
                 <Users className="w-5 h-5" />
@@ -265,7 +265,7 @@ export function Reports() {
           </div>
 
           {/* Inventory Health */}
-          <div className="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="flex justify-between items-start mb-4">
               <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-xl text-amber-600 dark:text-amber-400">
                 <Package className="w-5 h-5" />
@@ -287,12 +287,12 @@ export function Reports() {
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Revenue Trends */}
-          <div className="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="flex justify-between items-center mb-6">
               <h4 className="font-bold text-lg text-slate-900 dark:text-white">Revenue Trends</h4>
               <div className="flex gap-4 text-xs font-medium text-slate-500">
                 <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-teal-600" /> Revenue</span>
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-500" /> Quotes</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-cyan-500" /> Quotes</span>
               </div>
             </div>
             <div className="h-64">
@@ -303,14 +303,14 @@ export function Reports() {
                   <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} tickFormatter={v => `$${v / 1000}k`} />
                   <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", fontSize: "13px" }} />
                   <Area type="monotone" dataKey="revenue" stroke="#0d9488" fill="#0d9488" fillOpacity={0.1} strokeWidth={2} />
-                  <Area type="monotone" dataKey="quotes" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.1} strokeWidth={2} />
+                  <Area type="monotone" dataKey="quotes" stroke="#06b6d4" fill="#06b6d4" fillOpacity={0.1} strokeWidth={2} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </div>
 
           {/* Deal Pipeline */}
-          <div className="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="flex justify-between items-center mb-6">
               <h4 className="font-bold text-lg text-slate-900 dark:text-white">Deal Pipeline</h4>
               <span className="text-xs font-medium text-slate-500">{deals.length} total deals</span>
@@ -335,7 +335,7 @@ export function Reports() {
         {/* Lower Section */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           {/* Performance Metrics Table */}
-          <div className="xl:col-span-2 p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="xl:col-span-2 p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
             <h4 className="font-bold text-lg mb-6 text-slate-900 dark:text-white">Performance Metrics</h4>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
@@ -397,7 +397,7 @@ export function Reports() {
           </div>
 
           {/* Contact Distribution */}
-          <div className="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center text-center">
+          <div className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center text-center">
             <h4 className="font-bold text-lg mb-6 w-full text-left text-slate-900 dark:text-white">Contact Distribution</h4>
             <div className="w-48 h-48 mb-4">
               <ResponsiveContainer width="100%" height="100%">
@@ -437,7 +437,7 @@ export function Reports() {
         {/* Inventory & Lead Source Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Inventory Breakdown */}
-          <div className="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
             <h4 className="font-bold text-lg mb-6 text-slate-900 dark:text-white">Inventory Breakdown</h4>
             <div className="grid grid-cols-3 gap-4 mb-6">
               <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 text-center">
@@ -460,7 +460,7 @@ export function Reports() {
           </div>
 
           {/* Lead Sources */}
-          <div className="p-6 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
             <h4 className="font-bold text-lg mb-6 text-slate-900 dark:text-white">Lead Sources</h4>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">

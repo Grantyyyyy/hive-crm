@@ -128,7 +128,7 @@ export function Activities() {
         </div>
 
         {/* Filter Controls Bar */}
-        <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm p-2 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-2 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex flex-col md:flex-row md:items-center gap-3 px-3 w-full md:w-auto">
             <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest shrink-0">Activity Type</span>
             <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-hide py-1">
@@ -178,7 +178,7 @@ export function Activities() {
         {/* Timeline Feed */}
         <div className="py-6 relative">
           {groupedActivities.length === 0 ? (
-            <div className="py-12 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-center shadow-sm">
+            <div className="py-12 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-center shadow-sm">
               <ActivityIcon className="h-8 w-8 mx-auto text-slate-300 dark:text-slate-700 mb-3" />
               <h3 className="text-[15px] font-semibold text-slate-800 dark:text-slate-100 mb-1">No activities found</h3>
               <p className="text-[13px] text-slate-500 dark:text-slate-400 max-w-sm mx-auto">Either you have no interactions logged yet, or no activities match your current filters.</p>
@@ -232,11 +232,11 @@ export function Activities() {
 
                                 <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
                                   <div className="flex items-center gap-2">
-                                    <div className="w-5 h-5 rounded-full bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center ring-1 ring-white dark:ring-slate-950 overflow-hidden shrink-0 shadow-sm">
+                                    <div className="w-5 h-5 rounded-full bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center ring-1 ring-white dark:ring-slate-950 overflow-hidden shrink-0 shadow-sm">
                                       {user?.user_metadata?.avatar_url ? (
                                         <img src={user.user_metadata?.avatar_url} className="w-full h-full object-cover" alt="User" />
                                       ) : (
-                                        <span className="text-[8px] font-black text-orange-700">ME</span>
+                                        <span className="text-[8px] font-black text-teal-700">ME</span>
                                       )}
                                     </div>
                                     <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 max-w-[100px] truncate">{user?.user_metadata?.first_name || "Me"}</span>

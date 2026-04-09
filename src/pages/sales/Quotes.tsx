@@ -158,7 +158,7 @@ export function Quotes() {
             placeholder="Search quotes, customers..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 placeholder:text-slate-400 outline-none transition-all"
+            className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
           />
         </div>
 

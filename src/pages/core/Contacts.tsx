@@ -242,7 +242,7 @@ export function Contacts() {
             {
               header: "Phone Number",
               render: (c: EnrichedContact) => (
-                <div className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[11px] font-bold rounded-md w-fit">
+                <div className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[11px] font-bold rounded-lg w-fit">
                   {c.phone || "—"}
                 </div>
               )

@@ -42,10 +42,10 @@ const SOURCE_ICONS: Record<LeadSource, any> = {
 }
 
 const STATUS_STYLE: Record<LeadStatus, { bg: string; text: string; dot: string }> = {
-  new: { bg: "bg-blue-50 dark:bg-blue-900/20", text: "text-blue-700 dark:text-blue-400", dot: "bg-blue-600" },
+  new: { bg: "bg-slate-100 dark:bg-slate-800", text: "text-slate-700 dark:text-slate-300", dot: "bg-slate-500" },
   contacted: { bg: "bg-amber-50 dark:bg-amber-900/20", text: "text-amber-700 dark:text-amber-400", dot: "bg-amber-600" },
   qualified: { bg: "bg-emerald-50 dark:bg-emerald-900/20", text: "text-emerald-700 dark:text-emerald-400", dot: "bg-emerald-600" },
-  unqualified: { bg: "bg-slate-100 dark:bg-slate-800", text: "text-slate-600 dark:text-slate-400", dot: "bg-slate-500" },
+  unqualified: { bg: "bg-slate-50 dark:bg-slate-900/30", text: "text-slate-500 dark:text-slate-400", dot: "bg-slate-400" },
   converted: { bg: "bg-teal-50 dark:bg-teal-900/20", text: "text-teal-700 dark:text-teal-400", dot: "bg-teal-600" },
 }
 

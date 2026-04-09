@@ -94,7 +94,7 @@ function UserActionsMenu({ u, currentUserId, onChangeRole, onRemove, removePendi
         <div
           ref={menuRef}
           style={{ position: "fixed", top: coords.top, left: coords.left, zIndex: 9999 }}
-          className="w-52 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/60 dark:shadow-slate-900/60 py-2 overflow-hidden"
+          className="w-52 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/60 dark:shadow-slate-900/60 py-2 overflow-hidden"
           onClick={e => e.stopPropagation()}
         >
           {canUpdate && (
@@ -401,7 +401,7 @@ export function Users() {
                 onClick={() => setShowAddDialog(true)}
                 className="shadow-md shadow-teal-100 dark:shadow-none"
               >
-                <UserPlus className="w-4 h-4 mr-2" /> Add User
+                <UserPlus className="w-4 h-4" /> Add User
               </Button>
             )}
           </div>
@@ -414,13 +414,13 @@ export function Users() {
             placeholder="Search by name or email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 placeholder:text-slate-400 outline-none transition-all"
+            className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
           />
         </div>
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-4">
-          <div className="bg-white dark:bg-slate-900 p-1 rounded-2xl border border-slate-200 dark:border-slate-800 w-fit flex items-center">
+          <div className="bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800 w-fit flex items-center">
             {['all', 'admin', 'manager', 'agent', 'no role'].map((role) => (
               <button
                 key={role}
@@ -539,7 +539,7 @@ export function Users() {
 
       {/* Role Dialog */}
       <Dialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>
-        <DialogContent className="max-w-md rounded-2xl">
+        <DialogContent className="max-w-md rounded-xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">Change User Role</DialogTitle>
             <DialogDescription>
@@ -552,7 +552,7 @@ export function Users() {
                 <Label htmlFor="newRole" className="text-xs font-bold uppercase tracking-wider text-slate-500">New Role</Label>
                 <select
                   id="newRole"
-                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-medium outline-none focus:ring-2 focus:ring-teal-500 transition-all appearance-none"
+                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-medium outline-none focus:ring-4 focus:ring-teal-600/20 transition-all appearance-none"
                   value={newRoleId}
                   onChange={(e) => setNewRoleId(e.target.value)}
                   required
@@ -596,7 +596,7 @@ export function Users() {
 
       {/* Add User Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="max-w-md rounded-2xl sm:max-w-lg">
+        <DialogContent className="max-w-md rounded-xl sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">Add New User</DialogTitle>
             <DialogDescription>
@@ -669,7 +669,7 @@ export function Users() {
                   <Label htmlFor="addUserRole" className="text-xs font-bold uppercase tracking-wider text-slate-500">Initial Role</Label>
                   <select
                     id="addUserRole"
-                    className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-medium outline-none focus:ring-2 focus:ring-teal-500 transition-all appearance-none"
+                    className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-medium outline-none focus:ring-4 focus:ring-teal-600/20 transition-all appearance-none"
                     value={addForm.roleId}
                     onChange={(e) => setAddForm({ ...addForm, roleId: e.target.value })}
                   >
@@ -697,7 +697,7 @@ export function Users() {
                 type="submit"
                 className={cn(
                   "h-11 rounded-xl shadow-md",
-                  inviteMode ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-100" : "bg-teal-600 hover:bg-teal-700 shadow-teal-100",
+                  inviteMode ? "bg-teal-600 hover:bg-teal-700 shadow-teal-100" : "bg-teal-600 hover:bg-teal-700 shadow-teal-100",
                   "dark:shadow-none"
                 )}
                 disabled={inviteMode ? inviteUserMutation.isPending : addUserMutation.isPending}

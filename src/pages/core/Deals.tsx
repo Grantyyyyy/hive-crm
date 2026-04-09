@@ -48,7 +48,7 @@ import { exportToCSV, debounce } from "@/lib/helpers"
 import type { Activity } from "@/lib/types"
 
 const STAGE_STYLE: Record<DealStage, { bg: string; text: string; icon: any }> = {
-  discovery: { bg: "bg-blue-50 dark:bg-blue-900/20", text: "text-blue-700 dark:text-blue-400", icon: DollarSign },
+  discovery: { bg: "bg-slate-50 dark:bg-slate-900/20", text: "text-slate-700 dark:text-slate-300", icon: DollarSign },
   proposal: { bg: "bg-amber-50 dark:bg-amber-900/20", text: "text-amber-700 dark:text-amber-400", icon: DollarSign },
   negotiation: { bg: "bg-purple-50 dark:bg-purple-900/20", text: "text-purple-700 dark:text-purple-400", icon: DollarSign },
   won: { bg: "bg-emerald-50 dark:bg-emerald-900/20", text: "text-emerald-700 dark:text-emerald-400", icon: CheckCircle2 },

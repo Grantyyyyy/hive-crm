@@ -227,7 +227,7 @@ export function DealDetail() {
           </Link>
 
           {/* Deal Header */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-4 md:p-6">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-4 md:p-6">
             <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
               <div className="space-y-4">
                 <div className="flex items-center gap-4 flex-wrap">
@@ -298,7 +298,7 @@ export function DealDetail() {
             {/* Left column */}
             <div className="lg:col-span-2 space-y-4">
               {/* Activity Timeline */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-4 md:p-6">
+              <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-4 md:p-6">
                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4 mb-4">
                   <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500">Activity Timeline</h2>
                   <Button variant="outlineNeutral" size="sm" onClick={() => setShowActivityModal(true)}>
@@ -307,7 +307,7 @@ export function DealDetail() {
                 </div>
 
                 {dealActivities.length === 0 ? (
-                  <div className="py-12 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800 text-center">
+                  <div className="py-12 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 text-center">
                     <ActivityIcon className="h-10 w-10 mx-auto text-slate-300 dark:text-slate-700 mb-3" />
                     <p className="text-sm font-medium text-slate-500">
                       No activities yet. Log an interaction above.
@@ -347,7 +347,7 @@ export function DealDetail() {
             {/* Right column */}
             <div className="space-y-4">
               {/* Deal Info */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-4 md:p-6">
+              <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-4 md:p-6">
                 <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 border-b border-slate-100 dark:border-slate-800 pb-3 mb-3">Deal Info</h2>
                 <div className="space-y-4">
                   <div>
@@ -406,7 +406,7 @@ export function DealDetail() {
               </div>
 
               {/* Tasks Section */}
-              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-4 md:p-6">
+              <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-4 md:p-6">
                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-3">
                   <div className="flex items-center gap-2">
                     <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500">Tasks</h2>
@@ -425,7 +425,7 @@ export function DealDetail() {
                 </div>
 
                 {tasks.length === 0 ? (
-                  <div className="py-8 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800 text-center">
+                  <div className="py-8 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 text-center">
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">No tasks.</p>
                   </div>
                 ) : (
@@ -440,7 +440,7 @@ export function DealDetail() {
                             key={task.id}
                             onClick={() => setEditingTask(task)}
                             className={cn(
-                              "flex items-center p-3 gap-3 bg-slate-50 dark:bg-slate-950/50 rounded-2xl border transition-colors cursor-pointer group/task",
+                              "flex items-center p-3 gap-3 bg-slate-50 dark:bg-slate-950/50 rounded-xl border transition-colors cursor-pointer group/task",
                               !isComp && isOverdueTask
                                 ? "border-rose-200 dark:border-rose-900/50"
                                 : "border-slate-200 dark:border-slate-800/50",

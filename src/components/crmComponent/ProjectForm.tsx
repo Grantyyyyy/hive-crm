@@ -16,7 +16,7 @@ interface ProjectFormProps {
 }
 
 const PRESET_COLORS = [
-  { value: "#6366f1", bg: "bg-[#6366f1]" },
+  { value: "#0d9488", bg: "bg-[#0d9488]" },
   { value: "#8b5cf6", bg: "bg-[#8b5cf6]" },
   { value: "#ec4899", bg: "bg-[#ec4899]" },
   { value: "#ef4444", bg: "bg-[#ef4444]" },
@@ -68,7 +68,7 @@ export function ProjectForm({
     <form onSubmit={handleSubmit} className="flex flex-col h-full overflow-hidden">
       {/* Scrollable Content Area */}
       <div className="flex-1 overflow-y-auto px-8 py-8 space-y-10">
-        
+
         <div className="grid grid-cols-1 gap-y-6">
           {/* Main Info Section */}
           <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">

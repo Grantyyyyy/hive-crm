@@ -28,7 +28,7 @@ export function Tasks() {
   }
 
   return (
-    <div className="flex-1 bg-bg-base text-text-primary min-h-screen">
+    <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen font-sans">
       <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">

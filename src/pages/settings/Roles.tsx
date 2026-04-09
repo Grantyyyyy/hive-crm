@@ -58,7 +58,7 @@ export function Roles() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    color: '#6366f1',
+    color: '#0d9488',
     permissionIds: [] as string[],
     fullAccess: false,
   });
@@ -143,7 +143,7 @@ export function Roles() {
     setFormData({
       name: '',
       description: '',
-      color: '#6366f1',
+      color: '#0d9488',
       permissionIds: [],
       fullAccess: false,
     });
@@ -297,7 +297,7 @@ export function Roles() {
             placeholder="Search by role name or description..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 placeholder:text-slate-400 outline-none transition-all"
+            className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
           />
         </div>
 
@@ -306,12 +306,12 @@ export function Roles() {
           {filteredRoles.map((role) => (
             <div
               key={role.id}
-              className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:shadow-teal-500/10 dark:hover:shadow-teal-500/5 transition-all duration-300"
+              className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 shadow-sm hover:shadow-xl hover:shadow-teal-500/10 dark:hover:shadow-teal-500/5 transition-all duration-300"
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-4">
                   <div
-                    className="size-12 rounded-2xl flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform duration-300"
+                    className="size-12 rounded-lg flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform duration-300"
                     style={{ backgroundColor: role.color, color: '#fff' }}
                   >
                     <Shield className="w-6 h-6" />
@@ -370,7 +370,7 @@ export function Roles() {
                   const isFullAccess = allPermIds.length > 0 && allPermIds.every(id => rolePermIds.includes(id));
                   if (isFullAccess) {
                     return (
-                      <Badge className="text-[10px] font-bold bg-gradient-to-r from-teal-600 to-violet-600 border-none mb-2">
+                      <Badge className="text-[10px] font-bold bg-teal-600 border-none mb-2">
                         <Layers className="w-3 h-3 mr-1" /> FULL ACCESS
                       </Badge>
                     );
@@ -435,7 +435,7 @@ export function Roles() {
         open={showCreateDialog || showEditDialog}
         onOpenChange={(v) => !v && resetForm()}
       >
-        <DialogContent className="max-w-2xl rounded-3xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+        <DialogContent className="max-w-2xl rounded-xl max-h-[90vh] overflow-hidden flex flex-col p-0">
           <DialogHeader className="p-8 pb-4">
             <DialogTitle className="text-2xl font-bold">
               {editingRole ? 'Update Role' : 'Define New Role'}
@@ -507,7 +507,7 @@ export function Roles() {
                   className={cn(
                     "flex items-center justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200",
                     formData.fullAccess
-                      ? "bg-gradient-to-r from-teal-600 to-violet-600 border-teal-500 shadow-lg shadow-teal-200 dark:shadow-teal-900/30"
+                      ? "bg-gradient-to-r from-teal-600 to-teal-500 border-teal-500 shadow-lg shadow-teal-200 dark:shadow-teal-900/30"
                       : "bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700"
                   )}
                 >
@@ -548,7 +548,7 @@ export function Roles() {
                   </div>
                 </div>
 
-                <div className="space-y-6 border border-slate-100 dark:border-slate-800 rounded-3xl p-6 bg-slate-50/50 dark:bg-slate-900/30">
+                <div className="space-y-6 border border-slate-100 dark:border-slate-800 rounded-xl p-6 bg-slate-50/50 dark:bg-slate-900/30">
                   {Object.entries(permissionsData || {}).map(([module, permissions]) => {
                     const moduleAllSelected = isModuleAllSelected(permissions);
                     const moduleCount = permissions.filter(p => formData.permissionIds.includes(p.id)).length;
@@ -631,13 +631,13 @@ export function Roles() {
           </form>
 
           <DialogFooter className="p-8 pt-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-800 gap-3">
-            <Button type="button" variant="outlineNeutral" onClick={resetForm} className="h-12 rounded-2xl px-8 font-bold">
+            <Button type="button" variant="outlineNeutral" onClick={resetForm} className="h-12 rounded-lg px-8 font-bold">
               Dismiss
             </Button>
             <Button
               type="submit"
               onClick={handleSubmit}
-              className="h-12 rounded-2xl px-10 bg-teal-600 hover:bg-teal-700 shadow-lg shadow-teal-200 dark:shadow-none font-bold"
+              className="h-12 rounded-lg px-10 bg-teal-600 hover:bg-teal-700 shadow-lg shadow-teal-200 dark:shadow-none font-bold"
               disabled={createMutation.isPending || updateMutation.isPending}
             >
               {(createMutation.isPending || updateMutation.isPending) ? (

@@ -67,7 +67,7 @@ export function FormModal({
     blue: {
       iconBg: 'bg-blue-50 dark:bg-blue-950/40',
       iconColor: 'text-blue-600 dark:text-blue-400',
-      inputFocus: 'focus:ring-blue-500/20 focus:border-blue-500',
+      inputFocus: 'focus:ring-teal-500/20 focus:border-teal-500',
       button: 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/25',
       success: 'text-blue-600 dark:text-blue-400',
     },
@@ -96,7 +96,7 @@ export function FormModal({
               <div className={`w-12 h-12 rounded-xl ${colors.iconBg} flex items-center justify-center flex-shrink-0`}>
                 {icon || <Mail className={`w-5 h-5 ${colors.iconColor}`} />}
               </div>
-              
+
               {/* Title & Description */}
               <div className="space-y-1">
                 <h2 className="text-xl font-extrabold text-slate-900 dark:text-white leading-tight">

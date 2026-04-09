@@ -54,112 +54,143 @@ export function ContactForm({ onSave, onCancel, initialData }: ContactFormProps)
     })
   }
 
-  const inputClass = "h-12 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 font-medium text-sm transition-all shadow-sm text-slate-900 dark:text-white"
-  const labelClass = "text-[12px] font-bold text-slate-700 dark:text-slate-300 mb-2 block"
-
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col h-full overflow-hidden font-sans">
+    <form onSubmit={handleSubmit} className="flex flex-col h-full overflow-hidden">
       {/* Scrollable Content Area */}
-      <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8 scroll-smooth scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
-        <div className="animate-content-in duration-700 ease-out">
-          {/* Name Row */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5 animate-content-in [animation-delay:100ms]">
-              <Label className={labelClass}>First Name</Label>
-              <Input
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder="e.g. John"
-                className={cn(inputClass, errors.firstName && "border-red-500")}
-              />
+      <div className="flex-1 overflow-y-auto px-8 py-8 space-y-10">
+        
+        <div className="grid grid-cols-1 gap-y-6">
+          {/* Section 1: Personal Information */}
+          <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Personal Information</h3>
             </div>
-            <div className="space-y-1.5 animate-content-in [animation-delay:150ms]">
-              <Label className={labelClass}>Last Name</Label>
-              <Input
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder="e.g. Doe"
-                className={inputClass}
-              />
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">First Name</Label>
+                <div className="group relative">
+                  <Input
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="e.g. John"
+                    className={cn(
+                      "h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10",
+                      errors.firstName && "border-red-500 ring-4 ring-red-500/10"
+                    )}
+                  />
+                </div>
+                {errors.firstName && <p className="text-[9px] font-bold text-red uppercase tracking-wide">{errors.firstName}</p>}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Last Name</Label>
+                <Input
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="e.g. Doe"
+                  className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10"
+                />
+              </div>
             </div>
-          </div>
-        </div>
+          </section>
 
-        {/* Email */}
-        <div className="space-y-1.5 animate-content-in [animation-delay:200ms]">
-          <Label className={labelClass}>Email Address</Label>
-          <div className="relative group">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="john.doe@example.com"
-              className={cn(inputClass, "pl-11", errors.email && "border-red-500")}
-            />
-          </div>
-        </div>
+          {/* Section 2: Contact Details */}
+          <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-1 h-3.5 bg-sky-500 rounded-full" />
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Communication</h3>
+            </div>
 
-        {/* Phone */}
-        <div className="space-y-1.5 animate-content-in [animation-delay:250ms]">
-          <Label className={labelClass}>Phone Number</Label>
-          <div className="relative group">
-            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-            <Input
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+1 (555) 000-0000"
-              className={cn(inputClass, "pl-11")}
-            />
-          </div>
-        </div>
+            <div className="space-y-6">
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Email Address</Label>
+                <div className="group relative">
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-teal-600 transition-colors" />
+                  <Input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="john@example.com"
+                    className={cn(
+                      "h-11 pl-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10",
+                      errors.email && "border-red-500 ring-4 ring-red-500/10"
+                    )}
+                  />
+                </div>
+                {errors.email && <p className="text-[9px] font-bold text-red uppercase tracking-wide">{errors.email}</p>}
+              </div>
 
-        {/* Company */}
-        <div className="space-y-1.5 animate-content-in [animation-delay:300ms]">
-          <Label className={labelClass}>Company Name</Label>
-          <div className="relative group">
-            <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-            <Input
-              value={company}
-              onChange={(e) => setCompany(e.target.value)}
-              placeholder="Acme Inc."
-              className={cn(inputClass, "pl-11")}
-            />
-          </div>
-        </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Phone Number</Label>
+                <div className="group relative">
+                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-teal-600 transition-colors" />
+                  <Input
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+1 (555) 000-0000"
+                    className="h-11 pl-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10"
+                  />
+                </div>
+              </div>
+            </div>
+          </section>
 
-        {/* Source */}
-        <div className="space-y-1.5 animate-content-in [animation-delay:350ms]">
-          <Label className={labelClass}>Contact Source</Label>
-          <div className="relative group">
-            <select
-              value={source}
-              onChange={(e) => setSource(e.target.value as ContactSource)}
-              className={cn(inputClass, "w-full appearance-none pl-4 pr-10 cursor-pointer")}
-            >
-              {(Object.entries(SOURCE_LABELS) as [ContactSource, string][]).map(([val, label]) => (
-                <option key={val} value={val}>{label}</option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-          </div>
+          {/* Section 3: Organization */}
+          <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-1 h-3.5 bg-amber-500 rounded-full" />
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Organization & Profile</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Company Name</Label>
+                <div className="group relative">
+                  <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-teal-600 transition-colors" />
+                  <Input
+                    value={company}
+                    onChange={(e) => setCompany(e.target.value)}
+                    placeholder="Acme Corp"
+                    className="h-11 pl-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Contact Source</Label>
+                <div className="relative group">
+                  <select
+                    value={source}
+                    onChange={(e) => setSource(e.target.value as ContactSource)}
+                    className="w-full h-11 px-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-teal-500/10 transition-all shadow-sm"
+                  >
+                    {(Object.entries(SOURCE_LABELS) as [ContactSource, string][]).map(([val, label]) => (
+                      <option key={val} value={val}>{label}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
 
       {/* Sticky Action Footer */}
-      <div className="sticky bottom-0 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md px-8 py-6 border-t border-slate-100 dark:border-slate-900/50 flex items-center gap-3 z-10 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.05)]">
-        <Button 
-          type="button" 
-          variant="outlineNeutral" 
+      <div className="px-8 py-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
+        <Button
+          type="button"
+          variant="outlineNeutral"
           onClick={onCancel}
-          className="flex-1 h-12"
+          className="h-9 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest border-2"
         >
           Cancel
         </Button>
-        <Button 
-          type="submit" 
-          variant="default"
-          className="flex-[1.5] h-12"
+        <Button
+          type="submit"
+          className="h-9 px-10 bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-600/20 text-[10px] font-black uppercase tracking-widest"
         >
           {initialData?.id ? (
              <>Save Changes</>

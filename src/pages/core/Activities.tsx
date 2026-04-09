@@ -273,20 +273,25 @@ export function Activities() {
         </div>
       </div>
       <Sheet open={showLogModal} onOpenChange={setShowLogModal}>
-        <SheetContent className="sm:max-w-xl p-0 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex flex-col h-full">
-          <SheetHeader className="px-8 py-10 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800 shrink-0">
-            <SheetTitle className="text-2xl font-bold text-slate-900 dark:text-white">
+        <SheetContent className="sm:max-w-3xl p-0 border-l border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex flex-col h-full">
+          <SheetHeader className="px-8 pt-8 pb-4 bg-white/50 dark:bg-slate-900/50 border-b border-slate-200/60 dark:border-slate-800/60 backdrop-blur-sm shrink-0">
+            <SheetTitle className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
               Log Activity
             </SheetTitle>
+            <p className="text-sm font-medium text-slate-500">
+              Record a new interaction with a contact or deal.
+            </p>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto">
             <ActivityForm
               contacts={contacts}
               onSave={handleLogActivity}
+              onCancel={() => setShowLogModal(false)}
             />
           </div>
         </SheetContent>
       </Sheet>
+
     </div>
   )
 }

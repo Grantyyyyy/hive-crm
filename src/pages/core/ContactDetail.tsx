@@ -541,17 +541,21 @@ export function ContactDetail() {
 
       {/* Activity modal */}
       <Dialog open={showActivityModal} onOpenChange={setShowActivityModal}>
-        <DialogContent className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 shadow-xl rounded-3xl sm:max-w-[500px]">
-          <DialogHeader className="px-6 pt-6 pb-2">
-            <DialogTitle className="text-xl font-bold text-slate-900 dark:text-white">Log Activity</DialogTitle>
+        <DialogContent className="p-0 bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 shadow-xl rounded-3xl sm:max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+          <DialogHeader className="px-8 pt-8 pb-4 bg-white/50 dark:bg-slate-900/50 border-b border-slate-200/60 dark:border-slate-800/60 backdrop-blur-sm shrink-0">
+            <DialogTitle className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Log Activity</DialogTitle>
           </DialogHeader>
-          <ActivityForm
-            contactId={contactId}
-            deals={contactDeals}
-            onSave={handleAddActivity}
-          />
+          <div className="flex-1 overflow-y-auto">
+            <ActivityForm
+              contactId={contactId}
+              deals={contactDeals}
+              onSave={handleAddActivity}
+              onCancel={() => setShowActivityModal(false)}
+            />
+          </div>
         </DialogContent>
       </Dialog>
+
 
       {/* Delete Confirmation Modal */}
       <DeleteModal

@@ -42,24 +42,25 @@ export function EditProjectModal({ project, open, onOpenChange, onUpdate, onDele
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-xl p-0 flex flex-col h-full">
-        <SheetHeader>
-          <div className="flex items-center justify-between pr-8">
+      <SheetContent className="sm:max-w-3xl p-0 flex flex-col h-full bg-slate-50 dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800">
+        <SheetHeader className="px-8 pt-8 pb-4 bg-white/50 dark:bg-slate-900/50 border-b border-slate-200/60 dark:border-slate-800/60 backdrop-blur-sm">
+          <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <SheetTitle>Edit Project</SheetTitle>
-              <SheetDescription>
-                Update the project details or remove it if no longer needed.
+              <SheetTitle className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Edit Project</SheetTitle>
+              <SheetDescription className="text-sm font-medium text-slate-500">
+                Update project details or remove it.
               </SheetDescription>
             </div>
             <Button
               variant="destructiveOutline"
-              size="sm"
+              className="h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest border-2"
               onClick={handleDelete}
             >
               Delete
             </Button>
           </div>
         </SheetHeader>
+
         <div className="flex-1 overflow-y-auto">
           <ProjectForm
             onSave={handleSave}

@@ -298,14 +298,16 @@ export function Contacts() {
       </div>
 
       <Sheet open={showModal} onOpenChange={setShowModal}>
-        <SheetHeader>
-          <SheetTitle>Add New Contact</SheetTitle>
-          <SheetDescription>
-            Enter the details of a person you are building a relationship with.
-          </SheetDescription>
-        </SheetHeader>
-        <SheetContent>
-          <ContactForm onSave={handleAddContact} onCancel={() => setShowModal(false)} />
+        <SheetContent className="sm:max-w-3xl p-0 flex flex-col h-full bg-slate-50 dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800">
+          <SheetHeader className="px-8 pt-8 pb-4 bg-white/50 dark:bg-slate-900/50 border-b border-slate-200/60 dark:border-slate-800/60 backdrop-blur-sm shrink-0">
+            <SheetTitle className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Add New Contact</SheetTitle>
+            <SheetDescription className="text-sm font-medium text-slate-500">
+              Enter the details of a person you are building a relationship with.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto">
+            <ContactForm onSave={handleAddContact} onCancel={() => setShowModal(false)} />
+          </div>
         </SheetContent>
       </Sheet>
 

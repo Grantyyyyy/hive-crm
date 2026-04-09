@@ -64,117 +64,131 @@ export function ProjectForm({
     onSave(project)
   }
 
-  const inputClass = "h-12 bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-md focus:ring-indigo-500 focus:border-indigo-500 font-medium text-sm transition-all shadow-sm text-slate-900 dark:text-white"
-  const labelClass = "text-[12px] font-bold text-slate-700 dark:text-slate-300 mb-2 block"
-
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col h-full overflow-hidden font-sans">
+    <form onSubmit={handleSubmit} className="flex flex-col h-full overflow-hidden">
       {/* Scrollable Content Area */}
-      <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8 scroll-smooth scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
-
-        {/* Project Name */}
-        <div className="space-y-1.5 animate-content-in [animation-delay:100ms]">
-          <Label className={labelClass}>Project Name</Label>
-          <div className="relative group">
-            <Type className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Website Redesign"
-              className={cn(inputClass, "pl-11", errors.name && "border-red-500")}
-            />
-          </div>
-        </div>
-
-        {/* Description */}
-        <div className="space-y-1.5 animate-content-in [animation-delay:150ms]">
-          <Label className={labelClass}>Description</Label>
-          <div className="relative group">
-            <AlignLeft className="absolute left-4 top-4 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Brief description of this project..."
-              rows={3}
-              className={cn(inputClass, "pl-11 pt-3 resize-none h-auto min-h-[100px]")}
-            />
-          </div>
-        </div>
-
-        {/* Color Selection */}
-        <div className="space-y-4 animate-content-in [animation-delay:200ms]">
-          <Label className={labelClass}>Project Color</Label>
-
-          {/* Color Picker Input */}
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <input
-                type="color"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                className="w-14 h-14 rounded-lg cursor-pointer border-2 border-slate-200 dark:border-slate-700 overflow-hidden p-0.5 bg-white dark:bg-slate-900"
-                style={{ WebkitAppearance: 'none' }}
-              />
+      <div className="flex-1 overflow-y-auto px-8 py-8 space-y-10">
+        
+        <div className="grid grid-cols-1 gap-y-6">
+          {/* Main Info Section */}
+          <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-1 h-3.5 bg-indigo-600 rounded-full" />
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Project Details</h3>
             </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <Palette className="w-4 h-4 text-slate-400" />
-                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{color.toUpperCase()}</span>
+
+            <div className="space-y-6">
+              {/* Project Name */}
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Project Name</Label>
+                <div className="group relative">
+                  <Type className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+                  <Input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. Website Redesign"
+                    className={cn(
+                      "h-11 pl-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-indigo-500/10",
+                      errors.name && "border-red-500 ring-4 ring-red-500/10"
+                    )}
+                  />
+                </div>
+                {errors.name && <p className="text-[9px] font-bold text-red uppercase tracking-wide">{errors.name}</p>}
               </div>
-              <p className="text-[11px] text-slate-500 mt-0.5">Click the color box to pick any color</p>
-            </div>
-          </div>
 
-          {/* Preset Colors */}
-          <div className="space-y-2">
-            <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Quick Select</Label>
-            <div className="flex items-center gap-2 flex-wrap">
-              {PRESET_COLORS.map((c) => (
-                <button
-                  key={c.value}
-                  type="button"
-                  onClick={() => setColor(c.value)}
-                  className={cn(
-                    "w-8 h-8 rounded-md transition-all border-2",
-                    color === c.value
-                      ? "border-slate-900 dark:border-white scale-110 shadow-lg ring-2 ring-offset-2 ring-slate-300 dark:ring-slate-600"
-                      : "border-transparent hover:scale-105"
-                  )}
-                  title={c.value}
-                >
-                  <div className={cn("w-full h-full rounded-md", c.bg)} />
-                </button>
-              ))}
+              {/* Description */}
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Description</Label>
+                <div className="group relative">
+                  <AlignLeft className="absolute left-3.5 top-3.5 w-3.5 h-3.5 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+                  <Textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Brief description of this project..."
+                    className="h-32 pl-10 pt-3.5 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-medium transition-all focus:ring-4 focus:ring-indigo-500/10 resize-none"
+                  />
+                </div>
+              </div>
             </div>
-          </div>
+          </section>
+
+          {/* Color Section */}
+          <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-1 h-3.5 bg-amber-500 rounded-full" />
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Visual Identity</h3>
+            </div>
+
+            <div className="space-y-6">
+              <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
+                <div className="relative group shrink-0">
+                  <input
+                    type="color"
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                    className="w-16 h-16 rounded-xl cursor-pointer border-2 border-white dark:border-slate-700 shadow-sm overflow-hidden p-0 bg-white"
+                    style={{ WebkitAppearance: 'none' }}
+                  />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <Palette className="w-3.5 h-3.5 text-indigo-600" />
+                    <span className="text-xs font-black text-slate-700 dark:text-slate-300 tracking-wider">
+                      {color.toUpperCase()}
+                    </span>
+                  </div>
+                  <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tight">Custom hex code or pick presets below</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Quick Presets</Label>
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  {PRESET_COLORS.map((c) => (
+                    <button
+                      key={c.value}
+                      type="button"
+                      onClick={() => setColor(c.value)}
+                      className={cn(
+                        "w-9 h-9 rounded-xl transition-all border-2 relative group",
+                        color === c.value
+                          ? "border-indigo-600 scale-110 shadow-lg shadow-indigo-600/20 z-10"
+                          : "border-transparent hover:scale-105 hover:border-slate-200 dark:hover:border-slate-700"
+                      )}
+                    >
+                      <div className={cn("w-full h-full rounded-[10px]", c.bg)} />
+                      {color === c.value && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Check className="w-4 h-4 text-white drop-shadow-sm" />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
 
       {/* Sticky Action Footer */}
-      <div className="sticky bottom-0 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md px-8 py-6 border-t border-slate-100 dark:border-slate-900/50 flex items-center gap-3 z-10 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.05)]">
+      <div className="px-8 py-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
         <Button
           type="button"
           variant="outlineNeutral"
           onClick={onCancel}
-          className="flex-1 h-12"
+          className="h-9 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest border-2"
         >
           Cancel
         </Button>
         <Button
           type="submit"
-          variant="default"
-          className="flex-[1.5] h-12"
+          className="h-9 px-10 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20 text-[10px] font-black uppercase tracking-widest"
         >
-          {initialData?.id ? (
-            <>Save Changes</>
-          ) : (
-            <>
-              <Check className="w-4 h-4 mr-2" />
-              Create Project
-            </>
-          )}
+          {initialData?.id ? 'Save Changes' : 'Create Project'}
         </Button>
       </div>
     </form>
   )
 }
+

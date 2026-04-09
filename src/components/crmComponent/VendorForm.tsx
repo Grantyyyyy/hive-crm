@@ -1,5 +1,4 @@
 import { useState } from "react"
-import { Building2, Mail, Activity } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -57,172 +56,172 @@ export function VendorForm({ initialData, onSave, onCancel }: VendorFormProps) {
     onSave(vendor)
   }
 
-  const inputClass = "h-12 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all font-medium text-sm shadow-sm"
-  const labelClass = "text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 block"
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); handleSave() }} className="flex flex-col h-full overflow-hidden bg-white dark:bg-slate-950 font-sans border-l border-slate-200 dark:border-slate-800">
-      <div className="flex-1 overflow-y-auto px-8 py-10 space-y-10 scroll-smooth scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-800">
+    <form onSubmit={(e) => { e.preventDefault(); handleSave() }} className="flex flex-col h-full overflow-hidden bg-slate-50 dark:bg-slate-950 font-sans">
+      <div className="flex-1 overflow-y-auto px-8 py-8 space-y-10">
         
-        {/* Section: Company Information */}
-        <section className="space-y-6 animate-content-in [animation-delay:50ms]">
-          <div className="border-b border-slate-100 dark:border-slate-900 pb-3 flex items-center gap-2">
-            <Building2 className="size-4 text-slate-400" />
-            <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">Company Details</h3>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="md:col-span-2 space-y-2">
-              <Label className={labelClass}>Vendor Name</Label>
-              <Input
-                placeholder="Acme Logistics Corp"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className={cn(inputClass, errors.name && "border-red-500 focus:ring-red-500/20")}
-              />
-              {errors.name && <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest pt-1">{errors.name}</p>}
+        <div className="grid grid-cols-1 gap-y-8">
+          {/* Section: Company Information */}
+          <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Company Identity</h3>
             </div>
 
-            <div className="space-y-2">
-              <Label className={labelClass}>Category / Trade</Label>
-              <Input
-                placeholder="Electronics Supplier"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className={inputClass}
-              />
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="md:col-span-2 space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Vendor Name</Label>
+                <Input
+                  placeholder="Acme Logistics Corp"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className={cn("h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10", errors.name && "border-red-500")}
+                />
+                {errors.name && <p className="text-[9px] font-bold text-red-500 uppercase tracking-wide">{errors.name}</p>}
+              </div>
 
-            <div className="space-y-2">
-              <Label className={labelClass}>Tax ID / VAT</Label>
-              <Input
-                placeholder="XX-XXXXXXX"
-                value={taxId}
-                onChange={(e) => setTaxId(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-          </div>
-        </section>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Category / Trade</Label>
+                <Input
+                  placeholder="Electronics Supplier"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10"
+                />
+              </div>
 
-        {/* Section: Contact Details */}
-        <section className="space-y-6 animate-content-in [animation-delay:150ms]">
-          <div className="border-b border-slate-100 dark:border-slate-900 pb-3 flex items-center gap-2">
-            <Mail className="size-4 text-slate-400" />
-            <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">Contact Information</h3>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label className={labelClass}>Email Address</Label>
-              <Input
-                type="email"
-                placeholder="vendor@company.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className={labelClass}>Work Phone</Label>
-              <Input
-                placeholder="+1 (555) 000-0000"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-
-            <div className="md:col-span-2 space-y-2">
-              <Label className={labelClass}>Website URL</Label>
-              <Input
-                placeholder="https://vendor-site.com"
-                value={website}
-                onChange={(e) => setWebsite(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-
-            <div className="md:col-span-2 space-y-2">
-              <Label className={labelClass}>Headquarters Address</Label>
-              <Textarea
-                placeholder="Street, City, State, ZIP..."
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[80px] p-4 font-medium text-sm focus:ring-2 focus:ring-indigo-500/20 shadow-sm transition-all"
-              />
-            </div>
-          </div>
-        </section>
-
-        {/* Section: Business Logic */}
-        <section className="space-y-6 animate-content-in [animation-delay:250ms]">
-          <div className="border-b border-slate-100 dark:border-slate-900 pb-3 flex items-center gap-2">
-            <Activity className="size-4 text-slate-400" />
-            <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight">Terms & Status</h3>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label className={labelClass}>Payment Terms</Label>
-              <Input
-                placeholder="e.g. Net 30"
-                value={paymentTerms}
-                onChange={(e) => setPaymentTerms(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className={labelClass}>Vendor Status</Label>
-              <div className="grid grid-cols-3 gap-2 p-1.5 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner">
-                {(['active', 'on_hold', 'inactive'] as VendorStatus[]).map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => setStatus(s)}
-                    className={cn(
-                      "py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-                      status === s
-                        ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-md border border-slate-200 dark:border-slate-700 active:scale-95"
-                        : "text-slate-400 hover:text-slate-600"
-                    )}
-                  >
-                    {s.replace('_', ' ')}
-                  </button>
-                ))}
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tax ID / VAT</Label>
+                <Input
+                  placeholder="XX-XXXXXXX"
+                  value={taxId}
+                  onChange={(e) => setTaxId(e.target.value)}
+                  className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10"
+                />
               </div>
             </div>
+          </section>
 
-            <div className="md:col-span-2 space-y-2 pb-10">
-              <Label className={labelClass}>Internal Notes</Label>
-              <Textarea
-                placeholder="Private remarks regarding performance, reliability, etc."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[140px] p-4 text-sm font-medium focus:ring-2 focus:ring-indigo-500/20 shadow-sm transition-all"
-              />
+          {/* Section: Contact Details */}
+          <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-1 h-3.5 bg-sky-500 rounded-full" />
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Contact Access</h3>
             </div>
-          </div>
-        </section>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Email Address</Label>
+                <Input
+                  type="email"
+                  placeholder="vendor@company.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Work Phone</Label>
+                <Input
+                  placeholder="+1 (555) 000-0000"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10"
+                />
+              </div>
+
+              <div className="md:col-span-2 space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Website URL</Label>
+                <Input
+                  placeholder="https://vendor-site.com"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10"
+                />
+              </div>
+
+              <div className="md:col-span-2 space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Headquarters Address</Label>
+                <Textarea
+                  placeholder="Street, City, State, ZIP..."
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  className="rounded-xl border-slate-200 dark:border-slate-100 bg-white dark:bg-slate-900 min-h-[80px] p-4 text-xs font-medium focus:ring-4 focus:ring-teal-500/10 shadow-sm transition-all"
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* Section: Business Logic */}
+          <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-1 h-3.5 bg-amber-500 rounded-full" />
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Partnership Terms</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Payment Terms</Label>
+                <Input
+                  placeholder="e.g. Net 30"
+                  value={paymentTerms}
+                  onChange={(e) => setPaymentTerms(e.target.value)}
+                  className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Vendor Status</Label>
+                <div className="grid grid-cols-3 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl shadow-inner ring-1 ring-slate-200/50">
+                  {(['active', 'on_hold', 'inactive'] as VendorStatus[]).map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setStatus(s)}
+                      className={cn(
+                        "py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
+                        status === s
+                          ? "bg-white dark:bg-slate-700 text-teal-600 dark:text-teal-400 shadow-sm ring-1 ring-slate-200/50"
+                          : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                      )}
+                    >
+                      {s.replace('_', ' ')}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="md:col-span-2 space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Internal Notes</Label>
+                <Textarea
+                  placeholder="Private remarks regarding performance, reliability..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="rounded-xl border-slate-200 dark:border-slate-100 bg-white dark:bg-slate-900 min-h-[120px] p-4 text-xs font-medium focus:ring-4 focus:ring-teal-500/10 shadow-sm transition-all"
+                />
+              </div>
+            </div>
+          </section>
+        </div>
       </div>
 
-      {/* Footer */}
-      <div className="sticky bottom-0 left-0 right-0 p-8 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border-t border-slate-100 dark:border-slate-900/50 flex items-center justify-between gap-4 z-20 shadow-[0_-8px_30px_-10px_rgba(0,0,0,0.05)]">
+      {/* Sticky Action Footer */}
+      <div className="px-8 py-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3 z-30">
         <Button
           type="button"
           variant="outlineNeutral"
           onClick={onCancel}
-          className="flex-1 rounded-xl font-bold text-xs uppercase tracking-[0.1em] h-12 transition-all hover:bg-slate-50 shadow-sm border-slate-200"
+          className="h-9 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 transition-all hover:bg-slate-50"
         >
           Cancel
         </Button>
         <Button
           type="submit"
-          className="flex-[1.8] rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-[0.15em] h-12 shadow-xl shadow-indigo-100 dark:shadow-none transition-all active:scale-[0.98]"
+          className="h-9 px-10 bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-600/20 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
         >
-          {initialData?.id ? "Save Changes" : "Register Partner"}
+          {initialData?.id ? "Update Partner" : "Register Partner"}
         </Button>
       </div>
     </form>

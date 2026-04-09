@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react"
+import { useMemo } from "react"
 import { Link } from "wouter"
 import {
   Activity,
@@ -12,19 +12,14 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { ConfirmModal } from "@/components/ui/confirm-modal"
 import { formatCurrency } from "@/lib/helpers"
 import type { Deal, Activity as ActivityT } from "@/lib/types"
 import { useCRMResource } from "@/lib/hooks"
-import { seedApi } from "@/lib/api"
 import { DashboardSkeleton } from "@/components/ui/skeletons"
 
 export function Dashboard() {
-  const { isLoaded: contactsLoaded, refresh: refreshContacts } = useCRMResource('contacts')
-  const { data: deals, isLoaded: dealsLoaded, refresh: refreshDeals } = useCRMResource<Deal>('deals')
-  const { data: activities, isLoaded: activitiesLoaded, refresh: refreshActivities } = useCRMResource<ActivityT>('activities')
-  const [seeding, setSeeding] = useState(false)
-  const [showConfirmSeed, setShowConfirmSeed] = useState(false)
+  const { data: deals, isLoaded: dealsLoaded } = useCRMResource<Deal>('deals')
+  const { data: activities, isLoaded: activitiesLoaded } = useCRMResource<ActivityT>('activities')
 
   const openDeals = useMemo(
     () => deals.filter((d) => !["won", "lost"].includes(d.stage)),
@@ -46,26 +41,7 @@ export function Dashboard() {
 
   const hasData = deals.length > 0 || activities.length > 0
 
-  const handleLoadDemoData = () => {
-    setShowConfirmSeed(true)
-  }
-
-  const confirmLoadDemoData = async () => {
-    setShowConfirmSeed(false)
-    setSeeding(true)
-    try {
-      await seedApi.seed()
-      await Promise.all([refreshContacts(), refreshDeals(), refreshActivities()])
-      alert('Demo data loaded successfully!')
-    } catch (error) {
-      console.error('Error loading demo data:', error)
-      alert('Failed to load demo data')
-    } finally {
-      setSeeding(false)
-    }
-  }
-
-  if (!contactsLoaded || !dealsLoaded || !activitiesLoaded) {
+  if (!dealsLoaded || !activitiesLoaded) {
     return <DashboardSkeleton />
   }
 
@@ -80,15 +56,8 @@ export function Dashboard() {
             Welcome to your CRM
           </h2>
           <p className="text-slate-500 dark:text-slate-400 mb-6">
-            Get started by loading some demo data to explore the features.
+            You don't have any deals or activities yet. Start by adding some data.
           </p>
-          <Button
-            onClick={handleLoadDemoData}
-            disabled={seeding}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white"
-          >
-            {seeding ? 'Loading...' : 'Load Demo Data'}
-          </Button>
         </div>
       </div>
     )
@@ -348,16 +317,6 @@ export function Dashboard() {
         </div>
 
       </div>
-      <ConfirmModal
-        open={showConfirmSeed}
-        onOpenChange={setShowConfirmSeed}
-        title="Load Demo Data"
-        description="This will populate your organization with sample contacts, deals, and tasks. High-level dashboard stats will be updated accordingly."
-        confirmLabel="Load Data"
-        onConfirm={confirmLoadDemoData}
-        loading={seeding}
-        variant="amber"
-      />
     </div>
   )
 }

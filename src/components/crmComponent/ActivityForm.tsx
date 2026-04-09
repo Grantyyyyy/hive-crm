@@ -3,14 +3,15 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import type { Activity, ActivityType, Deal, Contact } from "@/lib/types"
-import { ACTIVITY_TYPES } from "@/lib/types"
 import { generateId } from "@/lib/helpers"
+import { cn } from "@/lib/utils"
 
 interface ActivityFormProps {
   contactId?: string
   deals?: Deal[]
   contacts?: Contact[]
   onSave: (activity: Activity) => void
+  onCancel?: () => void
 }
 
 const TYPE_LABELS: Record<ActivityType, string> = {
@@ -20,7 +21,7 @@ const TYPE_LABELS: Record<ActivityType, string> = {
   meeting: "Meeting",
 }
 
-export function ActivityForm({ contactId, deals, contacts, onSave }: ActivityFormProps) {
+export function ActivityForm({ contactId, deals, contacts, onSave, onCancel }: ActivityFormProps) {
   const [type, setType] = useState<ActivityType>("note")
   const [content, setContent] = useState("")
   const [dealId, setDealId] = useState("")
@@ -52,90 +53,135 @@ export function ActivityForm({ contactId, deals, contacts, onSave }: ActivityFor
   }
 
   return (
-    <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-6 font-sans">
-      <div className="space-y-3">
-        <Label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Activity Type</Label>
-        <div className="flex gap-2 flex-wrap">
-          {ACTIVITY_TYPES.map((t) => (
-            <Button
-              key={t}
-              type="button"
-              variant={type === t ? "default" : "outlineNeutral"}
-              size="sm"
-              onClick={() => setType(t)}
-              className="rounded-xl px-4 h-8 text-[10px]"
-            >
-              {TYPE_LABELS[t]}
-            </Button>
-          ))}
+    <form onSubmit={handleSubmit} className="flex flex-col h-full overflow-hidden">
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto px-8 py-8 space-y-10">
+        
+        <div className="grid grid-cols-1 gap-y-6">
+          {/* Main Activity Info Section */}
+          <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Interaction Details</h3>
+            </div>
+
+            <div className="space-y-6">
+              {/* Activity Type Selection */}
+              <div className="space-y-3">
+                <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Type of Activity</Label>
+                <div className="grid grid-cols-4 gap-2">
+                  {(['call', 'email', 'meeting', 'note'] as const).map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setType(t)}
+                      className={cn(
+                        "h-10 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all scale-100 active:scale-95",
+                        type === t
+                          ? "bg-teal-600 border-teal-600 text-white shadow-lg shadow-teal-600/20"
+                          : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-400 hover:border-slate-300"
+                      )}
+                    >
+                      {TYPE_LABELS[t]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">What happened? (Content)</Label>
+                <div className="group relative">
+                  <Textarea
+                    id="activity-content"
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder="Briefly describe the interaction..."
+                    className={cn(
+                      "h-32 px-4 py-3 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-medium transition-all focus:ring-4 focus:ring-teal-500/10 resize-none",
+                      errors.content && "border-red-500 ring-4 ring-red-500/10"
+                    )}
+                  />
+                </div>
+                {errors.content && <p className="text-[9px] font-bold text-red-500 uppercase tracking-wide">{errors.content}</p>}
+              </div>
+            </div>
+          </section>
+
+          {/* Relations Section */}
+          <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="w-1 h-3.5 bg-sky-500 rounded-full" />
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Related Context</h3>
+            </div>
+
+            <div className="space-y-6">
+              {contacts && contacts.length > 0 && !contactId && (
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Related Contact</Label>
+                  <div className="relative group">
+                    <select
+                      id="activity-contact"
+                      value={selectedContactId}
+                      onChange={(e) => setSelectedContactId(e.target.value)}
+                      className={cn(
+                        "w-full h-11 px-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-teal-500/10 transition-all shadow-sm",
+                        errors.contact && "border-red-500"
+                      )}
+                    >
+                      <option value="">Select a contact...</option>
+                      {contacts.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {errors.contact && <p className="text-[9px] font-bold text-red-500 uppercase tracking-wide">{errors.contact}</p>}
+                </div>
+              )}
+
+              {deals && deals.length > 0 && (
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Related Deal (Optional)</Label>
+                  <div className="relative group">
+                    <select
+                      id="activity-deal"
+                      value={dealId}
+                      onChange={(e) => setDealId(e.target.value)}
+                      className="w-full h-11 px-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-teal-500/10 transition-all shadow-sm"
+                    >
+                      <option value="">None</option>
+                      {deals.map((d) => (
+                        <option key={d.id} value={d.id}>{d.title}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
         </div>
       </div>
-      
-      {contacts && contacts.length > 0 && !contactId && (
-        <div className="space-y-2">
-          <Label htmlFor="activity-contact" className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Related Contact *</Label>
-          <select
-            id="activity-contact"
-            value={selectedContactId}
-            onChange={(e) => setSelectedContactId(e.target.value)}
-            className="flex h-12 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-2 text-sm text-slate-900 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all appearance-none"
-          >
-            <option value="">Select a contact</option>
-            {contacts.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-          {errors.contact && (
-            <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider mt-1">{errors.contact}</p>
-          )}
-        </div>
-      )}
 
-      {deals && deals.length > 0 && (
-        <div className="space-y-2">
-          <Label htmlFor="activity-deal" className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Related Deal (optional)</Label>
-          <select
-            id="activity-deal"
-            value={dealId}
-            onChange={(e) => setDealId(e.target.value)}
-            className="flex h-12 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 py-2 text-sm text-slate-900 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all appearance-none"
+      {/* Sticky Action Footer */}
+      <div className="px-8 py-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
+        {onCancel && (
+          <Button
+            type="button"
+            variant="outlineNeutral"
+            onClick={onCancel}
+            className="h-9 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest border-2"
           >
-            <option value="">None</option>
-            {deals.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.title}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      <div className="space-y-2">
-        <Label htmlFor="activity-content" className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Content *</Label>
-        <Textarea
-          id="activity-content"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="What happened?"
-          rows={3}
-          className="rounded-xl border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-indigo-500/20 shadow-sm bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-white min-h-[100px] resize-none"
-        />
-        {errors.content && (
-          <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider mt-1">{errors.content}</p>
+            Cancel
+          </Button>
         )}
-      </div>
-
-      <div className="pt-2">
-        <Button 
-          type="submit" 
-          variant="default"
-          className="w-full h-12 rounded-xl text-xs uppercase tracking-widest font-black"
+        <Button
+          type="submit"
+          className="h-9 px-10 bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-600/20 text-[10px] font-black uppercase tracking-widest"
         >
-          Log Activity
+          Log Interaction
         </Button>
       </div>
     </form>
   )
 }
+

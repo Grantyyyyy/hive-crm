@@ -402,3 +402,19 @@ export interface InventoryTransaction {
   userName: string
   createdAt: string
 }
+
+// CRM Contact constants
+export const CONTACT_FOLLOW_UP_DAYS = 7
+export const CONTACT_MAX_TOP_TASKS = 5
+
+// Activity display configuration
+export const ACTIVITY_TYPE_COLORS: Record<string, string> = {
+  call: "bg-blue-500",
+  email: "bg-teal-500",
+  note: "bg-amber-500",
+  meeting: "bg-emerald-500",
+}
+
+// Shared constants
+export const NIL_UUID = "00000000-0000-0000-0000-000000000000"
+export const DEFAULT_TAX_RATE = 0.10 // 10%

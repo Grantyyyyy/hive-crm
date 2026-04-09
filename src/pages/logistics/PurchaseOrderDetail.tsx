@@ -1,7 +1,6 @@
-import { useState, useMemo } from "react"
-import { useRoute, useLocation, Link } from "wouter"
+import { useState, useMemo, useEffect, useRef } from "react"
+import { useRoute, useLocation } from "wouter"
 import {
-  ArrowLeft,
   ShoppingCart,
   Truck,
   PackageCheck,
@@ -26,6 +25,7 @@ import { useCRMResource } from "@/lib/hooks"
 import { BackButton } from "@/components/reusables/BackButton"
 import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
 import type { PurchaseOrder, PurchaseOrderStatus, Quote, SalesOrder, InventoryItem, PurchaseRequest, InventoryTransaction, Vendor, Task } from "@/lib/types"
+import { NIL_UUID, DEFAULT_TAX_RATE } from "@/lib/types"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { restockFromPO, sendPOToVendor } from "@/services/procurementService"
@@ -51,8 +51,6 @@ const STATUS_CONFIG: Record<PurchaseOrderStatus, { label: string; badge: string;
   cancelled: { label: "Cancelled", badge: "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 ring-1 ring-rose-200 dark:ring-rose-800", dot: "bg-rose-400" },
 }
 
-const NIL_UUID = "00000000-0000-0000-0000-000000000000"
-
 const TIMELINE: { status: PurchaseOrderStatus; label: string; icon: React.ElementType }[] = [
   { status: "pending", label: "PO Created", icon: FileText },
   { status: "sent", label: "Sent to Vendor", icon: Truck },
@@ -74,6 +72,22 @@ export function PurchaseOrderDetail() {
   const [moreOpen, setMoreOpen] = useState(false)
   const [vendorSelectorOpen, setVendorSelectorOpen] = useState(false)
   const [vendorSearch, setVendorSearch] = useState("")
+
+  // Ref for the "More" dropdown to detect outside clicks
+  const moreDropdownRef = useRef<HTMLDivElement>(null)
+
+  // Close "More" dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (moreDropdownRef.current && !moreDropdownRef.current.contains(e.target as Node)) {
+        setMoreOpen(false)
+      }
+    }
+    if (moreOpen) {
+      document.addEventListener("mousedown", handleClickOutside)
+      return () => document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [moreOpen])
 
   const { data: vendors } = useCRMResource<Vendor>("vendors")
 
@@ -202,7 +216,8 @@ export function PurchaseOrderDetail() {
     new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(n)
 
   const subtotal = order.items.reduce((s, i) => s + i.quantity * i.price, 0)
-  const tax = subtotal * 0.1
+  // Tax calculation using configurable rate
+  const tax = subtotal * DEFAULT_TAX_RATE
   const total = subtotal + tax
 
 
@@ -290,6 +305,7 @@ export function PurchaseOrderDetail() {
                 </Button>
                 {moreOpen && (
                   <div
+                    ref={moreDropdownRef}
                     className="absolute right-0 top-11 z-50 w-48 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl py-2 overflow-hidden"
                     onMouseLeave={() => setMoreOpen(false)}
                   >

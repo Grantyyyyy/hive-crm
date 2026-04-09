@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/dialog"
 import { EditContactSheet } from "@/components/crmComponent/EditContactSheet"
 import { BackButton } from "@/components/reusables/BackButton"
-import { ContactForm } from "@/components/crmComponent/ContactForm"
 import { ActivityForm } from "@/components/crmComponent/ActivityForm"
 import {
   relativeTime,
@@ -36,20 +35,13 @@ import {
   sortTasks,
 } from "@/lib/helpers"
 import type { CreateContactInput, Contact, Activity, Deal, Task } from "@/lib/types"
-import { SOURCE_LABELS, STAGE_LABELS } from "@/lib/types"
+import { SOURCE_LABELS, STAGE_LABELS, CONTACT_FOLLOW_UP_DAYS, CONTACT_MAX_TOP_TASKS, ACTIVITY_TYPE_COLORS } from "@/lib/types"
 import { AddTaskModal } from "@/components/crmComponent/AddTaskModal"
 import { EditTaskModal } from "@/components/crmComponent/EditTaskModal"
 import { useCRMResource } from "@/lib/hooks"
 import { DetailSkeleton } from "@/components/ui/skeletons"
 import { DeleteModal } from "@/components/ui/delete-modal"
 import { toast } from "sonner"
-
-const activityColorMap: Record<string, string> = {
-  call: "bg-blue-500",
-  email: "bg-teal-500",
-  note: "bg-amber-500",
-  meeting: "bg-emerald-500",
-}
 
 export function ContactDetail() {
   const [, params] = useRoute("/contacts/:id")
@@ -117,7 +109,7 @@ export function ContactDetail() {
   const daysSinceLastActivity = lastActivity ? daysSince(lastActivity.createdAt) : null
   const [dismissed, setDismissed] = useState(false)
   const showFollowUp =
-    daysSinceLastActivity !== null && daysSinceLastActivity > 7 && !dismissed
+    daysSinceLastActivity !== null && daysSinceLastActivity > CONTACT_FOLLOW_UP_DAYS && !dismissed
 
   const relScore = useMemo(() => {
     const hasActive = contactDeals.some((d) => !["won", "lost"].includes(d.stage))
@@ -165,24 +157,24 @@ export function ContactDetail() {
   }, [deleteContact, contactId, navigate])
 
   const sortedTasks = useMemo(() => sortTasks(tasks), [tasks])
-  const topTasks = useMemo(() => sortedTasks.slice(0, 5), [sortedTasks])
+  const topTasks = useMemo(() => sortedTasks.slice(0, CONTACT_MAX_TOP_TASKS), [sortedTasks])
+
+  const relScoreConfig = useMemo(() => ({
+    Hot: { color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500", pct: 100 },
+    Warm: { color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-500", pct: 60 },
+    Cold: { color: "text-slate-500 dark:text-slate-400", bg: "bg-slate-400", pct: 30 },
+  }), [])
 
   function relScoreColor(label: string): string {
-    if (label === "Hot") return "text-emerald-600 dark:text-emerald-400"
-    if (label === "Warm") return "text-amber-600 dark:text-amber-400"
-    return "text-slate-500 dark:text-slate-400"
+    return relScoreConfig[label as keyof typeof relScoreConfig]?.color ?? relScoreConfig.Cold.color
   }
 
   function relScoreBg(label: string): string {
-    if (label === "Hot") return "bg-emerald-500"
-    if (label === "Warm") return "bg-amber-500"
-    return "bg-slate-400"
+    return relScoreConfig[label as keyof typeof relScoreConfig]?.bg ?? relScoreConfig.Cold.bg
   }
 
   function relScorePct(label: string): number {
-    if (label === "Hot") return 100
-    if (label === "Warm") return 60
-    return 30
+    return relScoreConfig[label as keyof typeof relScoreConfig]?.pct ?? relScoreConfig.Cold.pct
   }
 
   if (!userLoaded || !contactsLoaded || !activitiesLoaded || !dealsLoaded || !tasksLoaded) {
@@ -328,7 +320,7 @@ export function ContactDetail() {
                           <div
                             className={cn(
                               "absolute left-[-26px] top-1 w-3 h-3 rounded-full ring-4 ring-white dark:bg-slate-900 dark:ring-slate-900 z-10",
-                              activityColorMap[a.type] || "bg-slate-400"
+                              ACTIVITY_TYPE_COLORS[a.type] || "bg-slate-400"
                             )}
                           />
                           <div className="w-full bg-slate-50 dark:bg-slate-950 rounded-xl p-3 border border-slate-100 dark:border-slate-800/50">
@@ -374,7 +366,9 @@ export function ContactDetail() {
                   </div>
                   <div>
                     <div className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-1">Owner</div>
-                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100">You</p>
+                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                      {user?.user_metadata?.full_name || user?.email || "You"}
+                    </p>
                   </div>
                   <div>
                     <div className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-1">Created</div>
@@ -445,6 +439,7 @@ export function ContactDetail() {
                         return (
                           <div
                             key={task.id}
+                            // Clicking a task opens the EditTaskModal for modifying details
                             onClick={() => setEditingTask(task)}
                             className={cn(
                               "flex items-center p-3 gap-3 bg-slate-50 dark:bg-slate-950/50 rounded-2xl border transition-colors cursor-pointer group/task",

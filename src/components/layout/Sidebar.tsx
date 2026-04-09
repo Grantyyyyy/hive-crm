@@ -72,14 +72,17 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
   const initials = (user?.email ?? "U").slice(0, 2).toUpperCase();
 
   // Define nav groups with permission requirements
+  // Organized by workflow: Overview → Pipeline → Projects → Sales → Supply Chain → Reports → Settings
   const navGroups = useMemo(() => [
     {
-      title: "Core CRM",
+      title: "Overview",
       links: [
         { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-        { href: "/tasks", label: "Tasks", icon: CheckSquare, perm: "tasks" as const },
-        { href: "/projects", label: "Projects", icon: FolderOpen, perm: "projects" as const },
-        { href: "/workload", label: "Workload", icon: UserCog, perm: "projects" as const },
+      ]
+    },
+    {
+      title: "Pipeline",
+      links: [
         { href: "/leads", label: "Leads", icon: UserSearch, perm: "leads" as const },
         { href: "/contacts", label: "Contacts", icon: Users, perm: "contacts" as const },
         { href: "/deals", label: "Deals", icon: Handshake, perm: "deals" as const },
@@ -87,19 +90,32 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
       ]
     },
     {
-      title: "Sales Ops",
+      title: "Projects",
+      links: [
+        { href: "/projects", label: "Projects", icon: FolderOpen, perm: "projects" as const },
+        { href: "/tasks", label: "Tasks", icon: CheckSquare, perm: "tasks" as const },
+        { href: "/workload", label: "Workload", icon: UserCog, perm: "projects" as const },
+      ]
+    },
+    {
+      title: "Sales",
       links: [
         { href: "/quotes", label: "Quotes", icon: FileText, perm: "quotes" as const },
         { href: "/orders", label: "Orders", icon: ShoppingBag, perm: "orders" as const },
       ]
     },
     {
-      title: "Logistics",
+      title: "Supply Chain",
       links: [
         { href: "/inventory", label: "Inventory", icon: Package, perm: "inventory" as const },
         { href: "/purchase-orders", label: "P. Orders", icon: ScrollText, perm: "purchase_orders" as const },
         { href: "/purchase-requests", label: "P. Requests", icon: Layers, perm: "purchase_requests" as const },
         { href: "/vendors", label: "Vendors", icon: Building2, perm: "vendors" as const },
+      ]
+    },
+    {
+      title: "Reports",
+      links: [
         { href: "/reports", label: "Reports", icon: BarChart3, perm: "reports" as const },
       ]
     },

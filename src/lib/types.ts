@@ -200,7 +200,7 @@ export const SOURCE_COLORS: Record<ContactSource, string> = {
   manual: 'bg-slate-100 text-slate-700 border-slate-200',
   referral: 'bg-teal-100 text-teal-700 border-teal-200',
   ad: 'bg-orange-100 text-orange-700 border-orange-200',
-  import: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+  import: 'bg-teal-100 text-teal-700 border-teal-200',
 }
 
 export const LEAD_SOURCE_LABELS: Record<LeadSource, string> = {
@@ -221,7 +221,7 @@ export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
   converted: 'Converted',
 }
 
-export type SalesOrderStatus = 'pending' | 'shipped' | 'delivered' | 'cancelled'
+export type SalesOrderStatus = 'draft' | 'pending' | 'shipped' | 'delivered' | 'cancelled'
 
 export interface OrderItem {
   id: string
@@ -248,7 +248,7 @@ export interface SalesOrder {
   updatedAt: string
 }
 
-export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'expired'
+export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'expired' | 'rejected'
 
 export interface QuoteItem {
   id: string

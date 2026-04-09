@@ -77,7 +77,7 @@ const STATUS_CONFIG: Record<
   approved: {
     label: "Approved",
     badge:
-      "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 ring-1 ring-indigo-200 dark:ring-indigo-800",
+      "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 ring-1 ring-teal-200 dark:ring-teal-800",
   },
   rejected: {
     label: "Rejected",
@@ -387,7 +387,7 @@ export function PurchaseRequestDetail() {
 
             {/* Identity */}
             <div className="flex items-start gap-5">
-              <div className="size-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-xl font-black shrink-0 shadow-sm">
+              <div className="size-16 rounded-2xl bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center text-teal-600 dark:text-teal-400 text-xl font-black shrink-0 shadow-sm">
                 {initials}
               </div>
               <div>
@@ -534,7 +534,7 @@ export function PurchaseRequestDetail() {
                           className={cn(
                             "size-10 rounded-full flex items-center justify-center transition-all shrink-0",
                             done
-                              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none"
+                              ? "bg-teal-600 text-white shadow-lg shadow-teal-200 dark:shadow-none"
                               : "bg-slate-100 dark:bg-slate-800 text-slate-400"
                           )}
                         >
@@ -544,14 +544,14 @@ export function PurchaseRequestDetail() {
                           className={cn(
                             "text-[10px] font-bold uppercase tracking-widest whitespace-nowrap",
                             done
-                              ? "text-indigo-600 dark:text-indigo-400"
+                              ? "text-teal-600 dark:text-teal-400"
                               : "text-slate-400"
                           )}
                         >
                           {active && request.status !== "ordered" ? (
                             <span className="relative">
                               {step.label}
-                              <span className="absolute -top-1 -right-2 w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                              <span className="absolute -top-1 -right-2 w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
                             </span>
                           ) : (
                             step.label
@@ -563,7 +563,7 @@ export function PurchaseRequestDetail() {
                           className={cn(
                             "flex-1 h-0.5 mx-2 rounded-full mb-5 transition-colors",
                             progressIdx > i
-                              ? "bg-indigo-600"
+                              ? "bg-teal-600"
                               : "bg-slate-200 dark:bg-slate-800"
                           )}
                         />
@@ -636,7 +636,7 @@ export function PurchaseRequestDetail() {
                           <td className="px-6 py-4 text-slate-600 dark:text-slate-400 text-xs font-medium">
                             {item.vendorName || <span className="text-slate-300 italic">Unassigned</span>}
                           </td>
-                          <td className="px-6 py-4 text-right font-black text-indigo-600 dark:text-indigo-400">
+                          <td className="px-6 py-4 text-right font-black text-teal-600 dark:text-teal-400">
                             {item.quantity}
                           </td>
                           <td className="px-6 py-4 text-right text-slate-600 dark:text-slate-400">
@@ -688,7 +688,7 @@ export function PurchaseRequestDetail() {
                     icon: Hash,
                     label: "Reference ID",
                     value: (
-                      <span className="text-indigo-600 dark:text-indigo-400 font-bold">
+                      <span className="text-teal-600 dark:text-teal-400 font-bold">
                         {request.requestNumber}
                       </span>
                     ),
@@ -764,7 +764,7 @@ export function PurchaseRequestDetail() {
                   <span className="font-black text-slate-900 dark:text-white">
                     Budget Impact
                   </span>
-                  <span className="font-black text-xl text-indigo-600 dark:text-indigo-400">
+                  <span className="font-black text-xl text-teal-600 dark:text-teal-400">
                     {fmt(request.amount)}
                   </span>
                 </div>

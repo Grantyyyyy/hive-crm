@@ -45,7 +45,7 @@ function relativeTime(iso: string): string {
 const STATUS_CONFIG: Record<PurchaseOrderStatus, { label: string; badge: string; dot: string }> = {
   draft: { label: "Draft", badge: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 ring-1 ring-slate-200 dark:ring-slate-700", dot: "bg-slate-400" },
   pending: { label: "Pending", badge: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 ring-1 ring-amber-200 dark:ring-amber-800", dot: "bg-amber-500" },
-  sent: { label: "Sent", badge: "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 ring-1 ring-indigo-200 dark:ring-indigo-800", dot: "bg-indigo-500" },
+  sent: { label: "Sent", badge: "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 ring-1 ring-teal-200 dark:ring-teal-800", dot: "bg-teal-500" },
   received: { label: "Received", badge: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200 dark:ring-emerald-800", dot: "bg-emerald-500" },
   cancelled: { label: "Cancelled", badge: "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 ring-1 ring-rose-200 dark:ring-rose-800", dot: "bg-rose-400" },
 }
@@ -248,7 +248,7 @@ export function PurchaseOrderDetail() {
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 md:p-8">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
             <div className="flex items-start gap-5">
-              <div className="size-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-xl font-black shrink-0 shadow-sm">
+              <div className="size-16 rounded-2xl bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center text-teal-600 dark:text-teal-400 text-xl font-black shrink-0 shadow-sm">
                 {initials}
               </div>
               <div>
@@ -337,22 +337,22 @@ export function PurchaseOrderDetail() {
                         <div className={cn(
                           "size-10 rounded-full flex items-center justify-center transition-all shrink-0",
                           done
-                            ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none"
+                            ? "bg-teal-600 text-white shadow-lg shadow-teal-200 dark:shadow-none"
                             : "bg-slate-100 dark:bg-slate-800 text-slate-400"
                         )}>
                           <Icon className="w-5 h-5" />
                         </div>
                         <span className={cn(
                           "text-[10px] font-bold uppercase tracking-widest whitespace-nowrap",
-                          done ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400"
+                          done ? "text-teal-600 dark:text-teal-400" : "text-slate-400"
                         )}>
-                          {active ? <span className="relative">{step.label}<span className="absolute -top-1 -right-2 w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" /></span> : step.label}
+                          {active ? <span className="relative">{step.label}<span className="absolute -top-1 -right-2 w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" /></span> : step.label}
                         </span>
                       </div>
                       {i < TIMELINE.length - 1 && (
                         <div className={cn(
                           "flex-1 h-0.5 mx-2 rounded-full mb-5 transition-colors",
-                          currentStepIdx > i ? "bg-indigo-600" : "bg-slate-200 dark:bg-slate-800"
+                          currentStepIdx > i ? "bg-teal-600" : "bg-slate-200 dark:bg-slate-800"
                         )} />
                       )}
                     </div>
@@ -413,7 +413,7 @@ export function PurchaseOrderDetail() {
                   </tr>
                   <tr className="bg-slate-50/50 dark:bg-slate-800/30">
                     <td colSpan={4} className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300">Total Approved</td>
-                    <td className="px-6 py-4 text-right text-lg font-black text-indigo-600 dark:text-indigo-400">{fmt(total)}</td>
+                    <td className="px-6 py-4 text-right text-lg font-black text-teal-600 dark:text-teal-400">{fmt(total)}</td>
                   </tr>
                 </tfoot>
               </table>
@@ -431,7 +431,7 @@ export function PurchaseOrderDetail() {
                   <Hash className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">PO Number</p>
-                    <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">{order.poNumber}</p>
+                    <p className="text-sm font-bold text-teal-600 dark:text-teal-400">{order.poNumber}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3 group">
@@ -442,7 +442,7 @@ export function PurchaseOrderDetail() {
                       {order.status === 'pending' && (
                         <button
                           onClick={() => setVendorSelectorOpen(true)}
-                          className="opacity-0 group-hover:opacity-100 text-[9px] font-black uppercase text-indigo-600 hover:text-indigo-700 transition-all underline underline-offset-2"
+                          className="opacity-0 group-hover:opacity-100 text-[9px] font-black uppercase text-teal-600 hover:text-teal-700 transition-all underline underline-offset-2"
                         >
                           Change
                         </button>
@@ -484,7 +484,7 @@ export function PurchaseOrderDetail() {
                 </div>
                 <div className="flex justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
                   <span className="font-black text-slate-900 dark:text-white">Total Value</span>
-                  <span className="font-black text-xl text-indigo-600 dark:text-indigo-400">{fmt(total)}</span>
+                  <span className="font-black text-xl text-teal-600 dark:text-teal-400">{fmt(total)}</span>
                 </div>
               </div>
 
@@ -556,10 +556,10 @@ export function PurchaseOrderDetail() {
                     onClick={() => handleSelectVendor(vendor)}
                     className={cn(
                       "w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 group",
-                      order.vendorId === vendor.id && "bg-indigo-50 dark:bg-indigo-900/20 ring-1 ring-indigo-100 dark:ring-indigo-800"
+                      order.vendorId === vendor.id && "bg-teal-50 dark:bg-teal-900/20 ring-1 ring-teal-100 dark:ring-teal-800"
                     )}
                   >
-                    <div className="size-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center shrink-0 shadow-sm text-slate-400 group-hover:text-indigo-600">
+                    <div className="size-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center shrink-0 shadow-sm text-slate-400 group-hover:text-teal-600">
                       <Building2 className="size-5" />
                     </div>
                     <div className="flex-1 min-w-0">

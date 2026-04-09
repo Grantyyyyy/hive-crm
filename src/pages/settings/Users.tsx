@@ -100,7 +100,7 @@ function UserActionsMenu({ u, currentUserId, onChangeRole, onRemove, removePendi
           {canUpdate && (
             <button
               onClick={(e) => { e.stopPropagation(); setOpen(false); onChangeRole(); }}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors"
             >
               <Shield className="w-4 h-4 shrink-0" />
               Change Role
@@ -399,7 +399,7 @@ export function Users() {
               <Button
                 variant="default"
                 onClick={() => setShowAddDialog(true)}
-                className="shadow-md shadow-indigo-100 dark:shadow-none"
+                className="shadow-md shadow-teal-100 dark:shadow-none"
               >
                 <UserPlus className="w-4 h-4 mr-2" /> Add User
               </Button>
@@ -414,7 +414,7 @@ export function Users() {
             placeholder="Search by name or email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-slate-400 outline-none transition-all"
+            className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 placeholder:text-slate-400 outline-none transition-all"
           />
         </div>
 
@@ -428,7 +428,7 @@ export function Users() {
                 className={cn(
                   "px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap",
                   roleFilter === role
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-100 dark:shadow-none"
+                    ? "bg-teal-600 text-white shadow-md shadow-teal-100 dark:shadow-none"
                     : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
                 )}
               >
@@ -474,14 +474,14 @@ export function Users() {
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="size-9 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-sm font-bold uppercase shadow-sm">
+                          <div className="size-9 rounded-full bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center text-teal-600 dark:text-teal-400 text-sm font-bold uppercase shadow-sm">
                             {u.name?.charAt(0) || 'U'}
                           </div>
                           <div>
                             <p className="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
                               {u.name}
                               {u.authUserId === user?.id && (
-                                <Badge variant="secondary" className="text-[9px] uppercase tracking-tighter h-4 px-1 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400 border-indigo-100 dark:border-indigo-800">You</Badge>
+                                <Badge variant="secondary" className="text-[9px] uppercase tracking-tighter h-4 px-1 bg-teal-50 text-teal-600 dark:bg-teal-900/20 dark:text-teal-400 border-teal-100 dark:border-teal-800">You</Badge>
                               )}
                             </p>
                             <p className="text-[11px] text-slate-400 font-medium md:hidden">{u.email}</p>
@@ -501,7 +501,7 @@ export function Users() {
                               variant="ghost"
                               size="sm"
                               onClick={() => openRoleDialog(u)}
-                              className="text-[11px] h-7 px-3 font-bold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="text-[11px] h-7 px-3 font-bold text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
                             >
                               <Shield className="w-3.5 h-3.5 mr-1" /> Role
                             </Button>
@@ -552,7 +552,7 @@ export function Users() {
                 <Label htmlFor="newRole" className="text-xs font-bold uppercase tracking-wider text-slate-500">New Role</Label>
                 <select
                   id="newRole"
-                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all appearance-none"
+                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-medium outline-none focus:ring-2 focus:ring-teal-500 transition-all appearance-none"
                   value={newRoleId}
                   onChange={(e) => setNewRoleId(e.target.value)}
                   required
@@ -577,7 +577,7 @@ export function Users() {
               </Button>
               <Button
                 type="submit"
-                className="h-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-100 dark:shadow-none"
+                className="h-11 rounded-xl bg-teal-600 hover:bg-teal-700 shadow-md shadow-teal-100 dark:shadow-none"
                 disabled={updateRoleMutation.isPending}
               >
                 {updateRoleMutation.isPending ? (
@@ -611,7 +611,7 @@ export function Users() {
               onClick={() => setInviteMode(true)}
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all",
-                inviteMode ? "bg-white dark:bg-slate-800 text-indigo-600 shadow-sm" : "text-slate-500"
+                inviteMode ? "bg-white dark:bg-slate-800 text-teal-600 shadow-sm" : "text-slate-500"
               )}
             >
               <Mail className="w-4 h-4" /> Send Invite
@@ -620,7 +620,7 @@ export function Users() {
               onClick={() => setInviteMode(false)}
               className={cn(
                 "flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all",
-                !inviteMode ? "bg-white dark:bg-slate-800 text-indigo-600 shadow-sm" : "text-slate-500"
+                !inviteMode ? "bg-white dark:bg-slate-800 text-teal-600 shadow-sm" : "text-slate-500"
               )}
             >
               <UserPlus className="w-4 h-4" /> Manual Add
@@ -669,7 +669,7 @@ export function Users() {
                   <Label htmlFor="addUserRole" className="text-xs font-bold uppercase tracking-wider text-slate-500">Initial Role</Label>
                   <select
                     id="addUserRole"
-                    className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 transition-all appearance-none"
+                    className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-medium outline-none focus:ring-2 focus:ring-teal-500 transition-all appearance-none"
                     value={addForm.roleId}
                     onChange={(e) => setAddForm({ ...addForm, roleId: e.target.value })}
                   >
@@ -697,7 +697,7 @@ export function Users() {
                 type="submit"
                 className={cn(
                   "h-11 rounded-xl shadow-md",
-                  inviteMode ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-100" : "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100",
+                  inviteMode ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-100" : "bg-teal-600 hover:bg-teal-700 shadow-teal-100",
                   "dark:shadow-none"
                 )}
                 disabled={inviteMode ? inviteUserMutation.isPending : addUserMutation.isPending}

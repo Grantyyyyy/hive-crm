@@ -163,8 +163,8 @@ export function ProjectDetail() {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="bg-bg-surface rounded-2xl border border-border p-5 shadow-sm hover:shadow-md transition-all">
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center">
-                  <ListTodo className="w-4 h-4 text-indigo-600" />
+                <div className="w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center">
+                  <ListTodo className="w-4 h-4 text-teal-600" />
                 </div>
                 <p className="text-[11px] font-black uppercase tracking-widest text-slate-500">Total Tasks</p>
               </div>

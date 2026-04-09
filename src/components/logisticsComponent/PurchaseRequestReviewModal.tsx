@@ -52,8 +52,8 @@ export function PurchaseRequestReviewModal({
         <SheetHeader className="px-8 py-6 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="size-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center">
-                <Layers className="size-6 text-indigo-600 dark:text-indigo-400" />
+              <div className="size-12 rounded-2xl bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center">
+                <Layers className="size-6 text-teal-600 dark:text-teal-400" />
               </div>
               <div>
                 <SheetTitle className="text-xl font-bold text-slate-900 dark:text-white leading-tight">
@@ -109,8 +109,8 @@ export function PurchaseRequestReviewModal({
 
           {/* Inventory Context (if linked) */}
           {inventoryItem && (
-            <section className="p-5 rounded-2xl bg-indigo-50/50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-800/30 space-y-3">
-              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+            <section className="p-5 rounded-2xl bg-teal-50/50 dark:bg-teal-900/10 border border-teal-100 dark:border-teal-800/30 space-y-3">
+              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-teal-600 dark:text-teal-400">
                 <Package className="size-3.5" />
                 Linked Inventory Item
               </div>
@@ -188,7 +188,7 @@ export function PurchaseRequestReviewModal({
                       Total Estimated Amount
                     </td>
                     <td className="px-5 py-4 text-right">
-                      <span className="text-lg font-black text-indigo-600 dark:text-indigo-400">
+                      <span className="text-lg font-black text-teal-600 dark:text-teal-400">
                         ${totalEstimate.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </span>
                     </td>
@@ -277,7 +277,7 @@ function StatusBadge({ status }: { status: PurchaseRequest['status'] }) {
   const styles: Record<PurchaseRequest['status'], string> = {
     pending_review: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800",
     draft: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700",
-    approved: "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800",
+    approved: "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-800",
     rejected: "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800",
     ordered: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
   }

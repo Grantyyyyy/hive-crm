@@ -17,7 +17,7 @@ export function Design() {
 
   const colorOptions = [
     { name: 'Teal', value: 'teal', class: 'text-teal-600 bg-teal-600 border-teal-600 ring-teal-600', bgDim: 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400' },
-    { name: 'Indigo', value: 'indigo', class: 'text-indigo-600 bg-indigo-600 border-indigo-600 ring-indigo-600', bgDim: 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400' },
+    { name: 'teal', value: 'teal', class: 'text-teal-600 bg-teal-600 border-teal-600 ring-teal-600', bgDim: 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400' },
     { name: 'Blue', value: 'blue', class: 'text-blue-600 bg-blue-600 border-blue-600 ring-blue-600', bgDim: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400' },
     { name: 'Emerald', value: 'emerald', class: 'text-emerald-600 bg-emerald-600 border-emerald-600 ring-emerald-600', bgDim: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' },
     { name: 'Violet', value: 'violet', class: 'text-violet-600 bg-violet-600 border-violet-600 ring-violet-600', bgDim: 'bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-400' },

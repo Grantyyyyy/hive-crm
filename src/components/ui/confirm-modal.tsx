@@ -72,11 +72,11 @@ export function ConfirmModal({
         }
       case 'primary':
         return {
-          iconBg: 'bg-indigo-50 dark:bg-indigo-950/30',
-          iconColor: 'text-indigo-600 dark:text-indigo-500',
-          dotColor: 'bg-indigo-600',
+          iconBg: 'bg-teal-50 dark:bg-teal-950/30',
+          iconColor: 'text-teal-600 dark:text-teal-500',
+          dotColor: 'bg-teal-600',
           icon: Sparkles,
-          buttonClass: 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/20 text-white',
+          buttonClass: 'bg-teal-600 hover:bg-teal-700 shadow-teal-500/20 text-white',
         }
       default: // teal
         return {

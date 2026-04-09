@@ -44,7 +44,7 @@ import { toast } from "sonner"
 
 const activityColorMap: Record<string, string> = {
   call: "bg-blue-500",
-  email: "bg-indigo-500",
+  email: "bg-teal-500",
   note: "bg-amber-500",
   meeting: "bg-emerald-500",
 }
@@ -398,7 +398,7 @@ export function ContactDetail() {
                   <div className="space-y-3">
                     {contactDeals.map((d: Deal) => (
                       <Link key={d.id} href={`/deals/${d.id}`}>
-                        <div className="bg-slate-50 dark:bg-slate-950 rounded-2xl p-4 border border-slate-100 dark:border-slate-800/50 hover:border-indigo-300 dark:hover:border-indigo-700/50 transition-colors cursor-pointer">
+                        <div className="bg-slate-50 dark:bg-slate-950 rounded-2xl p-4 border border-slate-100 dark:border-slate-800/50 hover:border-teal-300 dark:hover:border-teal-700/50 transition-colors cursor-pointer">
                           <div className="flex items-start justify-between mb-1">
                             <span className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{d.title}</span>
                             <span className={cn(
@@ -455,7 +455,7 @@ export function ContactDetail() {
                               !isComp && isOverdueTask
                                 ? "border-rose-200 dark:border-rose-900/50"
                                 : "border-slate-200 dark:border-slate-800/50",
-                              "hover:border-indigo-300 dark:hover:border-indigo-700/50",
+                              "hover:border-teal-300 dark:hover:border-teal-700/50",
                               isComp && "opacity-60"
                             )}
                           >
@@ -471,7 +471,7 @@ export function ContactDetail() {
                                     "w-5 h-5 rounded-full border-2 transition-colors",
                                     isOverdueTask
                                       ? "border-rose-300 group-hover/task:border-rose-500"
-                                      : "border-slate-300 dark:border-slate-600 group-hover/task:border-indigo-500"
+                                      : "border-slate-300 dark:border-slate-600 group-hover/task:border-teal-500"
                                   )}
                                 />
                               )}

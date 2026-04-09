@@ -136,12 +136,12 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
                   onClick={() => setShowVendorSelector(!showVendorSelector)}
                   className={cn(
                     "w-full h-12 flex items-center justify-between px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm transition-all",
-                    errors.vendorName ? "border-red-500 ring-1 ring-red-100" : "hover:border-indigo-300",
+                    errors.vendorName ? "border-red-500 ring-1 ring-red-100" : "hover:border-teal-300",
                     !vendorName && "text-slate-400"
                   )}
                 >
                   <div className="flex items-center gap-3">
-                    <Building2 className={cn("size-4", vendorName ? "text-indigo-600" : "text-slate-400")} />
+                    <Building2 className={cn("size-4", vendorName ? "text-teal-600" : "text-slate-400")} />
                     <span className="font-semibold">{vendorName || "Choose a vendor..."}</span>
                   </div>
                   <ChevronDown className={cn("size-4 text-slate-400 transition-transform", showVendorSelector && "rotate-180")} />
@@ -169,12 +169,12 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
                             type="button"
                             onClick={() => selectVendor(vendor)}
                             className={cn(
-                              "w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all hover:bg-indigo-50 dark:hover:bg-indigo-900/10 group",
-                              vendorId === vendor.id && "bg-indigo-50/50 dark:bg-indigo-900/5 ring-1 ring-inset ring-indigo-100 dark:ring-indigo-900/20"
+                              "w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all hover:bg-teal-50 dark:hover:bg-teal-900/10 group",
+                              vendorId === vendor.id && "bg-teal-50/50 dark:bg-teal-900/5 ring-1 ring-inset ring-teal-100 dark:ring-teal-900/20"
                             )}
                           >
                             <div className="flex-1 min-w-0">
-                              <p className={cn("text-xs font-bold truncate", vendorId === vendor.id ? "text-indigo-600" : "text-slate-900 dark:text-white group-hover:text-indigo-600")}>
+                              <p className={cn("text-xs font-bold truncate", vendorId === vendor.id ? "text-teal-600" : "text-slate-900 dark:text-white group-hover:text-teal-600")}>
                                 {vendor.name}
                               </p>
                               <p className="text-[10px] text-slate-500 font-medium truncate uppercase tracking-tight mt-0.5">
@@ -199,7 +199,7 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
               <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
                 Reference ID
                 {initialData?.referenceId && (
-                  <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">
+                  <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400">
                     Auto-linked
                   </span>
                 )}
@@ -238,7 +238,7 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
             placeholder="Enter destination address and shipping method..."
             value={shippingInfo}
             onChange={(e) => setShippingInfo(e.target.value)}
-            className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[100px] p-5 focus:ring-indigo-500 shadow-sm"
+            className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[100px] p-5 focus:ring-teal-500 shadow-sm"
           />
         </section>
 
@@ -257,7 +257,7 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowInventory(!showInventory)}
-                    className="h-8 text-[11px] font-bold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 px-3"
+                    className="h-8 text-[11px] font-bold text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-900/10 px-3"
                   >
                     Quick Add
                   </Button>
@@ -274,7 +274,7 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
                               onClick={() => addFromInventory(item)}
                               className="w-full text-left p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors rounded-lg group"
                             >
-                              <div className="text-[12px] font-bold text-slate-900 dark:text-white group-hover:text-indigo-600">{item.name}</div>
+                              <div className="text-[12px] font-bold text-slate-900 dark:text-white group-hover:text-teal-600">{item.name}</div>
                               <div className="text-[10px] text-slate-500 mt-0.5">
                                 ATP: {atp} • ${item.price.toFixed(2)} • SKU: {item.sku}
                               </div>
@@ -290,7 +290,7 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
                 variant="ghost"
                 size="sm"
                 onClick={addItem}
-                className="h-8 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:bg-transparent px-3"
+                className="h-8 text-[11px] font-bold text-teal-600 dark:text-teal-400 hover:bg-transparent px-3"
               >
                 <Plus className="w-3.5 h-3.5 mr-1" /> Add Item
               </Button>
@@ -387,7 +387,7 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
               placeholder="Notes for internal used only..."
               value={internalNotes}
               onChange={(e) => setInternalNotes(e.target.value)}
-              className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[120px] p-4 text-sm focus:ring-indigo-500"
+              className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[120px] p-4 text-sm focus:ring-teal-500"
             />
           </div>
           <div className="space-y-4">
@@ -399,7 +399,7 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
               placeholder="Specific instructions for the vendor..."
               value={vendorInstructions}
               onChange={(e) => setVendorInstructions(e.target.value)}
-              className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[120px] p-4 text-sm focus:ring-indigo-500"
+              className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[120px] p-4 text-sm focus:ring-teal-500"
             />
           </div>
         </section>
@@ -428,7 +428,7 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
             variant="default"
             size="sm"
             onClick={() => handleSave('pending')}
-            className="h-10 px-6 font-black bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] rounded-lg shadow-sm"
+            className="h-10 px-6 font-black bg-teal-600 hover:bg-teal-700 text-white text-[11px] rounded-lg shadow-sm"
           >
             Create Purchase Order
           </Button>

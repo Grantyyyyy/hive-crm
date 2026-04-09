@@ -196,7 +196,7 @@ export function PurchaseOrders() {
             placeholder="Search PO number, vendor name..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-medium focus:ring-2 focus:ring-indigo-500 placeholder:text-slate-400 outline-none transition-all"
+            className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-medium focus:ring-2 focus:ring-teal-500 placeholder:text-slate-400 outline-none transition-all"
           />
         </div>
 
@@ -210,7 +210,7 @@ export function PurchaseOrders() {
                 className={cn(
                   "px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap",
                   statusFilter === s
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-100"
+                    ? "bg-teal-600 text-white shadow-md shadow-teal-100"
                     : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
                 )}
               >
@@ -258,7 +258,7 @@ export function PurchaseOrders() {
                       className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors cursor-pointer group"
                     >
                       <td className="px-4 py-2.5">
-                        <span className="text-[13px] font-bold text-indigo-600 dark:text-indigo-400">{order.poNumber}</span>
+                        <span className="text-[13px] font-bold text-teal-600 dark:text-teal-400">{order.poNumber}</span>
                       </td>
                       <td className="px-4 py-2.5">
                         <div className="flex items-center gap-3">
@@ -297,7 +297,7 @@ export function PurchaseOrders() {
                             variant="ghost"
                             size="sm"
                             onClick={(e) => { e.stopPropagation(); window.location.href = `/purchase-orders/${order.id}` }}
-                            className="text-slate-400 hover:text-indigo-600 font-bold text-[11px] transition-colors h-7 px-2"
+                            className="text-slate-400 hover:text-teal-600 font-bold text-[11px] transition-colors h-7 px-2"
                           >
                             View
                           </Button>

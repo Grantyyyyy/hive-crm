@@ -140,7 +140,7 @@ export function InventoryDetail() {
             <Button variant="outlineNeutral" size="sm" className="h-9 px-4" onClick={() => setAdjustmentOpen(true)}>
               <Activity className="size-4 mr-2" /> Stock Adjustment
             </Button>
-            <Button variant="default" size="sm" className="h-9 px-6 bg-indigo-600 hover:bg-indigo-700">
+            <Button variant="default" size="sm" className="h-9 px-6 bg-teal-600 hover:bg-teal-700">
               <Pencil className="size-4 mr-2" /> Edit Product
             </Button>
           </div>
@@ -151,7 +151,7 @@ export function InventoryDetail() {
           <div className="lg:w-1/2 p-8 lg:p-12 space-y-8">
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase tracking-widest rounded-full border border-indigo-100 dark:border-indigo-800/30">
+                <span className="px-3 py-1 bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 text-[10px] font-black uppercase tracking-widest rounded-full border border-teal-100 dark:border-teal-800/30">
                   {item.category}
                 </span>
                 <span className={cn(
@@ -175,7 +175,7 @@ export function InventoryDetail() {
               <div className="space-y-1">
                 <p className="text-[10px] font-black tracking-widest uppercase text-slate-400">Inventory ID</p>
                 <div className="flex items-center gap-2">
-                  <Hash className="size-3.5 text-indigo-500" />
+                  <Hash className="size-3.5 text-teal-500" />
                   <span className="text-sm font-bold text-slate-900 dark:text-white">{item.id.slice(0, 8)}</span>
                 </div>
               </div>
@@ -208,11 +208,11 @@ export function InventoryDetail() {
           <div className="lg:w-1/2 bg-slate-50/50 dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800 p-8 lg:p-12 flex flex-col justify-center">
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-8 relative overflow-hidden">
               {/* Accent circle */}
-              <div className="absolute -top-12 -right-12 size-40 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -top-12 -right-12 size-40 bg-teal-500/5 rounded-full blur-3xl pointer-events-none" />
 
               <div className="flex items-center justify-between relative">
                 <div className="space-y-1">
-                  <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">Available to Promise</h3>
+                  <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400">Available to Promise</h3>
                   <div className="flex items-baseline gap-2">
                     <span className="text-6xl font-black tracking-tighter text-slate-900 dark:text-white">{atp}</span>
                     <span className="text-slate-400 font-bold uppercase text-[10px]">Units</span>
@@ -235,14 +235,14 @@ export function InventoryDetail() {
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reserved Hold</p>
-                  <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{item.reservedQuantity || 0}</p>
+                  <p className="text-2xl font-black text-teal-600 dark:text-teal-400">{item.reservedQuantity || 0}</p>
                 </div>
               </div>
 
-              <div className="p-4 bg-indigo-50/30 dark:bg-indigo-900/10 rounded-2xl flex items-center gap-3 border border-indigo-100/50 dark:border-indigo-800/20 relative">
-                <Layers className="size-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+              <div className="p-4 bg-teal-50/30 dark:bg-teal-900/10 rounded-2xl flex items-center gap-3 border border-teal-100/50 dark:border-teal-800/20 relative">
+                <Layers className="size-5 text-teal-600 dark:text-teal-400 shrink-0" />
                 <p className="text-[11px] font-medium text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Reserved units are locked in active <span className="font-bold text-indigo-700 dark:text-indigo-300">Quotations</span> and pending <span className="font-bold text-indigo-700 dark:text-indigo-300">Sales Orders</span>.
+                  Reserved units are locked in active <span className="font-bold text-teal-700 dark:text-teal-300">Quotations</span> and pending <span className="font-bold text-teal-700 dark:text-teal-300">Sales Orders</span>.
                 </p>
               </div>
             </div>
@@ -253,7 +253,7 @@ export function InventoryDetail() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-5">
             <div className="size-12 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
-              <ShoppingCart className="size-6 text-indigo-500" />
+              <ShoppingCart className="size-6 text-teal-500" />
             </div>
             <div>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Sales</p>
@@ -262,7 +262,7 @@ export function InventoryDetail() {
           </div>
           <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-5">
             <div className="size-12 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
-              <ClipboardList className="size-6 text-indigo-500" />
+              <ClipboardList className="size-6 text-teal-500" />
             </div>
             <div>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Current Enquiries</p>
@@ -271,7 +271,7 @@ export function InventoryDetail() {
           </div>
           <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-5">
             <div className="size-12 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
-              <History className="size-6 text-indigo-500" />
+              <History className="size-6 text-teal-500" />
             </div>
             <div>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Last Shipped</p>
@@ -286,7 +286,7 @@ export function InventoryDetail() {
         <div className="bg-white dark:bg-slate-950 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
           <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <h2 className="text-sm font-black uppercase tracking-[0.1em] text-slate-900 dark:text-white flex items-center gap-3">
-              <History className="size-4 text-indigo-600" />
+              <History className="size-4 text-teal-600" />
               Inventory Transaction History
             </h2>
           </div>
@@ -300,7 +300,7 @@ export function InventoryDetail() {
                   receipt: { label: 'Receipt', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
                   shipment: { label: 'Shipment', color: 'text-rose-600', bg: 'bg-rose-50 dark:bg-rose-900/20' },
                   adjustment: { label: 'Adjustment', color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20' },
-                  reservation: { label: 'Reservation', color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
+                  reservation: { label: 'Reservation', color: 'text-teal-600', bg: 'bg-teal-50 dark:bg-teal-900/20' },
                   release: { label: 'Release', color: 'text-slate-600', bg: 'bg-slate-50 dark:bg-slate-800/50' },
                   return: { label: 'Return', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
                 }

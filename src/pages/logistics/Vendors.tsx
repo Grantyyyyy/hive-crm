@@ -191,7 +191,7 @@ export function Vendors() {
         {/* Simplified Header */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400 mb-1">Procurement</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">Procurement</p>
             <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Vendors</h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Manage your global supply chain and procurement partners.</p>
           </div>
@@ -218,7 +218,7 @@ export function Vendors() {
                 className={cn(
                   "pb-4 font-bold text-sm tracking-wide transition-colors relative flex items-center gap-2 shrink-0",
                   activeTab === tab
-                    ? "text-indigo-600 dark:text-indigo-400"
+                    ? "text-teal-600 dark:text-teal-400"
                     : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
                 )}
               >
@@ -226,13 +226,13 @@ export function Vendors() {
                 <span className={cn(
                   "px-2 py-0.5 rounded-full text-[10px] font-bold transition-colors",
                   activeTab === tab
-                    ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400"
+                    ? "bg-teal-50 text-teal-600 dark:bg-teal-900/40 dark:text-teal-400"
                     : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500"
                 )}>
                   {tab === 'all' ? vendors.length : vendors.filter(v => v.status === tab).length}
                 </span>
                 {activeTab === tab && (
-                  <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-indigo-600 dark:bg-indigo-400 rounded-t-full" />
+                  <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-teal-600 dark:bg-teal-400 rounded-t-full" />
                 )}
               </button>
             ))}
@@ -240,12 +240,12 @@ export function Vendors() {
 
           <div className="flex-1 w-full lg:max-w-[240px] pb-4 lg:pb-3">
             <div className="relative group/search">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within/search:text-indigo-600 transition-colors" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within/search:text-teal-600 transition-colors" />
               <Input
                 placeholder="Search..."
                 value={search}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setSearch(e.target.value); setCurrentPage(1) }}
-                className="w-full pl-9 h-9 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-xs font-semibold focus:ring-4 focus:ring-indigo-600/5 focus:border-indigo-600/50 placeholder:text-slate-400 outline-none transition-all duration-300"
+                className="w-full pl-9 h-9 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-xs font-semibold focus:ring-4 focus:ring-teal-600/5 focus:border-teal-600/50 placeholder:text-slate-400 outline-none transition-all duration-300"
               />
             </div>
           </div>
@@ -281,7 +281,7 @@ export function Vendors() {
                     >
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-3 min-w-0">
-                          <Building2 className="size-4 text-slate-300 group-hover:text-indigo-500 transition-colors shrink-0" />
+                          <Building2 className="size-4 text-slate-300 group-hover:text-teal-500 transition-colors shrink-0" />
                           <div className="min-w-0">
                             <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{vendor.name}</p>
                             <p className="text-[10px] text-slate-400 font-medium pt-0.5 uppercase tracking-tighter">ID: {vendor.id.slice(0, 8)}</p>

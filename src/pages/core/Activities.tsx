@@ -29,7 +29,7 @@ const TYPE_META: Record<
   { label: string; icon: any; color: string; bg: string; iconBorder: string }
 > = {
   call: { label: "Calls", icon: Phone, color: "text-blue-500", bg: "bg-blue-50", iconBorder: "border-blue-100" },
-  email: { label: "Emails", icon: Mail, color: "text-indigo-500", bg: "bg-indigo-50", iconBorder: "border-indigo-100" },
+  email: { label: "Emails", icon: Mail, color: "text-teal-500", bg: "bg-teal-50", iconBorder: "border-teal-100" },
   meeting: { label: "Meetings", icon: Video, color: "text-emerald-500", bg: "bg-emerald-50", iconBorder: "border-emerald-100" },
   note: { label: "Notes", icon: FileText, color: "text-amber-500", bg: "bg-amber-50", iconBorder: "border-amber-100" },
 }
@@ -216,7 +216,7 @@ export function Activities() {
                               "w-full ml-8 md:ml-0 md:w-[calc(50%-2rem)]",
                               !isEven && "md:ml-auto"
                             )}>
-                              <div className="bg-white dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow group-hover:border-indigo-200 dark:group-hover:border-indigo-800/50">
+                              <div className="bg-white dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow group-hover:border-teal-200 dark:group-hover:border-teal-800/50">
                                 <div className="flex items-center justify-between mb-2">
                                   <span className="text-[11px] font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/20 px-1.5 py-0.5 rounded">{timeString}</span>
                                   <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{TYPE_META[activity.type].label.slice(0, -1)}</span>

@@ -94,7 +94,7 @@ export function InventoryItemForm({ initialData, onSave, onCancel }: InventoryIt
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className={cn(
-                    "h-12 px-5 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm",
+                    "h-12 px-5 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 focus:ring-2 focus:ring-teal-500/20 transition-all text-sm",
                     errors.name && "border-red-500 focus:ring-red-500/20"
                   )}
                 />
@@ -110,14 +110,14 @@ export function InventoryItemForm({ initialData, onSave, onCancel }: InventoryIt
                   value={sku}
                   onChange={(e) => setSku(e.target.value)}
                   className={cn(
-                    "h-12 pl-5 pr-28 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm",
+                    "h-12 pl-5 pr-28 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 focus:ring-2 focus:ring-teal-500/20 transition-all text-sm",
                     errors.sku && "border-red-500"
                   )}
                 />
                 <button
                   type="button"
                   onClick={generateSKU}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 text-[10px] font-bold uppercase tracking-wider hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-all flex items-center gap-1.5 border border-indigo-200/50 dark:border-indigo-800/50"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg bg-teal-50 dark:bg-teal-900/40 text-teal-600 dark:text-teal-300 text-[10px] font-bold uppercase tracking-wider hover:bg-teal-100 dark:hover:bg-teal-900/60 transition-all flex items-center gap-1.5 border border-teal-200/50 dark:border-teal-800/50"
                 >
                   <Zap className="size-3" />
                   Generate
@@ -132,7 +132,7 @@ export function InventoryItemForm({ initialData, onSave, onCancel }: InventoryIt
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className={cn(
-                  "h-12 px-5 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm",
+                  "h-12 px-5 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 focus:ring-2 focus:ring-teal-500/20 transition-all text-sm",
                   errors.category && "border-red-500"
                 )}
               />
@@ -156,7 +156,7 @@ export function InventoryItemForm({ initialData, onSave, onCancel }: InventoryIt
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 className={cn(
-                  "h-12 px-5 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm",
+                  "h-12 px-5 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 focus:ring-2 focus:ring-teal-500/20 transition-all text-sm",
                   errors.price && "border-red-500"
                 )}
               />
@@ -170,7 +170,7 @@ export function InventoryItemForm({ initialData, onSave, onCancel }: InventoryIt
                 value={stockQuantity}
                 onChange={(e) => setStockQuantity(e.target.value)}
                 className={cn(
-                  "h-12 px-5 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm",
+                  "h-12 px-5 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 focus:ring-2 focus:ring-teal-500/20 transition-all text-sm",
                   errors.stockQuantity && "border-red-500"
                 )}
               />
@@ -186,7 +186,7 @@ export function InventoryItemForm({ initialData, onSave, onCancel }: InventoryIt
                 placeholder={`Default: ${STOCK_THRESHOLDS.low}`}
                 value={reorderThreshold}
                 onChange={(e) => setReorderThreshold(e.target.value)}
-                className="h-12 px-5 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm"
+                className="h-12 px-5 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 focus:ring-2 focus:ring-teal-500/20 transition-all text-sm"
               />
               <p className="text-[10px] text-slate-400 font-medium px-1">ATP units at which this item is flagged as low stock</p>
             </div>
@@ -199,7 +199,7 @@ export function InventoryItemForm({ initialData, onSave, onCancel }: InventoryIt
                 placeholder="e.g. 50"
                 value={reorderQuantity}
                 onChange={(e) => setReorderQuantity(e.target.value)}
-                className="h-12 px-5 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 focus:ring-2 focus:ring-indigo-500/20 transition-all text-sm"
+                className="h-12 px-5 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 focus:ring-2 focus:ring-teal-500/20 transition-all text-sm"
               />
               <p className="text-[10px] text-slate-400 font-medium px-1">Suggested quantity to order when restocking</p>
             </div>
@@ -219,7 +219,7 @@ export function InventoryItemForm({ initialData, onSave, onCancel }: InventoryIt
                 placeholder="Product technical specifications and details..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 min-h-[120px] p-4 text-sm focus:ring-2 focus:ring-indigo-500/20 shadow-sm transition-all"
+                className="rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 min-h-[120px] p-4 text-sm focus:ring-2 focus:ring-teal-500/20 shadow-sm transition-all"
               />
             </div>
   
@@ -234,7 +234,7 @@ export function InventoryItemForm({ initialData, onSave, onCancel }: InventoryIt
                     className={cn(
                       "py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all",
                       status === s
-                        ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm border border-slate-200 dark:border-slate-700"
+                        ? "bg-white dark:bg-slate-800 text-teal-600 dark:text-teal-400 shadow-sm border border-slate-200 dark:border-slate-700"
                         : "text-slate-400 hover:text-slate-600"
                     )}
                   >
@@ -259,7 +259,7 @@ export function InventoryItemForm({ initialData, onSave, onCancel }: InventoryIt
         <div className="flex items-center gap-3">
           <Button
             onClick={handleSave}
-            className="rounded-xl px-10 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-widest h-12 shadow-lg shadow-indigo-100 dark:shadow-none transition-all active:scale-95"
+            className="rounded-xl px-10 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs uppercase tracking-widest h-12 shadow-lg shadow-teal-100 dark:shadow-none transition-all active:scale-95"
           >
             Create Product
           </Button>

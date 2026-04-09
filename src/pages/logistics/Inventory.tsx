@@ -89,7 +89,7 @@ export function Inventory() {
             placeholder="Search products by name, SKU, or category..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-slate-400 outline-none transition-all"
+            className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 placeholder:text-slate-400 outline-none transition-all"
           />
         </div>
 
@@ -108,7 +108,7 @@ export function Inventory() {
                 className={cn(
                   "px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap",
                   filterState === tab.id
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-100 dark:shadow-none"
+                    ? "bg-teal-600 text-white shadow-md shadow-teal-100 dark:shadow-none"
                     : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
                 )}
               >
@@ -246,5 +246,5 @@ function ItemStatusBadge({ status }: { status: InventoryStatus }) {
     return <span className="text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">Draft</span>
   }
 
-  return <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest bg-indigo-50 dark:bg-indigo-900/20 px-2 py-0.5 rounded-md">Active</span>
+  return <span className="text-xs font-bold text-teal-600 dark:text-teal-400 uppercase tracking-widest bg-teal-50 dark:bg-teal-900/20 px-2 py-0.5 rounded-md">Active</span>
 }

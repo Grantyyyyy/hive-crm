@@ -141,7 +141,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
                 className={cn(
-                  "w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-indigo-500 outline-none",
+                  "w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-teal-500 outline-none",
                   errors.department && "border-red-500"
                 )}
               >
@@ -166,7 +166,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                     className={cn(
                       "flex-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
                       priority === p
-                        ? "bg-indigo-600 text-white shadow-md shadow-indigo-200"
+                        ? "bg-teal-600 text-white shadow-md shadow-teal-200"
                         : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                     )}
                   >
@@ -182,7 +182,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                 placeholder="Explain why this purchase is needed..."
                 value={purpose}
                 onChange={(e) => setPurpose(e.target.value)}
-                className="rounded-2xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[100px] p-5 focus:ring-indigo-500 shadow-sm transition-all"
+                className="rounded-2xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[100px] p-5 focus:ring-teal-500 shadow-sm transition-all"
               />
             </div>
           </div>
@@ -200,7 +200,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
               variant="link"
               size="sm"
               onClick={addItem}
-              className="h-auto p-0 font-bold text-indigo-600 dark:text-indigo-400"
+              className="h-auto p-0 font-bold text-teal-600 dark:text-teal-400"
             >
               <Plus className="w-4 h-4 mr-1.5" /> Add Item
             </Button>
@@ -219,11 +219,11 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
 
             <div className="relative group">
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 min-w-4 h-4 text-slate-400 pointer-events-none group-focus-within:text-indigo-500 transition-colors" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 min-w-4 h-4 text-slate-400 pointer-events-none group-focus-within:text-teal-500 transition-colors" />
                 <input
                   type="text"
                   placeholder="Search by Item Name, SKU, or Category..."
-                  className="w-full h-12 pl-12 pr-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all shadow-sm group-focus-within:shadow-md"
+                  className="w-full h-12 pl-12 pr-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-teal-500 outline-none transition-all shadow-sm group-focus-within:shadow-md"
                   onChange={(e) => setSearchTerm(e.target.value)}
                   value={searchTerm}
                   onFocus={() => setShowResults(true)}
@@ -257,7 +257,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                             className="w-full text-left px-5 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors flex items-center justify-between group/item"
                           >
                             <div className="flex flex-col">
-                              <span className="text-sm font-bold text-slate-900 dark:text-white group-hover/item:text-indigo-600 transition-colors">
+                              <span className="text-sm font-bold text-slate-900 dark:text-white group-hover/item:text-teal-600 transition-colors">
                                 {item.name}
                               </span>
                               <span className="text-[10px] text-slate-500 font-medium">
@@ -343,7 +343,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                     <td className="px-6 py-4 text-center">
                       <input
                         type="checkbox"
-                        className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 dark:border-slate-700 bg-transparent cursor-pointer"
+                        className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-700 bg-transparent cursor-pointer"
                         checked={item.trackInInventory ?? !!item.inventoryItemId}
                         onChange={(e) => updateItem(item.id, { trackInInventory: e.target.checked })}
                       />
@@ -386,7 +386,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
               <tfoot>
                 <tr className="bg-slate-50/50 dark:bg-slate-800/30">
                   <td colSpan={5} className="px-6 py-6 text-right text-[10px] font-black uppercase tracking-widest text-slate-400">Total Estimated Budget</td>
-                  <td className="px-6 py-6 text-right text-xl font-black text-indigo-600 dark:text-indigo-400">
+                  <td className="px-6 py-6 text-right text-xl font-black text-teal-600 dark:text-teal-400">
                     ${totalEstimate.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </td>
                   <td></td>
@@ -430,7 +430,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
             variant="default"
             size="sm"
             onClick={() => handleSave('pending_review')}
-            className="h-10 px-8 font-black bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] rounded-lg shadow-sm uppercase tracking-widest"
+            className="h-10 px-8 font-black bg-teal-600 hover:bg-teal-700 text-white text-[11px] rounded-lg shadow-sm uppercase tracking-widest"
           >
             Submit for Review
           </Button>

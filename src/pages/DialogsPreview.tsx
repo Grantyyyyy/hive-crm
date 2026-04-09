@@ -125,16 +125,16 @@ const DIALOG_CARDS: DialogCard[] = [
   {
     id: 'upgrade',
     icon: <Sparkles className="w-5 h-5" />,
-    iconBg: 'bg-indigo-50 dark:bg-indigo-900/20',
-    iconColor: 'text-indigo-600 dark:text-indigo-400',
-    accentDot: 'bg-indigo-500',
+    iconBg: 'bg-teal-50 dark:bg-teal-900/20',
+    iconColor: 'text-teal-600 dark:text-teal-400',
+    accentDot: 'bg-teal-500',
     label: 'Upgrade',
     title: 'Upgrade Your Plan',
     description: 'Unlock advanced features, unlimited API calls, and priority support by upgrading your plan.',
     confirmLabel: 'Upgrade Now',
     cancelLabel: 'Maybe Later',
     variant: 'primary',
-    buttonClass: 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200 dark:shadow-none',
+    buttonClass: 'bg-teal-600 hover:bg-teal-700 shadow-teal-200 dark:shadow-none',
     type: 'confirm',
   },
   {
@@ -209,7 +209,7 @@ export function DialogsPreview() {
                       ${card.id === 'warning' ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400' : ''}
                       ${card.id === 'info' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400' : ''}
                       ${card.id === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' : ''}
-                      ${card.id === 'upgrade' ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400' : ''}
+                      ${card.id === 'upgrade' ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400' : ''}
                       ${card.id === 'feature' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400' : ''}
                     `}
                   >

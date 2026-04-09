@@ -43,7 +43,7 @@ export function AddInventorySheet({ open, onOpenChange, onSuccess }: AddInventor
               New Inventory Product
             </SheetTitle>
             <p className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] flex items-center gap-2">
-              <span className="w-1 h-1 rounded-full bg-indigo-500 animate-pulse" />
+              <span className="w-1 h-1 rounded-full bg-teal-500 animate-pulse" />
               Product Catalog Management
             </p>
           </div>

@@ -59,6 +59,12 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
     setItems(items.map(item => item.id === id ? { ...item, ...updates } : item))
   }
 
+  const canAddNewItem = useMemo(() => {
+    if (items.length === 0) return true
+    const lastItem = items[items.length - 1]
+    return lastItem.name.trim() !== ""
+  }, [items])
+
   const validate = () => {
     const newErrors: Record<string, string> = {}
     if (!customerId) newErrors.customerId = "Customer is required"
@@ -69,6 +75,20 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
     })
 
     setErrors(newErrors)
+
+    if (Object.keys(newErrors).length > 0) {
+      const firstErrorId = Object.keys(newErrors)[0]
+      setTimeout(() => {
+        const el = document.getElementById(firstErrorId)
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          if (el.tagName === 'INPUT' || el.tagName === 'SELECT') {
+            (el as any).focus()
+          }
+        }
+      }, 100)
+    }
+
     return Object.keys(newErrors).length === 0
   }
 
@@ -95,191 +115,259 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
   }
 
   return (
-    <div className={cn("flex flex-col h-full bg-white dark:bg-slate-950", className)}>
-      <div className="flex-1 overflow-y-auto px-6 md:px-8 py-6 space-y-6">
-
-        {/* Basic Info Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
-          <div className="space-y-1.5">
-            <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Customer</Label>
-            <div className="relative">
-              <select
-                value={customerId}
-                onChange={(e) => setCustomerId(e.target.value)}
-                className={cn(
-                  "w-full h-10 pl-3 pr-8 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-medium focus:ring-1 focus:ring-indigo-500 outline-none appearance-none dark:text-slate-200",
-                  errors.customerId && "border-red-500"
-                )}
-              >
-                <option value="">Select a customer...</option>
-                {contacts.map(c => (
-                  <option key={c.id} value={c.id}>{c.name} ({c.company})</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+    <div className={cn("flex flex-col h-full bg-slate-50 dark:bg-slate-950 font-sans", className)}>
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto px-8 py-8 space-y-10 scroll-smooth">
+        
+        <div className="grid grid-cols-1 gap-y-10">
+          {/* Section 1: Order Identity */}
+          <section className="bg-white dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Order Context</h3>
             </div>
-            {errors.customerId && <p className="text-[9px] font-medium text-red-500">{errors.customerId}</p>}
-          </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Order Date</Label>
-            <DatePicker
-              value={orderDate}
-              disabled={true}
-              className="h-12 py-3 rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 cursor-not-allowed text-sm font-medium dark:text-slate-400 disabled:opacity-100"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Currency</Label>
-            <div className="relative">
-              <Input
-                value="USD ($)"
-                readOnly
-                className="h-10 rounded-lg border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 cursor-not-allowed text-xs font-medium dark:text-slate-400 disabled:opacity-100 shadow-none border-none"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Items Section */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Order Items</h3>
-            <div className="flex items-center gap-2">
-              {inventory && inventory.length > 0 && (
-                <div className="relative">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowInventory(!showInventory)}
-                    className="h-8 text-[11px] font-bold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 px-3"
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Target Customer</Label>
+                <div className="relative group">
+                  <select
+                    id="customerId"
+                    value={customerId}
+                    onChange={(e) => {
+                      setCustomerId(e.target.value)
+                      if (errors.customerId) setErrors(prev => {
+                        const n = { ...prev }
+                        delete n.customerId
+                        return n
+                      })
+                    }}
+                    className={cn(
+                      "w-full h-11 px-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-[13px] font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-teal-500/10 transition-all shadow-sm",
+                      errors.customerId && "border-red-500 ring-4 ring-red-500/10"
+                    )}
                   >
-                    Quick Add
-                  </Button>
-                  {showInventory && (
-                    <div className="absolute right-0 top-full mt-1 w-64 max-h-60 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl z-50 p-1 divide-y divide-slate-50 dark:divide-slate-800">
-                      {inventory.map(item => (
-                        <button
-                          key={item.id}
-                          onClick={() => {
-                            addFromInventory(item)
-                          }}
-                          className="w-full text-left p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors rounded-lg group"
-                        >
-                          <div className="text-[12px] font-bold text-slate-900 dark:text-white group-hover:text-indigo-600">{item.name}</div>
-                          <div className="text-[10px] text-slate-500 mt-0.5">${item.price} • SKU: {item.sku}</div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                    <option value="">Select a customer...</option>
+                    {contacts.map(c => (
+                      <option key={c.id} value={c.id}>{c.name} ({c.company})</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none group-hover:text-teal-500 transition-colors" />
                 </div>
-              )}
-              <Button
-                variant="outlineNeutral"
-                size="sm"
-                onClick={addItem}
-                className="h-8 text-[11px] font-bold rounded-lg px-3 border-slate-200 dark:border-slate-800"
-              >
-                + Product
-              </Button>
-            </div>
-          </div>
+                {errors.customerId && <p className="text-[9px] font-bold text-red-500 uppercase tracking-wide">{errors.customerId}</p>}
+              </div>
 
-          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm overflow-x-auto">
-            <table className="w-full text-left text-xs border-separate border-spacing-0 min-w-[700px]">
-              <thead>
-                <tr className="bg-slate-50/50 dark:bg-slate-800/50 text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                  <th className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">Product Details</th>
-                  <th className="px-4 py-3 w-20 border-b border-slate-100 dark:border-slate-800 text-center">Qty</th>
-                  <th className="px-4 py-3 w-32 border-b border-slate-100 dark:border-slate-800 text-right">Price</th>
-                  <th className="px-4 py-3 w-32 border-b border-slate-100 dark:border-slate-800 text-right">Total</th>
-                  <th className="px-4 py-3 w-12 border-b border-slate-100 dark:border-slate-800 text-right"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
-                {items.map((item, index) => (
-                  <tr key={item.id} className="group hover:bg-slate-50/30 dark:hover:bg-slate-800/10 transition-colors">
-                    <td className="px-4 py-3 align-top">
-                      <div className="space-y-1">
-                        <input
-                          ref={index === items.length - 1 ? lastItemRef : null}
-                          className="w-full bg-transparent border-none focus:ring-0 p-0 text-[13px] font-bold text-slate-900 dark:text-slate-100 placeholder:text-slate-300"
-                          placeholder="Product name..."
-                          value={item.name}
-                          onChange={(e) => updateItem(item.id, { name: e.target.value })}
-                        />
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Order Date</Label>
+                <DatePicker
+                  value={orderDate}
+                  disabled={true}
+                  className="h-11 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-[13px] font-bold cursor-not-allowed opacity-70"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Financial Currency</Label>
+                <div className="relative group">
+                  <Input
+                    value="USD ($)"
+                    readOnly
+                    className="h-11 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-[13px] font-bold cursor-not-allowed border-none shadow-none"
+                  />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Section 2: Items & Financials */}
+          <section className="bg-white dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <div id="items" className="w-1 h-3.5 bg-sky-500 rounded-full" />
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Products & Pricing</h3>
+              </div>
+              {errors.items && <p className="text-[9px] font-bold text-red-500 uppercase tracking-wide mr-auto px-4">{errors.items}</p>}
+              <div className="flex items-center gap-3">
+                {inventory && inventory.length > 0 && (
+                  <div className="relative">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      disabled={!canAddNewItem}
+                      onClick={() => setShowInventory(!showInventory)}
+                      className={cn(
+                        "h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                        !canAddNewItem ? "opacity-40 grayscale cursor-not-allowed" : 
+                        showInventory ? "bg-teal-50 text-teal-700 underline underline-offset-4" : "text-teal-600 hover:bg-teal-50/50"
+                      )}
+                    >
+                      Quick Add
+                    </Button>
+                    {showInventory && canAddNewItem && (
+                      <div className="absolute right-0 top-full mt-3 w-80 max-h-80 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[60] p-2 divide-y divide-slate-50 dark:divide-slate-800 animate-in fade-in slide-in-from-top-2 duration-200 ring-1 ring-slate-950/5">
+                        <div className="px-3 py-2 mb-1">
+                          <p className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400">Available Inventory</p>
+                        </div>
+                        {inventory.map(item => (
+                          <button
+                            key={item.id}
+                            onClick={() => addFromInventory(item)}
+                            className="w-full text-left p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all rounded-xl group flex items-start justify-between gap-4"
+                          >
+                            <div className="min-w-0">
+                              <div className="text-[13px] font-black text-slate-900 dark:text-white group-hover:text-teal-600 truncate">{item.name}</div>
+                              <div className="text-[10px] font-bold text-slate-400 mt-0.5 tracking-tight line-clamp-1">{item.sku} • {item.description}</div>
+                            </div>
+                            <div className="text-[13px] font-black text-slate-900 dark:text-white shrink-0">
+                              ${item.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            </div>
+                          </button>
+                        ))}
                       </div>
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      <input
-                        type="number"
-                        className="w-full bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-md focus:ring-0 p-1 text-[12px] font-bold text-slate-900 dark:text-slate-100 text-center transition-all"
-                        value={item.quantity}
-                        onChange={(e) => updateItem(item.id, { quantity: parseInt(e.target.value) || 0 })}
-                      />
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      <input
-                        type="number"
-                        className="w-full bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-md focus:ring-0 p-1 text-[12px] font-bold text-slate-900 dark:text-slate-100 text-right transition-all"
-                        value={item.price}
-                        onChange={(e) => updateItem(item.id, { price: parseFloat(e.target.value) || 0 })}
-                      />
-                    </td>
-                    <td className="px-4 py-3 align-top text-right text-[13px] font-black text-slate-900 dark:text-white">
-                      ${(item.quantity * item.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="px-4 py-3 align-top text-right">
-                      <button
-                        onClick={() => removeItem(item.id)}
-                        className="text-slate-300 hover:text-red-500 transition-colors p-1"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="flex justify-end pr-4">
-            <div className="text-right">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Total Value</span>
-              <span className="text-xl font-black text-slate-900 dark:text-white">${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                    )}
+                  </div>
+                )}
+                <Button
+                  type="button"
+                  variant="outlineNeutral"
+                  onClick={addItem}
+                  disabled={!canAddNewItem}
+                  className={cn(
+                    "h-9 px-5 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 transition-all active:scale-95",
+                    !canAddNewItem 
+                      ? "opacity-40 grayscale cursor-not-allowed border-slate-200 dark:border-slate-800 shadow-none hover:bg-transparent" 
+                      : "border-slate-100 dark:border-slate-800 hover:bg-slate-50"
+                  )}
+                >
+                  + Product
+                </Button>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Shipping Section Placeholder */}
-        <div className="pt-2">
-          <div className="p-4 rounded-xl bg-amber-50/30 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 flex items-start gap-3">
-            <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-            <p className="text-[10px] text-amber-800 dark:text-amber-300 font-medium leading-relaxed">
-              New orders are set to <span className="font-bold uppercase tracking-widest text-amber-900 dark:text-amber-200 px-1 py-0.5 bg-amber-200/50 rounded">pending</span>. Fulfillment will be processed after logging.
-            </p>
-          </div>
+            <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/50 overflow-hidden shadow-inner ring-1 ring-slate-950/5">
+              <table className="w-full text-left border-collapse table-fixed">
+                <thead>
+                  <tr className="bg-slate-50/50 dark:bg-slate-800/20 text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 border-b border-slate-100 dark:border-slate-800">
+                    <th className="px-6 py-4 w-1/2">Product Details</th>
+                    <th className="px-4 py-4 w-[12%] text-center">Qty</th>
+                    <th className="px-4 py-4 w-[18%] text-right">Price</th>
+                    <th className="px-4 py-4 w-[15%] text-right">Total</th>
+                    <th className="px-6 py-4 w-12 text-right"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50/50 dark:divide-slate-800/20">
+                  {items.map((item, index) => (
+                    <tr key={item.id} className="group hover:bg-slate-50/30 dark:hover:bg-slate-800/10 transition-colors">
+                      <td className="px-6 py-4 align-top">
+                        <div className="space-y-1.5 pt-1">
+                          <input
+                            id={`item_${index}_name`}
+                            ref={index === items.length - 1 ? lastItemRef : null}
+                            className={cn(
+                              "w-full bg-transparent border-none focus:ring-0 p-0 text-[13px] font-black placeholder:text-slate-300 transition-colors focus:placeholder:text-teal-400",
+                              errors[`item_${index}_name`] ? "text-red-500 placeholder:text-red-300" : "text-slate-900 dark:text-slate-100"
+                            )}
+                            placeholder="Product name..."
+                            value={item.name}
+                            onChange={(e) => {
+                              updateItem(item.id, { name: e.target.value })
+                              if (errors[`item_${index}_name`]) setErrors(prev => {
+                                const n = { ...prev }
+                                delete n[`item_${index}_name`]
+                                return n
+                              })
+                            }}
+                          />
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 align-top">
+                        <input
+                          type="number"
+                          className="w-full h-9 bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl focus:ring-4 focus:ring-teal-500/10 p-0 text-[13px] font-black text-slate-900 dark:text-slate-100 text-center transition-all outline-none"
+                          value={item.quantity}
+                          onChange={(e) => updateItem(item.id, { quantity: parseInt(e.target.value) || 0 })}
+                        />
+                      </td>
+                      <td className="px-4 py-4 align-top">
+                        <input
+                          type="number"
+                          className="w-full h-9 bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl focus:ring-4 focus:ring-teal-500/10 pl-2 pr-2 text-[13px] font-black text-slate-900 dark:text-slate-100 text-right transition-all outline-none"
+                          value={item.price}
+                          onChange={(e) => updateItem(item.id, { price: parseFloat(e.target.value) || 0 })}
+                        />
+                      </td>
+                      <td className="px-4 py-4 align-top text-right pt-5">
+                        <p className="text-[13px] font-black text-slate-900 dark:text-white tracking-tight">
+                          ${(item.quantity * item.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        </p>
+                      </td>
+                      <td className="px-6 py-4 align-top text-right pt-5">
+                        <button
+                          onClick={() => removeItem(item.id)}
+                          className="text-slate-300 hover:text-red-500 transition-all scale-100 hover:scale-110 active:scale-95"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-8 flex justify-end">
+              <div className="bg-slate-50 dark:bg-slate-900/50 px-8 py-4 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-inner flex flex-col items-end min-w-[280px]">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Total Order Value</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-[13px] font-black text-slate-400">USD</span>
+                  <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-none tabular-nums italic">
+                    {totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Section 3: Fulfillment Note */}
+          <section className="bg-white dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-1 h-3.5 bg-amber-500 rounded-full" />
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Processing & Fulfillment</h3>
+            </div>
+            <div className="p-4 rounded-xl bg-amber-50/30 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 flex items-start gap-3">
+              <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <p className="text-[10px] text-amber-800 dark:text-amber-300 font-medium leading-relaxed uppercase tracking-tight font-bold">
+                New orders are set to <span className="text-amber-900 dark:text-amber-200 px-1 py-0.5 bg-amber-200/50 rounded">pending</span>. Fulfillment will be processed immediately after submission.
+              </p>
+            </div>
+          </section>
         </div>
       </div>
 
-      <div className="px-8 py-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end shrink-0 gap-3">
+      {/* Sticky Action Footer */}
+      <div className="px-8 py-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4 shrink-0 shadow-[0_-8px_30px_-10px_rgba(0,0,0,0.05)] z-20">
         <Button
-          variant="ghost"
-          size="sm"
-          onClick={onCancel}
-          className="h-9 px-4 font-bold text-[11px]"
+          variant="outline"
+          onClick={() => handleSave('draft')}
+          className="h-9 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 border-slate-200 dark:border-slate-800 transition-all hover:bg-slate-50 active:scale-95"
         >
-          Cancel
+          Park Order
         </Button>
-        <Button
-          variant="default"
-          size="sm"
-          onClick={() => handleSave('pending')}
-          className="h-9 px-6 font-black bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] rounded-lg shadow-sm"
-        >
-          Complete Order
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            onClick={onCancel}
+            className="h-9 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 transition-all"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={() => handleSave('pending')}
+            className="h-9 px-8 bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-600/20 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95"
+          >
+            Place Order
+          </Button>
+        </div>
       </div>
     </div>
   )

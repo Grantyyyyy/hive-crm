@@ -236,7 +236,7 @@ export function PurchaseRequests() {
           </div>
           <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none">
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Approved This Month</p>
-            <h4 className="text-3xl font-black text-indigo-600">28</h4>
+            <h4 className="text-3xl font-black text-teal-600">28</h4>
           </div>
         </div>
 
@@ -248,7 +248,7 @@ export function PurchaseRequests() {
               placeholder="Search by ID, requester, department..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-bold focus:ring-2 focus:ring-indigo-500 placeholder:text-slate-400 outline-none transition-all"
+              className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-bold focus:ring-2 focus:ring-teal-500 placeholder:text-slate-400 outline-none transition-all"
             />
           </div>
 
@@ -260,7 +260,7 @@ export function PurchaseRequests() {
                 className={cn(
                   "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
                   statusFilter === s
-                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100 dark:shadow-none"
+                    ? "bg-teal-600 text-white shadow-lg shadow-teal-100 dark:shadow-none"
                     : "text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                 )}
               >
@@ -269,7 +269,7 @@ export function PurchaseRequests() {
             ))}
           </div>
 
-          <Button variant="ghost" className="rounded-xl font-bold text-xs uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+          <Button variant="ghost" className="rounded-xl font-bold text-xs uppercase tracking-widest text-teal-600 dark:text-teal-400">
             <Filter className="w-4 h-4" /> More Filters
           </Button>
         </div>
@@ -307,7 +307,7 @@ export function PurchaseRequests() {
                       className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors cursor-pointer group"
                     >
                       <td className="px-4 py-2.5">
-                        <span className="text-[13px] font-bold text-indigo-600 dark:text-indigo-400">{request.requestNumber}</span>
+                        <span className="text-[13px] font-bold text-teal-600 dark:text-teal-400">{request.requestNumber}</span>
                         <p className="text-[10px] text-slate-500 mt-0.5">{new Date(request.date).toLocaleDateString()}</p>
                       </td>
                       <td className="px-4 py-2.5">
@@ -408,7 +408,7 @@ function StatusBadge({ status }: { status: PurchaseRequestStatus }) {
   const styles: Record<PurchaseRequestStatus, string> = {
     pending_review: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400",
     draft: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400",
-    approved: "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400",
+    approved: "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400",
     rejected: "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400",
     ordered: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400",
   }

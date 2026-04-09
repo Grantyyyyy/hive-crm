@@ -8,7 +8,9 @@ import {
   MoreVertical,
   Truck,
   PackageCheck,
+  FileDown,
   FileText,
+  Mail,
   XCircle,
   Receipt
 } from "lucide-react"
@@ -18,9 +20,10 @@ import { useCRMResource } from "@/lib/hooks"
 import { useCRMContext, updateRow } from "@/lib/CRMContext"
 import { useLocation } from "wouter"
 import { cn } from "@/lib/utils"
-import type { SalesOrder, SalesOrderStatus } from "@/lib/types"
+import type { SalesOrder, SalesOrderStatus, Contact } from "@/lib/types"
 import { AddSalesOrderModal } from "@/components/crmComponent/AddSalesOrderModal"
 import { InvoiceModal } from "@/components/crmComponent/InvoiceModal"
+import { SendEmailModal } from "@/components/crmComponent/SendEmailModal"
 import { ListSkeleton } from "@/components/ui/skeletons"
 import { toast } from "sonner"
 import {
@@ -85,7 +88,7 @@ function ActionsMenu({ order, onShip, onDeliver, onCancel, onViewInvoice, onView
     {
       label: "View Invoice",
       icon: Receipt,
-      color: "text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20",
+      color: "text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20",
       action: onViewInvoice,
     },
     {
@@ -147,6 +150,7 @@ export function SalesOrders() {
     refresh,
     isLoaded
   } = useCRMResource<SalesOrder>('orders')
+  const { data: contacts } = useCRMResource<Contact>('contacts')
 
 
   const [search, setSearch] = useState("")
@@ -196,7 +200,7 @@ export function SalesOrders() {
       await fulfillOrderStock(order, ctx, user?.id || 'system', user?.user_metadata?.full_name || 'Unknown User')
       sendShippingNotification(order)
       refresh()
-      toast.success("Order Marked as Shipped", { description: `#${order.orderNumber} — stock physical/reserved updated.` })
+      toast.success("Order Marked as Shipped", { description: `#${order.orderNumber} — stock updated. Download the invoice PDF manually.` })
     } catch (e: unknown) {
       toast.error("Failed to ship order", { description: (e as Error).message })
     }
@@ -207,7 +211,7 @@ export function SalesOrders() {
       await updateRow<SalesOrder>(ctx, 'orders', order.id, { status: 'delivered' })
       generateInvoice(order)
       refresh()
-      toast.success("Order Delivered", { description: `#${order.orderNumber} — invoice generated.` })
+      toast.success("Order Delivered", { description: `#${order.orderNumber} — delivered. Download the invoice PDF manually.` })
       setInvoiceOrder({ ...order, status: 'delivered' })
     } catch {
       toast.error("Failed to update order status.")
@@ -223,6 +227,31 @@ export function SalesOrders() {
       toast.error("Failed to cancel order", { description: (e as Error).message })
     }
   }
+
+  const handleDownloadInvoice = async (order: SalesOrder, e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      const { generateInvoicePDF } = await import("@/services/pdfService")
+      await generateInvoicePDF(order)
+      toast.success("Invoice PDF Downloaded", { description: `${order.orderNumber} — ready to email to ${order.customerName}.` })
+    } catch (e: unknown) {
+      toast.error("Failed to generate invoice PDF", { description: (e as Error).message })
+    }
+  }
+
+  const handleSendEmail = (order: SalesOrder, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setEmailOrder(order)
+    setSendEmailOpen(true)
+  }
+
+  const [sendEmailOpen, setSendEmailOpen] = useState(false)
+  const [emailOrder, setEmailOrder] = useState<SalesOrder | null>(null)
+  const orderEmail = useMemo(() => {
+    if (!emailOrder?.customerId) return undefined
+    const contact = contacts?.find(c => c.id === emailOrder.customerId)
+    return contact?.email
+  }, [emailOrder?.customerId, contacts])
 
   if (!isLoaded) {
     return <ListSkeleton />
@@ -259,7 +288,7 @@ export function SalesOrders() {
             placeholder="Search by order number, customer name..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-slate-400 outline-none transition-all"
+            className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 placeholder:text-slate-400 outline-none transition-all"
           />
         </div>
 
@@ -273,7 +302,7 @@ export function SalesOrders() {
                 className={cn(
                   "px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap",
                   statusFilter === s
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-100 dark:shadow-none"
+                    ? "bg-teal-600 text-white shadow-md shadow-teal-100 dark:shadow-none"
                     : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
                 )}
               >
@@ -321,7 +350,7 @@ export function SalesOrders() {
                       className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors cursor-pointer group"
                     >
                       <td className="px-4 py-3">
-                        <span className="text-[13px] font-bold text-indigo-600 dark:text-indigo-400">#{order.orderNumber}</span>
+                        <span className="text-[13px] font-bold text-teal-600 dark:text-teal-400">#{order.orderNumber}</span>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
@@ -368,14 +397,25 @@ export function SalesOrders() {
                             </Button>
                           )}
                           {order.status === 'delivered' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => { e.stopPropagation(); setInvoiceOrder(order) }}
-                              className="text-[11px] h-7 px-3 font-bold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <Receipt className="w-3.5 h-3.5 mr-1" /> Invoice
-                            </Button>
+                            <div className="inline-flex items-center rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-900 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => { e.stopPropagation(); handleDownloadInvoice(order, e) }}
+                                className="text-[11px] h-7 px-3 font-bold text-slate-500 hover:bg-teal-50 hover:text-teal-600 border-none rounded-none"
+                              >
+                                <FileDown className="w-3.5 h-3.5 mr-1" /> Invoice
+                              </Button>
+                              <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700" />
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => { e.stopPropagation(); handleSendEmail(order, e) }}
+                                className="text-[11px] h-7 px-3 font-bold text-slate-500 hover:bg-teal-50 hover:text-teal-600 border-none rounded-none"
+                              >
+                                <Mail className="w-3.5 h-3.5 mr-1" /> Email
+                              </Button>
+                            </div>
                           )}
                           <ActionsMenu
                             order={order}
@@ -415,12 +455,20 @@ export function SalesOrders() {
         order={invoiceOrder}
         onClose={() => setInvoiceOrder(null)}
       />
+
+      <SendEmailModal
+        open={sendEmailOpen}
+        onOpenChange={setSendEmailOpen}
+        document={emailOrder ? { type: "invoice" as const, data: emailOrder } : null}
+        customerEmail={orderEmail}
+      />
     </div>
   )
 }
 
 function StatusBadge({ status }: { status: SalesOrderStatus }) {
   const styles: Record<SalesOrderStatus, string> = {
+    draft: "bg-slate-50 dark:bg-slate-900/20 text-slate-500 dark:text-slate-400",
     pending: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400",
     shipped: "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400",
     delivered: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400",

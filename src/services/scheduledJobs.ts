@@ -118,9 +118,9 @@ export async function sendFollowUpReminders(adapter: JobAdapter): Promise<void> 
       const midpoint = new Date(createDate.getTime() + totalDuration / 2);
 
       if (now >= midpoint && now < validUntil) {
-        sendFollowUpReminder(quote);
+        await sendFollowUpReminder(quote);
         await adapter.updateQuote(quote.id, { reminderSent: true });
-        console.log(`[scheduledJobs] Follow-up reminder sent for ${quote.quoteNumber}`);
+        console.log(`[scheduledJobs] Follow-up reminder logged for ${quote.quoteNumber}`);
       }
     }
   }

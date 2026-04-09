@@ -15,6 +15,8 @@ import {
   ShoppingCart,
   Receipt,
   MoreVertical,
+  Download,
+  Mail,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -24,7 +26,7 @@ import { ConfirmModal } from "@/components/ui/confirm-modal"
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
 import { useCRMContext } from "@/lib/CRMContext"
-import type { Quote, QuoteStatus } from "@/lib/types"
+import type { Quote, QuoteStatus, Contact } from "@/lib/types"
 import {
   acceptQuote,
   sendQuoteEmail,
@@ -33,6 +35,7 @@ import {
   releaseQuoteStock,
 } from "@/services/quoteService"
 import { useUser } from "@/lib/AuthContext"
+import { SendEmailModal } from "@/components/crmComponent/SendEmailModal"
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -50,7 +53,10 @@ const STATUS_CONFIG: Record<QuoteStatus, { label: string; badge: string; dot: st
   sent: { label: "Sent", badge: "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 ring-1 ring-blue-200 dark:ring-blue-800", dot: "bg-blue-500" },
   accepted: { label: "Accepted", badge: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200 dark:ring-emerald-800", dot: "bg-emerald-500" },
   expired: { label: "Expired", badge: "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400 ring-1 ring-rose-200 dark:ring-rose-800", dot: "bg-rose-400" },
+  rejected: { label: "Rejected", badge: "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 ring-1 ring-red-200 dark:ring-red-800", dot: "bg-red-500" },
 }
+
+const DEFAULT_CONFIG = { label: "Unknown", badge: "bg-slate-100 text-slate-500", dot: "bg-slate-300" }
 
 const TIMELINE_STEPS: { status: QuoteStatus; label: string; icon: React.ElementType }[] = [
   { status: "draft", label: "Draft Created", icon: FileText },
@@ -67,6 +73,7 @@ export function QuoteDetail() {
   const { user, isLoaded: userLoaded } = useUser()
 
   const { data: quotes, isLoaded, deleteItem } = useCRMResource<Quote>("quotes")
+  const { data: contacts } = useCRMResource<Contact>("contacts")
 
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
@@ -77,6 +84,12 @@ export function QuoteDetail() {
   const [isDeleting, setIsDeleting] = useState(false)
 
   const quote = useMemo(() => quotes.find(q => q.id === quoteId), [quotes, quoteId])
+
+  const customerEmail = useMemo(() => {
+    if (!quote?.customerId) return undefined
+    const contact = contacts?.find(c => c.id === quote.customerId)
+    return contact?.email
+  }, [quote?.customerId, contacts])
 
   const nowRef = useRef(Date.now())
   const daysUntilExpiry = useMemo(() => {
@@ -91,7 +104,7 @@ export function QuoteDetail() {
     try {
       await reserveStockForQuote(quote, ctx, user?.id || 'system', user?.user_metadata?.full_name || 'Unknown User')
       sendQuoteEmail(quote)
-      toast.success("Quote Sent & Stock Reserved", { description: "Email dispatched. Inventory items are now 'Soft Reserved'." })
+      toast.success("Quote Sent & Stock Reserved", { description: "Inventory items are now 'Soft Reserved'. Download the PDF to email manually." })
     } catch (e: unknown) {
       toast.error("Failed to send quote", { description: (e as Error).message })
     } finally {
@@ -119,11 +132,29 @@ export function QuoteDetail() {
     if (!quote) return
     try {
       sendFollowUpReminder(quote)
-      toast.success("Follow-up Sent", { description: "A follow-up reminder was sent to the customer." })
+      toast.success("Follow-up Logged", { description: "Follow-up reminder recorded." })
     } catch {
-      toast.error("Failed to send follow-up.")
+      toast.error("Failed to log follow-up.")
     }
   }
+
+  const handleDownloadPDF = async () => {
+    if (!quote) return
+    try {
+      const { generateQuotePDF } = await import("@/services/pdfService")
+      await generateQuotePDF(quote)
+      toast.success("Quote PDF Downloaded", { description: `${quote.quoteNumber} — attach and email to ${quote.customerName} manually.` })
+    } catch (e: unknown) {
+      toast.error("Failed to generate PDF", { description: (e as Error).message })
+    }
+  }
+
+  const handleSendEmail = () => {
+    if (!quote) return
+    setSendEmailOpen(true)
+  }
+
+  const [sendEmailOpen, setSendEmailOpen] = useState(false)
 
   const handleExpire = async () => {
     if (!quote || isExpiring) return
@@ -180,7 +211,7 @@ export function QuoteDetail() {
   const tax = subtotal * 0.1
   const total = subtotal + tax
 
-  const cfg = STATUS_CONFIG[quote.status]
+  const cfg = STATUS_CONFIG[quote.status] || DEFAULT_CONFIG
   const progressIdx = PROGRESS_ORDER.indexOf(quote.status)
   const isExpired = quote.status === "expired"
   const initials = quote.customerName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
@@ -203,12 +234,12 @@ export function QuoteDetail() {
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 md:p-8">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
             <div className="flex items-start gap-5">
-              <div className="size-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-xl font-black shrink-0 shadow-sm">
+              <div className="size-16 rounded-2xl bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center text-teal-600 dark:text-teal-400 text-xl font-black shrink-0 shadow-sm">
                 {initials}
               </div>
               <div>
                 <div className="flex flex-wrap items-center gap-3 mb-1">
-                  <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                  <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight italic">
                     #{quote.quoteNumber}
                   </h1>
                   <span className={cn("px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest", cfg.badge)}>
@@ -237,19 +268,30 @@ export function QuoteDetail() {
             {/* Actions */}
             <div className="flex flex-wrap items-center gap-2 shrink-0">
               {quote.status === "draft" && (
-                <Button variant="default" onClick={handleMarkSent} disabled={isSending} className="bg-blue-600 hover:bg-blue-700">
+                <Button variant="default" onClick={handleMarkSent} disabled={isSending} className="bg-teal-600 hover:bg-teal-700 rounded-xl px-6 transition-all active:scale-95 shadow-lg shadow-teal-600/20 text-[10px] font-black uppercase tracking-widest">
                   <Send className="w-4 h-4 mr-2" /> {isSending ? 'Sending...' : 'Send Quote'}
                 </Button>
               )}
               {quote.status === "sent" && (
                 <>
-                  <Button variant="outlineNeutral" onClick={handleFollowUp}>
-                    <Receipt className="w-4 h-4 mr-2 text-slate-400" /> Follow Up
-                  </Button>
-                  <Button variant="default" onClick={handleAccept} disabled={isAccepting} className="bg-emerald-600 hover:bg-emerald-700">
+                  <Button variant="default" onClick={handleAccept} disabled={isAccepting} className="bg-teal-600 hover:bg-teal-700 rounded-xl px-6 transition-all active:scale-95 shadow-lg shadow-teal-600/20 text-[10px] font-black uppercase tracking-widest">
                     <CheckCircle2 className="w-4 h-4 mr-2" /> {isAccepting ? 'Accepting...' : 'Accept & Create Order'}
                   </Button>
+                  <Button variant="outlineNeutral" onClick={handleFollowUp} className="rounded-xl border-2 transition-all active:scale-95 text-[10px] font-black uppercase tracking-widest">
+                    <Receipt className="w-4 h-4 mr-2 text-slate-400" /> Follow Up
+                  </Button>
                 </>
+              )}
+              {(quote.status === "sent" || quote.status === "accepted") && (
+                <div className="inline-flex items-center rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-900">
+                  <Button variant="outline" size="sm" onClick={handleDownloadPDF} className="rounded-none border-none h-9 px-5 text-[10px] font-black uppercase tracking-widest hover:bg-teal-50 hover:text-teal-600">
+                    <Download className="w-4 h-4 mr-2" /> Download
+                  </Button>
+                  <div className="w-px h-4 bg-slate-200 dark:bg-slate-700" />
+                  <Button variant="outline" size="sm" onClick={handleSendEmail} className="rounded-none border-none h-9 px-5 text-[10px] font-black uppercase tracking-widest hover:bg-teal-50 hover:text-teal-600">
+                    <Mail className="w-4 h-4 mr-2" /> Send Email
+                  </Button>
+                </div>
               )}
               {/* More menu */}
               <div className="relative">
@@ -301,24 +343,24 @@ export function QuoteDetail() {
                         <div className={cn(
                           "size-10 rounded-full flex items-center justify-center transition-all shrink-0",
                           done
-                            ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none"
+                            ? "bg-teal-600 text-white shadow-lg shadow-teal-200 dark:shadow-none"
                             : "bg-slate-100 dark:bg-slate-800 text-slate-400"
                         )}>
                           <Icon className="w-5 h-5" />
                         </div>
                         <span className={cn(
                           "text-[10px] font-bold uppercase tracking-widest whitespace-nowrap",
-                          done ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400"
+                          done ? "text-teal-600 dark:text-teal-400" : "text-slate-400"
                         )}>
                           {active && quote.status !== "accepted"
-                            ? <span className="relative">{step.label}<span className="absolute -top-1 -right-2 w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" /></span>
+                            ? <span className="relative">{step.label}<span className="absolute -top-1 -right-2 w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" /></span>
                             : step.label}
                         </span>
                       </div>
                       {i < TIMELINE_STEPS.length - 1 && (
                         <div className={cn(
                           "flex-1 h-0.5 mx-2 rounded-full mb-5 transition-colors",
-                          progressIdx > i ? "bg-indigo-600" : "bg-slate-200 dark:bg-slate-800"
+                          progressIdx > i ? "bg-teal-600" : "bg-slate-200 dark:bg-slate-800"
                         )} />
                       )}
                     </div>
@@ -377,7 +419,10 @@ export function QuoteDetail() {
                   </tr>
                   <tr className="bg-slate-50/50 dark:bg-slate-800/30">
                     <td colSpan={4} className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300">Total</td>
-                    <td className="px-6 py-4 text-right text-lg font-black text-indigo-600 dark:text-indigo-400">{fmt(total)}</td>
+                    <td className="px-6 py-4 text-right text-lg font-black text-teal-600 dark:text-teal-400 italic tabular-nums inline-flex items-baseline gap-1">
+                      <span className="text-[11px] text-slate-400 font-bold">{quote.currency || 'USD'}</span>
+                      {fmt(total).replace(/[^\d.,]/g, '')}
+                    </td>
                   </tr>
                 </tfoot>
               </table>
@@ -406,7 +451,7 @@ export function QuoteDetail() {
                   <Hash className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Quote Number</p>
-                    <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">#{quote.quoteNumber}</p>
+                    <p className="text-sm font-black text-teal-600 dark:text-teal-400 tracking-tight italic">#{quote.quoteNumber}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -469,14 +514,17 @@ export function QuoteDetail() {
                 </div>
                 <div className="flex justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
                   <span className="font-black text-slate-900 dark:text-white">Total</span>
-                  <span className="font-black text-xl text-indigo-600 dark:text-indigo-400">{fmt(total)}</span>
+                  <span className="font-black text-xl text-teal-600 dark:text-teal-400 italic tabular-nums inline-flex items-baseline gap-1">
+                    <span className="text-xs text-slate-400 font-bold">{quote.currency || 'USD'}</span>
+                    {fmt(total).replace(/[^\d.,]/g, '')}
+                  </span>
                 </div>
               </div>
 
               {/* CTA based on status */}
               {quote.status === "sent" && (
                 <Button
-                  className="w-full mt-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-emerald-100 dark:shadow-none"
+                  className="w-full mt-5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-teal-600/20 active:scale-95 transition-all"
                   onClick={handleAccept}
                   disabled={isAccepting}
                 >
@@ -485,7 +533,7 @@ export function QuoteDetail() {
               )}
               {quote.status === "draft" && (
                 <Button
-                  className="w-full mt-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-blue-100 dark:shadow-none"
+                  className="w-full mt-5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-teal-600/20 active:scale-95 transition-all"
                   onClick={handleMarkSent}
                   disabled={isSending}
                 >
@@ -531,6 +579,14 @@ export function QuoteDetail() {
         confirmClassName="bg-amber-600 hover:bg-amber-700 text-white"
         onConfirm={handleExpire}
         loading={isExpiring}
+      />
+
+      {/* Send Email Modal */}
+      <SendEmailModal
+        open={sendEmailOpen}
+        onOpenChange={setSendEmailOpen}
+        document={quote ? { type: "quote" as const, data: quote } : null}
+        customerEmail={customerEmail}
       />
     </div>
   )

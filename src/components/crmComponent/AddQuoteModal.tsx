@@ -1,5 +1,6 @@
 import {
   Dialog,
+  DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -48,41 +49,41 @@ export function AddQuoteModal({ open, onOpenChange, onSuccess }: AddQuoteModalPr
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={onOpenChange}
-      className="max-w-[1100px] w-[95vw] h-[85vh] max-h-[85vh] flex flex-col bg-white dark:bg-slate-950 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden p-0"
-    >
-      <button
-        onClick={() => onOpenChange(false)}
-        className="absolute right-6 top-8 z-50 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-      >
-        <X className="size-5" />
-      </button>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-7xl h-[95vh] p-0 bg-slate-50 dark:bg-slate-950 border-none rounded-3xl overflow-hidden shadow-2xl flex flex-col">
+        <button
+          onClick={() => onOpenChange(false)}
+          className="absolute right-6 top-6 z-50 p-2 rounded-full bg-white/50 dark:bg-slate-800/50 backdrop-blur-md hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-400 hover:text-slate-900 dark:hover:text-white"
+        >
+          <X className="size-5" />
+        </button>
 
-      <DialogHeader className="px-8 py-5 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 shrink-0 mb-0">
-        <div className="flex items-center gap-4">
-          <div className="size-11 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center shrink-0">
-            <FileText className="size-5 text-indigo-600 dark:text-indigo-400" />
+        <DialogHeader className="px-10 py-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 shrink-0 m-0">
+          <div className="flex items-center gap-5">
+            <div className="size-16 rounded-3xl bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center shrink-0 border border-teal-100/50 dark:border-teal-800/50 shadow-inner">
+              <FileText className="size-8 text-teal-600 dark:text-teal-400" />
+            </div>
+            <div>
+              <DialogTitle className="text-2xl font-black text-slate-900 dark:text-white leading-tight uppercase tracking-tight italic">
+                Compose Quote
+              </DialogTitle>
+              <p className="text-slate-400 dark:text-slate-500 text-xs mt-1 font-bold uppercase tracking-widest">
+                Draft a new high-value sales estimate for your customer
+              </p>
+            </div>
           </div>
-          <div>
-            <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white leading-tight uppercase tracking-normal">
-              Create New Quote
-            </DialogTitle>
-            <p className="text-slate-500 dark:text-slate-400 text-[10px] mt-0.5 font-medium">
-              Draft a new sales proposal for your customer
-            </p>
-          </div>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-hidden relative">
+          <QuoteForm
+            onSave={handleSave}
+            onCancel={() => onOpenChange(false)}
+            contacts={contacts}
+            inventory={inventory}
+            className="flex-1"
+          />
         </div>
-      </DialogHeader>
-
-      <QuoteForm
-        onSave={handleSave}
-        onCancel={() => onOpenChange(false)}
-        contacts={contacts}
-        inventory={inventory}
-        className="flex-1 overflow-auto"
-      />
+      </DialogContent>
     </Dialog>
   )
 }

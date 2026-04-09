@@ -13,6 +13,8 @@ import {
   Package,
   Clock,
   Pencil,
+  Download,
+  Mail,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -23,7 +25,7 @@ import { ConfirmModal } from "@/components/ui/confirm-modal"
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
 import { useCRMContext } from "@/lib/CRMContext"
-import type { SalesOrder, SalesOrderStatus } from "@/lib/types"
+import type { SalesOrder, SalesOrderStatus, Contact } from "@/lib/types"
 import {
   fulfillOrderStock,
   releaseOrderStock,
@@ -32,6 +34,7 @@ import {
   sendShippingNotification
 } from "@/services/orderService"
 import { useUser } from "@/lib/AuthContext"
+import { SendEmailModal } from "@/components/crmComponent/SendEmailModal"
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -45,6 +48,7 @@ function relativeTime(iso: string): string {
 }
 
 const STATUS_CONFIG: Record<SalesOrderStatus, { label: string; badge: string; dot: string }> = {
+  draft: { label: "Draft", badge: "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 ring-1 ring-slate-200 dark:ring-slate-700", dot: "bg-slate-400" },
   pending: { label: "Pending", badge: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 ring-1 ring-amber-200 dark:ring-amber-800", dot: "bg-amber-500" },
   shipped: { label: "Shipped", badge: "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 ring-1 ring-blue-200 dark:ring-blue-800", dot: "bg-blue-500" },
   delivered: { label: "Delivered", badge: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200 dark:ring-emerald-800", dot: "bg-emerald-500" },
@@ -67,6 +71,7 @@ export function SalesOrderDetail() {
   const { user, isLoaded: userLoaded } = useUser()
 
   const { data: orders, isLoaded, deleteItem, updateItem } = useCRMResource<SalesOrder>("orders")
+  const { data: contacts } = useCRMResource<Contact>("contacts")
 
   const [invoiceOpen, setInvoiceOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -81,13 +86,19 @@ export function SalesOrderDetail() {
 
   const order = useMemo(() => orders.find(o => o.id === orderId), [orders, orderId])
 
+  const customerEmail = useMemo(() => {
+    if (!order?.customerId) return undefined
+    const contact = contacts?.find(c => c.id === order.customerId)
+    return contact?.email
+  }, [order?.customerId, contacts])
+
   const handleShip = async () => {
     if (!order || isShipping) return
     setIsShipping(true)
     try {
       await fulfillOrderStock(order, ctx, user?.id || 'system', user?.user_metadata?.full_name || 'Unknown User')
       sendShippingNotification(order)
-      toast.success("Order Marked as Shipped", { description: `#${order.orderNumber} — stock physical/reserved updated.` })
+      toast.success("Order Marked as Shipped", { description: `#${order.orderNumber} — stock updated. Download the invoice PDF manually.` })
     } catch (e: unknown) {
       toast.error("Failed to ship order", { description: (e as Error).message })
     } finally {
@@ -145,6 +156,24 @@ export function SalesOrderDetail() {
       setConfirmCancel(false)
     }
   }
+
+  const handleDownloadInvoice = async () => {
+    if (!order) return
+    try {
+      const { generateInvoicePDF } = await import("@/services/pdfService")
+      await generateInvoicePDF(order)
+      toast.success("Invoice PDF Downloaded", { description: `${order.orderNumber} — ready to email to ${order.customerName}.` })
+    } catch (e: unknown) {
+      toast.error("Failed to generate invoice PDF", { description: (e as Error).message })
+    }
+  }
+
+  const handleSendEmail = () => {
+    if (!order) return
+    setSendEmailOpen(true)
+  }
+
+  const [sendEmailOpen, setSendEmailOpen] = useState(false)
 
   const handleDelete = async () => {
     if (!order || isDeleting) return
@@ -230,7 +259,7 @@ export function SalesOrderDetail() {
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
             <div className="flex items-start gap-5">
               {/* Avatar */}
-              <div className="size-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-xl font-black shrink-0 shadow-sm">
+              <div className="size-16 rounded-2xl bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center text-teal-600 dark:text-teal-400 text-xl font-black shrink-0 shadow-sm">
                 {initials}
               </div>
               <div>
@@ -267,8 +296,19 @@ export function SalesOrderDetail() {
                 </button>
               )}
               <Button variant="outlineNeutral" onClick={() => setInvoiceOpen(true)}>
-                <Receipt className="w-4 h-4 mr-2 text-indigo-500" /> View Invoice
+                <Receipt className="w-4 h-4 mr-2 text-teal-500" /> View Invoice
               </Button>
+              {(order.status === "shipped" || order.status === "delivered") && (
+                <div className="inline-flex items-center rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-900">
+                  <Button variant="outline" size="sm" onClick={handleDownloadInvoice} className="rounded-none border-none h-9 px-5 text-[10px] font-black uppercase tracking-widest hover:bg-teal-50 hover:text-teal-600">
+                    <Download className="w-4 h-4 mr-2" /> Download
+                  </Button>
+                  <div className="w-px h-4 bg-slate-200 dark:bg-slate-700" />
+                  <Button variant="outline" size="sm" onClick={handleSendEmail} className="rounded-none border-none h-9 px-5 text-[10px] font-black uppercase tracking-widest hover:bg-teal-50 hover:text-teal-600">
+                    <Mail className="w-4 h-4 mr-2" /> Send Email
+                  </Button>
+                </div>
+              )}
               {(order.status === "pending" || order.status === "shipped") && (
                 <button
                   onClick={() => setConfirmCancel(true)}
@@ -307,22 +347,22 @@ export function SalesOrderDetail() {
                         <div className={cn(
                           "size-10 rounded-full flex items-center justify-center transition-all shrink-0",
                           done
-                            ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none"
+                            ? "bg-teal-600 text-white shadow-lg shadow-teal-200 dark:shadow-none"
                             : "bg-slate-100 dark:bg-slate-800 text-slate-400"
                         )}>
                           <Icon className="w-5 h-5" />
                         </div>
                         <span className={cn(
                           "text-[10px] font-bold uppercase tracking-widest whitespace-nowrap",
-                          done ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400"
+                          done ? "text-teal-600 dark:text-teal-400" : "text-slate-400"
                         )}>
-                          {active ? <span className="relative">{step.label}<span className="absolute -top-1 -right-2 w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" /></span> : step.label}
+                          {active ? <span className="relative">{step.label}<span className="absolute -top-1 -right-2 w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" /></span> : step.label}
                         </span>
                       </div>
                       {i < TIMELINE.length - 1 && (
                         <div className={cn(
                           "flex-1 h-0.5 mx-2 rounded-full mb-5 transition-colors",
-                          currentStepIdx > i ? "bg-indigo-600" : "bg-slate-200 dark:bg-slate-800"
+                          currentStepIdx > i ? "bg-teal-600" : "bg-slate-200 dark:bg-slate-800"
                         )} />
                       )}
                     </div>
@@ -378,7 +418,7 @@ export function SalesOrderDetail() {
                   </tr>
                   <tr className="bg-slate-50/50 dark:bg-slate-800/30">
                     <td colSpan={4} className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300">Total Due</td>
-                    <td className="px-6 py-4 text-right text-lg font-black text-indigo-600 dark:text-indigo-400">{fmt(total)}</td>
+                    <td className="px-6 py-4 text-right text-lg font-black text-teal-600 dark:text-teal-400">{fmt(total)}</td>
                   </tr>
                 </tfoot>
               </table>
@@ -396,7 +436,7 @@ export function SalesOrderDetail() {
                   <Hash className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Order Number</p>
-                    <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">#{order.orderNumber}</p>
+                    <p className="text-sm font-bold text-teal-600 dark:text-teal-400">#{order.orderNumber}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -450,12 +490,12 @@ export function SalesOrderDetail() {
                 </div>
                 <div className="flex justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
                   <span className="font-black text-slate-900 dark:text-white">Total</span>
-                  <span className="font-black text-xl text-indigo-600 dark:text-indigo-400">{fmt(total)}</span>
+                  <span className="font-black text-xl text-teal-600 dark:text-teal-400">{fmt(total)}</span>
                 </div>
               </div>
 
               <Button
-                className="w-full mt-5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-indigo-100 dark:shadow-none"
+                className="w-full mt-5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-teal-100 dark:shadow-none"
                 onClick={() => setInvoiceOpen(true)}
               >
                 <Receipt className="w-4 h-4 mr-2" /> View Invoice
@@ -540,6 +580,14 @@ export function SalesOrderDetail() {
         confirmLabel="Cancel order"
         confirmClassName="bg-rose-600 hover:bg-rose-700 text-white"
         onConfirm={handleCancel}
+      />
+
+      {/* Send Email Modal */}
+      <SendEmailModal
+        open={sendEmailOpen}
+        onOpenChange={setSendEmailOpen}
+        document={order ? { type: "invoice" as const, data: order } : null}
+        customerEmail={customerEmail}
       />
     </div>
   )

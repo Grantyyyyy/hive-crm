@@ -217,17 +217,17 @@ export async function acceptQuote(quote: Quote, ctx: CRMContextValue): Promise<S
 }
 
 /**
- * PDF generation and email stub.
+ * Sends a quote email notification.
+ * Email dispatch is not implemented — use generateQuotePDF() from pdfService for manual download.
  */
-export function sendQuoteEmail(quote: Quote) {
-  // TODO: Implement actual PDF generation and email sending
-  console.log(`[quoteService] Sending Quote Email to ${quote.customerName} for ${quote.quoteNumber}`);
+export async function sendQuoteEmail(_quote: Quote): Promise<void> {
+  console.log("[quoteService] sendQuoteEmail — email dispatch not implemented. User can download PDF manually.");
 }
 
 /**
- * Reminder email stub.
+ * Sends a follow-up reminder.
+ * Email dispatch is not implemented — use generateQuotePDF() from pdfService for manual download.
  */
-export function sendFollowUpReminder(quote: Quote) {
-  // TODO: Implement actual email sending
-  console.log(`[quoteService] Sending Follow-Up Reminder for Quote ${quote.quoteNumber}`);
+export async function sendFollowUpReminder(_quote: Quote): Promise<void> {
+  console.log("[quoteService] sendFollowUpReminder — email dispatch not implemented. User can download PDF manually.");
 }

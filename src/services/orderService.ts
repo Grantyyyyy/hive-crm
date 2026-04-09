@@ -473,17 +473,17 @@ export async function cancelOrderWithStockReversal(
 }
 
 /**
- * Sends a shipping notification email stub.
+ * Sends a shipping notification.
+ * Email dispatch is not implemented — use generateInvoicePDF() from pdfService for manual download.
  */
-export function sendShippingNotification(order: SalesOrder) {
-  // TODO: Implement actual email sending
-  console.log(`[orderService] Sending Shipping Notification for Order ${order.orderNumber}`);
+export async function sendShippingNotification(_order: SalesOrder): Promise<void> {
+  console.log("[orderService] sendShippingNotification — email dispatch not implemented. User can download PDF manually.");
 }
 
 /**
- * Generates an invoice and emails the customer.
+ * Generates an invoice for the order.
+ * PDF/email dispatch is not implemented — use generateInvoicePDF() from pdfService for manual download.
  */
-export function generateInvoice(order: SalesOrder) {
-  // TODO: Implement PDF generation and email dispatch
-  console.log(`[orderService] Generating Invoice for Delivered Order ${order.orderNumber}`);
+export async function generateInvoice(_order: SalesOrder): Promise<void> {
+  console.log("[orderService] generateInvoice — email dispatch not implemented. User can download PDF manually.");
 }

@@ -143,14 +143,14 @@ export function Contacts() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen font-sans">
-      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in">
+      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
 
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 pt-2 mb-4">
-          <div className="space-y-1">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-600 mb-1">CUSTOMER DATABASE</p>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Contacts</h1>
-            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Relationship management and contact details.</p>
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">Customer Database</p>
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Contacts</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Relationship management and contact details.</p>
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <Button variant="outline" onClick={handleExportCSV} className="border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">

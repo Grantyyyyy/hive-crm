@@ -321,11 +321,11 @@ export function Deals() {
       <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
 
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 pt-2 mb-4">
-          <div className="space-y-1">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-600 mb-1">SALES OPERATIONS</p>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Pipeline</h1>
-            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Track and manage active sales opportunities.</p>
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">Sales Operations</p>
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Pipeline</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Track and manage active sales opportunities.</p>
           </div>
 
           <div className="flex items-center gap-3 shrink-0">

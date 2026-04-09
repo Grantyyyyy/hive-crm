@@ -76,13 +76,13 @@ export function Projects() {
       <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
 
         {/* Header Area */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 mb-1">Work Organization</p>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Projects</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">Organize tasks into projects for better workflow management.</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">Work Organization</p>
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Projects</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Organize tasks into projects for better workflow management.</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <Button variant="brand" onClick={() => setShowAddModal(true)}>
               <PlusCircle className="w-4 h-4" /> Create Project
             </Button>

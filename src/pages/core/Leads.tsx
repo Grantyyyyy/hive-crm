@@ -131,18 +131,16 @@ export function Leads() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen font-sans">
-      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in">
+      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
 
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8">
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-600 mb-1">SALES PIPELINE</p>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Leads</h1>
-            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
-              Manage and track your prospective customers through the sales funnel.
-            </p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">Sales Pipeline</p>
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Leads</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Manage and track your prospective customers through the sales funnel.</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <Button variant="outline" onClick={handleExportCSV} className="border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
               <Download className="w-4 h-4" />
               Export CSV
@@ -157,214 +155,215 @@ export function Leads() {
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative mb-6">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-          <Input
-            placeholder="Search leads by name, email, or company..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="pl-12 h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400"
-          />
-        </div>
-
-        {/* Filters & Table Container */}
-        <div className="space-y-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex bg-white dark:bg-slate-900 p-1 rounded-md border border-slate-200 dark:border-slate-800 w-fit">
-              <Button
-                variant={statusFilter === "all" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setStatusFilter("all")}
-                className={cn("h-8 px-5 rounded-md transition-all", statusFilter === "all" && "bg-teal-600 text-white shadow-md hover:bg-teal-700")}
-              >
-                All Leads
-              </Button>
-              {LEAD_STATUSES.filter(s => ["new", "contacted", "qualified"].includes(s)).map((s) => (
-                <Button
-                  key={s}
-                  variant={statusFilter === s ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setStatusFilter(s)}
-                  className={cn("h-8 px-5 rounded-md transition-all", statusFilter === s && "bg-teal-600 text-white shadow-md hover:bg-teal-700")}
-                >
-                  {LEAD_STATUS_LABELS[s]}
-                </Button>
-              ))}
-            </div>
-            <Button variant="outline" size="sm" className="h-auto py-2 border-slate-200 dark:border-slate-800">
-              <Filter className="w-4 h-4" />
-              Advanced Filters
-            </Button>
-          </div>
-
-          <DataTable<Lead>
-            data={paginatedLeads}
-            onRowClick={(lead) => navigate(`/leads/${lead.id}`)}
-            emptyState={{
-              icon: <UserSearch className="w-10 h-10" />,
-              title: "No leads found matching your selection."
-            }}
-            pagination={{
-              currentPage,
-              totalPages,
-              onPageChange: setCurrentPage,
-              totalItems,
-              itemsPerPage,
-              itemLabel: "leads"
-            }}
-            columns={[
-              {
-                header: "Lead Name",
-                render: (lead) => {
-                  const initials = lead.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-                  return (
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black uppercase shrink-0 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800",
-                        lead.status === 'qualified' ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400" :
-                          lead.status === 'new' ? "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400" :
-                            "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-                      )}>
-                        {initials}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{lead.name}</p>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{lead.email}</p>
-                      </div>
-                    </div>
-                  )
-                }
-              },
-              {
-                header: "Company",
-                render: (lead) => (
-                  <p className="text-[13px] font-semibold text-slate-600 dark:text-slate-400">{lead.company || "—"}</p>
-                )
-              },
-              {
-                header: "Source",
-                render: (lead) => {
-                  const SourceIcon = SOURCE_ICONS[lead.source] || Globe
-                  return (
-                    <div className="flex items-center gap-2 px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[11px] font-bold rounded-md w-fit">
-                      <SourceIcon className="w-3.5 h-3.5" />
-                      {lead.source.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                    </div>
-                  )
-                }
-              },
-              {
-                header: "Status",
-                render: (lead) => {
-                  const status = STATUS_STYLE[lead.status] || STATUS_STYLE.new
-                  return (
-                    <div className={cn(
-                      "flex items-center gap-2 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest w-fit",
-                      status.bg,
-                      status.text
-                    )}>
-                      {LEAD_STATUS_LABELS[lead.status] || lead.status}
-                    </div>
-                  )
-                }
-              },
-              {
-                header: "Score",
-                render: (lead) => (
-                  <div className="flex items-center gap-2">
-                    <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                      <div
-                        className={cn(
-                          "h-full rounded-full transition-all",
-                          lead.score >= 70 ? "bg-emerald-500" :
-                            lead.score >= 40 ? "bg-amber-500" : "bg-red-500"
-                        )}
-                        style={{ width: `${lead.score}%` }}
-                      />
-                    </div>
-                    <span className={cn(
-                      "text-[13px] font-bold",
-                      lead.score >= 70 ? "text-emerald-600" :
-                        lead.score >= 40 ? "text-amber-600" : "text-red-600"
-                    )}>
-                      {lead.score}
-                    </span>
-                  </div>
-                )
-              },
-              {
-                header: "Date Added",
-                render: (lead) => (
-                  <p className="text-[13px] text-slate-600 dark:text-slate-400">
-                    {new Date(lead.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </p>
-                )
-              },
-              {
-                header: "Actions",
-                headerClassName: "text-right",
-                align: "right",
-                render: (lead) => (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-600 transition-all"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setPendingDelete(lead)
-                    }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                )
-              }
-            ]}
-          />
-        </div>
-      </div>
-
-      <Sheet open={showModal} onOpenChange={(open) => { setShowModal(open); if (!open) setEditingLead(null) }}>
-        <SheetContent className="sm:max-w-3xl p-0 flex flex-col h-full bg-slate-50 dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800">
-          <SheetHeader className="px-8 pt-8 pb-4 bg-white/50 dark:bg-slate-900/50 border-b border-slate-200/60 dark:border-slate-800/60 backdrop-blur-sm shrink-0">
-            <SheetTitle className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
-              {editingLead ? "Edit Lead" : "Add New Lead"}
-            </SheetTitle>
-            <SheetDescription className="text-sm font-medium text-slate-500">
-              {editingLead
-                ? "Update the details for this sales prospect."
-                : "Fill in the information to create a new sales prospect."}
-            </SheetDescription>
-          </SheetHeader>
-          <div className="flex-1 overflow-y-auto">
-            <LeadForm
-              userId={userId}
-              onSave={handleSaveLead}
-              onCancel={() => setShowModal(false)}
-              initialData={editingLead ?? undefined}
+        {/* Search & Filters */}
+        <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center">
+          <div className="relative flex-1 w-full lg:max-w-md">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              placeholder="Search leads by name, email, or company..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
             />
           </div>
-        </SheetContent>
-      </Sheet>
 
-      <DeleteModal
-        open={!!pendingDelete}
-        onOpenChange={(open) => { if (!open) setPendingDelete(null) }}
-        title="Delete Lead"
-        description={
-          <>
-            Are you sure you want to delete{" "}
-            <strong className="text-text-primary font-bold">{pendingDelete?.name}</strong>?
-            {" "}This action cannot be undone.
-          </>
-        }
-        onDelete={() => {
-          if (pendingDelete) deleteItem(pendingDelete.id)
-          setPendingDelete(null)
-        }}
-        cancelText="Cancel"
-        deleteText="Delete Lead"
-      />
-    </div>
-  )
+          {/* Filters & Table Container */}
+          <div className="space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex bg-white dark:bg-slate-900 p-1 rounded-md border border-slate-200 dark:border-slate-800 w-fit">
+                <Button
+                  variant={statusFilter === "all" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setStatusFilter("all")}
+                  className={cn("h-8 px-5 rounded-md transition-all", statusFilter === "all" && "bg-teal-600 text-white shadow-md hover:bg-teal-700")}
+                >
+                  All Leads
+                </Button>
+                {LEAD_STATUSES.filter(s => ["new", "contacted", "qualified"].includes(s)).map((s) => (
+                  <Button
+                    key={s}
+                    variant={statusFilter === s ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setStatusFilter(s)}
+                    className={cn("h-8 px-5 rounded-md transition-all", statusFilter === s && "bg-teal-600 text-white shadow-md hover:bg-teal-700")}
+                  >
+                    {LEAD_STATUS_LABELS[s]}
+                  </Button>
+                ))}
+              </div>
+              <Button variant="outline" size="sm" className="h-auto py-2 border-slate-200 dark:border-slate-800">
+                <Filter className="w-4 h-4" />
+                Advanced Filters
+              </Button>
+            </div>
+
+            <DataTable<Lead>
+              data={paginatedLeads}
+              onRowClick={(lead) => navigate(`/leads/${lead.id}`)}
+              emptyState={{
+                icon: <UserSearch className="w-10 h-10" />,
+                title: "No leads found matching your selection."
+              }}
+              pagination={{
+                currentPage,
+                totalPages,
+                onPageChange: setCurrentPage,
+                totalItems,
+                itemsPerPage,
+                itemLabel: "leads"
+              }}
+              columns={[
+                {
+                  header: "Lead Name",
+                  render: (lead) => {
+                    const initials = lead.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+                    return (
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black uppercase shrink-0 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800",
+                          lead.status === 'qualified' ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400" :
+                            lead.status === 'new' ? "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400" :
+                              "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                        )}>
+                          {initials}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{lead.name}</p>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{lead.email}</p>
+                        </div>
+                      </div>
+                    )
+                  }
+                },
+                {
+                  header: "Company",
+                  render: (lead) => (
+                    <p className="text-[13px] font-semibold text-slate-600 dark:text-slate-400">{lead.company || "—"}</p>
+                  )
+                },
+                {
+                  header: "Source",
+                  render: (lead) => {
+                    const SourceIcon = SOURCE_ICONS[lead.source] || Globe
+                    return (
+                      <div className="flex items-center gap-2 px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[11px] font-bold rounded-md w-fit">
+                        <SourceIcon className="w-3.5 h-3.5" />
+                        {lead.source.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </div>
+                    )
+                  }
+                },
+                {
+                  header: "Status",
+                  render: (lead) => {
+                    const status = STATUS_STYLE[lead.status] || STATUS_STYLE.new
+                    return (
+                      <div className={cn(
+                        "flex items-center gap-2 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest w-fit",
+                        status.bg,
+                        status.text
+                      )}>
+                        {LEAD_STATUS_LABELS[lead.status] || lead.status}
+                      </div>
+                    )
+                  }
+                },
+                {
+                  header: "Score",
+                  render: (lead) => (
+                    <div className="flex items-center gap-2">
+                      <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-all",
+                            lead.score >= 70 ? "bg-emerald-500" :
+                              lead.score >= 40 ? "bg-amber-500" : "bg-red-500"
+                          )}
+                          style={{ width: `${lead.score}%` }}
+                        />
+                      </div>
+                      <span className={cn(
+                        "text-[13px] font-bold",
+                        lead.score >= 70 ? "text-emerald-600" :
+                          lead.score >= 40 ? "text-amber-600" : "text-red-600"
+                      )}>
+                        {lead.score}
+                      </span>
+                    </div>
+                  )
+                },
+                {
+                  header: "Date Added",
+                  render: (lead) => (
+                    <p className="text-[13px] text-slate-600 dark:text-slate-400">
+                      {new Date(lead.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </p>
+                  )
+                },
+                {
+                  header: "Actions",
+                  headerClassName: "text-right",
+                  align: "right",
+                  render: (lead) => (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-600 transition-all"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setPendingDelete(lead)
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )
+                }
+              ]}
+            />
+          </div>
+        </div>
+
+        <Sheet open={showModal} onOpenChange={(open) => { setShowModal(open); if (!open) setEditingLead(null) }}>
+          <SheetContent className="sm:max-w-3xl p-0 flex flex-col h-full bg-slate-50 dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800">
+            <SheetHeader className="px-8 pt-8 pb-4 bg-white/50 dark:bg-slate-900/50 border-b border-slate-200/60 dark:border-slate-800/60 backdrop-blur-sm shrink-0">
+              <SheetTitle className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                {editingLead ? "Edit Lead" : "Add New Lead"}
+              </SheetTitle>
+              <SheetDescription className="text-sm font-medium text-slate-500">
+                {editingLead
+                  ? "Update the details for this sales prospect."
+                  : "Fill in the information to create a new sales prospect."}
+              </SheetDescription>
+            </SheetHeader>
+            <div className="flex-1 overflow-y-auto">
+              <LeadForm
+                userId={userId}
+                onSave={handleSaveLead}
+                onCancel={() => setShowModal(false)}
+                initialData={editingLead ?? undefined}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        <DeleteModal
+          open={!!pendingDelete}
+          onOpenChange={(open) => { if (!open) setPendingDelete(null) }}
+          title="Delete Lead"
+          description={
+            <>
+              Are you sure you want to delete{" "}
+              <strong className="text-text-primary font-bold">{pendingDelete?.name}</strong>?
+              {" "}This action cannot be undone.
+            </>
+          }
+          onDelete={() => {
+            if (pendingDelete) deleteItem(pendingDelete.id)
+            setPendingDelete(null)
+          }}
+          cancelText="Cancel"
+          deleteText="Delete Lead"
+        />
+      </div>
+      )
 }

@@ -31,13 +31,13 @@ export function Tasks() {
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen font-sans">
       <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 mb-1">Work Management</p>
-            <h1 className="text-3xl font-bold tracking-tight text-text-primary">Tasks</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">Manage, prioritize and track your team's workload.</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">Work Management</p>
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Tasks</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Manage, prioritize and track your team's workload.</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <Button
               variant="brand"
               onClick={() => setShowAddModal(true)}

@@ -65,21 +65,19 @@ export function Dashboard() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen font-sans">
-      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in">
+      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
 
         {/* Title Section */}
-        <div className="mb-8">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 mb-1">SYSTEM OVERVIEW</p>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Dashboard
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">
-            Welcome back. Here's what's happening today.
-          </p>
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">System Overview</p>
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Dashboard</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Welcome back. Here's what's happening today.</p>
+          </div>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Revenue Card */}
           <div className="bg-white dark:bg-slate-900 p-6 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm border-l-4 border-l-teal-600 transition-all hover:shadow-xl hover:shadow-teal-600/5 group">
             <div className="flex items-center justify-between mb-6">

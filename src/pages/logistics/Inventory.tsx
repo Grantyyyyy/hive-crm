@@ -16,6 +16,7 @@ import { useCRMResource } from "@/lib/hooks"
 import { cn } from "@/lib/utils"
 import type { InventoryItem, StockLevel, InventoryStatus } from "@/lib/types"
 import { ListSkeleton } from "@/components/ui/skeletons"
+import { ProcurementDataTable, type ProcurementColumn } from "@/components/reusables/ProcurementDataTable"
 import { StatusTabs } from "@/components/reusables/StatusTabs"
 import type { StatusTab } from "@/components/reusables/StatusTabs"
 
@@ -67,6 +68,66 @@ export function Inventory() {
     currentPage * itemsPerPage
   )
 
+  // Column definitions
+  const columns: ProcurementColumn<InventoryItem>[] = [
+    {
+      header: "Product",
+      render: (item) => (
+        <div className="flex items-center gap-3">
+          <div className="size-8 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex items-center justify-center shrink-0">
+            {item.imageUrl ? (
+              <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover rounded" />
+            ) : (
+              <ImageIcon className="w-3.5 h-3.5 text-slate-400" />
+            )}
+          </div>
+          <span className="text-[13px] font-bold text-slate-900 dark:text-white truncate max-w-[200px]">{item.name}</span>
+        </div>
+      ),
+    },
+    {
+      header: "SKU",
+      render: (item) => (
+        <span className="text-[11px] font-mono text-slate-500 bg-slate-100 dark:bg-slate-800/50 px-1.5 py-0.5 rounded">{item.sku}</span>
+      ),
+    },
+    {
+      header: "Category",
+      render: (item) => (
+        <span className="text-[13px] font-medium text-slate-600 dark:text-slate-300">{item.category}</span>
+      ),
+    },
+    {
+      header: "Price",
+      render: (item) => (
+        <span className="text-[13px] font-bold text-slate-900 dark:text-white">
+          ${item.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+        </span>
+      ),
+    },
+    {
+      header: "Stock Level",
+      render: (item) => <StockBadge level={item.stockLevel} quantity={item.stockQuantity} reserved={item.reservedQuantity} />,
+    },
+    {
+      header: "Status",
+      render: (item) => <ItemStatusBadge status={item.status} />,
+    },
+    {
+      header: "Actions",
+      render: () => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-slate-400 hover:text-slate-600 transition-colors h-6 px-2"
+        >
+          <MoreVertical className="w-4 h-4" />
+        </Button>
+      ),
+      align: 'right',
+    },
+  ]
+
   if (!isLoaded) {
     return <ListSkeleton />
   }
@@ -116,93 +177,24 @@ export function Inventory() {
           </Button>
         </div>
 
-        {/* Main Table Container */}
-        <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left table-auto border-collapse">
-              <thead>
-                <tr className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
-                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Product</th>
-                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">SKU</th>
-                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Category</th>
-                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Price</th>
-                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Stock Level</th>
-                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Status</th>
-                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
-                {paginatedItems.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="py-20 text-center">
-                      <div className="flex flex-col items-center gap-3">
-                        <Package className="w-10 h-10 text-slate-300" />
-                        <p className="text-slate-500 font-medium">No inventory items found.</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  paginatedItems.map((item) => (
-                    <tr
-                      key={item.id}
-                      onClick={() => navigate(`/inventory/${item.id}`)}
-                      className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors cursor-pointer group"
-                    >
-                      <td className="px-4 py-2.5">
-                        <div className="flex items-center gap-3">
-                          <div className="size-8 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 flex items-center justify-center shrink-0">
-                            {item.imageUrl ? (
-                              <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover rounded" />
-                            ) : (
-                              <ImageIcon className="w-3.5 h-3.5 text-slate-400" />
-                            )}
-                          </div>
-                          <span className="text-[13px] font-bold text-slate-900 dark:text-white truncate max-w-[200px]">{item.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-2.5">
-                        <span className="text-[11px] font-mono text-slate-500 bg-slate-100 dark:bg-slate-800/50 px-1.5 py-0.5 rounded">{item.sku}</span>
-                      </td>
-                      <td className="px-4 py-2.5">
-                        <span className="text-[13px] font-medium text-slate-600 dark:text-slate-300">{item.category}</span>
-                      </td>
-                      <td className="px-4 py-2.5">
-                        <span className="text-[13px] font-bold text-slate-900 dark:text-white">
-                          ${item.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2.5">
-                        <StockBadge level={item.stockLevel} quantity={item.stockQuantity} reserved={item.reservedQuantity} />
-                      </td>
-                      <td className="px-4 py-2.5">
-                        <ItemStatusBadge status={item.status} />
-                      </td>
-                      <td className="px-4 py-2.5 text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-slate-400 hover:text-slate-600 transition-colors h-6 px-2 opacity-0 group-hover:opacity-100"
-                        >
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-            totalItems={totalItems}
-            itemsPerPage={itemsPerPage}
-            itemLabel="items"
-          />
-        </div>
+        <ProcurementDataTable<InventoryItem>
+          data={paginatedItems}
+          columns={columns}
+          isLoading={!isLoaded}
+          onRowClick={(item) => navigate(`/inventory/${item.id}`)}
+          pagination={{
+            currentPage,
+            totalPages,
+            onPageChange: setCurrentPage,
+            totalItems,
+            itemsPerPage,
+            itemLabel: "items",
+          }}
+          emptyState={{
+            icon: <Package className="w-10 h-10 text-slate-300" />,
+            message: "No inventory items found.",
+          }}
+        />
       </div>
 
       <AddInventorySheet

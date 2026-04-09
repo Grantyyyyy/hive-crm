@@ -27,6 +27,7 @@ import { VendorForm } from "@/components/crmComponent/VendorForm"
 import { ListSkeleton } from "@/components/ui/skeletons"
 import { StatusTabs } from "@/components/reusables/StatusTabs"
 import type { StatusTab } from "@/components/reusables/StatusTabs"
+import { ProcurementDataTable, type ProcurementColumn } from "@/components/reusables/ProcurementDataTable"
 
 export function Vendors() {
   const [, navigate] = useLocation()
@@ -80,6 +81,68 @@ export function Vendors() {
     }
   }
 
+  // Column definitions
+  const columns: ProcurementColumn<Vendor>[] = [
+    {
+      header: "Company",
+      render: (vendor) => (
+        <div className="flex items-center gap-3 min-w-0">
+          <Building2 className="size-4 text-slate-300 group-hover:text-teal-500 transition-colors shrink-0" />
+          <div className="min-w-0">
+            <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{vendor.name}</p>
+            <p className="text-[10px] text-slate-400 font-medium pt-0.5 uppercase tracking-tighter">ID: {vendor.id.slice(0, 8)}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Category",
+      render: (vendor) => (
+        <span className="text-[12px] font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded uppercase tracking-tighter">{vendor.category || "Supplier"}</span>
+      ),
+    },
+    {
+      header: "Contact",
+      render: (vendor) => (
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-700 dark:text-slate-300">
+            <Mail className="size-3 text-slate-300" />
+            {vendor.email}
+          </div>
+          {vendor.phone && (
+            <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
+              <Phone className="size-3 text-slate-300" />
+              {vendor.phone}
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      header: "VAT / Tax",
+      render: (vendor) => (
+        <p className="text-[11px] font-bold font-mono text-slate-500 uppercase">{vendor.taxId || "—"}</p>
+      ),
+    },
+    {
+      header: "Status",
+      render: (vendor) => <StatusBadge status={vendor.status} />,
+    },
+    {
+      header: "Actions",
+      render: () => (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-slate-300 hover:text-slate-900 dark:hover:text-white"
+        >
+          <MoreVertical className="size-4" />
+        </Button>
+      ),
+      align: 'right',
+    },
+  ]
+
   if (!isLoaded) {
     return <ListSkeleton />
   }
@@ -132,93 +195,23 @@ export function Vendors() {
           </Button>
         </div>
 
-        {/* Content Table */}
-        <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden animate-in fade-in duration-500">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left table-auto">
-              <thead>
-                <tr className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Company</th>
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Category</th>
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Contact</th>
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">VAT / Tax</th>
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Status</th>
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
-                {paginatedVendors.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-20 text-center">
-                      <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">No matching results</p>
-                    </td>
-                  </tr>
-                ) : (
-                  paginatedVendors.map((vendor) => (
-                    <tr
-                      key={vendor.id}
-                      onClick={() => navigate(`/vendors/${vendor.id}`)}
-                      className="group hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-all cursor-pointer border-l-2 border-l-transparent hover:border-l-teal-500"
-                    >
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <Building2 className="size-4 text-slate-300 group-hover:text-teal-500 transition-colors shrink-0" />
-                          <div className="min-w-0">
-                            <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{vendor.name}</p>
-                            <p className="text-[10px] text-slate-400 font-medium pt-0.5 uppercase tracking-tighter">ID: {vendor.id.slice(0, 8)}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <span className="text-[12px] font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded uppercase tracking-tighter">{vendor.category || "Supplier"}</span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-1.5 text-[12px] font-semibold text-slate-700 dark:text-slate-300">
-                            <Mail className="size-3 text-slate-300" />
-                            {vendor.email}
-                          </div>
-                          {vendor.phone && (
-                            <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
-                              <Phone className="size-3 text-slate-300" />
-                              {vendor.phone}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <p className="text-[11px] font-bold font-mono text-slate-500 uppercase">{vendor.taxId || "—"}</p>
-                      </td>
-                      <td className="px-6 py-5">
-                        <StatusBadge status={vendor.status} />
-                      </td>
-                      <td className="px-6 py-5 text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-slate-300 hover:text-slate-900 dark:hover:text-white"
-                        >
-                          <MoreVertical className="size-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="px-6 py-4 bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-              Total <span className="text-slate-900 dark:text-white">{totalItems}</span>
-            </p>
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          </div>
-        </div>
+        <ProcurementDataTable<Vendor>
+          data={paginatedVendors}
+          columns={columns}
+          isLoading={!isLoaded}
+          onRowClick={(vendor) => navigate(`/vendors/${vendor.id}`)}
+          pagination={{
+            currentPage,
+            totalPages,
+            onPageChange: setCurrentPage,
+            totalItems,
+            itemsPerPage,
+            itemLabel: "vendors",
+          }}
+          emptyState={{
+            message: "No matching results",
+          }}
+        />
       </div>
 
       <Sheet open={showSheet} onOpenChange={setShowSheet}>

@@ -17,16 +17,16 @@ export interface ProcurementColumn<T> {
 interface ProcurementDataTableProps<T extends { id: string | number }> {
   /** Data items to display */
   data: T[];
-  
+
   /** Column definitions */
   columns: ProcurementColumn<T>[];
-  
+
   /** Loading state */
   isLoading?: boolean;
-  
+
   /** Called when a row is clicked (receives the item) */
   onRowClick?: (item: T) => void;
-  
+
   /** Pagination configuration */
   pagination?: {
     currentPage: number;
@@ -36,25 +36,25 @@ interface ProcurementDataTableProps<T extends { id: string | number }> {
     itemsPerPage: number;
     itemLabel?: string;
   };
-  
+
   /** Empty state customization */
   emptyState?: {
     icon?: React.ReactNode;
     message?: string;
   };
-  
+
   /** Custom row className (in addition to default hover styles) */
   rowClassName?: string;
-  
+
   /** Custom table container className */
   className?: string;
-  
+
   /** Stats cards rendered above the table (optional slot) */
   statsCards?: React.ReactNode;
-  
+
   /** Search input rendered above the table (optional slot) */
   searchInput?: React.ReactNode;
-  
+
   /** Filter tabs/buttons rendered above the table (optional slot) */
   filterTabs?: React.ReactNode;
 }
@@ -100,7 +100,7 @@ export function ProcurementDataTable<T extends { id: string | number }>({
                   <th
                     key={index}
                     className={cn(
-                      "px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400",
+                      "px-6 py-4 text-[10px] font-black uppercase tracking-widest text-slate-400",
                       col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left'
                     )}
                   >
@@ -112,7 +112,7 @@ export function ProcurementDataTable<T extends { id: string | number }>({
             <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
               {isLoading ? (
                 <tr>
-                  <td colSpan={columns.length} className="px-4 py-20 text-center">
+                  <td colSpan={columns.length} className="px-6 py-20 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-8 h-8 border-2 border-teal-600 border-t-transparent rounded-full animate-spin" />
                       <p className="text-slate-500 font-medium italic">Loading data...</p>
@@ -121,7 +121,7 @@ export function ProcurementDataTable<T extends { id: string | number }>({
                 </tr>
               ) : data.length === 0 ? (
                 <tr>
-                  <td colSpan={columns.length} className="px-4 py-24 text-center">
+                  <td colSpan={columns.length} className="px-6 py-24 text-center">
                     <div className="flex flex-col items-center gap-4">
                       {emptyState?.icon || <Layers className="w-12 h-12 text-slate-200" />}
                       <p className="text-slate-400 font-bold italic">
@@ -136,7 +136,7 @@ export function ProcurementDataTable<T extends { id: string | number }>({
                     key={item.id}
                     onClick={() => onRowClick?.(item)}
                     className={cn(
-                      "hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors group",
+                      "hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-all cursor-pointer group border-l-2 border-l-transparent hover:border-l-teal-500",
                       onRowClick && "cursor-pointer",
                       rowClassName
                     )}
@@ -145,7 +145,7 @@ export function ProcurementDataTable<T extends { id: string | number }>({
                       <td
                         key={index}
                         className={cn(
-                          "px-4 py-2.5",
+                          "px-6 py-4",
                           col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left',
                           col.className
                         )}

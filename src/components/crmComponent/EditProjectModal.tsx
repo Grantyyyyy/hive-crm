@@ -53,7 +53,7 @@ export function EditProjectModal({ project, open, onOpenChange, onUpdate, onDele
             </div>
             <Button
               variant="destructiveOutline"
-              className="h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest border-2"
+              className="h-9 px-4 rounded-md text-[10px] font-black uppercase tracking-widest border-2"
               onClick={handleDelete}
             >
               Delete

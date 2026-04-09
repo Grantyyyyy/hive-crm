@@ -28,6 +28,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet"
 import { DealForm } from "@/components/crmComponent/DealForm"
+import { BackButton } from "@/components/reusables/BackButton"
 import { ActivityForm } from "@/components/crmComponent/ActivityForm"
 import { relativeTime, formatCurrency, isOverdue, sortTasks, getDealHealth, daysSince } from "@/lib/helpers"
 import type { Deal, Activity, Contact, Task } from "@/lib/types"
@@ -215,16 +216,10 @@ export function DealDetail() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 font-sans min-h-screen text-slate-900 dark:text-slate-100">
-      <div className="mx-auto p-3 md:p-5 max-w-full">
+      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
         <div className="space-y-4 animate-fade-in">
 
-          {/* Back button */}
-          <Link
-            href="/deals"
-            className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" /> Back
-          </Link>
+          <BackButton href="/deals" className="mb-2" />
 
           {/* Deal Header */}
           <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-4 md:p-6">

@@ -47,6 +47,7 @@ export interface Activity {
 export interface Lead {
   id: string
   name: string
+  position?: string
   email: string
   company?: string
   phone?: string

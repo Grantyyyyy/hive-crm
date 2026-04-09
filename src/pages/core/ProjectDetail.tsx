@@ -19,12 +19,15 @@ import { useUser } from "@/lib/AuthContext"
 import { DetailSkeleton } from "@/components/ui/skeletons"
 import { TaskView } from "@/components/crmComponent/TaskView"
 import { AddTaskModal } from "@/components/crmComponent/AddTaskModal"
+import { BackButton } from "@/components/reusables/BackButton"
+import { EditProjectModal } from "@/components/crmComponent/EditProjectModal"
+import { Pencil } from "lucide-react"
 
 export function ProjectDetail() {
   const { id } = useParams<{ id: string }>()
   const [, setLocation] = useLocation()
   const { isLoaded: userLoaded } = useUser()
-  const { data: projects, isLoaded: projectsLoaded } = useCRMResource<Project>('projects')
+  const { data: projects, isLoaded: projectsLoaded, updateItem, deleteItem } = useCRMResource<Project>('projects')
   const { data: tasks, isLoaded: tasksLoaded } = useCRMResource<Task>('tasks')
 
   const isLoaded = userLoaded && projectsLoaded && tasksLoaded
@@ -37,6 +40,7 @@ export function ProjectDetail() {
 
   const [activeTab, setActiveTab] = useState<'tasks' | 'analytics'>('tasks')
   const [showAddTaskModal, setShowAddTaskModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
 
   const analytics = useMemo(() => {
     const total = projectTasks.length
@@ -96,14 +100,7 @@ export function ProjectDetail() {
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setLocation('/projects')}
-                className="h-8 w-8"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
+              <BackButton href="/projects" showText={false} />
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Work Organization</p>
             </div>
             <div className="flex items-center gap-3">
@@ -113,8 +110,17 @@ export function ProjectDetail() {
               >
                 <FolderOpen className="w-5 h-5" style={{ color: project.color }} />
               </div>
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight text-text-primary">{project.name}</h1>
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-3xl font-bold tracking-tight text-text-primary">{project.name}</h1>
+                  <button
+                    onClick={() => setShowEditModal(true)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-all active:scale-90"
+                    title="Edit Project"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                </div>
                 {project.description && (
                   <p className="text-text-muted mt-1 font-medium">{project.description}</p>
                 )}
@@ -123,7 +129,7 @@ export function ProjectDetail() {
           </div>
           <div className="flex items-center gap-3">
             <Button
-              className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-teal-200 dark:shadow-none"
+              variant="brand"
               onClick={() => setShowAddTaskModal(true)}
             >
               <PlusCircle className="w-4 h-4" /> New Task
@@ -450,6 +456,17 @@ export function ProjectDetail() {
         fixedProjectId={id}
         onSave={() => { }}
         userId={project.ownerId}
+      />
+
+      <EditProjectModal
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+        project={project}
+        onUpdate={updateItem}
+        onDelete={async (id) => {
+          await deleteItem(id)
+          setLocation('/projects')
+        }}
       />
     </div>
   )

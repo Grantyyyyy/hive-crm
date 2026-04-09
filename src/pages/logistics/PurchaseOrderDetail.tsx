@@ -23,6 +23,7 @@ import { DetailSkeleton } from "@/components/ui/skeletons"
 import { DeleteModal } from "@/components/ui/delete-modal"
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
+import { BackButton } from "@/components/reusables/BackButton"
 import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
 import type { PurchaseOrder, PurchaseOrderStatus, Quote, SalesOrder, InventoryItem, PurchaseRequest, InventoryTransaction, Vendor, Task } from "@/lib/types"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -189,11 +190,7 @@ export function PurchaseOrderDetail() {
       <div className="flex-1 flex flex-col items-center justify-center gap-4 bg-slate-50 dark:bg-slate-950">
         <ShoppingCart className="w-10 h-10 text-slate-300" />
         <h2 className="text-sm font-medium text-slate-500">PO not found.</h2>
-        <Link href="/purchase-orders">
-          <Button variant="outlineNeutral">
-            <ArrowLeft className="h-4 w-4 mr-2" /> Back to Orders
-          </Button>
-        </Link>
+        <BackButton href="/purchase-orders" label="Back to Orders" />
       </div>
     )
   }
@@ -213,13 +210,7 @@ export function PurchaseOrderDetail() {
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 font-sans min-h-screen text-slate-900 dark:text-slate-100">
       <div className="mx-auto p-4 md:p-8 max-w-full space-y-6 animate-fade-in">
 
-        {/* Back */}
-        <Link
-          href="/purchase-orders"
-          className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Purchase Orders
-        </Link>
+        <BackButton href="/purchase-orders" className="mb-2" />
 
         {/* Warning Banner for Unassigned Vendor */}
         {order.vendorId === NIL_UUID && (

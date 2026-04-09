@@ -1,5 +1,4 @@
 import { useState, useMemo, useEffect, useCallback } from "react"
-import { DataTable } from "@/components/reusables/DataTable"
 import { useLocation } from "wouter"
 import {
   UserSearch,
@@ -11,17 +10,15 @@ import {
   Globe,
   Users,
   Target,
-  Mail
+  Mail,
+  FileSearch,
+  ArrowRight
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet"
+import { LeadSheet } from "@/components/crmComponent/EditLeadSheet"
 import { LeadForm } from "@/components/crmComponent/LeadForm"
 import { useCRMResource } from "@/lib/hooks"
 import { ListSkeleton } from "@/components/ui/skeletons"
@@ -30,6 +27,8 @@ import type { Lead, LeadStatus, LeadSource } from "@/lib/types"
 import { LEAD_STATUSES, LEAD_STATUS_LABELS } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { exportToCSV, debounce } from "@/lib/helpers"
+import { ProcurementDataTable, type ProcurementColumn } from "@/components/reusables/ProcurementDataTable"
+import { StatusTabs, type StatusTab } from "@/components/reusables/StatusTabs"
 
 const SOURCE_ICONS: Record<LeadSource, any> = {
   website: Globe,
@@ -69,6 +68,14 @@ export function Leads() {
   const [currentPage, setCurrentPage] = useState(1)
   const [searchInput, setSearchInput] = useState("")
   const itemsPerPage = 10
+
+  const statusTabs: StatusTab<LeadStatus>[] = [
+    { value: 'new', label: 'New' },
+    { value: 'contacted', label: 'Contacted' },
+    { value: 'qualified', label: 'Qualified' },
+    { value: 'unqualified', label: 'Unqualified' },
+    { value: 'converted', label: 'Converted' },
+  ]
 
   // Debounced search
   const debouncedSetSearch = useCallback(
@@ -117,6 +124,7 @@ export function Leads() {
       filtered,
       [
         { key: 'name', header: 'Lead Name' },
+        { key: 'position', header: 'Position' },
         { key: 'email', header: 'Email' },
         { key: 'phone', header: 'Phone' },
         { key: 'company', header: 'Company' },
@@ -128,6 +136,125 @@ export function Leads() {
       'leads'
     )
   }
+
+  const columns: ProcurementColumn<Lead>[] = [
+    {
+      header: "Lead Contact",
+      render: (lead) => {
+        const initials = lead.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+        return (
+          <div className="flex items-center gap-3">
+            <div className={cn(
+              "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black uppercase shrink-0 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800",
+              lead.status === 'qualified' ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400" :
+                lead.status === 'new' ? "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400" :
+                  "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+            )}>
+              {initials}
+            </div>
+            <div className="min-w-0">
+              <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{lead.name}</p>
+              <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 truncate mt-0.5">{lead.email}</p>
+            </div>
+          </div>
+        )
+      }
+    },
+    {
+      header: "Company & Position",
+      render: (lead) => (
+        <div className="min-w-0">
+          <p className="text-[13px] font-semibold text-slate-700 dark:text-slate-300 truncate">{lead.company || "—"}</p>
+          {lead.position && (
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{lead.position}</p>
+          )}
+        </div>
+      )
+    },
+    {
+      header: "Source",
+      render: (lead) => {
+        const SourceIcon = SOURCE_ICONS[lead.source] || Globe
+        return (
+          <div className="flex items-center gap-2 px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-bold rounded-md w-fit">
+            <SourceIcon className="w-3.5 h-3.5" />
+            {lead.source.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+          </div>
+        )
+      }
+    },
+    {
+      header: "Status",
+      render: (lead) => {
+        const status = STATUS_STYLE[lead.status] || STATUS_STYLE.new
+        return (
+          <div className={cn(
+            "flex items-center gap-2 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest w-fit border border-transparent shadow-sm",
+            status.bg,
+            status.text
+          )}>
+            <div className={cn("size-1.5 rounded-full", status.dot)} />
+            {LEAD_STATUS_LABELS[lead.status] || lead.status}
+          </div>
+        )
+      }
+    },
+    {
+      header: "Score",
+      render: (lead) => (
+        <div className="flex items-center gap-2">
+          <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+            <div
+              className={cn(
+                "h-full rounded-full transition-all",
+                lead.score >= 70 ? "bg-emerald-500" :
+                  lead.score >= 40 ? "bg-amber-500" : "bg-red-500"
+              )}
+              style={{ width: `${lead.score}%` }}
+            />
+          </div>
+          <span className={cn(
+            "text-[12px] font-bold",
+            lead.score >= 70 ? "text-emerald-600" :
+              lead.score >= 40 ? "text-amber-600" : "text-red-600"
+          )}>
+            {lead.score}
+          </span>
+        </div>
+      )
+    },
+    {
+      header: "Actions",
+      align: "right",
+      render: (lead) => (
+        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-slate-400 hover:text-teal-600 transition-all"
+            onClick={(e) => {
+              e.stopPropagation()
+              setEditingLead(lead)
+              setShowModal(true)
+            }}
+          >
+            <ArrowRight className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-slate-400 hover:text-red-600 transition-all"
+            onClick={(e) => {
+              e.stopPropagation()
+              setPendingDelete(lead)
+            }}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      )
+    }
+  ]
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen font-sans">
@@ -155,196 +282,56 @@ export function Leads() {
           </div>
         </div>
 
-        {/* Search & Filters */}
-        <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center">
-          <div className="relative flex-1 w-full lg:max-w-md">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              placeholder="Search leads by name, email, or company..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
-            />
-          </div>
-
-          {/* Filters & Table Container */}
-          <div className="space-y-4">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex bg-white dark:bg-slate-900 p-1 rounded-md border border-slate-200 dark:border-slate-800 w-fit">
-                <Button
-                  variant={statusFilter === "all" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setStatusFilter("all")}
-                  className={cn("h-8 px-5 rounded-md transition-all", statusFilter === "all" && "bg-teal-600 text-white shadow-md hover:bg-teal-700")}
-                >
-                  All Leads
-                </Button>
-                {LEAD_STATUSES.filter(s => ["new", "contacted", "qualified"].includes(s)).map((s) => (
-                  <Button
-                    key={s}
-                    variant={statusFilter === s ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setStatusFilter(s)}
-                    className={cn("h-8 px-5 rounded-md transition-all", statusFilter === s && "bg-teal-600 text-white shadow-md hover:bg-teal-700")}
-                  >
-                    {LEAD_STATUS_LABELS[s]}
-                  </Button>
-                ))}
-              </div>
-              <Button variant="outline" size="sm" className="h-auto py-2 border-slate-200 dark:border-slate-800">
-                <Filter className="w-4 h-4" />
-                Advanced Filters
-              </Button>
-            </div>
-
-            <DataTable<Lead>
-              data={paginatedLeads}
-              onRowClick={(lead) => navigate(`/leads/${lead.id}`)}
-              emptyState={{
-                icon: <UserSearch className="w-10 h-10" />,
-                title: "No leads found matching your selection."
-              }}
-              pagination={{
-                currentPage,
-                totalPages,
-                onPageChange: setCurrentPage,
-                totalItems,
-                itemsPerPage,
-                itemLabel: "leads"
-              }}
-              columns={[
-                {
-                  header: "Lead Name",
-                  render: (lead) => {
-                    const initials = lead.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
-                    return (
-                      <div className="flex items-center gap-3">
-                        <div className={cn(
-                          "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black uppercase shrink-0 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800",
-                          lead.status === 'qualified' ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400" :
-                            lead.status === 'new' ? "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400" :
-                              "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-                        )}>
-                          {initials}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{lead.name}</p>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{lead.email}</p>
-                        </div>
-                      </div>
-                    )
-                  }
-                },
-                {
-                  header: "Company",
-                  render: (lead) => (
-                    <p className="text-[13px] font-semibold text-slate-600 dark:text-slate-400">{lead.company || "—"}</p>
-                  )
-                },
-                {
-                  header: "Source",
-                  render: (lead) => {
-                    const SourceIcon = SOURCE_ICONS[lead.source] || Globe
-                    return (
-                      <div className="flex items-center gap-2 px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[11px] font-bold rounded-md w-fit">
-                        <SourceIcon className="w-3.5 h-3.5" />
-                        {lead.source.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                      </div>
-                    )
-                  }
-                },
-                {
-                  header: "Status",
-                  render: (lead) => {
-                    const status = STATUS_STYLE[lead.status] || STATUS_STYLE.new
-                    return (
-                      <div className={cn(
-                        "flex items-center gap-2 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest w-fit",
-                        status.bg,
-                        status.text
-                      )}>
-                        {LEAD_STATUS_LABELS[lead.status] || lead.status}
-                      </div>
-                    )
-                  }
-                },
-                {
-                  header: "Score",
-                  render: (lead) => (
-                    <div className="flex items-center gap-2">
-                      <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                        <div
-                          className={cn(
-                            "h-full rounded-full transition-all",
-                            lead.score >= 70 ? "bg-emerald-500" :
-                              lead.score >= 40 ? "bg-amber-500" : "bg-red-500"
-                          )}
-                          style={{ width: `${lead.score}%` }}
-                        />
-                      </div>
-                      <span className={cn(
-                        "text-[13px] font-bold",
-                        lead.score >= 70 ? "text-emerald-600" :
-                          lead.score >= 40 ? "text-amber-600" : "text-red-600"
-                      )}>
-                        {lead.score}
-                      </span>
-                    </div>
-                  )
-                },
-                {
-                  header: "Date Added",
-                  render: (lead) => (
-                    <p className="text-[13px] text-slate-600 dark:text-slate-400">
-                      {new Date(lead.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </p>
-                  )
-                },
-                {
-                  header: "Actions",
-                  headerClassName: "text-right",
-                  align: "right",
-                  render: (lead) => (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-600 transition-all"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setPendingDelete(lead)
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )
-                }
-              ]}
-            />
-          </div>
-        </div>
-
-        <Sheet open={showModal} onOpenChange={(open) => { setShowModal(open); if (!open) setEditingLead(null) }}>
-          <SheetContent className="sm:max-w-3xl p-0 flex flex-col h-full bg-slate-50 dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800">
-            <SheetHeader className="px-8 pt-8 pb-4 bg-white/50 dark:bg-slate-900/50 border-b border-slate-200/60 dark:border-slate-800/60 backdrop-blur-sm shrink-0">
-              <SheetTitle className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
-                {editingLead ? "Edit Lead" : "Add New Lead"}
-              </SheetTitle>
-              <SheetDescription className="text-sm font-medium text-slate-500">
-                {editingLead
-                  ? "Update the details for this sales prospect."
-                  : "Fill in the information to create a new sales prospect."}
-              </SheetDescription>
-            </SheetHeader>
-            <div className="flex-1 overflow-y-auto">
-              <LeadForm
-                userId={userId}
-                onSave={handleSaveLead}
-                onCancel={() => setShowModal(false)}
-                initialData={editingLead ?? undefined}
+        <ProcurementDataTable<Lead>
+          data={paginatedLeads}
+          columns={columns}
+          onRowClick={(lead) => navigate(`/leads/${lead.id}`)}
+          emptyState={{
+            icon: <FileSearch className="w-10 h-10 text-slate-300" />,
+            message: "No leads found matching your selection."
+          }}
+          pagination={{
+            currentPage,
+            totalPages,
+            onPageChange: setCurrentPage,
+            totalItems,
+            itemsPerPage,
+            itemLabel: "leads"
+          }}
+          searchInput={
+            <div className="relative flex-1 w-full lg:max-w-md">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                placeholder="Search leads by name, email, or company..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
               />
             </div>
-          </SheetContent>
-        </Sheet>
+          }
+          filterTabs={
+            <>
+              <StatusTabs<LeadStatus>
+                tabs={statusTabs}
+                value={statusFilter}
+                onChange={setStatusFilter}
+                allLabel="All Leads"
+              />
+              <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
+              <Button variant="outlineNeutral" className="h-10 px-4 rounded-md font-bold text-xs uppercase tracking-widest">
+                <Filter className="w-4 h-4" /> More Filters
+              </Button>
+            </>
+          }
+        />
+
+        <LeadSheet
+          open={showModal}
+          onOpenChange={(open) => { setShowModal(open); if (!open) setEditingLead(null) }}
+          editingLead={editingLead}
+          userId={userId}
+          onSave={handleSaveLead}
+        />
 
         <DeleteModal
           open={!!pendingDelete}
@@ -353,7 +340,7 @@ export function Leads() {
           description={
             <>
               Are you sure you want to delete{" "}
-              <strong className="text-text-primary font-bold">{pendingDelete?.name}</strong>?
+              <strong className="text-slate-900 dark:text-slate-100 font-bold">{pendingDelete?.name}</strong>?
               {" "}This action cannot be undone.
             </>
           }
@@ -365,5 +352,6 @@ export function Leads() {
           deleteText="Delete Lead"
         />
       </div>
-      )
+    </div>
+  )
 }

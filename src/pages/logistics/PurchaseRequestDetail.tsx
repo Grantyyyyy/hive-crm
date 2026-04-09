@@ -25,6 +25,7 @@ import { DetailSkeleton } from "@/components/ui/skeletons"
 import { DeleteModal } from "@/components/ui/delete-modal"
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
+import { BackButton } from "@/components/reusables/BackButton"
 import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
 import type {
   PurchaseRequest,
@@ -346,11 +347,7 @@ export function PurchaseRequestDetail() {
         <h2 className="text-sm font-medium text-slate-500">
           Request not found.
         </h2>
-        <Link href="/purchase-requests">
-          <Button variant="outlineNeutral">
-            <ArrowLeft className="h-4 w-4 mr-2" /> Back to Requests
-          </Button>
-        </Link>
+        <BackButton href="/purchase-requests" />
       </div>
     )
   }
@@ -374,12 +371,7 @@ export function PurchaseRequestDetail() {
       <div className="mx-auto p-4 md:p-8 max-w-full space-y-6 animate-fade-in">
 
         {/* Back */}
-        <Link
-          href="/purchase-requests"
-          className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Purchase Requests
-        </Link>
+        <BackButton href="/purchase-requests" className="mb-2" />
 
         {/* Header Card */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 md:p-8">

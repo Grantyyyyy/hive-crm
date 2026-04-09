@@ -22,6 +22,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { EditContactSheet } from "@/components/crmComponent/EditContactSheet"
+import { BackButton } from "@/components/reusables/BackButton"
 import { ContactForm } from "@/components/crmComponent/ContactForm"
 import { ActivityForm } from "@/components/crmComponent/ActivityForm"
 import {
@@ -203,7 +205,7 @@ export function ContactDetail() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 font-sans min-h-screen text-slate-900 dark:text-slate-100">
-      <div className="mx-auto p-3 md:p-5 max-w-full">
+      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
         <div className="space-y-4 animate-fade-in">
 
           {/* Follow-up banner */}
@@ -222,13 +224,7 @@ export function ContactDetail() {
             </div>
           )}
 
-          {/* Back button */}
-          <Link
-            href="/contacts"
-            className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" /> Back
-          </Link>
+          <BackButton href="/contacts" className="mb-2" />
 
           {/* Contact Header */}
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-4 md:p-6">
@@ -525,19 +521,13 @@ export function ContactDetail() {
         </div>
       </div>
 
-      {/* Edit modal */}
-      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 shadow-xl rounded-3xl sm:max-w-[500px]">
-          <DialogHeader className="px-6 pt-6 pb-2">
-            <DialogTitle className="text-xl font-bold text-slate-900 dark:text-white">Edit Contact</DialogTitle>
-          </DialogHeader>
-          <ContactForm
-            initialData={contact}
-            onSave={handleEditContact}
-            onCancel={() => setShowEditModal(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      {/* Edit Contact Sheet */}
+      <EditContactSheet
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+        editingContact={contact}
+        onSave={handleEditContact}
+      />
 
       {/* Activity modal */}
       <Dialog open={showActivityModal} onOpenChange={setShowActivityModal}>

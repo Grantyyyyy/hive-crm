@@ -29,6 +29,7 @@ export function LeadForm({ userId, onSave, onCancel, initialData }: LeadFormProp
   const [lastName, setLastName] = useState(initialNameParts.slice(1).join(" ") ?? "")
   
   const [email, setEmail] = useState(initialData?.email ?? "")
+  const [position, setPosition] = useState(initialData?.position ?? "")
   const [phone, setPhone] = useState(initialData?.phone ?? "")
   const [company, setCompany] = useState(initialData?.company ?? "")
   const [source, setSource] = useState<LeadSource>(initialData?.source ?? "manual")
@@ -53,6 +54,7 @@ export function LeadForm({ userId, onSave, onCancel, initialData }: LeadFormProp
     const lead: Lead = {
       id: initialData?.id ?? generateId(),
       name: `${firstName.trim()} ${lastName.trim()}`.trim(),
+      position: position.trim() || undefined,
       email: email.trim(),
       phone: phone.trim() || undefined,
       company: company.trim() || undefined,
@@ -153,15 +155,26 @@ export function LeadForm({ userId, onSave, onCancel, initialData }: LeadFormProp
             </div>
 
             <div className="space-y-6">
-              <div className="space-y-1.5">
-                <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Company Name</Label>
-                <div className="group relative">
-                  <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-teal-600 transition-colors" />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Company Name</Label>
+                  <div className="group relative">
+                    <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-teal-600 transition-colors" />
+                    <Input
+                      value={company}
+                      onChange={(e) => setCompany(e.target.value)}
+                      placeholder="Acme Industries"
+                      className="h-11 pl-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Job Title / Position</Label>
                   <Input
-                    value={company}
-                    onChange={(e) => setCompany(e.target.value)}
-                    placeholder="Acme Industries"
-                    className="h-11 pl-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10"
+                    value={position}
+                    onChange={(e) => setPosition(e.target.value)}
+                    placeholder="CEO / Founder"
+                    className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10"
                   />
                 </div>
               </div>

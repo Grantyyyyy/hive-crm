@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button"
 import { DetailSkeleton } from "@/components/ui/skeletons"
 import { StockAdjustmentModal } from "@/components/ui/stock-adjustment-modal"
 import { useCRMResource } from "@/lib/hooks"
+import { BackButton } from "@/components/reusables/BackButton"
 import { useCRMContext } from "@/lib/CRMContext"
 import type { InventoryItem, SalesOrder, Quote, InventoryTransaction } from "@/lib/types"
 import { recalculateStockLevel } from "@/services/inventoryService"
@@ -113,11 +114,7 @@ export function InventoryDetail() {
       <div className="flex-1 flex flex-col items-center justify-center gap-4 bg-slate-50 dark:bg-slate-950">
         <Package className="w-10 h-10 text-slate-300" />
         <h2 className="text-sm font-medium text-slate-500">Product not found.</h2>
-        <Link href="/inventory">
-          <Button variant="outlineNeutral">
-            <ArrowLeft className="h-4 w-4 mr-2" /> Back to Inventory
-          </Button>
-        </Link>
+        <BackButton href="/inventory" className="mb-2" />
       </div>
     )
   }
@@ -130,12 +127,7 @@ export function InventoryDetail() {
 
         {/* Breadcrumbs & Navigation */}
         <div className="flex items-center justify-between">
-          <Link href="/inventory">
-            <button className="flex items-center gap-2 text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors group">
-              <ArrowLeft className="size-4 group-hover:-translate-x-1 transition-transform" />
-              <span className="text-xs font-bold uppercase tracking-widest">Back to Products</span>
-            </button>
-          </Link>
+          <BackButton href="/inventory" label="Back to Products" />
           <div className="flex items-center gap-3">
             <Button variant="outlineNeutral" size="sm" className="h-9 px-4" onClick={() => setAdjustmentOpen(true)}>
               <Activity className="size-4 mr-2" /> Stock Adjustment

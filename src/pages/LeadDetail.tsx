@@ -22,6 +22,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  SheetDescription,
+} from "@/components/ui/sheet"
+import { LeadSheet } from "@/components/crmComponent/EditLeadSheet"
+import { BackButton } from "@/components/reusables/BackButton"
 import { LeadForm } from "@/components/crmComponent/LeadForm"
 import { ActivityForm } from "@/components/crmComponent/ActivityForm"
 import { ConvertLeadModal } from "@/components/crmComponent/ConvertLeadModal"
@@ -184,16 +189,10 @@ export function LeadDetail() {
         </div>
       )}
 
-      <div className="mx-auto p-3 md:p-5 max-w-full">
+      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
         <div className="space-y-4 animate-fade-in">
 
-          {/* Back button */}
-          <Link
-            href="/leads"
-            className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" /> Back
-          </Link>
+          <BackButton href="/leads" className="mb-2" />
 
           {/* Lead Header */}
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-4 md:p-6">
@@ -224,7 +223,7 @@ export function LeadDetail() {
                   )}
                   {lead.company && (
                     <span className="flex items-center gap-2">
-                      <Building className="h-4 w-4 text-slate-400" /> {lead.company}
+                      <Building className="h-4 w-4 text-slate-400" /> {lead.company} {lead.position && <span className="text-slate-400 font-normal">({lead.position})</span>}
                     </span>
                   )}
                 </div>
@@ -392,6 +391,12 @@ export function LeadDetail() {
                     <div className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-1">Source</div>
                     <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{LEAD_SOURCE_LABELS[lead.source]}</p>
                   </div>
+                  {lead.position && (
+                    <div>
+                      <div className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-1">Position</div>
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{lead.position}</p>
+                    </div>
+                  )}
                   <div>
                     <div className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-1">Owner</div>
                     <p className="text-sm font-medium text-slate-900 dark:text-slate-100">You</p>
@@ -503,20 +508,14 @@ export function LeadDetail() {
         </div>
       </div>
 
-      {/* Edit modal */}
-      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 shadow-xl rounded-3xl sm:max-w-[500px]">
-          <DialogHeader className="px-6 pt-6 pb-2">
-            <DialogTitle className="text-xl font-bold text-slate-900 dark:text-white">Edit Lead</DialogTitle>
-          </DialogHeader>
-          <LeadForm
-            userId={userId}
-            onSave={handleEditLead}
-            onCancel={() => setShowEditModal(false)}
-            initialData={lead}
-          />
-        </DialogContent>
-      </Dialog>
+      {/* Edit Sheet */}
+      <LeadSheet
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+        editingLead={lead}
+        userId={userId || ""}
+        onSave={handleEditLead}
+      />
 
       {/* Activity modal */}
       <Dialog open={showActivityModal} onOpenChange={setShowActivityModal}>

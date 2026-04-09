@@ -266,6 +266,23 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
       )
     }] : []),
     {
+      header: "Assignee",
+      render: (task) => {
+        const initials = 'TM' // Team Member placeholder
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[9px] font-black text-slate-500 border border-slate-200 dark:border-slate-800">
+              {initials}
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-slate-900 dark:text-white truncate">Assignee</p>
+              <p className="text-[9px] text-slate-500 truncate mt-0.5">Team Role</p>
+            </div>
+          </div>
+        )
+      }
+    },
+    {
       header: "Due Date",
       render: (task) => {
         const date = new Date(task.dueDate)
@@ -311,7 +328,7 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
               <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Workspace</h1>
               <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium leading-relaxed italic">Coordination simplified for teams.</p>
             </div>
-            <button className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2" onClick={() => setShowAddModal(true)}>
+            <button className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white text-xs font-black uppercase tracking-widest rounded-md transition-all flex items-center gap-2" onClick={() => setShowAddModal(true)}>
               <PlusCircle className="w-4 h-4" /> Create Record
             </button>
           </div>
@@ -341,7 +358,7 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-6 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-6 bg-white dark:bg-slate-900 p-4 rounded-md border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-950 p-1 rounded-md border border-slate-200 dark:border-slate-800 h-9">
               {[
@@ -405,7 +422,7 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
               <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-10 font-medium leading-relaxed">Try adjusting filters to expand your search context.</p>
               <div className="flex items-center gap-4">
                 <Button variant="ghost" onClick={() => { setSearch(""); setStatusFilter("all"); setActiveFilter("my"); }} className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-slate-900">Reset Workspace</Button>
-                <Button onClick={() => setShowAddModal(true)} className="rounded-xl h-11 px-8 bg-teal-600 hover:bg-teal-700 text-xs font-black uppercase tracking-widest">Create Task</Button>
+                <Button onClick={() => setShowAddModal(true)} className="rounded-md h-11 px-8 bg-teal-600 hover:bg-teal-700 text-xs font-black uppercase tracking-widest">Create Task</Button>
               </div>
             </div>
           ) : activeTab === 'list' ? (
@@ -420,7 +437,7 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
                   return (
                     <div key={status} className="space-y-4">
                       <div className={cn(
-                        "flex items-center justify-between px-6 py-3 rounded-xl border transition-all",
+                        "flex items-center justify-between px-6 py-3 rounded-md border transition-all",
                         s.bg, s.border
                       )}>
                         <div className="flex items-center gap-3">

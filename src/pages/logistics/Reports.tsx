@@ -3,6 +3,7 @@ import { Calendar, ChevronDown, TrendingUp, Banknote, Package, Users } from "luc
 import { useCRMResource } from "@/lib/hooks"
 import { ListSkeleton } from "@/components/ui/skeletons"
 import type { SalesOrder, Quote, Deal, InventoryItem, Contact, Lead } from "@/lib/types"
+import { StatCard } from "@/components/reusables/StatCard"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell
 } from "recharts"
@@ -178,13 +179,13 @@ export function Reports() {
       <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
 
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8">
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 mb-1">Analytics</p>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Reports & Analytics</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">View and analyze your business performance.</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">Analytics</p>
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Reports & Analytics</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">View and analyze your business performance.</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             {/* Period Selector */}
             <div className="relative">
               <button
@@ -215,73 +216,44 @@ export function Reports() {
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Total Revenue */}
-          <div className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-2 bg-teal-50 dark:bg-teal-900/20 rounded-xl text-teal-600 dark:text-teal-400">
-                <Banknote className="w-5 h-5" />
-              </div>
-              <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg shadow-sm ${revenueChange >= 0
-                ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20"
-                : "text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20"
-                }`}>
-                {revenueChange >= 0 ? "+" : ""}{revenueChange.toFixed(1)}%
-              </span>
-            </div>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Revenue</p>
-            <h3 className="text-2xl font-bold mt-1">{fmtCurrency(deliveredRevenue)}</h3>
-          </div>
+          <StatCard
+            label="Total Revenue"
+            value={fmtCurrency(deliveredRevenue)}
+            icon={<Banknote className="w-5 h-5" />}
+            accentColor="teal"
+            badge={revenueChange >= 0 ? `+${revenueChange.toFixed(1)}%` : `${revenueChange.toFixed(1)}%`}
+            badgeColor={revenueChange >= 0 ? "emerald" : "rose"}
+          />
 
           {/* Pipeline Value */}
-          <div className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-2 bg-teal-50 dark:bg-teal-900/20 rounded-xl text-teal-600 dark:text-teal-400">
-                <TrendingUp className="w-5 h-5" />
-              </div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-lg shadow-sm">
-                Active
-              </span>
-            </div>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Pipeline Value</p>
-            <h3 className="text-2xl font-bold mt-1">{fmtCurrency(pipelineValue)}</h3>
-          </div>
+          <StatCard
+            label="Pipeline Value"
+            value={fmtCurrency(pipelineValue)}
+            icon={<TrendingUp className="w-5 h-5" />}
+            accentColor="teal"
+            badge="Active"
+            badgeColor="slate"
+          />
 
           {/* Win Rate */}
-          <div className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-2 bg-teal-50 dark:bg-teal-900/20 rounded-xl text-teal-600 dark:text-teal-400">
-                <Users className="w-5 h-5" />
-              </div>
-              <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg shadow-sm ${winRate >= 50
-                ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20"
-                : winRate >= 25
-                  ? "text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20"
-                  : "text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20"
-                }`}>
-                {fmtPct(winRate)}
-              </span>
-            </div>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Win Rate</p>
-            <h3 className="text-2xl font-bold mt-1">{wonDeals.length} / {wonDeals.length + lostDeals.length} deals</h3>
-          </div>
+          <StatCard
+            label="Win Rate"
+            value={`${wonDeals.length} / ${wonDeals.length + lostDeals.length} deals`}
+            icon={<Users className="w-5 h-5" />}
+            accentColor="teal"
+            badge={fmtPct(winRate)}
+            badgeColor={winRate >= 50 ? "emerald" : winRate >= 25 ? "amber" : "rose"}
+          />
 
           {/* Inventory Health */}
-          <div className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-xl text-amber-600 dark:text-amber-400">
-                <Package className="w-5 h-5" />
-              </div>
-              <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg shadow-sm ${inventoryHealth >= 70
-                ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20"
-                : inventoryHealth >= 40
-                  ? "text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20"
-                  : "text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20"
-                }`}>
-                {outOfStock} out
-              </span>
-            </div>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Inventory Health</p>
-            <h3 className="text-2xl font-bold mt-1">{fmtPct(inventoryHealth)}</h3>
-          </div>
+          <StatCard
+            label="Inventory Health"
+            value={fmtPct(inventoryHealth)}
+            icon={<Package className="w-5 h-5" />}
+            accentColor="amber"
+            badge={`${outOfStock} out`}
+            badgeColor={inventoryHealth >= 70 ? "emerald" : inventoryHealth >= 40 ? "amber" : "rose"}
+          />
         </div>
 
         {/* Charts */}

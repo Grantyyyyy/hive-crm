@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react"
+import { useState, useMemo } from "react"
 import { useLocation } from "wouter"
 import {
   Search,
@@ -8,11 +8,9 @@ import {
   Building2,
   Mail,
   Phone,
-  ChevronDown,
-  Check
+  Filter
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Pagination } from "@/components/ui/Pagination"
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
@@ -27,93 +25,8 @@ import {
 } from "@/components/ui/sheet"
 import { VendorForm } from "@/components/crmComponent/VendorForm"
 import { ListSkeleton } from "@/components/ui/skeletons"
-
-function VendorStatusDropdown({
-  vendor,
-  onStatusChange,
-}: {
-  vendor: Vendor
-  onStatusChange: (id: string, status: Vendor['status']) => Promise<void>
-}) {
-  const [open, setOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
-
-  const handleSelect = async (status: Vendor['status']) => {
-    if (status === vendor.status || loading) return
-    setLoading(true)
-    await onStatusChange(vendor.id, status)
-    setLoading(false)
-    setOpen(false)
-  }
-
-  const statuses: Vendor['status'][] = ['active', 'inactive', 'on_hold']
-
-  const badgeClass = {
-    active: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400',
-    inactive: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400',
-    on_hold: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400',
-  }
-
-  const label = {
-    active: 'Active',
-    inactive: 'Inactive',
-    on_hold: 'On Hold',
-  }
-
-  return (
-    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        disabled={loading}
-        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg
-                    text-[10px] font-black uppercase tracking-widest
-                    cursor-pointer hover:opacity-80 transition-opacity
-                    disabled:opacity-50 ${badgeClass[vendor.status]}`}
-      >
-        {loading ? '...' : label[vendor.status]}
-        <ChevronDown className="w-3 h-3 opacity-60" />
-      </button>
-
-      {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 min-w-[160px]
-                        bg-white dark:bg-slate-900 border border-slate-200
-                        dark:border-slate-800 rounded-md shadow-lg
-                        overflow-hidden">
-          {statuses.map(s => (
-            <button
-              key={s}
-              onClick={() => handleSelect(s)}
-              className="w-full flex items-center gap-2.5 px-3 py-2
-                         text-sm text-left hover:bg-slate-50
-                         dark:hover:bg-slate-800 transition-colors
-                         text-slate-700 dark:text-slate-300"
-            >
-              <span className={`inline-flex px-2 py-0.5 rounded text-[10px]
-                                font-black uppercase tracking-widest
-                                ${badgeClass[s]}`}>
-                {label[s]}
-              </span>
-              {s === vendor.status && (
-                <Check className="w-3.5 h-3.5 ml-auto text-slate-400" />
-              )}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
+import { StatusTabs } from "@/components/reusables/StatusTabs"
+import type { StatusTab } from "@/components/reusables/StatusTabs"
 
 export function Vendors() {
   const [, navigate] = useLocation()
@@ -130,6 +43,12 @@ export function Vendors() {
   const [showSheet, setShowSheet] = useState(false)
 
   const itemsPerPage = 10
+
+  const statusTabs: StatusTab<VendorStatus>[] = [
+    { value: 'active', label: 'Active' },
+    { value: 'on_hold', label: 'On Hold' },
+    { value: 'inactive', label: 'Inactive' },
+  ]
 
   const filteredVendors = useMemo(() => {
     return vendors.filter(v => {
@@ -161,25 +80,6 @@ export function Vendors() {
     }
   }
 
-  const handleStatusChange = async (
-    id: string,
-    status: Vendor['status']
-  ) => {
-    try {
-      await updateItem(id, {
-        status,
-        updatedAt: new Date().toISOString()
-      })
-      toast.success('Vendor updated', {
-        description: `Status changed to ${status.replace('_', ' ')}.`
-      })
-    } catch (e: unknown) {
-      toast.error('Failed to update vendor', {
-        description: (e as Error).message
-      })
-    }
-  }
-
   if (!isLoaded) {
     return <ListSkeleton />
   }
@@ -208,47 +108,28 @@ export function Vendors() {
           </div>
         </div>
 
-        {/* Minimal Search & Tabs */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-8 overflow-x-auto scrollbar-none pb-[2px]">
-            {(['all', 'active', 'on_hold', 'inactive'] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => { setActiveTab(tab); setCurrentPage(1) }}
-                className={cn(
-                  "pb-4 font-bold text-sm tracking-wide transition-colors relative flex items-center gap-2 shrink-0",
-                  activeTab === tab
-                    ? "text-teal-600 dark:text-teal-400"
-                    : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
-                )}
-              >
-                <span className="capitalize">{tab.replace('_', ' ')}</span>
-                <span className={cn(
-                  "px-2 py-0.5 rounded-full text-[10px] font-bold transition-colors",
-                  activeTab === tab
-                    ? "bg-teal-50 text-teal-600 dark:bg-teal-900/40 dark:text-teal-400"
-                    : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500"
-                )}>
-                  {tab === 'all' ? vendors.length : vendors.filter(v => v.status === tab).length}
-                </span>
-                {activeTab === tab && (
-                  <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-teal-600 dark:bg-teal-400 rounded-t-full" />
-                )}
-              </button>
-            ))}
+        {/* Search & Filters */}
+        <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center">
+          <div className="relative flex-1 w-full lg:max-w-md">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              placeholder="Search vendors by name, category, or email..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1) }}
+              className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
+            />
           </div>
 
-          <div className="flex-1 w-full lg:max-w-[240px] pb-4 lg:pb-3">
-            <div className="relative group/search">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within/search:text-teal-600 transition-colors" />
-              <Input
-                placeholder="Search..."
-                value={search}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setSearch(e.target.value); setCurrentPage(1) }}
-                className="w-full pl-9 h-9 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-xs font-semibold focus:ring-4 focus:ring-teal-600/5 focus:border-teal-600/50 placeholder:text-slate-400 outline-none transition-all duration-300"
-              />
-            </div>
-          </div>
+          <StatusTabs<VendorStatus>
+            tabs={statusTabs}
+            value={activeTab}
+            onChange={(value) => { setActiveTab(value as VendorStatus | 'all'); setCurrentPage(1) }}
+            allLabel="All Vendors"
+          />
+
+          <Button variant="outlineNeutral" className="h-10 px-4 rounded-md">
+            <Filter className="w-4 h-4 mr-2" /> Filters
+          </Button>
         </div>
 
         {/* Content Table */}
@@ -309,7 +190,7 @@ export function Vendors() {
                         <p className="text-[11px] font-bold font-mono text-slate-500 uppercase">{vendor.taxId || "—"}</p>
                       </td>
                       <td className="px-6 py-5">
-                        <VendorStatusDropdown vendor={vendor} onStatusChange={handleStatusChange} />
+                        <StatusBadge status={vendor.status} />
                       </td>
                       <td className="px-6 py-5 text-right">
                         <Button
@@ -355,5 +236,25 @@ export function Vendors() {
         </SheetContent>
       </Sheet>
     </div>
+  )
+}
+
+function StatusBadge({ status }: { status: VendorStatus }) {
+  const styles: Record<VendorStatus, string> = {
+    active: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400",
+    inactive: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400",
+    on_hold: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400",
+  }
+
+  const labels: Record<VendorStatus, string> = {
+    active: "Active",
+    inactive: "Inactive",
+    on_hold: "On Hold",
+  }
+
+  return (
+    <span className={cn("px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm border border-transparent", styles[status])}>
+      {labels[status]}
+    </span>
   )
 }

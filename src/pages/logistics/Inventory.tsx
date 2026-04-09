@@ -16,6 +16,8 @@ import { useCRMResource } from "@/lib/hooks"
 import { cn } from "@/lib/utils"
 import type { InventoryItem, StockLevel, InventoryStatus } from "@/lib/types"
 import { ListSkeleton } from "@/components/ui/skeletons"
+import { StatusTabs } from "@/components/reusables/StatusTabs"
+import type { StatusTab } from "@/components/reusables/StatusTabs"
 
 export function Inventory() {
   const [, navigate] = useLocation()
@@ -29,6 +31,12 @@ export function Inventory() {
   const [currentPage, setCurrentPage] = useState(1)
   const [showAddModal, setShowAddModal] = useState(false)
   const itemsPerPage = 8
+
+  const statusTabs: StatusTab<'low_stock' | 'out_of_stock' | 'draft'>[] = [
+    { value: 'low_stock', label: 'Low Stock' },
+    { value: 'out_of_stock', label: 'Out of Stock' },
+    { value: 'draft', label: 'Drafts' },
+  ]
 
   // Removed legacy dummy data seeding
 
@@ -68,13 +76,13 @@ export function Inventory() {
       <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
 
         {/* Header Region */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-slate-500 mb-1">Products</p>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Inventory</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">Manage stock, products, and variants.</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">Products</p>
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Inventory</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Manage stock, products, and variants.</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <Button variant="outlineNeutral">
               <Download className="w-4 h-4" /> Export
             </Button>
@@ -84,44 +92,26 @@ export function Inventory() {
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-          <input
-            placeholder="Search products by name, SKU, or category..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500 placeholder:text-slate-400 outline-none transition-all"
-          />
-        </div>
-
-        {/* Filters & Tabs */}
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="bg-white dark:bg-slate-900 p-1 rounded-2xl border border-slate-200 dark:border-slate-800 w-fit flex items-center">
-            {[
-              { id: 'all', label: 'All Products' },
-              { id: 'low_stock', label: 'Low Stock' },
-              { id: 'out_of_stock', label: 'Out of Stock' },
-              { id: 'draft', label: 'Drafts' }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setFilterState(tab.id as typeof filterState)}
-                className={cn(
-                  "px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap",
-                  filterState === tab.id
-                    ? "bg-teal-600 text-white shadow-md shadow-teal-100 dark:shadow-none"
-                    : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
+        {/* Search & Filters */}
+        <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center">
+          <div className="relative flex-1 w-full lg:max-w-md">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              placeholder="Search products by name, SKU, or category..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
+            />
           </div>
 
-          <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
+          <StatusTabs<'low_stock' | 'out_of_stock' | 'draft'>
+            tabs={statusTabs}
+            value={filterState}
+            onChange={setFilterState}
+            allLabel="All Products"
+          />
 
-          <Button variant="outlineNeutral" className="h-10 px-4">
+          <Button variant="outlineNeutral" className="h-10 px-4 rounded-md">
             <Filter className="w-4 h-4 mr-2" /> Filters
           </Button>
         </div>

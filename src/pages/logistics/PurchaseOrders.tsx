@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react"
+import { useLocation } from "wouter"
 import {
   PlusCircle,
   Search,
@@ -28,6 +29,7 @@ import { StatCard } from "@/components/reusables/StatCard"
 import { StatusTabs } from "@/components/reusables/StatusTabs"
 import type { StatusTab } from "@/components/reusables/StatusTabs"
 export function PurchaseOrders() {
+  const [, navigate] = useLocation()
   const { user, isLoaded: userLoaded } = useUser()
   const {
     data: orders,
@@ -217,7 +219,7 @@ export function PurchaseOrders() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={(e) => { e.stopPropagation(); window.location.href = `/purchase-orders/${order.id}` }}
+            onClick={(e) => { e.stopPropagation(); navigate(`/purchase-orders/${order.id}`) }}
             className="inline-flex text-slate-400 hover:text-slate-600 text-[11px] h-7 px-2 items-center gap-1 transition-all"
           >
             View <ArrowRight className="w-3 h-3" />
@@ -260,7 +262,7 @@ export function PurchaseOrders() {
           data={paginatedOrders}
           columns={columns}
           isLoading={!isLoaded}
-          onRowClick={(order) => (window.location.href = `/purchase-orders/${order.id}`)}
+          onRowClick={(order) => navigate(`/purchase-orders/${order.id}`)}
           pagination={{
             currentPage,
             totalPages,

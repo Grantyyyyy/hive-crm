@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { useUser, useAuth } from "@/lib/AuthContext";
 import { usePermission } from "@/lib/usePermission";
@@ -42,6 +42,30 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
   const { userId, signOut } = useAuth();
   const { can, hasFullAccess, isLoaded: permLoaded } = usePermission();
   const [roleName, setRoleName] = useState<string | null>(null);
+
+  // Preserve sidebar nav scroll position across remounts (e.g. Protected ↔ PermissionProtected)
+  const navRef = useRef<HTMLElement>(null);
+  const SCROLL_KEY = "sidebar_nav_scroll";
+
+  // On mount: restore persisted scroll position
+  useEffect(() => {
+    const stored = parseInt(localStorage.getItem(SCROLL_KEY) ?? "0", 10);
+    requestAnimationFrame(() => {
+      if (navRef.current) {
+        navRef.current.scrollTop = stored;
+      }
+    });
+  }, []);
+
+  // After each route change: re-apply the stored scroll (browser may reset it)
+  useEffect(() => {
+    const stored = parseInt(localStorage.getItem(SCROLL_KEY) ?? "0", 10);
+    requestAnimationFrame(() => {
+      if (navRef.current) {
+        navRef.current.scrollTop = stored;
+      }
+    });
+  }, [location]);
 
   // Fetch role name from app_users + roles tables
   useEffect(() => {
@@ -230,7 +254,7 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
         </div>
 
         {/* Nav Links */}
-        <nav className="flex-1 py-4 flex flex-col w-full overflow-y-auto px-3 scrollbar-hide">
+        <nav ref={navRef as React.Ref<HTMLElement>} className="flex-1 py-4 flex flex-col w-full overflow-y-auto px-3 scrollbar-hide">
           {groups.map((group, groupIdx) => (
             <div key={group.title} className={cn("mb-6", groupIdx === 0 && "mt-2")}>
               {!collapsed && (
@@ -243,7 +267,7 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
                   const isActive = location === link.href || (link.href !== "/dashboard" && location.startsWith(link.href) && link.href.length > 1);
 
                   return (
-                    <Link key={link.href} href={link.href} onClick={() => setMobileOpen(false)}>
+                    <Link key={link.href} href={link.href} onClick={() => { localStorage.setItem(SCROLL_KEY, String(navRef.current?.scrollTop ?? 0)); setMobileOpen(false); }}>
                       <div
                         className={cn(
                           "flex items-center h-11 px-4 rounded-xl transition-all relative group cursor-pointer",

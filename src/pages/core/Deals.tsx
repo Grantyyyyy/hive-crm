@@ -9,7 +9,9 @@ import {
   DollarSign,
   Calendar,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  List,
+  LayoutGrid
 } from "lucide-react"
 import { DeleteModal } from "@/components/ui/delete-modal"
 import {
@@ -19,6 +21,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  useDroppable,
   type DragStartEvent,
   type DragEndEvent,
 } from "@dnd-kit/core"
@@ -39,6 +42,7 @@ import {
 import { DealForm } from "@/components/crmComponent/DealForm"
 import { LostReasonModal } from "@/components/crmComponent/LostReasonModal"
 import { formatCurrency, getDealHealth } from "@/lib/helpers"
+import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
 import { ListSkeleton } from "@/components/ui/skeletons"
 import type { Deal, DealStage, Contact } from "@/lib/types"
@@ -46,6 +50,31 @@ import { STAGE_LABELS, DEAL_STAGES } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { exportToCSV, debounce } from "@/lib/helpers"
 import type { Activity } from "@/lib/types"
+
+/* ── Stage transition rules ──────────────────────────────────────── */
+const ALLOWED_TRANSITIONS: Record<DealStage, DealStage[]> = {
+  discovery: ['proposal', 'lost'],
+  proposal: ['negotiation', 'lost'],
+  negotiation: ['won', 'lost'],
+  won: [],
+  lost: [],
+}
+
+function isTransitionAllowed(from: DealStage, to: DealStage): boolean {
+  return ALLOWED_TRANSITIONS[from]?.includes(to) ?? false
+}
+
+function getTransitionError(from: DealStage, to: DealStage): string {
+  if (from === 'won' || from === 'lost') {
+    return `Cannot reopen a ${STAGE_LABELS[from].toLowerCase()} deal`
+  }
+  const fromIdx = DEAL_STAGES.indexOf(from)
+  const toIdx = DEAL_STAGES.indexOf(to)
+  if (toIdx < fromIdx) {
+    return `Cannot move backward from ${STAGE_LABELS[from]} to ${STAGE_LABELS[to]}`
+  }
+  return `Cannot skip from ${STAGE_LABELS[from]} to ${STAGE_LABELS[to]}`
+}
 
 const STAGE_STYLE: Record<DealStage, { bg: string; text: string; icon: any }> = {
   discovery: { bg: "bg-slate-50 dark:bg-slate-900/20", text: "text-slate-700 dark:text-slate-300", icon: DollarSign },
@@ -97,42 +126,22 @@ function getLastActivityDate(dealId: string, activities: Activity[]): string | n
   return sorted[0]?.createdAt ?? null
 }
 
-interface SortableDealCardProps {
+interface DealCardContentProps {
   deal: Deal
   contactName: string
   activities: Activity[]
-  onClick: () => void
+  isDragging?: boolean
 }
 
-function SortableDealCard({ deal, contactName, activities, onClick }: SortableDealCardProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: deal.id })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.4 : 1,
-  }
-
-  // Generate a mock tag based on ID
+/** Pure presentational card — no dnd hooks, safe for DragOverlay */
+function DealCardContent({ deal, contactName, activities, isDragging = false }: DealCardContentProps) {
   const tags = ["SOFTWARE", "ENTERPRISE", "URGENT", "CONSULTING", "RECURRING"]
   const tag = tags[deal.id.charCodeAt(0) % tags.length]
 
   return (
     <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      onClick={onClick}
       className={cn(
-        "group relative bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-md cursor-grab active:cursor-grabbing",
+        "group relative bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing",
         isDragging && "z-50 shadow-xl ring-2 ring-teal-500 border-transparent rotate-1",
         deal.stage === 'won' && "border-emerald-100 dark:border-emerald-900/50 hover:border-emerald-500",
         deal.stage === 'lost' && "border-rose-100 dark:border-rose-900/50 hover:border-rose-500"
@@ -171,6 +180,60 @@ function SortableDealCard({ deal, contactName, activities, onClick }: SortableDe
   )
 }
 
+interface SortableDealCardProps {
+  deal: Deal
+  contactName: string
+  activities: Activity[]
+  onClick: () => void
+}
+
+function SortableDealCard({ deal, contactName, activities, onClick }: SortableDealCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: deal.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      onClick={onClick}
+    >
+      <DealCardContent deal={deal} contactName={contactName} activities={activities} isDragging={isDragging} />
+    </div>
+  )
+}
+
+/** Droppable column wrapper — registers each stage as a proper drop target */
+function DroppableColumn({ stage, children }: { stage: string; children: React.ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({ id: stage })
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "flex-1 flex flex-col gap-3 min-h-[500px] p-2 rounded-md border-2 border-dashed transition-colors",
+        isOver
+          ? "border-teal-400 dark:border-teal-600 bg-teal-50/30 dark:bg-teal-900/10"
+          : "border-slate-200 dark:border-slate-800/50 hover:border-teal-200 dark:hover:border-teal-900/50"
+      )}
+    >
+      {children}
+    </div>
+  )
+}
+
 /* ── Main Component ─────────────────────────────────────────────── */
 
 export function Deals() {
@@ -193,6 +256,7 @@ export function Deals() {
   const [showModal, setShowModal] = useState(false)
   const [viewMode, setViewMode] = useState<"board" | "list">("board")
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [prefilledStage, setPrefilledStage] = useState<DealStage | undefined>(undefined)
   const [pendingDelete, setPendingDelete] = useState<Deal | null>(null)
   const [pendingLostDeal, setPendingLostDeal] = useState<Deal | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
@@ -280,6 +344,13 @@ export function Deals() {
     if (newStage) {
       const deal = deals.find(d => d.id === dealId)
       if (deal && deal.stage !== newStage) {
+        // Validate the transition
+        if (!isTransitionAllowed(deal.stage, newStage)) {
+          toast.error(getTransitionError(deal.stage, newStage), {
+            description: `Allowed next steps from ${STAGE_LABELS[deal.stage]}: ${ALLOWED_TRANSITIONS[deal.stage].map(s => STAGE_LABELS[s]).join(', ') || 'None (deal is closed)'}`,
+          })
+          return
+        }
         // If moving to lost stage, show lost reason modal
         if (newStage === 'lost') {
           setPendingLostDeal(deal)
@@ -297,6 +368,12 @@ export function Deals() {
   function handleAddDeal(deal: Deal) {
     addItems([deal])
     setShowModal(false)
+    setPrefilledStage(undefined)
+  }
+
+  function handleOpenCreateModal(stage?: DealStage) {
+    setPrefilledStage(stage)
+    setShowModal(true)
   }
 
   function handleExportCSV() {
@@ -329,36 +406,47 @@ export function Deals() {
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
-            <div className="bg-white dark:bg-slate-900 p-1 rounded-md border border-slate-200 dark:border-slate-800 flex items-center mr-2 shadow-sm">
-              <Button
-                variant={viewMode === "board" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("board")}
-                className={cn("h-8 px-4 font-bold rounded-sm", viewMode === "board" && "bg-teal-600 text-white shadow-md hover:bg-teal-700")}
-              >
-                Board
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("list")}
-                className={cn("h-8 px-4 font-bold rounded-sm", viewMode === "list" && "bg-teal-600 text-white shadow-md hover:bg-teal-700")}
-              >
-                List
-              </Button>
-            </div>
+
 
             <Button variant="outline" onClick={handleExportCSV} className="border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
               <DollarSign className="w-4 h-4" />
               Export CSV
             </Button>
 
-            <Button
-              variant="brand"
-              onClick={() => setShowModal(true)}
-            >
-              <PlusCircle className="w-4 h-4" /> Create Deal
-            </Button>
+            {viewMode === "list" && (
+              <Button
+                variant="brand"
+                onClick={() => handleOpenCreateModal()}
+              >
+                <PlusCircle className="w-4 h-4" /> Create Deal
+              </Button>
+            )}
+            <div className="bg-white dark:bg-slate-900 p-1 rounded-md border border-slate-200 dark:border-slate-800 flex items-center mr-2 shadow-sm gap-1">
+              <button
+                onClick={() => setViewMode("board")}
+                className={cn(
+                  "h-8 px-3 rounded text-[11px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-2",
+                  viewMode === "board"
+                    ? "bg-teal-600 text-white shadow-md shadow-teal-600/20"
+                    : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                )}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                Kanban
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                className={cn(
+                  "h-8 px-3 rounded text-[11px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-2",
+                  viewMode === "list"
+                    ? "bg-teal-600 text-white shadow-md shadow-teal-600/20"
+                    : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                )}
+              >
+                <List className="w-3.5 h-3.5" />
+                List
+              </button>
+            </div>
           </div>
         </div>
 
@@ -493,7 +581,7 @@ export function Deals() {
             >
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                 {DEAL_STAGES.map((stage) => (
-                  <div className="flex flex-col gap-4">
+                  <div key={stage} className="flex flex-col gap-4">
                     {/* Column Header */}
                     <div className="flex items-center justify-between px-2">
                       <div className="flex items-center gap-3 min-w-0">
@@ -515,10 +603,7 @@ export function Deals() {
                       items={(dealsByStage[stage] || []).map(d => d.id)}
                       strategy={verticalListSortingStrategy}
                     >
-                      <div className={cn(
-                        "flex-1 flex flex-col gap-3 min-h-[500px] p-2 rounded-md border-2 border-dashed transition-colors",
-                        "border-slate-200 dark:border-slate-800/50 hover:border-teal-200 dark:hover:border-teal-900/50"
-                      )}>
+                      <DroppableColumn stage={stage}>
                         {(dealsByStage[stage] || []).map((deal) => (
                           <SortableDealCard
                             key={deal.id}
@@ -529,15 +614,17 @@ export function Deals() {
                           />
                         ))}
 
-                        <Button
-                          variant="ghost"
-                          onClick={() => setShowModal(true)}
-                          className="w-full h-12 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 group"
-                        >
-                          <PlusCircle className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
-                          Add Card
-                        </Button>
-                      </div>
+                        {stage !== 'won' && stage !== 'lost' && (
+                          <Button
+                            variant="ghost"
+                            onClick={() => handleOpenCreateModal(stage)}
+                            className="w-full h-12 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 group"
+                          >
+                            <PlusCircle className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
+                            Add {STAGE_LABELS[stage]}
+                          </Button>
+                        )}
+                      </DroppableColumn>
                     </SortableContext>
                   </div>
                 ))}
@@ -546,11 +633,11 @@ export function Deals() {
               <DragOverlay>
                 {activeDeal ? (
                   <div className="w-[300px] pointer-events-none">
-                    <SortableDealCard
+                    <DealCardContent
                       deal={activeDeal}
                       contactName={contactMap.get(activeDeal.contactId) || "Unknown"}
                       activities={activities}
-                      onClick={() => { }}
+                      isDragging
                     />
                   </div>
                 ) : null}
@@ -560,7 +647,10 @@ export function Deals() {
         )}
       </div>
 
-      <Sheet open={showModal} onOpenChange={setShowModal}>
+      <Sheet open={showModal} onOpenChange={(open) => {
+        setShowModal(open)
+        if (!open) setPrefilledStage(undefined)
+      }}>
         <SheetContent className="sm:max-w-3xl p-0 flex flex-col h-full bg-slate-50 dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800">
           <SheetHeader className="px-8 pt-8 pb-4 bg-white/50 dark:bg-slate-900/50 border-b border-slate-200/60 dark:border-slate-800/60 backdrop-blur-sm shrink-0">
             <SheetTitle className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Add New Deal</SheetTitle>
@@ -569,7 +659,15 @@ export function Deals() {
             </SheetDescription>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto">
-            <DealForm onSave={handleAddDeal} onCancel={() => setShowModal(false)} contacts={contacts} />
+            <DealForm
+              onSave={handleAddDeal}
+              onCancel={() => {
+                setShowModal(false)
+                setPrefilledStage(undefined)
+              }}
+              contacts={contacts}
+              initialData={prefilledStage ? { stage: prefilledStage } : undefined}
+            />
           </div>
         </SheetContent>
       </Sheet>

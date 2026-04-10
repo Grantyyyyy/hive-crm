@@ -243,7 +243,7 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
             {!collapsed && (
               <div className="flex flex-col min-w-0">
                 <span className="text-[15px] font-bold text-text-primary truncate leading-tight">
-                  CRM &amp; Inventory
+                  CRM Hub
                 </span>
                 <span className="text-[11px] text-text-muted font-medium truncate uppercase tracking-wider">
                   Enterprise Suite

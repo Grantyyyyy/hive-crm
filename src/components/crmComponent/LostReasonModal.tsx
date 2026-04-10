@@ -46,18 +46,18 @@ export function LostReasonModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px] rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 shadow-xl">
         <div className="flex flex-col gap-6">
-          {/* Icon Section */}
-          <div className="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center">
-            <AlertTriangle className="w-5 h-5 text-rose-600 dark:text-rose-500" />
-          </div>
-
-          {/* Text Section */}
-          <DialogHeader className="p-0 text-left space-y-2">
-            <DialogTitle className="text-lg font-semibold text-slate-900 dark:text-white">
-              Mark Deal as Lost
-            </DialogTitle>
-            <DialogDescription className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-              Please provide a reason for losing <strong className="text-slate-900 dark:text-white">"{dealTitle}"</strong>.
+          {/* Header Section */}
+          <DialogHeader className="p-0 text-center">
+            <div className="flex flex-col items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-6 h-6 text-rose-600 dark:text-rose-500" />
+              </div>
+              <DialogTitle className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                Mark Deal as Lost
+              </DialogTitle>
+            </div>
+            <DialogDescription className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+              Please provide a reason for losing <strong className="text-slate-900 dark:text-white font-bold">"{dealTitle}"</strong>.
               This information helps track why deals are lost and improve future sales efforts.
             </DialogDescription>
           </DialogHeader>
@@ -76,7 +76,7 @@ export function LostReasonModal({
                 }}
                 placeholder="e.g., Price too high, competitor won, timing not right, budget constraints..."
                 rows={4}
-                className="w-full bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-xl focus:ring-4 focus:ring-rose-500/20 focus:border-rose-500 text-sm resize-none"
+                className="w-full bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-xl focus-visible:ring-4 focus-visible:ring-rose-500/20 focus-visible:border-rose-500 text-sm resize-none outline-none"
                 autoFocus
               />
               {error && (
@@ -110,7 +110,7 @@ export function LostReasonModal({
           </div>
 
           {/* Actions Section */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex justify-end gap-3 pt-2">
             <Button
               type="button"
               variant="ghost"

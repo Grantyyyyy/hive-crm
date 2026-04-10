@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect } from "react"
 import {
   Search,
   PlusCircle,
@@ -43,6 +43,8 @@ interface TaskViewProps {
   fixedEntityType?: 'contact' | 'deal' | 'lead';
   fixedEntityId?: string;
   hideHeader?: boolean;
+  defaultViewMode?: 'list' | 'kanban';
+  onViewModeChange?: (mode: 'list' | 'kanban') => void;
 }
 
 function SortableRow({ item, children, onClick, className }: any) {
@@ -66,7 +68,7 @@ function SortableRow({ item, children, onClick, className }: any) {
   )
 }
 
-export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideHeader = false }: TaskViewProps) {
+export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideHeader = false, defaultViewMode, onViewModeChange }: TaskViewProps) {
   const { user, isLoaded: userLoaded } = useUser()
   const {
     data: tasks,
@@ -83,9 +85,21 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
   const isLoaded = userLoaded && tasksLoaded
 
   const [search, setSearch] = useState("")
-  const [activeTab, setActiveTab] = useState<'list' | 'kanban'>('list')
+  const [activeTab, setActiveTab] = useState<'list' | 'kanban'>(defaultViewMode || 'list')
   const [activeFilter, setActiveFilter] = useState<'my' | 'team' | 'upcoming'>('my')
   const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'in-progress' | 'completed'>('all')
+
+  // Sync with parent view mode changes
+  useEffect(() => {
+    if (defaultViewMode) {
+      setActiveTab(defaultViewMode)
+    }
+  }, [defaultViewMode])
+
+  const handleViewModeChange = (mode: 'list' | 'kanban') => {
+    setActiveTab(mode)
+    onViewModeChange?.(mode)
+  }
 
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
@@ -312,7 +326,7 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
 
   useTaskShortcuts({
     onNewTask: () => setShowAddModal(true),
-    onViewToggle: () => setActiveTab(activeTab === 'list' ? 'kanban' : 'list'),
+    onViewToggle: () => handleViewModeChange(activeTab === 'list' ? 'kanban' : 'list'),
   })
 
   if (!isLoaded) return <ListSkeleton />
@@ -334,29 +348,31 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
           </div>
         )}
 
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-12">
-            {[
-              { id: 'list', label: 'All Tasks' },
-              { id: 'kanban', label: 'Kanban Board' },
-            ].map((t) => {
-              const isActive = activeTab === t.id
-              return (
-                <button key={t.id} onClick={() => setActiveTab(t.id as any)} className={cn("pb-4 font-bold text-sm tracking-wide transition-all relative px-1 hover:text-slate-900", isActive ? "text-teal-600" : "text-slate-500")}>
-                  <span className="uppercase text-[11px] tracking-[0.1em] font-black">{t.label}</span>
-                  {isActive && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-teal-600 rounded-t-full shadow-[0_0_12px_rgba(20,184,166,0.6)]" />}
-                </button>
-              )
-            })}
-          </div>
+        {!hideHeader && (
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800">
+            <div className="flex items-center gap-12">
+              {[
+                { id: 'list', label: 'All Tasks' },
+                { id: 'kanban', label: 'Kanban Board' },
+              ].map((t) => {
+                const isActive = activeTab === t.id
+                return (
+                  <button key={t.id} onClick={() => handleViewModeChange(t.id as any)} className={cn("pb-4 font-bold text-sm tracking-wide transition-all relative px-1 hover:text-slate-900", isActive ? "text-teal-600" : "text-slate-500")}>
+                    <span className="uppercase text-[11px] tracking-[0.1em] font-black">{t.label}</span>
+                    {isActive && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-teal-600 rounded-t-full shadow-[0_0_12px_rgba(20,184,166,0.6)]" />}
+                  </button>
+                )
+              })}
+            </div>
 
-          <div className="flex-1 w-full lg:max-w-md pb-3">
-            <div className="relative group/search">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within/search:text-teal-600 transition-colors" />
-              <input placeholder="Search records..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-semibold focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 outline-none transition-all shadow-xs" />
+            <div className="flex-1 w-full lg:max-w-md pb-3">
+              <div className="relative group/search">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within/search:text-teal-600 transition-colors" />
+                <input placeholder="Search records..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-semibold focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 outline-none transition-all shadow-xs" />
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <div className="flex flex-wrap items-center justify-between gap-6 bg-white dark:bg-slate-900 p-4 rounded-md border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex items-center gap-4">

@@ -368,11 +368,34 @@ export interface PurchaseReceiptItem {
   quantityReceived: number
   quantityAccepted: number
   quantityRejected: number
+  returnedQuantity: number // aggregate total returned to vendor
   rejectionReason?: RejectionReason
   isReturnable: boolean
   unitCost: number
   currency: string
 }
+
+export type RTSStatus = 'pending' | 'shipped' | 'credited' | 'cancelled'
+
+export interface ReturnToSupplier {
+  id: string
+  userId: string
+  rtsNumber: string
+  poId: string
+  receiptId: string
+  receiptItemId: string
+  inventoryItemId: string
+  quantity: number
+  unitCost: number
+  currency: string
+  status: RTSStatus
+  reason?: string
+  vendorReference?: string // RMA #
+  userName?: string
+  createdAt: string
+  updatedAt: string
+}
+
 
 export type PurchaseRequestStatus = 'draft' | 'pending_review' | 'approved' | 'rejected' | 'ordered'
 
@@ -409,7 +432,7 @@ export interface PurchaseRequest {
 
 export type InventoryTransactionType = 'receipt' | 'shipment' | 'adjustment' | 'reservation' | 'release' | 'return'
 
-export type InventoryTransactionSource = 'purchase_order' | 'sales_order' | 'quote' | 'manual' | 'system'
+export type InventoryTransactionSource = 'purchase_order' | 'sales_order' | 'quote' | 'manual' | 'system' | 'return_to_supplier'
 
 export interface InventoryTransaction {
   id: string

@@ -30,6 +30,7 @@ export const TABLE_MAP: Record<string, string> = {
   task_tags: "task_tags",
   task_tag_links: "task_tag_links",
   task_activities: "task_activities",
+  return_to_suppliers: "return_to_suppliers",
 }
 
 // ── Case converters ──────────────────────────────────────────────────────────
@@ -43,7 +44,7 @@ const UUID_FIELDS = [
   "converted_to_contact_id", "converted_to_deal_id",
   "customer_id", "project_id", "task_id", "tag_id",
   "parent_task_id", "inventory_item_id", "quote_id",
-  "receipt_id", "po_id", "po_item_id"
+  "receipt_id", "receipt_item_id", "po_id", "po_item_id"
 ]
 
 export function toSnake(obj: any): any {

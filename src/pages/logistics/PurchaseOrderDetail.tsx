@@ -19,6 +19,9 @@ import {
   ChevronRight,
   CheckCircle2,
   AlertCircle,
+  RotateCcw,
+  ShieldCheck,
+  ShieldX,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -30,14 +33,16 @@ import { ProcurementDataTable } from "@/components/reusables/ProcurementDataTabl
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
 import { BackButton } from "@/components/reusables/BackButton"
+import { ReturnToSupplierModal } from "@/components/logisticsComponent/ReturnToSupplierModal"
 import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
-import type { PurchaseOrder, PurchaseOrderStatus, Quote, SalesOrder, InventoryItem, PurchaseRequest, InventoryTransaction, Vendor, Task } from "@/lib/types"
+import type { PurchaseOrder, PurchaseOrderStatus, Quote, SalesOrder, InventoryItem, PurchaseRequest, InventoryTransaction, Vendor, Task, ReturnToSupplier } from "@/lib/types"
 import { NIL_UUID, DEFAULT_TAX_RATE } from "@/lib/types"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { sendPOToVendor, calculatePOFulfillment } from "@/services/procurementService"
 import { useUser } from "@/lib/AuthContext"
 import type { JobAdapter } from "@/services/types"
+import type { PurchaseReceipt, PurchaseReceiptItem } from "@/lib/types"
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -74,7 +79,7 @@ export function PurchaseOrderDetail() {
   const [, navigate] = useLocation()
   const poId = params?.id ?? ""
   const ctx = useCRMContext()
-  const { user, isLoaded: userLoaded } = useUser()
+  const { isLoaded: userLoaded } = useUser()
 
   const { data: orders, isLoaded, updateItem, deleteItem, refresh } = useCRMResource<PurchaseOrder>("purchase_orders")
   const { data: inventoryTransactions } = useCRMResource<InventoryTransaction>("inventory_transactions")
@@ -87,6 +92,7 @@ export function PurchaseOrderDetail() {
   const [invoiceOpen, setInvoiceOpen] = useState(false)
   const [receiveItemsOpen, setReceiveItemsOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
+  const [rtsItem, setRtsItem] = useState<any | null>(null)
   const itemsPerPage = 8
 
   const moreDropdownRef = useRef<HTMLDivElement>(null)
@@ -104,8 +110,9 @@ export function PurchaseOrderDetail() {
   }, [moreOpen])
 
   const { data: vendors } = useCRMResource<Vendor>("vendors")
-  const { data: receiptItems } = useCRMResource<any>("purchase_receipt_items")
-  const { data: receipts } = useCRMResource<any>("purchase_receipts")
+  const { data: receiptItems } = useCRMResource<PurchaseReceiptItem>("purchase_receipt_items")
+  const { data: receipts } = useCRMResource<PurchaseReceipt>("purchase_receipts")
+  const { data: rtsList } = useCRMResource<ReturnToSupplier>("return_to_suppliers")
 
   const order = useMemo(() => orders.find(o => o.id === poId), [orders, poId])
 
@@ -117,17 +124,17 @@ export function PurchaseOrderDetail() {
   // Receipts that belong to this PO, newest first
   const poReceipts = useMemo(() =>
     (receipts ?? [])
-      .filter((r: any) => r.poId === poId)
-      .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+      .filter((r) => r.poId === poId)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
     [receipts, poId]
   )
 
   // Flat rows for the history table (receipt-grouped)
   const historyRows = useMemo(() =>
-    poReceipts.flatMap((receipt: any) => {
-      const items = (receiptItems ?? []).filter((ri: any) => ri.receiptId === receipt.id)
-      return items.map((item: any, idx: number) => {
-        const poItem = order?.items.find((i: any) => i.id === item.poItemId)
+    poReceipts.flatMap((receipt) => {
+      const items = (receiptItems ?? []).filter((ri) => ri.receiptId === receipt.id)
+      return items.map((item, idx) => {
+        const poItem = order?.items.find((i) => i.id === item.poItemId)
         return {
           id: item.id,
           receiptId: receipt.id,
@@ -140,7 +147,12 @@ export function PurchaseOrderDetail() {
           quantityReceived: item.quantityReceived,
           quantityAccepted: item.quantityAccepted,
           quantityRejected: item.quantityRejected,
+          returnedQuantity: item.returnedQuantity || 0,
           rejectionReason: item.rejectionReason,
+          isReturnable: item.isReturnable,
+          inventoryItemId: item.inventoryItemId,
+          unitCost: item.unitCost,
+          currency: item.currency
         }
       })
     }),
@@ -158,38 +170,42 @@ export function PurchaseOrderDetail() {
   const adapter = useMemo<JobAdapter>(() => ({
     getQuotes: () => ctx.getResource<Quote>("quotes").data,
     updateQuote: (id, patch) => updateRow<Quote>(ctx, "quotes", id, patch),
-    insertQuote: (q) => insertRows<Quote>(ctx, "quotes", [q as any]).then(r => r[0] as Quote),
+    insertQuote: (q) => insertRows<Quote>(ctx, "quotes", [q as Quote]).then((r) => r[0] as Quote),
     getSalesOrders: () => ctx.getResource<SalesOrder>("orders").data,
     updateSalesOrder: (id, patch) => updateRow<SalesOrder>(ctx, "orders", id, patch),
-    insertSalesOrder: (o) => insertRows<SalesOrder>(ctx, "orders", [o as any]).then(r => r[0] as SalesOrder),
+    insertSalesOrder: (o) => insertRows<SalesOrder>(ctx, "orders", [o as SalesOrder]).then((r) => r[0] as SalesOrder),
     getInventoryItems: () => ctx.getResource<InventoryItem>("inventory").data,
     updateInventoryItem: (id, patch) => updateRow<InventoryItem>(ctx, "inventory", id, patch),
-    insertInventoryItem: (item) => insertRows<InventoryItem>(ctx, "inventory", [item as any]).then(r => r[0] as InventoryItem),
+    insertInventoryItem: (item) => insertRows<InventoryItem>(ctx, "inventory", [item as InventoryItem]).then((r) => r[0] as InventoryItem),
     getPurchaseRequests: () => ctx.getResource<PurchaseRequest>("purchase_requests").data,
     updatePurchaseRequest: (id, patch) => updateRow<PurchaseRequest>(ctx, "purchase_requests", id, patch),
-    insertPurchaseRequest: (pr) => insertRows<PurchaseRequest>(ctx, "purchase_requests", [pr as any]).then(r => r[0] as PurchaseRequest),
+    insertPurchaseRequest: (pr) => insertRows<PurchaseRequest>(ctx, "purchase_requests", [pr as PurchaseRequest]).then((r) => r[0] as PurchaseRequest),
     getPurchaseOrders: () => orders,
     updatePurchaseOrder: (id, patch) => updateRow<PurchaseOrder>(ctx, "purchase_orders", id, patch),
-    insertPurchaseOrder: (po) => insertRows<PurchaseOrder>(ctx, "purchase_orders", [po as any]).then(r => r[0] as PurchaseOrder),
-    getPurchaseReceipts: () => ctx.getResource<any>("purchase_receipts").data,
-    getPurchaseReceiptItems: () => ctx.getResource<any>("purchase_receipt_items").data,
-    insertPurchaseReceipt: (receipt) => insertRows<any>(ctx, "purchase_receipts", [receipt as any]).then(r => r[0]),
-    insertPurchaseReceiptItem: (item) => insertRows<any>(ctx, "purchase_receipt_items", [item as any]).then(r => r[0]),
+    insertPurchaseOrder: (po) => insertRows<PurchaseOrder>(ctx, "purchase_orders", [po as PurchaseOrder]).then((r) => r[0] as PurchaseOrder),
+    getPurchaseReceipts: () => ctx.getResource<PurchaseReceipt>("purchase_receipts").data,
+    getPurchaseReceiptItems: () => ctx.getResource<PurchaseReceiptItem>("purchase_receipt_items").data,
+    insertPurchaseReceipt: (receipt) => insertRows<PurchaseReceipt>(ctx, "purchase_receipts", [receipt as PurchaseReceipt]).then((r) => r[0] as PurchaseReceipt),
+    insertPurchaseReceiptItem: (item) => insertRows<PurchaseReceiptItem>(ctx, "purchase_receipt_items", [item as PurchaseReceiptItem]).then((r) => r[0] as PurchaseReceiptItem),
     getInventoryTransactions: () => inventoryTransactions,
-    insertInventoryTransaction: (tx) => insertRows<InventoryTransaction>(ctx, "inventory_transactions", [tx as any]).then(r => r[0] as InventoryTransaction),
+    insertInventoryTransaction: (tx) => insertRows<InventoryTransaction>(ctx, "inventory_transactions", [tx as InventoryTransaction]).then((r) => r[0] as InventoryTransaction),
     getTasks: () => ctx.getResource<Task>("tasks").data,
     updateTask: (id, patch) => updateRow<Task>(ctx, "tasks", id, patch),
-  }), [ctx, orders, inventoryTransactions])
+    getReturnToSuppliers: () => rtsList,
+    insertReturnToSupplier: (rts) => insertRows<ReturnToSupplier>(ctx, "return_to_suppliers", [rts as any]).then((r) => r[0] as ReturnToSupplier),
+    updateReturnToSupplier: (id, patch) => updateRow<ReturnToSupplier>(ctx, "return_to_suppliers", id, patch),
+    runAtomicUpdate: (ops) => ctx.runAtomicUpdate(ops),
+  }), [ctx, orders, inventoryTransactions, rtsList, receiptItems, receipts])
 
   // ─── Handlers ───────────────────────────────────────────────────────────────
   const handleSend = async () => {
     if (!order) return
-    const vendor = vendors.find(v => v.id === order.vendorId)
+    const vendor = vendors.find((v) => v.id === order.vendorId)
     if (!vendor && order.vendorId !== NIL_UUID) { toast.error("Vendor not found"); return }
-    toast.promise(sendPOToVendor(order, vendor || { id: NIL_UUID, name: order.vendorName } as any, adapter), {
+    toast.promise(sendPOToVendor(order, vendor || { id: NIL_UUID, name: order.vendorName } as Vendor, adapter), {
       loading: `Transmitting ${order.poNumber} to ${order.vendorName}…`,
       success: () => { refresh(); return `PO dispatched to ${order.vendorName}` },
-      error: (e: any) => `Failed to send: ${e.message}`,
+      error: (e: Error) => `Failed to send: ${e.message}`,
     })
   }
 
@@ -198,13 +214,19 @@ export function PurchaseOrderDetail() {
     try {
       await updateRow<PurchaseOrder>(ctx, "purchase_orders", order.id, { status: "cancelled" })
       refresh(); toast.success("Order cancelled")
-    } catch (e: any) { toast.error("Cancellation failed", { description: e.message }) }
+    } catch (e) {
+      const err = e instanceof Error ? e : new Error("Unknown error")
+      toast.error("Cancellation failed", { description: err.message })
+    }
   }
 
   const handleDelete = async () => {
     if (!order) return
     try { await deleteItem(order.id); navigate("/purchase-orders") }
-    catch (e: any) { toast.error("Failed to delete", { description: e.message }) }
+    catch (e) {
+      const err = e instanceof Error ? e : new Error("Unknown error")
+      toast.error("Failed to delete", { description: err.message })
+    }
   }
 
   const handleSelectVendor = async (vendor: Vendor) => {
@@ -213,7 +235,21 @@ export function PurchaseOrderDetail() {
       await updateItem(order.id, { vendorId: vendor.id, vendorName: vendor.name })
       setVendorSelectorOpen(false)
       toast.success(`Vendor assigned: ${vendor.name}`)
-    } catch (e: any) { toast.error("Failed to assign vendor", { description: e.message }) }
+    } catch (e) {
+      const err = e instanceof Error ? e : new Error("Unknown error")
+      toast.error("Failed to assign vendor", { description: err.message })
+    }
+  }
+
+  const toggleReturnable = async (row: any) => {
+    try {
+      await updateRow<PurchaseReceiptItem>(ctx, "purchase_receipt_items", row.id, { 
+        isReturnable: !row.isReturnable 
+      })
+      toast.success(`Line is now ${!row.isReturnable ? 'returnable' : 'locked'}`)
+    } catch (e) {
+      toast.error("Failed to update status")
+    }
   }
 
   const filteredVendors = useMemo(() =>
@@ -678,7 +714,6 @@ export function PurchaseOrderDetail() {
                         },
                         {
                           header: "Notes",
-                          className: "max-w-[160px]",
                           render: (row) => (
                             row.isFirstInReceipt && row.receiptNotes ? (
                               <p className="text-[11px] text-slate-500 dark:text-slate-400 italic leading-snug line-clamp-2">
@@ -686,6 +721,57 @@ export function PurchaseOrderDetail() {
                               </p>
                             ) : null
                           ),
+                        },
+                        {
+                          header: "Returnable",
+                          align: "center",
+                          className: "w-[135px]", // Fixed width prevents shifting
+                          render: (row) => (
+                            <div className="flex justify-center">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); toggleReturnable(row) }}
+                                className={cn(
+                                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tighter transition-all w-[100px] justify-center",
+                                  row.isReturnable 
+                                    ? "bg-teal-50 text-teal-600 dark:bg-teal-900/20 dark:text-teal-400 border border-teal-100 dark:border-teal-800 shadow-sm"
+                                    : "bg-slate-50 text-slate-400 dark:bg-slate-800/40 dark:text-slate-600 border border-slate-100 dark:border-slate-800"
+                                )}
+                              >
+                                {row.isReturnable ? <ShieldCheck className="w-3 h-3" /> : <ShieldX className="w-3 h-3" />}
+                                {row.isReturnable ? "Return Open" : "Locked"}
+                              </button>
+                            </div>
+                          ),
+                        },
+                        {
+                          header: "Returns",
+                          align: "right",
+                          className: "w-[120px]",
+                          render: (row) => {
+                            const available = row.quantityAccepted - (row.returnedQuantity || 0)
+                            return (
+                              <div className="flex flex-col items-end gap-1">
+                                <div className="flex items-center gap-2">
+                                  {row.returnedQuantity > 0 && (
+                                    <span className="text-[10px] font-bold text-rose-500">
+                                      {row.returnedQuantity} ret.
+                                    </span>
+                                  )}
+                                  <span className="text-xs font-bold text-slate-400">
+                                    {available} net
+                                  </span>
+                                </div>
+                                {row.isReturnable && available > 0 && (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); setRtsItem(row) }}
+                                    className="text-[10px] font-black uppercase tracking-widest text-teal-600 hover:text-teal-700 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/40 px-2 py-0.5 rounded border border-teal-100 dark:border-teal-800 hover:shadow-sm"
+                                  >
+                                    <RotateCcw className="w-2.5 h-2.5 inline mr-1" /> Return Item
+                                  </button>
+                                )}
+                              </div>
+                            )
+                          },
                         },
                       ]}
                       emptyState={{ message: "No receiving history for this PO yet." }}
@@ -855,6 +941,14 @@ export function PurchaseOrderDetail() {
       </Dialog>
 
       <VendorInvoiceModal order={invoiceOpen ? order : null} onClose={() => setInvoiceOpen(false)} />
+
+      {rtsItem && (
+        <ReturnToSupplierModal
+          lineItem={rtsItem}
+          onClose={() => setRtsItem(null)}
+          onSuccess={() => { refresh(); setRtsItem(null) }}
+        />
+      )}
     </div>
   )
 }

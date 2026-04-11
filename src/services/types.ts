@@ -48,6 +48,21 @@ export interface JobAdapter {
   // Tasks
   getTasks: () => Task[];
   updateTask: (id: string, patch: Partial<Task>) => Promise<void>;
+
+  // Return to Supplier
+  getReturnToSuppliers: () => import("../lib/types").ReturnToSupplier[];
+  insertReturnToSupplier: (rts: Omit<import("../lib/types").ReturnToSupplier, 'id' | 'createdAt' | 'updatedAt'>) => Promise<import("../lib/types").ReturnToSupplier>;
+  updateReturnToSupplier: (id: string, patch: Partial<import("../lib/types").ReturnToSupplier>) => Promise<void>;
+
+  // Atomic Transactions
+  runAtomicUpdate: (ops: import("./types").AtomicOp[]) => Promise<import("./types").AtomicOp[]>;
+}
+
+export interface AtomicOp {
+  resource: string;
+  action?: "insert" | "update";
+  id?: string;
+  patch: Record<string, any>;
 }
 
 /**

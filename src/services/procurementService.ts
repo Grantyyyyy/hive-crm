@@ -4,6 +4,7 @@ import { generateNumber } from "./types";
 import { recalculateStockLevel } from "./inventoryService";
 import { createReceiptTransaction } from "./inventoryTransactionService";
 import { generateId } from "../lib/helpers";
+import type { PurchaseReceiptItem, ReturnToSupplier, InventoryItem, InventoryTransaction } from "../lib/types";
 
 /**
  * Approves a Purchase Request and converts it to Purchase Orders.
@@ -75,6 +76,151 @@ export async function approvePurchaseRequest(
 }
 
 /**
+ * Initiates a Return to Supplier (RTS) event for previously accepted inventory.
+ * Enforces strict guards: Physical Stock check, Returnable flag check, and 
+ * original acceptance limits. Recalculates Moving Average Cost reversing the 
+ * original purchase value.
+ */
+export async function createReturnToSupplier(
+  params: {
+    receiptItemId: string;
+    quantity: number;
+    reason?: string;
+    vendorReference?: string;
+    userId: string;
+    userName: string;
+  },
+  adapter: JobAdapter
+): Promise<ReturnToSupplier> {
+  // 1. Fetch source documents
+  const receiptItems = adapter.getPurchaseReceiptItems();
+  const ri = receiptItems.find(i => i.id === params.receiptItemId);
+  if (!ri) throw new Error("Receipt line item not found");
+
+  if (!ri.isReturnable) {
+    throw new Error("This item is marked as non-returnable in the receiving log.");
+  }
+
+  const inventory = adapter.getInventoryItems();
+  const item = inventory.find(i => i.id === ri.inventoryItemId);
+  if (!item) throw new Error("Inventory item not found");
+
+  // 2. Validate quantities
+  const alreadyReturned = ri.returnedQuantity || 0;
+  const availableToReturn = ri.quantityAccepted - alreadyReturned;
+
+  if (params.quantity <= 0) throw new Error("Return quantity must be greater than zero.");
+  if (params.quantity > availableToReturn) {
+    throw new Error(`Cannot return ${params.quantity} units. Only ${availableToReturn} units remain from the original acceptance of ${ri.quantityAccepted}.`);
+  }
+
+  if (item.stockQuantity < params.quantity) {
+    throw new Error(`Only ${item.stockQuantity} units in stock. You requested ${params.quantity}.`);
+  }
+
+  // 3. Reverse Moving Average Calculation
+  const currentStock = item.stockQuantity;
+  const currentAvgCost = item.movingAverageCost || 0;
+  const returnQty = params.quantity;
+  const originalUnitCost = ri.unitCost;
+
+  const currentValue = currentStock * currentAvgCost;
+  const returnValue = returnQty * originalUnitCost;
+  const remainingValue = currentValue - returnValue;
+  const remainingQty = currentStock - returnQty;
+
+  let newMAC = 0;
+  if (remainingQty > 0) {
+    newMAC = remainingValue / remainingQty;
+    if (newMAC < 0) {
+      console.warn(`[procurementService] System Anomaly: Negative Inventory Value detected during RTS for "${item.name}". RemainingValue: ${remainingValue}. Coerced MAC to $0.`);
+      newMAC = 0;
+    }
+  } else {
+    // Zero-stock guard: If stock goes to zero, MAC resets to 0
+    newMAC = 0;
+    console.log(`[procurementService] Item "${item.name}" stock hit zero after RTS. Resetting Moving Average to $0.`);
+  }
+
+  const newStockLevel = recalculateStockLevel(remainingQty, item.reservedQuantity, item.reorderThreshold);
+
+  // 4. Generate RTS Metadata
+  const existingRTS = adapter.getReturnToSuppliers();
+  const rtsNumber = generateNumber('RTS', existingRTS.map(r => r.rtsNumber));
+
+  // Get parent PO ID (denormalized for query performance)
+  const receipts = adapter.getPurchaseReceipts();
+  const receipt = receipts.find(r => r.id === ri.receiptId);
+  if (!receipt) throw new Error("Parent receipt not found — data integrity failure.");
+
+  // 5. Atomic Transaction: Multi-table update
+  await adapter.runAtomicUpdate([
+    {
+      resource: 'inventory',
+      id: item.id,
+      patch: {
+        stockQuantity: remainingQty,
+        movingAverageCost: newMAC,
+        stockLevel: newStockLevel,
+        updatedAt: new Date().toISOString()
+      }
+    },
+    {
+      resource: 'purchase_receipt_items',
+      id: ri.id,
+      patch: {
+        returnedQuantity: alreadyReturned + returnQty
+      }
+    }
+  ]);
+
+  // 6. Record RTS entry
+  const rtsEntry: Omit<ReturnToSupplier, 'id' | 'createdAt' | 'updatedAt'> = {
+    userId: params.userId,
+    userName: params.userName,
+    rtsNumber,
+    poId: receipt.poId,
+    receiptId: ri.receiptId,
+    receiptItemId: ri.id,
+    inventoryItemId: item.id,
+    quantity: returnQty,
+    unitCost: originalUnitCost,
+    currency: ri.currency,
+    status: 'pending',
+    reason: params.reason,
+    vendorReference: params.vendorReference
+  };
+
+  const createdRTS = await adapter.insertReturnToSupplier(rtsEntry);
+
+  // 7. Audit Trail: Inventory Transaction
+  const auditTx: Omit<InventoryTransaction, 'id' | 'createdAt'> = {
+    inventoryItemId: item.id,
+    inventoryItemName: item.name,
+    type: 'return', // Logic level type
+    quantityChange: -returnQty,
+    quantityBefore: currentStock,
+    quantityAfter: remainingQty,
+    unitCost: originalUnitCost,
+    totalCost: -(returnQty * originalUnitCost),
+    currency: ri.currency,
+    referenceType: 'return_to_supplier',
+    referenceId: createdRTS.id,
+    referenceNumber: createdRTS.rtsNumber,
+    userId: params.userId,
+    userName: params.userName,
+    reason: `Stock returned to vendor via RTS: ${rtsNumber}`
+  };
+
+  await adapter.insertInventoryTransaction(auditTx);
+
+  console.log(`[procurementService] RTS ${rtsNumber} created. Stock: ${currentStock} -> ${remainingQty}. MAC: ${currentAvgCost} -> ${newMAC}.`);
+
+  return createdRTS;
+}
+
+
+/**
  * Calculates current PO fulfillment based on historical receipts.
  * Returns a projection of total ordered vs total accepted per line item,
  * and the overall PO status.
@@ -83,13 +229,13 @@ export function calculatePOFulfillment(
   po: PurchaseOrder,
   receiptItems: import('../lib/types').PurchaseReceiptItem[]
 ): {
-  items: Record<string, { ordered: number, accepted: number, received: number, remaining: number }>;
+  items: Record<string, { ordered: number, accepted: number, received: number, rejected: number, remaining: number }>;
   status: import('../lib/types').PurchaseOrderStatus;
 } {
-  const fulfillment: Record<string, { ordered: number, accepted: number, received: number, remaining: number }> = {};
+  const fulfillment: Record<string, { ordered: number, accepted: number, received: number, rejected: number, remaining: number }> = {};
 
   po.items.forEach(item => {
-    fulfillment[item.id] = { ordered: item.quantity, accepted: 0, received: 0, remaining: item.quantity };
+    fulfillment[item.id] = { ordered: item.quantity, accepted: 0, received: 0, rejected: 0, remaining: item.quantity };
   });
 
   const matchingReceiptItems = receiptItems.filter(ri => fulfillment[ri.poItemId]);
@@ -97,6 +243,7 @@ export function calculatePOFulfillment(
   matchingReceiptItems.forEach(ri => {
     fulfillment[ri.poItemId].accepted += ri.quantityAccepted;
     fulfillment[ri.poItemId].received += ri.quantityReceived;
+    fulfillment[ri.poItemId].rejected += ri.quantityRejected;
     fulfillment[ri.poItemId].remaining -= ri.quantityAccepted; // Only accepted items reduce the remaining quantity to receive correctly
   });
 
@@ -199,6 +346,7 @@ export async function createPurchaseReceipt(
       quantityRejected: input.quantityRejected,
       rejectionReason: input.rejectionReason,
       isReturnable: input.isReturnable,
+      returnedQuantity: 0,
       unitCost: input.unitCost,
       currency: input.currency
     });

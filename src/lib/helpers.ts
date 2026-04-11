@@ -104,11 +104,32 @@ export function getRelationshipTextColor(label: RelationshipLabel): string {
 
 export type DealHealth = 'green' | 'amber' | 'red'
 
-export function getDealHealth(lastActivityDate: string | null): DealHealth {
-  if (!lastActivityDate) return 'red'
-  const days = daysSince(lastActivityDate)
-  if (days > 14) return 'red'
-  if (days >= 7) return 'amber'
+export function getDealHealth(
+  lastActivityDate: string | null, 
+  createdAt?: string,
+  expectedCloseDate?: string | null,
+  updatedAt?: string | null
+): DealHealth {
+  // treating creation as activity if none exists
+  const lastInteraction = lastActivityDate || createdAt || new Date().toISOString()
+  const inactiveDays = daysSince(lastInteraction)
+  
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  const isOverdue = expectedCloseDate && new Date(expectedCloseDate).getTime() < today.getTime()
+  
+  // AT RISK (RED)
+  // - No activity > 14 days
+  // - OR past expected close date
+  if (inactiveDays > 14 || isOverdue) return 'red'
+  
+  // NEEDS ATTENTION (AMBER)
+  // - No activity in 7-14 days
+  // - OR hasn't been updated in 7 days (stalled)
+  const isStalled = updatedAt && daysSince(updatedAt) >= 7
+  if (inactiveDays >= 7 || isStalled) return 'amber'
+  
   return 'green'
 }
 

@@ -98,19 +98,19 @@ export function ConfirmModal({
         className="sm:max-w-[440px] p-7 border-none bg-white dark:bg-slate-900"
         onClose={() => onOpenChange(false)}
       >
-        <div className="flex flex-col items-start gap-5">
+        <div className="flex flex-col items-center gap-6 text-center">
           {/* Icon Section */}
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center relative ${variantStyles.iconBg}`}>
-            <IconComponent className={`w-5 h-5 ${variantStyles.iconColor}`} />
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center relative ${variantStyles.iconBg}`}>
+            <IconComponent className={`w-6 h-6 ${variantStyles.iconColor}`} />
             <div className={`absolute top-0 right-0 w-3.5 h-3.5 border-2 border-white dark:border-slate-900 rounded-full shadow-sm ${variantStyles.dotColor}`} />
           </div>
 
           {/* Text Section */}
           <div className="space-y-2">
-            <h2 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white uppercase">
+            <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white uppercase leading-none">
               {title}
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-[320px]">
+            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-[340px]">
               {description}
             </p>
           </div>

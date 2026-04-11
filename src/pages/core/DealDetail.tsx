@@ -55,8 +55,8 @@ const activityColorMap: Record<string, string> = {
   meeting: "bg-emerald-500",
 }
 
-function DealHealthBadge({ lastActivityDate }: { lastActivityDate: string | null }) {
-  const health = getDealHealth(lastActivityDate)
+function DealHealthBadge({ lastActivityDate, createdAt }: { lastActivityDate: string | null; createdAt?: string }) {
+  const health = getDealHealth(lastActivityDate, createdAt)
   const config = {
     green: {
       label: 'Healthy',
@@ -235,7 +235,12 @@ export function DealDetail() {
                   >
                     {STAGE_LABELS[deal.stage]}
                   </span>
-                  <DealHealthBadge lastActivityDate={lastActivityDate} />
+                  <DealHealthBadge 
+                    lastActivityDate={lastActivityDate} 
+                    createdAt={deal.createdAt} 
+                    expectedCloseDate={deal.expectedCloseDate}
+                    updatedAt={deal.updatedAt}
+                  />
                 </div>
 
                 <div className="flex flex-wrap gap-6 text-sm font-medium text-slate-600 dark:text-slate-400">

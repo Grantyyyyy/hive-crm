@@ -11,7 +11,8 @@ import {
   CheckCircle2,
   AlertCircle,
   List,
-  LayoutGrid
+  LayoutGrid,
+  Zap
 } from "lucide-react"
 import { DeleteModal } from "@/components/ui/delete-modal"
 import {
@@ -86,8 +87,13 @@ const STAGE_STYLE: Record<DealStage, { bg: string; text: string; icon: any }> = 
 
 /* ── Sortable Card Component ─────────────────────────────────────── */
 
-function DealHealthBadge({ lastActivityDate }: { lastActivityDate: string | null }) {
-  const health = getDealHealth(lastActivityDate)
+function DealHealthBadge({ lastActivityDate, createdAt, expectedCloseDate, updatedAt }: { 
+  lastActivityDate: string | null; 
+  createdAt?: string;
+  expectedCloseDate?: string | null;
+  updatedAt?: string | null;
+}) {
+  const health = getDealHealth(lastActivityDate, createdAt, expectedCloseDate, updatedAt)
   const config = {
     green: {
       label: 'Healthy',
@@ -161,7 +167,19 @@ function DealCardContent({ deal, contactName, activities, isDragging = false }: 
       <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1 truncate">{deal.title}</h4>
       <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate mb-2">{contactName}</p>
       <div className="mb-4">
-        <DealHealthBadge lastActivityDate={getLastActivityDate(deal.id, activities)} />
+        <div className="flex items-center justify-between mb-2">
+          <DealHealthBadge 
+            lastActivityDate={getLastActivityDate(deal.id, activities)} 
+            createdAt={deal.createdAt}
+            expectedCloseDate={deal.expectedCloseDate}
+            updatedAt={deal.updatedAt}
+          />
+          {deal.value >= 10000 && (
+            <span className="flex items-center gap-1 text-[9px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-tighter bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded border border-amber-200/50 dark:border-amber-800/50">
+              High Value
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="flex items-center justify-between pt-2 border-t border-slate-50 dark:border-slate-800/50 mt-1">
@@ -255,6 +273,7 @@ export function Deals() {
 
   const [showModal, setShowModal] = useState(false)
   const [viewMode, setViewMode] = useState<"board" | "list">("board")
+  const [autoPrioritize, setAutoPrioritize] = useState(true)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [prefilledStage, setPrefilledStage] = useState<DealStage | undefined>(undefined)
   const [pendingDelete, setPendingDelete] = useState<Deal | null>(null)
@@ -302,16 +321,27 @@ export function Deals() {
   )
 
   const dealsByStage = useMemo(() => {
-    const map: Record<DealStage, Deal[]> = {
-      discovery: [],
-      proposal: [],
-      negotiation: [],
-      won: [],
-      lost: [],
-    }
-    filtered.forEach((d) => map[d.stage].push(d))
-    return map
-  }, [filtered])
+    return DEAL_STAGES.reduce((acc, stage) => {
+      const filtered = deals.filter(d => d.stage === stage)
+      
+      // Sort by health only if autoPrioritize is active
+      acc[stage] = [...filtered].sort((a, b) => {
+        if (!autoPrioritize) return 0 // Maintain original order (by creation)
+
+        const healthA = getDealHealth(getLastActivityDate(a.id, activities), a.createdAt, a.expectedCloseDate, a.updatedAt)
+        const healthB = getDealHealth(getLastActivityDate(b.id, activities), b.createdAt, b.expectedCloseDate, b.updatedAt)
+        
+        const priority = { red: 0, amber: 1, green: 2 }
+        if (priority[healthA] !== priority[healthB]) {
+          return priority[healthA] - priority[healthB]
+        }
+        
+        return b.value - a.value
+      })
+      
+      return acc
+    }, {} as Record<DealStage, Deal[]>)
+  }, [deals, activities])
 
   const totalsByStage = useMemo(() => {
     const map: Record<string, number> = {}
@@ -423,6 +453,21 @@ export function Deals() {
             )}
             <div className="bg-white dark:bg-slate-900 p-1 rounded-md border border-slate-200 dark:border-slate-800 flex items-center mr-2 shadow-sm gap-1">
               <button
+                onClick={() => setAutoPrioritize(!autoPrioritize)}
+                className={cn(
+                  "h-8 px-3 rounded text-[11px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-2",
+                  autoPrioritize
+                    ? "bg-amber-500 text-white shadow-md shadow-amber-500/20"
+                    : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                )}
+              >
+                <Zap className={cn("w-3.5 h-3.5", autoPrioritize ? "fill-current" : "")} />
+                Prioritize
+              </button>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 p-1 rounded-md border border-slate-200 dark:border-slate-800 flex items-center mr-2 shadow-sm gap-1">
+              <button
                 onClick={() => setViewMode("board")}
                 className={cn(
                   "h-8 px-3 rounded text-[11px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-2",
@@ -515,7 +560,12 @@ export function Deals() {
               {
                 header: "Health",
                 render: (d: Deal) => (
-                  <DealHealthBadge lastActivityDate={getLastActivityDate(d.id, activities)} />
+                  <DealHealthBadge 
+                    lastActivityDate={getLastActivityDate(d.id, activities)} 
+                    createdAt={d.createdAt}
+                    expectedCloseDate={d.expectedCloseDate}
+                    updatedAt={d.updatedAt}
+                  />
                 )
               },
               {
@@ -592,9 +642,9 @@ export function Deals() {
                           {(dealsByStage[stage] || []).length}
                         </span>
                       </div>
-                      <span className="text-[11px] font-black text-teal-600 dark:text-teal-400 whitespace-nowrap">
-                        {formatCurrency(totalsByStage[stage])}
-                      </span>
+                      <p className="text-[10px] font-black text-emerald-600 dark:text-emerald-500 tracking-wider">
+                        {formatCurrency((dealsByStage[stage] || []).reduce((sum, d) => sum + d.value, 0))}
+                      </p>
                     </div>
 
                     {/* Droppable Area */}

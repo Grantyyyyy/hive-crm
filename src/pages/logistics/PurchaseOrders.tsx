@@ -19,7 +19,6 @@ import { cn } from "@/lib/utils"
 import type { PurchaseOrder, PurchaseOrderStatus, InventoryTransaction } from "@/lib/types"
 
 import { AddPurchaseOrderModal } from "@/components/logisticsComponent/AddPurchaseOrderModal"
-import { restockFromPO } from "@/services/procurementService"
 import type { JobAdapter } from "@/services/types"
 import { useCRMContext, updateRow, insertRows, deleteRow } from "@/lib/CRMContext"
 import { toast } from "sonner"
@@ -59,23 +58,16 @@ export function PurchaseOrders() {
     getPurchaseOrders: () => orders,
     updatePurchaseOrder: (id, patch) => updateRow<PurchaseOrder>(ctx, 'purchase_orders', id, patch),
     insertPurchaseOrder: (po) => insertRows<PurchaseOrder>(ctx, 'purchase_orders', [po as any]).then(rows => rows[0]),
+    getPurchaseReceipts: () => ctx.getResource<any>('purchase_receipts').data,
+    getPurchaseReceiptItems: () => ctx.getResource<any>('purchase_receipt_items').data,
+    insertPurchaseReceipt: (receipt) => insertRows<any>(ctx, 'purchase_receipts', [receipt as any]).then(rows => rows[0]),
+    insertPurchaseReceiptItem: (item) => insertRows<any>(ctx, 'purchase_receipt_items', [item as any]).then(rows => rows[0]),
     getInventoryTransactions: () => inventoryTransactions,
     insertInventoryTransaction: (tx) => insertRows<InventoryTransaction>(ctx, 'inventory_transactions', [tx as any]).then(rows => rows[0]),
 
     getTasks: () => ctx.getResource<Task>('tasks').data,
     updateTask: (id, patch) => updateRow<Task>(ctx, 'tasks', id, patch),
   }), [ctx, orders, inventoryTransactions])
-
-  const handleReceive = async (order: PurchaseOrder) => {
-    try {
-      await updateRow<PurchaseOrder>(ctx, 'purchase_orders', order.id, { status: 'received' })
-      await restockFromPO({ ...order, status: 'received' }, adapter, user?.id, user?.user_metadata?.full_name || 'Unknown User')
-      refresh()
-      toast.success("Order Received", { description: "Inventory has been restocked automatically." })
-    } catch (e: any) {
-      toast.error("Failed to receive order", { description: e.message })
-    }
-  }
 
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<PurchaseOrderStatus | 'all'>('all')
@@ -133,7 +125,8 @@ export function PurchaseOrders() {
     { value: 'draft', label: 'Draft' },
     { value: 'pending', label: 'Pending' },
     { value: 'sent', label: 'Sent' },
-    { value: 'received', label: 'Received' },
+    { value: 'partially_received', label: 'Partially Received' },
+    { value: 'fully_received', label: 'Fulfilled' },
     { value: 'cancelled', label: 'Cancelled' },
   ]
 
@@ -202,16 +195,6 @@ export function PurchaseOrders() {
       header: "Actions",
       render: (order) => (
         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          {order.status === 'sent' && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => { e.stopPropagation(); handleReceive(order) }}
-              className="text-[11px] h-7 px-3 font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
-            >
-              Receive
-            </Button>
-          )}
           <Button
             variant="ghost"
             size="sm"
@@ -378,13 +361,14 @@ function StatusBadge({ status }: { status: PurchaseOrderStatus }) {
     draft: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400",
     pending: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400",
     sent: "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400",
-    received: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400",
+    partially_received: "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400",
+    fully_received: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400",
     cancelled: "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400",
   }
 
   return (
     <span className={cn("px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm border border-transparent", styles[status])}>
-      {status}
+      {status.replace('_', ' ')}
     </span>
   )
 }

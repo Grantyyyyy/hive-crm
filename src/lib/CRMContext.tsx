@@ -22,6 +22,8 @@ export const TABLE_MAP: Record<string, string> = {
   inventory: "inventory",
   purchase_orders: "purchase_orders",
   purchase_requests: "purchase_requests",
+  purchase_receipts: "purchase_receipts",
+  purchase_receipt_items: "purchase_receipt_items",
   inventory_transactions: "inventory_transactions",
   vendors: "vendors",
   projects: "projects",
@@ -38,8 +40,10 @@ type CamelObject = Record<string, any>
 const UUID_FIELDS = [
   "contact_id", "deal_id", "lead_id", "entity_id",
   "converted_to_contact_id", "converted_to_deal_id",
+  "converted_to_contact_id", "converted_to_deal_id",
   "customer_id", "project_id", "task_id", "tag_id",
-  "parent_task_id", "inventory_item_id", "quote_id"
+  "parent_task_id", "inventory_item_id", "quote_id",
+  "receipt_id", "po_id", "po_item_id"
 ]
 
 export function toSnake(obj: any): any {
@@ -245,7 +249,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (action === "insert") {
-          const noUserIdTables = ['task_tags', 'task_tag_links', 'task_subtasks', 'task_comments']
+          const noUserIdTables = ['task_tags', 'task_tag_links', 'task_subtasks', 'task_comments', 'purchase_receipt_items']
           const ownerIdTables = ['tasks', 'task_tags', 'projects', 'leads', 'contacts', 'deals']
 
           if (!noUserIdTables.includes(op.resource) && !snakePatch.user_id) {
@@ -337,7 +341,7 @@ export async function insertRows<T extends { id: string }>(
       ['activities', 'tags'].forEach(f => delete row[f])
     }
 
-    const noUserIdTables = ['task_tags', 'task_tag_links', 'task_subtasks', 'task_comments']
+    const noUserIdTables = ['task_tags', 'task_tag_links', 'task_subtasks', 'task_comments', 'purchase_receipt_items']
     const ownerIdTables = ['tasks', 'task_tags', 'projects', 'leads', 'contacts', 'deals']
 
     if (!noUserIdTables.includes(resourceName) && !row.user_id) {

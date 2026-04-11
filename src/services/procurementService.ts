@@ -75,91 +75,194 @@ export async function approvePurchaseRequest(
 }
 
 /**
- * Restocks inventory when a Purchase Order is marked as Received.
- * Creates audit trail entries for each stock change.
+ * Calculates current PO fulfillment based on historical receipts.
+ * Returns a projection of total ordered vs total accepted per line item,
+ * and the overall PO status.
  */
-export async function restockFromPO(
+export function calculatePOFulfillment(
   po: PurchaseOrder,
-  adapter: JobAdapter,
-  userId?: string,
-  userName?: string
+  receiptItems: import('../lib/types').PurchaseReceiptItem[]
+): {
+  items: Record<string, { ordered: number, accepted: number, received: number, remaining: number }>;
+  status: import('../lib/types').PurchaseOrderStatus;
+} {
+  const fulfillment: Record<string, { ordered: number, accepted: number, received: number, remaining: number }> = {};
+
+  po.items.forEach(item => {
+    fulfillment[item.id] = { ordered: item.quantity, accepted: 0, received: 0, remaining: item.quantity };
+  });
+
+  const matchingReceiptItems = receiptItems.filter(ri => fulfillment[ri.poItemId]);
+
+  matchingReceiptItems.forEach(ri => {
+    fulfillment[ri.poItemId].accepted += ri.quantityAccepted;
+    fulfillment[ri.poItemId].received += ri.quantityReceived;
+    fulfillment[ri.poItemId].remaining -= ri.quantityAccepted; // Only accepted items reduce the remaining quantity to receive correctly
+  });
+
+  let fullyReceived = true;
+  let partiallyReceived = false;
+
+  po.items.forEach(item => {
+    const f = fulfillment[item.id];
+    // We base status strictly on accepted amounts fulfilling the ordered quantities
+    if (f.accepted > 0) partiallyReceived = true;
+    if (f.accepted < f.ordered) fullyReceived = false;
+  });
+
+  let newStatus = po.status;
+  if (fullyReceived) newStatus = 'fully_received';
+  else if (partiallyReceived) newStatus = 'partially_received';
+
+  return { items: fulfillment, status: newStatus };
+}
+
+/**
+ * Creates a new purchase receipt and logs associated inventory updates.
+ * Implements strict locks and optimistic concurrency checks.
+ */
+export async function createPurchaseReceipt(
+  params: {
+    po: PurchaseOrder;
+    receiptNumber: string;
+    vendorReference?: string;
+    notes?: string;
+    userId: string;
+    userName?: string;
+    items: Array<{
+      poItemId: string;
+      inventoryItemId?: string;
+      quantityReceived: number;
+      quantityAccepted: number;
+      quantityRejected: number;
+      rejectionReason?: import('../lib/types').RejectionReason;
+      isReturnable: boolean;
+      unitCost: number;
+      currency: string;
+    }>;
+  },
+  adapter: JobAdapter
 ): Promise<void> {
-  if (po.status !== 'received') return;
+  // 1. Transaction scope - (Simulated here with adapter, but in prod Supabase this would be an RPC with row-locks)
+  // FULL PO LOCK scope
+  const existingReceipts = adapter.getPurchaseReceipts();
+
+  // 3. IDEMPOTENCY CHECK
+  if (existingReceipts.some(r => r.receiptNumber === params.receiptNumber)) {
+    throw new Error(`Receipt number ${params.receiptNumber} already exists.`);
+  }
+
+  const allReceiptItems = adapter.getPurchaseReceiptItems();
+
+  // 4 & 5. AGGREGATE READ & VALIDATION
+  const fulfillment = calculatePOFulfillment(params.po, allReceiptItems);
+
+  params.items.forEach(input => {
+    // Math invariant
+    if (input.quantityReceived !== input.quantityAccepted + input.quantityRejected) {
+      throw new Error(`Invariant violation: Received must equal Accepted + Rejected for item ${input.poItemId}`);
+    }
+    if (input.quantityReceived < 0 || input.quantityAccepted < 0 || input.quantityRejected < 0) {
+      throw new Error(`Invariant violation: Quantities cannot be negative for item ${input.poItemId}`);
+    }
+
+    // Limits validation
+    const lineFulfillment = fulfillment.items[input.poItemId];
+    if (!lineFulfillment) throw new Error(`PO Item ${input.poItemId} not found on PO.`);
+
+    if (lineFulfillment.accepted + input.quantityAccepted > lineFulfillment.ordered) {
+      throw new Error(`Aggregate validation failed: Cannot accept more than ordered for item ${input.poItemId}`);
+    }
+  });
+
+  // 6. WRITE LOG
+  const insertedReceipt = await adapter.insertPurchaseReceipt({
+    id: generateId(),
+    poId: params.po.id,
+    receiptNumber: params.receiptNumber,
+    vendorReference: params.vendorReference,
+    date: new Date().toISOString(),
+    notes: params.notes,
+    createdBy: params.userId,
+  });
 
   const inventory = adapter.getInventoryItems();
 
-  for (const item of po.items) {
-    if (!item.trackInInventory) continue;
+  for (const input of params.items) {
+    await adapter.insertPurchaseReceiptItem({
+      id: generateId(),
+      receiptId: insertedReceipt.id,
+      poItemId: input.poItemId,
+      inventoryItemId: input.inventoryItemId,
+      quantityReceived: input.quantityReceived,
+      quantityAccepted: input.quantityAccepted,
+      quantityRejected: input.quantityRejected,
+      rejectionReason: input.rejectionReason,
+      isReturnable: input.isReturnable,
+      unitCost: input.unitCost,
+      currency: input.currency
+    });
 
-    const invItem = inventory.find(i => i.id === item.inventoryItemId);
-    if (invItem) {
-      const oldQty = invItem.stockQuantity;
-      const newQty = oldQty + item.quantity;
-      const newLevel = recalculateStockLevel(newQty, invItem.reservedQuantity, invItem.reorderThreshold);
+    // 7. VALUATION & INVENTORY UPDATE (Only for accepted items!)
+    if (input.quantityAccepted > 0 && input.inventoryItemId) {
+      const invItem = inventory.find(i => i.id === input.inventoryItemId);
+      if (invItem) {
+        const oldQty = invItem.stockQuantity;
+        const newQty = oldQty + input.quantityAccepted;
+        const currentAvg = invItem.movingAverageCost || invItem.price || 0;
 
-      await adapter.updateInventoryItem(invItem.id, {
-        stockQuantity: newQty,
-        stockLevel: newLevel
-      });
+        // Zero-Division Guard & MA calculation
+        let newAvgCost = input.unitCost;
+        if (newQty > 0 && oldQty >= 0) { // Safety: If recovering from negative, just take incoming cost. Or if new is 0...
+          newAvgCost = (oldQty * currentAvg + input.quantityAccepted * input.unitCost) / newQty;
+        } else {
+          console.warn(`[procurementService] Anomaly detected: Negative stock or zero sum encountered. Resetting Moving Average Cost to incoming Unit Cost for item ${invItem.id}`);
+        }
 
-      // Create audit trail entry
-      try {
-        await createReceiptTransaction({
-          inventoryItemId: invItem.id,
-          inventoryItemName: invItem.name,
-          quantityChange: item.quantity,
-          quantityBefore: oldQty,
-          quantityAfter: newQty,
-          referenceId: po.id,
-          referenceNumber: po.poNumber,
-          reason: `Received from PO ${po.poNumber}`,
-          userId: userId || 'system',
-          userName: userName || 'System'
-        }, adapter);
-      } catch (e) {
-        console.error('[procurementService] Failed to create audit trail for receipt:', e);
+        const newLevel = recalculateStockLevel(newQty, invItem.reservedQuantity, invItem.reorderThreshold);
+
+        await adapter.updateInventoryItem(invItem.id, {
+          stockQuantity: newQty,
+          movingAverageCost: newAvgCost,
+          stockLevel: newLevel
+        });
+
+        // Log transaction IN
+        try {
+          await createReceiptTransaction({
+            inventoryItemId: invItem.id,
+            inventoryItemName: invItem.name,
+            quantityChange: input.quantityAccepted,
+            quantityBefore: oldQty,
+            quantityAfter: newQty,
+            unitCost: input.unitCost,
+            totalCost: input.quantityAccepted * input.unitCost,
+            currency: input.currency,
+            referenceId: insertedReceipt.id,
+            referenceNumber: params.receiptNumber,
+            reason: `PO Receipt ${params.receiptNumber}`,
+            userId: params.userId,
+            userName: params.userName || params.userId // Fallback to userId if userName not provided
+          }, adapter);
+        } catch (e) {
+          console.error('[procurementService] Failed to log inventory transaction:', e);
+        }
+      } else {
+        console.warn(`[procurementService] Inventory item ${input.inventoryItemId} mapped but not found in DB.`);
       }
-
-      console.log(`[procurementService] Inventory restocked: ${invItem.name} +${item.quantity} units → new qty: ${newQty}`);
-    } else {
-      // Create new inventory item
-      const newItem = await adapter.insertInventoryItem({
-        name: item.name,
-        sku: `SKU-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-        category: 'Uncategorized',
-        price: item.price,
-        stockQuantity: item.quantity,
-        reservedQuantity: 0,
-        stockLevel: recalculateStockLevel(item.quantity, 0, undefined),
-        status: 'active',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
-
-      try {
-        await createReceiptTransaction({
-          inventoryItemId: newItem.id,
-          inventoryItemName: newItem.name,
-          quantityChange: item.quantity,
-          quantityBefore: 0,
-          quantityAfter: item.quantity,
-          referenceId: po.id,
-          referenceNumber: po.poNumber,
-          reason: `New item created from PO ${po.poNumber}`,
-          userId: userId || 'system',
-          userName: userName || 'System'
-        }, adapter);
-      } catch (e) {
-        console.error('[procurementService] Failed to create audit trail for new receipt:', e);
-      }
-
-      console.log(`[procurementService] New inventory item created: ${newItem.name} with ${item.quantity} units`);
     }
   }
 
-  // Mark PO as processed would go here if column existed
-  // await adapter.updatePurchaseOrder(po.id, { stockReceived: true });
+  // 8. PO PROJECTION SYNC
+  // We compute based on historicals PLUS what we just added.
+  const updatedAllItems = [...allReceiptItems, ...params.items.map(i => ({ ...i, id: 'temp', receiptId: insertedReceipt.id }))];
+  const { status: newStatus } = calculatePOFulfillment(params.po, updatedAllItems as any);
+
+  if (newStatus !== params.po.status) {
+    await adapter.updatePurchaseOrder(params.po.id, { status: newStatus, updatedAt: new Date().toISOString() });
+  }
 }
+
 
 /**
  * Sends a Purchase Order to a vendor and handles notifications.

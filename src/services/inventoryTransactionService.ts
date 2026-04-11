@@ -25,6 +25,9 @@ export async function createInventoryTransaction(
       quantityChange: newTransaction.quantityChange,
       quantityBefore: newTransaction.quantityBefore,
       quantityAfter: newTransaction.quantityAfter,
+      unitCost: newTransaction.unitCost,
+      totalCost: newTransaction.totalCost,
+      currency: newTransaction.currency,
       reservedChange: newTransaction.reservedChange,
       reservedBefore: newTransaction.reservedBefore,
       reservedAfter: newTransaction.reservedAfter,
@@ -56,6 +59,9 @@ export async function createReceiptTransaction(
     quantityChange: number;
     quantityBefore: number;
     quantityAfter: number;
+    unitCost?: number;
+    totalCost?: number;
+    currency?: string;
     referenceId?: string;
     referenceNumber?: string;
     reason?: string;
@@ -71,6 +77,9 @@ export async function createReceiptTransaction(
     quantityChange: params.quantityChange,
     quantityBefore: params.quantityBefore,
     quantityAfter: params.quantityAfter,
+    unitCost: params.unitCost,
+    totalCost: params.totalCost,
+    currency: params.currency,
     referenceType: 'purchase_order',
     referenceId: params.referenceId,
     referenceNumber: params.referenceNumber,

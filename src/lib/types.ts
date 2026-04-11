@@ -313,11 +313,12 @@ export interface InventoryItem {
   imageUrl?: string
   reorderThreshold?: number
   reorderQuantity?: number
+  movingAverageCost?: number
   createdAt: string
   updatedAt: string
 }
 
-export type PurchaseOrderStatus = 'draft' | 'pending' | 'sent' | 'received' | 'cancelled'
+export type PurchaseOrderStatus = 'draft' | 'pending' | 'sent' | 'partially_received' | 'fully_received' | 'cancelled'
 
 export interface PurchaseOrder {
   id: string
@@ -344,6 +345,33 @@ export interface PurchaseOrder {
 
   createdAt: string
   updatedAt: string
+}
+
+export type RejectionReason = 'damaged' | 'wrong_item' | 'expired' | 'short_shipped' | 'other'
+
+export interface PurchaseReceipt {
+  id: string
+  poId: string
+  receiptNumber: string
+  vendorReference?: string
+  date: string
+  notes?: string
+  createdBy: string
+  createdAt: string
+}
+
+export interface PurchaseReceiptItem {
+  id: string
+  receiptId: string
+  poItemId: string
+  inventoryItemId?: string
+  quantityReceived: number
+  quantityAccepted: number
+  quantityRejected: number
+  rejectionReason?: RejectionReason
+  isReturnable: boolean
+  unitCost: number
+  currency: string
 }
 
 export type PurchaseRequestStatus = 'draft' | 'pending_review' | 'approved' | 'rejected' | 'ordered'
@@ -389,6 +417,9 @@ export interface InventoryTransaction {
   inventoryItemName: string
   type: InventoryTransactionType
   quantityChange: number      // + for in, - for out
+  unitCost?: number           // cost per unit for this transaction
+  totalCost?: number          // quantityChange * unitCost
+  currency?: string
   quantityBefore: number      // stockQuantity before change
   quantityAfter: number       // stockQuantity after change
   reservedChange?: number     // change in reserved quantity (optional)

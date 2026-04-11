@@ -20,6 +20,7 @@
 
   --color-accent: var(--accent);
   --color-accent-dim: var(--accent-dim);
+  --color-brand: var(--accent);
 
   --color-green: var(--green);
   --color-amber: var(--amber);

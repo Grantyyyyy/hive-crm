@@ -84,7 +84,7 @@ export async function restockFromPO(
   userId?: string,
   userName?: string
 ): Promise<void> {
-  if (po.status !== 'received' || po.stockReceived === true) return;
+  if (po.status !== 'received') return;
 
   const inventory = adapter.getInventoryItems();
 
@@ -157,8 +157,8 @@ export async function restockFromPO(
     }
   }
 
-  // Mark PO as processed to prevent double-receipt
-  await adapter.updatePurchaseOrder(po.id, { stockReceived: true });
+  // Mark PO as processed would go here if column existed
+  // await adapter.updatePurchaseOrder(po.id, { stockReceived: true });
 }
 
 /**

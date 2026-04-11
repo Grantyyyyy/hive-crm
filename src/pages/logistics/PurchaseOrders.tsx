@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useCallback } from "react"
 import { useLocation } from "wouter"
 import {
   PlusCircle,
@@ -9,17 +9,19 @@ import {
   DollarSign,
   ShoppingCart,
   TrendingUp,
-  ArrowRight
+  ArrowRight,
+  Trash2,
+  X
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCRMResource } from "@/lib/hooks"
 import { cn } from "@/lib/utils"
 import type { PurchaseOrder, PurchaseOrderStatus, InventoryTransaction } from "@/lib/types"
-import { generateId } from "@/lib/helpers"
+
 import { AddPurchaseOrderModal } from "@/components/logisticsComponent/AddPurchaseOrderModal"
 import { restockFromPO } from "@/services/procurementService"
 import type { JobAdapter } from "@/services/types"
-import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
+import { useCRMContext, updateRow, insertRows, deleteRow } from "@/lib/CRMContext"
 import { toast } from "sonner"
 import type { Quote, SalesOrder, InventoryItem, PurchaseRequest, Task } from "@/lib/types"
 import { useUser } from "@/lib/AuthContext"
@@ -33,7 +35,6 @@ export function PurchaseOrders() {
   const { user, isLoaded: userLoaded } = useUser()
   const {
     data: orders,
-    addItems: addOrders,
     refresh,
     isLoaded
   } = useCRMResource<PurchaseOrder>('purchase_orders')
@@ -80,7 +81,53 @@ export function PurchaseOrders() {
   const [statusFilter, setStatusFilter] = useState<PurchaseOrderStatus | 'all'>('all')
   const [currentPage, setCurrentPage] = useState(1)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string | number>>(new Set())
+  const [isDeleting, setIsDeleting] = useState(false)
   const itemsPerPage = 8
+
+  // Selection handlers
+  const handleToggle = useCallback((id: string | number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
+  const handleToggleAll = useCallback((allIds: (string | number)[]) => {
+    setSelectedIds(prev => {
+      const allSelected = allIds.every(id => prev.has(id))
+      if (allSelected) {
+        // Deselect all on this page
+        const next = new Set(prev)
+        allIds.forEach(id => next.delete(id))
+        return next
+      } else {
+        // Select all on this page
+        const next = new Set(prev)
+        allIds.forEach(id => next.add(id))
+        return next
+      }
+    })
+  }, [])
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return
+    setIsDeleting(true)
+    try {
+      const ids = Array.from(selectedIds)
+      await Promise.all(ids.map(id => deleteRow<PurchaseOrder>(ctx, 'purchase_orders', String(id))))
+      toast.success(`Deleted ${ids.length} purchase order${ids.length > 1 ? 's' : ''}`, {
+        description: "Selected orders have been permanently removed."
+      })
+      setSelectedIds(new Set())
+    } catch (e: any) {
+      toast.error("Failed to delete orders", { description: e.message })
+    } finally {
+      setIsDeleting(false)
+    }
+  }
 
   const statusTabs: StatusTab<PurchaseOrderStatus>[] = [
     { value: 'draft', label: 'Draft' },
@@ -89,57 +136,6 @@ export function PurchaseOrders() {
     { value: 'received', label: 'Received' },
     { value: 'cancelled', label: 'Cancelled' },
   ]
-
-  // Seed dummy data if empty
-  useEffect(() => {
-    if (isLoaded && orders.length === 0) {
-      const dummyOrders: PurchaseOrder[] = [
-        {
-          id: generateId(),
-          poNumber: "PO-99001",
-          vendorId: "v1",
-          vendorName: "Global Logistics Ltd",
-          amount: 4500.00,
-          status: 'pending',
-          date: "2023-11-01T10:00:00Z",
-          items: [],
-          createdAt: "2023-11-01T10:00:00Z",
-          updatedAt: "2023-11-01T10:00:00Z"
-        },
-        {
-          id: generateId(),
-          poNumber: "PO-99002",
-          vendorId: "v2",
-          vendorName: "Tech Parts Co",
-          amount: 1250.50,
-          status: 'sent',
-          date: "2023-10-30T14:30:00Z",
-          items: [],
-          createdAt: "2023-10-30T14:30:00Z",
-          updatedAt: "2023-10-30T14:30:00Z"
-        },
-        {
-          id: generateId(),
-          poNumber: "PO-99003",
-          vendorId: "v3",
-          vendorName: "Office Supplies Hub",
-          amount: 320.00,
-          status: 'received',
-          date: "2023-10-28T09:15:00Z",
-          items: [{
-            id: 'po-item-1',
-            inventoryItemId: 'inv-1',
-            name: 'Paper Packs',
-            quantity: 20,
-            price: 16.00
-          }],
-          createdAt: "2023-10-28T09:15:00Z",
-          updatedAt: "2023-10-28T09:15:00Z"
-        }
-      ]
-      addOrders(dummyOrders)
-    }
-  }, [isLoaded, orders.length, addOrders])
 
   // Filter logic
   const filteredOrders = useMemo(() => {
@@ -263,6 +259,43 @@ export function PurchaseOrders() {
           columns={columns}
           isLoading={!isLoaded}
           onRowClick={(order) => navigate(`/purchase-orders/${order.id}`)}
+          selection={{
+            selectedIds,
+            onToggle: handleToggle,
+            onToggleAll: handleToggleAll,
+          }}
+          bulkActionBar={
+            <div className="flex items-center justify-between gap-4 px-5 py-3 bg-gradient-to-r from-teal-600 to-teal-700 dark:from-teal-700 dark:to-teal-800 rounded-xl shadow-lg shadow-teal-600/20 text-white">
+              <div className="flex items-center gap-3">
+                <div className="size-8 rounded-lg bg-white/15 flex items-center justify-center text-sm font-black">
+                  {selectedIds.size}
+                </div>
+                <span className="text-sm font-semibold">
+                  order{selectedIds.size !== 1 ? 's' : ''} selected
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedIds(new Set())}
+                  className="text-white/80 hover:text-white hover:bg-white/10 text-xs font-bold h-8 px-3"
+                >
+                  <X className="w-3.5 h-3.5" /> Clear
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleBulkDelete}
+                  disabled={isDeleting}
+                  className="text-white hover:bg-rose-500/20 hover:text-rose-100 text-xs font-bold h-8 px-3 gap-1.5"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  {isDeleting ? 'Deleting...' : 'Delete Selected'}
+                </Button>
+              </div>
+            </div>
+          }
           pagination={{
             currentPage,
             totalPages,

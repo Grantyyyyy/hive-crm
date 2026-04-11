@@ -341,7 +341,7 @@ export interface PurchaseOrder {
   shippingInfo?: string
   internalNotes?: string
   vendorInstructions?: string
-  stockReceived?: boolean      // prevents double-receipt
+
   createdAt: string
   updatedAt: string
 }

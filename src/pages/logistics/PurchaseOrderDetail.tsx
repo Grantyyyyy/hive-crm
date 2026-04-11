@@ -14,12 +14,14 @@ import {
   MoreVertical,
   AlertTriangle,
   Building2,
-  Search
+  Search,
+  Receipt
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { DetailSkeleton } from "@/components/ui/skeletons"
 import { DeleteModal } from "@/components/ui/delete-modal"
+import { VendorInvoiceModal } from "@/components/logisticsComponent/VendorInvoiceModal"
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
 import { BackButton } from "@/components/reusables/BackButton"
@@ -72,6 +74,7 @@ export function PurchaseOrderDetail() {
   const [moreOpen, setMoreOpen] = useState(false)
   const [vendorSelectorOpen, setVendorSelectorOpen] = useState(false)
   const [vendorSearch, setVendorSearch] = useState("")
+  const [invoiceOpen, setInvoiceOpen] = useState(false)
 
   // Ref for the "More" dropdown to detect outside clicks
   const moreDropdownRef = useRef<HTMLDivElement>(null)
@@ -288,6 +291,11 @@ export function PurchaseOrderDetail() {
                   <Truck className="w-4 h-4 mr-2" /> Send to Vendor
                 </Button>
               )}
+              {order.status === "received" && (
+                <Button variant="outlineNeutral" onClick={() => setInvoiceOpen(true)} className="rounded-xl border-2 shadow-sm font-bold text-xs uppercase tracking-widest gap-2">
+                  <Receipt className="w-4 h-4 text-slate-400 group-hover:text-teal-600" /> Generate Invoice
+                </Button>
+              )}
               {order.status === "sent" && (
                 <Button variant="default" onClick={handleReceive} className="bg-emerald-600 hover:bg-emerald-700">
                   <PackageCheck className="w-4 h-4 mr-2" /> Mark Received
@@ -495,28 +503,6 @@ export function PurchaseOrderDetail() {
                 </div>
               </div>
 
-              {/* CTA based on status */}
-              {order.status === "sent" && (
-                <Button
-                  className="w-full mt-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-emerald-100 dark:shadow-none"
-                  onClick={handleReceive}
-                >
-                  <PackageCheck className="w-4 h-4 mr-2" /> Mark Received
-                </Button>
-              )}
-              {(order.status === "pending" || order.status === "draft") && (
-                <Button
-                  className={cn(
-                    "w-full mt-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-blue-100 dark:shadow-none transition-all active:scale-95",
-                    order.vendorId === NIL_UUID && "opacity-50 grayscale cursor-not-allowed shadow-none"
-                  )}
-                  disabled={order.vendorId === NIL_UUID}
-                  onClick={handleSend}
-                >
-                  <Truck className="w-4 h-4 mr-2" />
-                  {order.vendorId === NIL_UUID ? "Assign Vendor First" : "Send to Vendor"}
-                </Button>
-              )}
             </div>
           </div>
         </div>
@@ -588,6 +574,8 @@ export function PurchaseOrderDetail() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <VendorInvoiceModal order={invoiceOpen ? order : null} onClose={() => setInvoiceOpen(false)} />
     </div>
   )
 }

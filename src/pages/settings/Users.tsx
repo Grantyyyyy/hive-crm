@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useUser } from '@/lib/AuthContext';
+import { useAuth, useUser } from '@/lib/AuthContext';
 import { usePermission } from '@/lib/usePermission';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCRMContext } from '@/lib/CRMContext';
@@ -29,13 +29,15 @@ import {
   Search,
   MoreVertical,
   User as UserIcon,
-  Filter
+  Filter,
+  PlusCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ListSkeleton } from "@/components/ui/skeletons";
 import { Pagination } from "@/components/ui/Pagination";
 import { DeleteModal } from "@/components/ui/delete-modal";
+import { StatusTabs, type StatusTab } from '@/components/reusables/StatusTabs';
 
 // ── Actions dropdown ──────────────────────────────────────────────────────────
 
@@ -139,21 +141,18 @@ function UserRoleBadge({ roleName }: { roleName?: string }) {
   };
 
   return (
-    <span className={cn(
-      "px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm border border-transparent inline-flex items-center gap-1",
-      getRoleStyle(roleName)
-    )}>
-      <Shield className="w-3 h-3" />
-      {roleName || 'No Role'}
-    </span>
+    <div className={cn("px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest w-fit border border-transparent shadow-sm", getRoleStyle(roleName))}>
+      {roleName || 'Custom Role'}
+    </div>
   );
 }
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export function Users() {
-  const { user, isLoaded: userLoaded } = useUser();
-  const { getClient, userId } = useCRMContext();
+  const { isSignedIn, isLoaded: userLoaded, userId, organizationId } = useAuth();
+  const { user } = useUser();
+  const { getClient } = useCRMContext();
   const queryClient = useQueryClient();
   const { can, hasFullAccess, isLoaded: permLoaded } = usePermission();
 
@@ -167,6 +166,13 @@ export function Users() {
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
+
+  const roleTabs: StatusTab<string>[] = [
+    { value: 'admin', label: 'Admin' },
+    { value: 'manager', label: 'Manager' },
+    { value: 'agent', label: 'Agent' },
+    { value: 'custom role', label: 'Custom Role' },
+  ];
 
   // Dialog State
   const [showRoleDialog, setShowRoleDialog] = useState(false);
@@ -185,7 +191,8 @@ export function Users() {
     mutationFn: async (data: { name: string; email: string; roleId?: string }) => {
       const client = await getClient();
       if (!client) throw new Error('Not authenticated');
-      return inviteUser(client, data, userId);
+      if (!organizationId) throw new Error('Organization ID not available');
+      return inviteUser(client, data, userId, organizationId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['app-users'] });
@@ -207,7 +214,8 @@ export function Users() {
     mutationFn: async (data: { name: string; email: string; roleId?: string }) => {
       const client = await getClient();
       if (!client) throw new Error('Not authenticated');
-      return addUser(client, data, userId);
+      if (!organizationId) throw new Error('Organization ID not available');
+      return addUser(client, data, userId, organizationId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['app-users'] });
@@ -245,17 +253,19 @@ export function Users() {
   }, [user, userId, getClient]);
 
   // Data Fetching
-  const { data: usersData, isLoading: usersLoading, error: usersError } = useQuery({
+  const { data: usersData, isLoading: usersLoading, error: usersError, isFetching } = useQuery({
     queryKey: ['app-users'],
     queryFn: async () => {
       const client = await getClient();
       if (!client) throw new Error('Not authenticated');
       return fetchAppUsers(client);
     },
-    enabled: !!user && !!userId,
+    enabled: userLoaded && isSignedIn && !!userId,
+    staleTime: 0,
+    retry: false,
   });
 
-  const { data: rolesData } = useQuery({
+  const { data: rolesData, error: rolesError } = useQuery({
     queryKey: ['roles'],
     queryFn: async () => {
       const client = await getClient();
@@ -303,10 +313,12 @@ export function Users() {
   const filteredUsers = useMemo(() => {
     if (!usersData) return [];
     return usersData.filter(u => {
+      const q = search.toLowerCase();
       const matchesSearch = !search ||
-        u.name?.toLowerCase().includes(search.toLowerCase()) ||
-        u.email?.toLowerCase().includes(search.toLowerCase());
-      const matchesRole = roleFilter === 'all' || u.role?.name?.toLowerCase() === roleFilter.toLowerCase();
+        u.name?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q);
+      const matchesRole = roleFilter === 'all' ||
+        (roleFilter === 'custom role' ? !u.role : u.role?.name?.toLowerCase() === roleFilter.toLowerCase());
       return matchesSearch && matchesRole;
     });
   }, [usersData, search, roleFilter]);
@@ -388,60 +400,47 @@ export function Users() {
       <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
 
         {/* Header Region */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-slate-500 mb-1">Organization Settings</p>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Users</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">Manage and track your organization members and their access levels.</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">Organization Settings</p>
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Users</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Manage and track your organization members and their access levels.</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             {canCreate && (
               <Button
                 variant="brand"
                 onClick={() => setShowAddDialog(true)}
-                className="shadow-md shadow-teal-100 dark:shadow-none"
               >
-                <UserPlus className="w-4 h-4" /> Create User
+                <PlusCircle className="w-4 h-4" /> Create User
               </Button>
             )}
           </div>
         </div>
-
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-          <input
-            placeholder="Search by name or email..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
-          />
-        </div>
-
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800 w-fit flex items-center">
-            {['all', 'admin', 'manager', 'agent', 'no role'].map((role) => (
-              <button
-                key={role}
-                onClick={() => setRoleFilter(role)}
-                className={cn(
-                  "px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap",
-                  roleFilter === role
-                    ? "bg-teal-600 text-white shadow-md shadow-teal-100 dark:shadow-none"
-                    : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
-                )}
-              >
-                {role}
-              </button>
-            ))}
+        {/* Search and Filters Bar (Match Leads.tsx Style exactly) */}
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+          <div className="relative flex-1 w-full lg:max-w-md">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              placeholder="Search by name or email..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
+            />
           </div>
 
-          <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
-
-          <Button variant="outlineNeutral" className="h-10 px-4">
-            <Filter className="w-4 h-4 mr-2" /> More Filters
-          </Button>
+          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+            <StatusTabs<string>
+              tabs={roleTabs}
+              value={roleFilter}
+              onChange={setRoleFilter}
+              allLabel="All Users"
+            />
+            <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
+            <Button variant="outlineNeutral" className="h-10 px-4 rounded-md font-bold text-xs uppercase tracking-widest">
+              <Filter className="w-4 h-4" /> More Filters
+            </Button>
+          </div>
         </div>
 
         {/* Main Table Container */}
@@ -480,7 +479,7 @@ export function Users() {
                           <div>
                             <p className="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
                               {u.name}
-                              {u.authUserId === user?.id && (
+                              {u.authUserId === userId && (
                                 <Badge variant="secondary" className="text-[9px] uppercase tracking-tighter h-4 px-1 bg-teal-50 text-teal-600 dark:bg-teal-900/20 dark:text-teal-400 border-teal-100 dark:border-teal-800">You</Badge>
                               )}
                             </p>

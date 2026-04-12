@@ -100,6 +100,7 @@ export interface AtomicOp {
 
 export interface CRMContextValue {
   userId: string
+  organizationId: string | null
   getResource: <T>(name: string) => ResourceState<T>
   setResourceData: <T>(name: string, updater: (prev: T[]) => T[]) => void
   getClient: () => Promise<typeof supabase | null>
@@ -124,7 +125,7 @@ const PRELOAD_RESOURCES = [
  * - Supabase RLS policies use auth.uid() to filter data
  */
 export function CRMProvider({ children }: { children: React.ReactNode }) {
-  const { userId, isLoaded } = useAuth()
+  const { userId, organizationId, isLoaded } = useAuth()
 
   // Single map holding arrays for every resource
   const [store, setStore] = useState<Record<string, ResourceState<any>>>(() =>
@@ -260,6 +261,11 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
             snakePatch.owner_id = userId
           }
 
+          // Auto-stamp organization_id on ALL inserts
+          if (!snakePatch.organization_id && organizationId) {
+            snakePatch.organization_id = organizationId
+          }
+
           const { data, error } = await client.from(tableName).insert(snakePatch).select()
           if (error) {
             console.error(`[CRMContext] Insert failed for ${op.resource}:`, error)
@@ -307,11 +313,11 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       })
       return successes
     },
-    [getClient, setResourceData, userId]
+    [getClient, setResourceData, userId, organizationId]
   )
 
   return (
-    <CRMContext.Provider value={{ userId, getResource, setResourceData, getClient, runAtomicUpdate }}>
+    <CRMContext.Provider value={{ userId, organizationId, getResource, setResourceData, getClient, runAtomicUpdate }}>
       {children}
     </CRMContext.Provider>
   )
@@ -350,6 +356,11 @@ export async function insertRows<T extends { id: string }>(
     }
     if (ownerIdTables.includes(resourceName) && !row.owner_id) {
       row.owner_id = ctx.userId
+    }
+
+    // Auto-stamp organization_id on ALL inserts
+    if (!row.organization_id && ctx.organizationId) {
+      row.organization_id = ctx.organizationId
     }
 
     // Always delete id so the database generates it (avoids UUID conflicts)

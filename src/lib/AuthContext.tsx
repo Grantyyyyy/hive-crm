@@ -10,11 +10,24 @@ interface AuthContextValue {
   isLoaded: boolean
   isSignedIn: boolean
   userId: string
+  organizationId: string | null
   signOut: () => Promise<void>
   getToken: () => Promise<string | null>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
+
+// ── Helper: extract org_id from JWT claims ────────────────────────────────────
+
+function extractOrgId(session: Session | null): string | null {
+  if (!session?.access_token) return null
+  try {
+    const payload = JSON.parse(atob(session.access_token.split('.')[1]))
+    return payload?.org_id ?? null
+  } catch {
+    return null
+  }
+}
 
 // ── Provider ──────────────────────────────────────────────────────────────────
 
@@ -37,6 +50,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
+  const [organizationId, setOrganizationId] = useState<string | null>(null)
   const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
@@ -44,6 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
       setSession(initialSession)
       setUser(initialSession?.user ?? null)
+      setOrganizationId(extractOrgId(initialSession))
       setIsLoaded(true)
     }).catch((err) => {
       console.error('Failed to get initial session:', err)
@@ -56,6 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession)
       setUser(newSession?.user ?? null)
+      setOrganizationId(extractOrgId(newSession))
       setIsLoaded(true)
     })
 
@@ -89,10 +105,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isLoaded,
       isSignedIn,
       userId,
+      organizationId,
       signOut,
       getToken,
     }),
-    [user, session, isLoaded, isSignedIn, userId, signOut, getToken]
+    [user, session, isLoaded, isSignedIn, userId, organizationId, signOut, getToken]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
@@ -102,15 +119,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 /**
  * useAuth — mirrors Clerk's useAuth() hook.
- * Returns isLoaded, isSignedIn, userId, signOut, getToken.
+ * Returns isLoaded, isSignedIn, userId, organizationId, signOut, getToken.
  */
-export function useAuth(): Pick<AuthContextValue, "isLoaded" | "isSignedIn" | "userId" | "signOut" | "getToken"> {
+export function useAuth(): Pick<AuthContextValue, "isLoaded" | "isSignedIn" | "userId" | "organizationId" | "signOut" | "getToken"> {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error("useAuth must be used within an AuthProvider")
   return {
     isLoaded: ctx.isLoaded,
     isSignedIn: ctx.isSignedIn,
     userId: ctx.userId,
+    organizationId: ctx.organizationId,
     signOut: ctx.signOut,
     getToken: ctx.getToken,
   }

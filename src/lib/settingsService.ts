@@ -394,6 +394,7 @@ export async function inviteUser(
   client: SupabaseClient,
   data: { name: string; email: string; roleId?: string },
   ownerId: string,
+  organizationId: string,
 ): Promise<{ appUser: AppUser; authUserId: string }> {
   await assertPermission(client, 'users', 'create')
   // Step 1: Call the invitation API
@@ -427,6 +428,7 @@ export async function inviteUser(
       name: data.name,
       role_id: data.roleId || null,
       owner_id: ownerId,
+      organization_id: organizationId,
     })
     .select()
     .single();
@@ -443,6 +445,7 @@ export async function addUser(
   client: SupabaseClient,
   data: { name: string; email: string; roleId?: string },
   ownerId: string,
+  organizationId: string,
 ): Promise<AppUser> {
   await assertPermission(client, 'users', 'create')
 
@@ -477,6 +480,7 @@ export async function addUser(
       name: data.name,
       role_id: data.roleId || null,
       owner_id: ownerId,
+      organization_id: organizationId,
     })
     .select()
     .single()

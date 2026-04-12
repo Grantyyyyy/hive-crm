@@ -149,6 +149,7 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
         { href: "/settings/profile", label: "Profile", icon: UserCog },
         { href: "/settings/users", label: "Users", icon: Users, perm: "users" as const },
         { href: "/settings/roles", label: "Roles", icon: Shield, perm: "roles" as const },
+        { href: "/settings/organizations", label: "Organizations", icon: Building2, perm: "organizations" as const },
       ]
     },
   ], [])

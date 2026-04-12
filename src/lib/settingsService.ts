@@ -3,43 +3,10 @@
  * Replaces the old localhost:3001 REST API calls with direct Supabase queries.
  */
 import { supabase } from './supabaseClient'
-
-// ── Types ────────────────────────────────────────────────────────────────────
-
-export interface Permission {
-  id: string
-  module: string
-  action: string
-  description?: string
-}
-
-export interface Role {
-  id: string
-  name: string
-  description?: string
-  color: string
-  isSystem: boolean
-  ownerId: string
-  permissions?: Permission[]
-  _count?: { users: number }
-  createdAt: string
-  updatedAt: string
-}
-
-export interface AppUser {
-  id: string
-  authUserId: string | null
-  email: string
-  name: string
-  username?: string
-  roleId?: string
-  role?: Role
-  ownerId: string
-  createdAt: string
-  updatedAt: string
-}
+import type { Permission, Role, AppUser } from './types'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+
 
 type SupabaseClient = typeof supabase
 

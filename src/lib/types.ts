@@ -472,3 +472,50 @@ export const ACTIVITY_TYPE_COLORS: Record<string, string> = {
 // Shared constants
 export const NIL_UUID = "00000000-0000-0000-0000-000000000000"
 export const DEFAULT_TAX_RATE = 0.10 // 10%
+
+export interface Organization {
+  id: string
+  name: string
+  slug: string
+  createdAt: string
+  updatedAt: string
+  memberCount?: number // Virtual field from SQL function
+}
+
+export type CreateOrganizationInput = Omit<Organization, 'id' | 'createdAt' | 'updatedAt' | 'memberCount'>
+
+export interface Permission {
+  id: string
+  module: string
+  action: string
+  description?: string
+}
+
+export interface Role {
+  id: string
+  name: string
+  description?: string
+  color: string
+  isSystem: boolean
+  ownerId: string
+  permissions?: Permission[]
+  _count?: { users: number }
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AppUser {
+  id: string
+  authUserId: string | null
+  email: string
+  name: string
+  username?: string
+  roleId?: string
+  role?: Role
+  ownerId: string
+  organizationId?: string
+  createdAt: string
+  updatedAt: string
+}
+
+

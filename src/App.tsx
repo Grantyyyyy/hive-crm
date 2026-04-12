@@ -28,6 +28,7 @@ import { Vendors } from "@/pages/logistics/Vendors";
 import { VendorDetail } from "@/pages/logistics/VendorDetail";
 import { Users } from "@/pages/settings/Users";
 import { Roles } from "@/pages/settings/Roles";
+import { OrganizationsPage } from "./pages/settings/OrganizationsPage";
 import { ProfilePage } from "@/pages/settings/ProfilePage";
 import { Navbar } from "@/components/Navbar";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -44,7 +45,7 @@ import { CRMProvider, useCRMContext, updateRow, insertRows } from "@/lib/CRMCont
 import { useCRMResource } from "@/lib/hooks";
 import { AuthProvider, useUser } from "@/lib/AuthContext"
 import { RequirePermission } from "@/components/RequirePermission";
-import type { Quote, SalesOrder, InventoryItem, PurchaseRequest, PurchaseOrder, InventoryTransaction, Task } from "@/lib/types";
+import type { Quote, SalesOrder, InventoryItem, PurchaseRequest, PurchaseOrder, InventoryTransaction, Task, PurchaseReceipt, PurchaseReceiptItem, ReturnToSupplier } from "@/lib/types";
 import { runScheduledJobs } from "@/services/scheduledJobs";
 import type { JobAdapter } from "@/services/types";
 import { setAuthToken, subscribeAuth } from "@/lib/api";
@@ -76,7 +77,10 @@ function AutomationRunner() {
   const { isLoaded: poLoaded } = useCRMResource('purchase_orders')
   const { isLoaded: txLoaded } = useCRMResource('inventory_transactions')
 
-  const dataReady = quotesLoaded && ordersLoaded && inventoryLoaded && prLoaded && poLoaded && txLoaded
+  const { isLoaded: receiptsLoaded } = useCRMResource('purchase_receipts')
+  const { isLoaded: rtsLoaded } = useCRMResource('return_to_suppliers')
+
+  const dataReady = quotesLoaded && ordersLoaded && inventoryLoaded && prLoaded && poLoaded && txLoaded && receiptsLoaded && rtsLoaded
   const runOnce = useRef(false)
 
   const adapter = useMemo<JobAdapter>(() => ({
@@ -105,6 +109,17 @@ function AutomationRunner() {
 
     getTasks: () => ctx.getResource<Task>('tasks').data,
     updateTask: (id, patch) => updateRow<Task>(ctx, 'tasks', id, patch),
+
+    getPurchaseReceipts: () => ctx.getResource<PurchaseReceipt>('purchase_receipts').data,
+    getPurchaseReceiptItems: () => ctx.getResource<PurchaseReceiptItem>('purchase_receipt_items').data,
+    insertPurchaseReceipt: (r) => insertRows<PurchaseReceipt>(ctx, 'purchase_receipts', [r as any]).then(rows => rows[0] as PurchaseReceipt),
+    insertPurchaseReceiptItem: (i) => insertRows<PurchaseReceiptItem>(ctx, 'purchase_receipt_items', [i as any]).then(rows => rows[0] as PurchaseReceiptItem),
+
+    getReturnToSuppliers: () => ctx.getResource<ReturnToSupplier>('return_to_suppliers').data,
+    insertReturnToSupplier: (rts) => insertRows<ReturnToSupplier>(ctx, 'return_to_suppliers', [rts as any]).then(rows => rows[0] as ReturnToSupplier),
+    updateReturnToSupplier: (id, patch) => updateRow<ReturnToSupplier>(ctx, 'return_to_suppliers', id, patch),
+
+    runAtomicUpdate: (ops) => ctx.runAtomicUpdate(ops),
   }), [ctx])
 
   useEffect(() => {
@@ -279,6 +294,9 @@ function AppContent() {
               </Route>
               <Route path="/settings/roles">
                 {() => <PermissionProtected module="roles" component={Roles} />}
+              </Route>
+              <Route path="/settings/organizations">
+                {() => <PermissionProtected module="organizations" component={OrganizationsPage} />}
               </Route>
               <Route path="/settings/profile">
                 {() => <Protected component={ProfilePage} />}

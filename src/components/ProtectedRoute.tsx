@@ -20,6 +20,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return subscribeAuth(setApiAuth);
   }, []);
 
+  React.useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      navigate("/sign-in");
+    }
+  }, [isLoaded, isSignedIn, navigate]);
+
   if (!isLoaded) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -29,7 +35,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (!isSignedIn) {
-    navigate("/sign-in");
     return null;
   }
 

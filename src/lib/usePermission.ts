@@ -192,6 +192,8 @@ export function usePermission(): UsePermissionReturn {
   const canSync = useCallback(
     (module: string, action: string): boolean => {
       if (!perms.loaded) return false
+      // Super Admin bypass: guaranteed full access
+      if (perms.roleName === 'Super Admin') return true
       if (perms.totalPermCount !== null && perms.ids.size >= perms.totalPermCount) return true
       const permId = permMap.get(`${module}:${action}`)
       if (!permId) return false
@@ -212,7 +214,7 @@ export function usePermission(): UsePermissionReturn {
       can: canSync,
       isLoaded: perms.loaded && authLoaded,
       canAsync,
-      hasFullAccess: perms.totalPermCount !== null && perms.ids.size >= (perms.totalPermCount || 0),
+      hasFullAccess: (perms.roleName === 'Super Admin') || (perms.totalPermCount !== null && perms.ids.size >= (perms.totalPermCount || 0)),
       roleName: perms.roleName,
     }),
     [canSync, perms.loaded, perms.totalPermCount, perms.ids.size, perms.roleName, authLoaded, canAsync],

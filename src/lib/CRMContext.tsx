@@ -31,6 +31,7 @@ export const TABLE_MAP: Record<string, string> = {
   task_tag_links: "task_tag_links",
   task_activities: "task_activities",
   return_to_suppliers: "return_to_suppliers",
+  organizations: "organizations",
 }
 
 // ── Case converters ──────────────────────────────────────────────────────────

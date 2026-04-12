@@ -15,6 +15,7 @@ interface DeleteModalProps {
   cancelText?: string
   deleteText?: string
   loading?: boolean
+  disabled?: boolean
 }
 
 export function DeleteModal({
@@ -26,6 +27,7 @@ export function DeleteModal({
   cancelText = "Keep Item",
   deleteText = "Delete",
   loading = false,
+  disabled = false,
 }: DeleteModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -63,7 +65,7 @@ export function DeleteModal({
             <Button
               className="h-11 px-6 rounded-full text-sm font-bold bg-red-600 hover:bg-red-700 text-white shadow-none transition-all active:scale-95 disabled:opacity-50"
               onClick={onDelete}
-              disabled={loading}
+              disabled={loading || disabled}
             >
               {loading ? 'Deleting...' : deleteText}
             </Button>
@@ -73,3 +75,4 @@ export function DeleteModal({
     </Dialog>
   )
 }
+

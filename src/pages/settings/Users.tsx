@@ -11,8 +11,8 @@ import {
   addUser,
   inviteUser,
   upsertCurrentUser,
-  type AppUser,
 } from '@/lib/settingsService';
+import type { AppUser } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -129,16 +129,15 @@ function UserActionsMenu({ u, currentUserId, onChangeRole, onRemove, removePendi
 function UserRoleBadge({ roleName }: { roleName?: string }) {
   const getRoleStyle = (name?: string) => {
     switch (name?.toLowerCase()) {
+      case 'super admin':
+        return 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400';
       case 'admin':
-        return 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400';
+        return 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400';
       case 'manager':
         return 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400';
-      case 'agent':
-        return 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400';
       default:
         return 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400';
-    }
-  };
+    }  };
 
   return (
     <div className={cn("px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest w-fit border border-transparent shadow-sm", getRoleStyle(roleName))}>
@@ -154,10 +153,11 @@ export function Users() {
   const { user } = useUser();
   const { getClient } = useCRMContext();
   const queryClient = useQueryClient();
-  const { can, hasFullAccess, isLoaded: permLoaded } = usePermission();
+  const { can, hasFullAccess, isLoaded: permLoaded, roleName, isSuperAdmin } = usePermission();
 
-  // Derived permission flags (default to true until loaded for smooth UX)
-  const canCreate = permLoaded && (hasFullAccess || can('users', 'create'));
+  const isAdmin = roleName === 'Admin';
+  // Super Admins and Admins can invite users. Others cannot.
+  const canCreate = permLoaded && (isSuperAdmin || isAdmin);
   const canUpdate = permLoaded && (hasFullAccess || can('users', 'update'));
   const canDelete = permLoaded && (hasFullAccess || can('users', 'delete'));
 
@@ -274,6 +274,13 @@ export function Users() {
     },
     enabled: !!user,
   });
+
+  const availableRoles = useMemo(() => {
+    if (!rolesData) return [];
+    if (isSuperAdmin) return rolesData;
+    if (isAdmin) return rolesData.filter(r => !['Super Admin', 'Admin'].includes(r.name));
+    return [];
+  }, [rolesData, isSuperAdmin, isAdmin]);
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ appUserId, roleId }: { appUserId: string; roleId: string }) => {
@@ -479,6 +486,9 @@ export function Users() {
                           <div>
                             <p className="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
                               {u.name}
+                              {u.role?.name === 'Admin' && (
+                                <span title="Admin User"><Shield className="w-3.5 h-3.5 text-amber-500" /></span>
+                              )}
                               {u.authUserId === userId && (
                                 <Badge variant="secondary" className="text-[9px] uppercase tracking-tighter h-4 px-1 bg-teal-50 text-teal-600 dark:bg-teal-900/20 dark:text-teal-400 border-teal-100 dark:border-teal-800">You</Badge>
                               )}
@@ -495,25 +505,35 @@ export function Users() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end items-center gap-2">
-                          {canUpdate && u.authUserId !== user?.id && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => openRoleDialog(u)}
-                              className="text-[11px] h-7 px-3 font-bold text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <Shield className="w-3.5 h-3.5 mr-1" /> Role
-                            </Button>
-                          )}
-                          <UserActionsMenu
-                            u={u}
-                            currentUserId={user?.id}
-                            onChangeRole={() => openRoleDialog(u)}
-                            onRemove={() => handleRemoveUser(u)}
-                            removePending={removeUserMutation.isPending}
-                            canUpdate={canUpdate}
-                            canDelete={canDelete}
-                          />
+                          {(() => {
+                            const isProtectedAdmin = u.role?.name === 'Admin' || u.role?.name === 'Super Admin' || !!u.isSuperadmin;
+                            const rowCanEdit = isSuperAdmin || (isAdmin && !isProtectedAdmin);
+                            const rowCanDelete = isSuperAdmin || (isAdmin && !isProtectedAdmin);
+                            
+                            return (
+                              <>
+                                {canUpdate && rowCanEdit && u.authUserId !== user?.id && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => openRoleDialog(u)}
+                                    className="text-[11px] h-7 px-3 font-bold text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                  >
+                                    <Shield className="w-3.5 h-3.5 mr-1" /> Role
+                                  </Button>
+                                )}
+                                <UserActionsMenu
+                                  u={u}
+                                  currentUserId={user?.id}
+                                  onChangeRole={() => openRoleDialog(u)}
+                                  onRemove={() => handleRemoveUser(u)}
+                                  removePending={removeUserMutation.isPending}
+                                  canUpdate={canUpdate && rowCanEdit}
+                                  canDelete={canDelete && rowCanDelete}
+                                />
+                              </>
+                            );
+                          })()}
                         </div>
                       </td>
                     </tr>
@@ -557,7 +577,7 @@ export function Users() {
                   required
                 >
                   <option value="">Select a role</option>
-                  {rolesData?.map((role) => (
+                  {availableRoles.map((role) => (
                     <option key={role.id} value={role.id}>
                       {role.name}
                     </option>
@@ -673,7 +693,7 @@ export function Users() {
                     onChange={(e) => setAddForm({ ...addForm, roleId: e.target.value })}
                   >
                     <option value="">Select a role (optional)</option>
-                    {rolesData?.map((role) => (
+                    {availableRoles.map((role) => (
                       <option key={role.id} value={role.id}>
                         {role.name}
                       </option>

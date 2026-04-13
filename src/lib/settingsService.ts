@@ -35,6 +35,7 @@ function toAppUser(row: any, role?: Role): AppUser {
     roleId: row.role_id,
     role,
     ownerId: row.owner_id,
+    isSuperadmin: row.is_superadmin,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -99,6 +100,84 @@ export async function assertPermission(
   if (!hasPerm) throw new Error(`Forbidden: requires ${module}:${action}`)
 }
 
+/**
+ * Validates that an Admin cannot assign the Admin or Super Admin role.
+ */
+async function assertRoleAssignmentPerms(
+  client: SupabaseClient,
+  assignedRoleId: string | undefined,
+  actingUserId: string,
+) {
+  if (!assignedRoleId || !actingUserId) return;
+
+  const { data: actingAppUser } = await client
+    .from('app_users')
+    .select('is_superadmin, roles(name)')
+    .eq('auth_user_id', actingUserId)
+    .maybeSingle();
+
+  if (!actingAppUser || actingAppUser.is_superadmin) return;
+
+  // roles(name) can be an array if there's multiple, but here it's singular relationship
+  const roleData = actingAppUser.roles as any;
+  const actingRoleName = roleData?.name;
+
+  if (actingRoleName === 'Admin') {
+    const { data: targetRole } = await client
+      .from('roles')
+      .select('name')
+      .eq('id', assignedRoleId)
+      .maybeSingle();
+
+    if (targetRole && ['Admin', 'Super Admin'].includes(targetRole.name)) {
+      throw new Error('Admins cannot assign the Admin or Super Admin role');
+    }
+  }
+}
+
+/**
+ * Validates that the last Admin in an organization cannot be removed or demoted.
+ */
+async function assertLastAdminGuard(
+  client: SupabaseClient,
+  targetAppUserId: string,
+) {
+  // Find the target user and their role
+  const { data: targetUser } = await client
+    .from('app_users')
+    .select('organization_id, roles(name)')
+    .eq('id', targetAppUserId)
+    .maybeSingle();
+
+  if (!targetUser) return;
+
+  const roleData = targetUser.roles as any;
+  const targetRoleName = roleData?.name;
+
+  if (targetRoleName === 'Admin') {
+    // Count how many Admins exist in this organization
+    const { count } = await client
+      .from('app_users')
+      .select('id', { count: 'exact', head: true })
+      .eq('organization_id', targetUser.organization_id)
+      .not('roles', 'is', null)
+      // This requires PostgREST filtering on the joined table or a simpler approach.
+      // Easiest is to fetch all users in the org and filter locally (or use RPC).
+      // Since orgs typically have few users, local filtering is acceptable for this guard.
+      
+    const { data: allOrgUsers } = await client
+      .from('app_users')
+      .select('id, roles(name)')
+      .eq('organization_id', targetUser.organization_id);
+
+    const adminCount = (allOrgUsers || []).filter((u: any) => u.roles?.name === 'Admin').length;
+
+    if (adminCount <= 1) {
+      throw new Error('Cannot modify or remove the last Admin in the organization');
+    }
+  }
+}
+
 // ── Roles Service ────────────────────────────────────────────────────────────
 
 export async function fetchRoles(client: SupabaseClient): Promise<Role[]> {
@@ -148,6 +227,7 @@ export async function createRole(
   client: SupabaseClient,
   data: { name: string; description?: string; color?: string; permissionIds?: string[] },
   ownerId: string,
+  organizationId: string,
 ): Promise<Role> {
   await assertPermission(client, 'roles', 'create')
   const { data: role, error } = await client
@@ -157,6 +237,7 @@ export async function createRole(
       description: data.description || null,
       color: data.color || '#6366f1',
       owner_id: ownerId,
+      organization_id: organizationId,
     })
     .select()
     .single()
@@ -167,6 +248,7 @@ export async function createRole(
     const links = data.permissionIds.map(pid => ({
       role_id: role.id,
       permission_id: pid,
+      organization_id: organizationId,
     }))
     const { error: linkError } = await client.from('role_permissions').insert(links)
     if (linkError) throw linkError
@@ -179,6 +261,7 @@ export async function updateRole(
   client: SupabaseClient,
   id: string,
   data: { name?: string; description?: string; color?: string; permissionIds?: string[] },
+  organizationId: string,
 ): Promise<Role> {
   await assertPermission(client, 'roles', 'update')
   const updates: any = { updated_at: new Date().toISOString() }
@@ -201,6 +284,7 @@ export async function updateRole(
       const links = data.permissionIds.map(pid => ({
         role_id: id,
         permission_id: pid,
+        organization_id: organizationId,
       }))
       const { error: linkError } = await client.from('role_permissions').insert(links)
       if (linkError) throw linkError
@@ -331,7 +415,16 @@ export async function updateUserRole(
   userId: string,
   roleId: string,
 ): Promise<void> {
-  await assertPermission(client, 'users', 'update')
+  await assertPermission(client, 'users', 'update');
+  
+  // Guard 1: Verify acting user's capacity to assign this role
+  const { data: session } = await client.auth.getSession();
+  if (session.session?.user?.id) {
+    await assertRoleAssignmentPerms(client, roleId, session.session.user.id);
+  }
+
+  // Guard 2: Prevent demoting the last admin
+  await assertLastAdminGuard(client, userId);
   const { error } = await client
     .from('app_users')
     .update({ role_id: roleId, updated_at: new Date().toISOString() })
@@ -364,6 +457,7 @@ export async function inviteUser(
   organizationId: string,
 ): Promise<{ appUser: AppUser; authUserId: string }> {
   await assertPermission(client, 'users', 'create')
+  await assertRoleAssignmentPerms(client, data.roleId, ownerId)
   // Step 1: Call the invitation API
   const inviteResponse = await fetch('/api/invite-user', {
     method: 'POST',
@@ -415,6 +509,7 @@ export async function addUser(
   organizationId: string,
 ): Promise<AppUser> {
   await assertPermission(client, 'users', 'create')
+  await assertRoleAssignmentPerms(client, data.roleId, ownerId)
 
   // Step 1: Create real Auth account via dev-api
   const createResponse = await fetch('/api/create-user', {
@@ -458,6 +553,7 @@ export async function addUser(
 
 export async function removeUser(client: SupabaseClient, userId: string): Promise<void> {
   await assertPermission(client, 'users', 'delete')
+  await assertLastAdminGuard(client, userId)
   const { error } = await client.from('app_users').delete().eq('id', userId)
   if (error) throw error
 }

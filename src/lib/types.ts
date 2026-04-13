@@ -514,6 +514,7 @@ export interface AppUser {
   role?: Role
   ownerId: string
   organizationId?: string
+  isSuperadmin?: boolean
   createdAt: string
   updatedAt: string
 }

@@ -41,9 +41,9 @@ import { DeleteModal } from "@/components/ui/delete-modal";
 
 export function Roles() {
   const { user, isLoaded: userLoaded } = useUser();
-  const { getClient, userId } = useCRMContext();
+  const { getClient, userId, organizationId } = useCRMContext();
   const queryClient = useQueryClient();
-  const { can, hasFullAccess, isLoaded: permLoaded } = usePermission();
+  const { can, hasFullAccess, isLoaded: permLoaded, isSuperAdmin } = usePermission();
 
   // Derived permission flags
   const canCreate = permLoaded && (hasFullAccess || can('roles', 'create'));
@@ -93,7 +93,8 @@ export function Roles() {
     mutationFn: async (data: typeof formData) => {
       const client = await getClient();
       if (!client) throw new Error('Not authenticated');
-      return createRole(client, data, userId);
+      if (!organizationId) throw new Error('No organization selected');
+      return createRole(client, data, userId, organizationId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
@@ -109,7 +110,8 @@ export function Roles() {
     mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
       const client = await getClient();
       if (!client) throw new Error('Not authenticated');
-      return updateRole(client, id, data);
+      if (!organizationId) throw new Error('No organization selected');
+      return updateRole(client, id, data, organizationId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
@@ -549,7 +551,9 @@ export function Roles() {
                 </div>
 
                 <div className="space-y-6 border border-slate-100 dark:border-slate-800 rounded-xl p-6 bg-slate-50/50 dark:bg-slate-900/30">
-                  {Object.entries(permissionsData || {}).map(([module, permissions]) => {
+                  {Object.entries(permissionsData || {})
+                    .filter(([module]) => module === 'organizations' ? isSuperAdmin : true)
+                    .map(([module, permissions]) => {
                     const moduleAllSelected = isModuleAllSelected(permissions);
                     const moduleCount = permissions.filter(p => formData.permissionIds.includes(p.id)).length;
                     const isPartial = moduleCount > 0 && moduleCount < permissions.length;

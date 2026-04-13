@@ -82,12 +82,15 @@ interface UsePermissionReturn {
   hasFullAccess: boolean
   /** The user's role name (e.g., "Admin", "Manager", "Agent"), or null. */
   roleName: string | null
+  /** True if the user's app_users.is_superadmin flag is set. Canonical SA check. */
+  isSuperAdmin: boolean
 }
 
 // Module-level global store for the map (doesn't change often)
 let globalPermMap: Map<string, string> | null = null;
 let globalTotalCount: number | null = null;
 let globalRoleName: string | null = null;
+let globalIsSuperAdmin: boolean = false;
 
 export function usePermission(): UsePermissionReturn {
   const { userId, isLoaded: authLoaded } = useAuth()
@@ -98,27 +101,30 @@ export function usePermission(): UsePermissionReturn {
     loaded: boolean
     totalPermCount: number | null
     roleName: string | null
+    isSuperAdmin: boolean
   }>(() => {
     if (cache && cache.userId === userId && cache.loaded) {
       return { 
         ids: cache.permissionIds, 
         loaded: true, 
         totalPermCount: globalTotalCount, 
-        roleName: globalRoleName 
+        roleName: globalRoleName,
+        isSuperAdmin: globalIsSuperAdmin,
       }
     }
-    return { ids: new Set(), loaded: false, totalPermCount: null, roleName: null }
+    return { ids: new Set(), loaded: false, totalPermCount: null, roleName: null, isSuperAdmin: false }
   })
 
   const [permMap, setPermMap] = useState<Map<string, string>>(globalPermMap || new Map())
 
   useEffect(() => {
     if (!userId) {
-      setPerms({ ids: new Set(), loaded: true, totalPermCount: null, roleName: null })
+      setPerms({ ids: new Set(), loaded: true, totalPermCount: null, roleName: null, isSuperAdmin: false })
       setPermMap(new Map())
       cache = null
       globalPermMap = null
       globalRoleName = null
+      globalIsSuperAdmin = false
       return
     }
 
@@ -129,7 +135,8 @@ export function usePermission(): UsePermissionReturn {
           ids: cache.permissionIds, 
           loaded: true, 
           totalPermCount: globalTotalCount, 
-          roleName: globalRoleName 
+          roleName: globalRoleName,
+          isSuperAdmin: globalIsSuperAdmin,
         })
         setPermMap(globalPermMap)
       }
@@ -143,6 +150,7 @@ export function usePermission(): UsePermissionReturn {
             .from("app_users")
             .select(`
               role_id,
+              is_superadmin,
               roles (
                 name,
                 role_permissions (
@@ -163,6 +171,7 @@ export function usePermission(): UsePermissionReturn {
         const { data: userRecord } = userRoleData;
         const { data: allPerms, count: totalCount } = allPermsData;
 
+        const isSuperAdmin = userRecord?.is_superadmin === true;
         const roleData = userRecord?.roles as any;
         const roleName = roleData?.name || null;
         const rawPerms = roleData?.role_permissions || [];
@@ -175,6 +184,7 @@ export function usePermission(): UsePermissionReturn {
         globalPermMap = map;
         globalTotalCount = totalCount;
         globalRoleName = roleName;
+        globalIsSuperAdmin = isSuperAdmin;
         cache = { userId, permissionIds: permIds, loaded: true };
 
         setPermMap(map);
@@ -183,6 +193,7 @@ export function usePermission(): UsePermissionReturn {
           loaded: true,
           totalPermCount: totalCount,
           roleName,
+          isSuperAdmin,
         });
       })()
 
@@ -192,7 +203,9 @@ export function usePermission(): UsePermissionReturn {
   const canSync = useCallback(
     (module: string, action: string): boolean => {
       if (!perms.loaded) return false
-      // Super Admin bypass: guaranteed full access
+      // Primary: is_superadmin boolean (canonical, rename-safe)
+      if (perms.isSuperAdmin) return true
+      // Fallback: string match (transition period — remove once is_superadmin is verified)
       if (perms.roleName === 'Super Admin') return true
       if (perms.totalPermCount !== null && perms.ids.size >= perms.totalPermCount) return true
       const permId = permMap.get(`${module}:${action}`)
@@ -214,9 +227,10 @@ export function usePermission(): UsePermissionReturn {
       can: canSync,
       isLoaded: perms.loaded && authLoaded,
       canAsync,
-      hasFullAccess: (perms.roleName === 'Super Admin') || (perms.totalPermCount !== null && perms.ids.size >= (perms.totalPermCount || 0)),
+      hasFullAccess: perms.isSuperAdmin || (perms.roleName === 'Super Admin') || (perms.totalPermCount !== null && perms.ids.size >= (perms.totalPermCount || 0)),
       roleName: perms.roleName,
+      isSuperAdmin: perms.isSuperAdmin,
     }),
-    [canSync, perms.loaded, perms.totalPermCount, perms.ids.size, perms.roleName, authLoaded, canAsync],
+    [canSync, perms.loaded, perms.totalPermCount, perms.ids.size, perms.roleName, perms.isSuperAdmin, authLoaded, canAsync],
   )
 }

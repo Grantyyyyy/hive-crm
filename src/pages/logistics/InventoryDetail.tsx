@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react"
 import { useRoute, Link } from "wouter"
 import {
-  ArrowLeft,
   Package,
   ShoppingCart,
   TrendingUp,
@@ -11,13 +10,15 @@ import {
   Layers,
   Pencil,
   ClipboardList,
-  History,
-  Activity
+  Activity,
+  Clock
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { DetailSkeleton } from "@/components/ui/skeletons"
 import { StockAdjustmentModal } from "@/components/ui/stock-adjustment-modal"
+import { StatCard } from "@/components/reusables/StatCard"
+import { ProcurementDataTable, type ProcurementColumn } from "@/components/reusables/ProcurementDataTable"
 import { useCRMResource } from "@/lib/hooks"
 import { BackButton } from "@/components/reusables/BackButton"
 import { useCRMContext } from "@/lib/CRMContext"
@@ -128,26 +129,26 @@ export function InventoryDetail() {
         {/* Breadcrumbs & Navigation */}
         <div className="flex items-center justify-between">
           <BackButton href="/inventory" label="Back to Products" />
-          <div className="flex items-center gap-3">
-            <Button variant="outlineNeutral" size="sm" className="h-9 px-4" onClick={() => setAdjustmentOpen(true)}>
-              <Activity className="size-4 mr-2" /> Stock Adjustment
+          <div className="flex items-center gap-2">
+            <Button variant="outlineNeutral" size="sm" className="h-8 px-3.5 text-xs" onClick={() => setAdjustmentOpen(true)}>
+              <Activity className="size-3.5 mr-1.5" /> Stock Adjustment
             </Button>
-            <Button variant="default" size="sm" className="h-9 px-6 bg-teal-600 hover:bg-teal-700">
-              <Pencil className="size-4 mr-2" /> Edit Product
+            <Button variant="default" size="sm" className="h-8 px-5 text-xs bg-teal-600 hover:bg-teal-700">
+              <Pencil className="size-3.5 mr-1.5" /> Edit Product
             </Button>
           </div>
         </div>
 
         {/* Hero Banner Area */}
-        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden flex flex-col lg:flex-row">
-          <div className="lg:w-1/2 p-8 lg:p-12 space-y-8">
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <span className="px-3 py-1 bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 text-[10px] font-black uppercase tracking-widest rounded-full border border-teal-100 dark:border-teal-800/30">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col lg:flex-row">
+          <div className="lg:w-1/2 p-6 lg:p-8 space-y-5">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 text-[10px] font-black uppercase tracking-widest rounded-full border border-teal-100 dark:border-teal-800/30">
                   {item.category}
                 </span>
                 <span className={cn(
-                  "px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border",
+                  "px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest rounded-full border",
                   item.status === 'active'
                     ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 border-emerald-100"
                     : "bg-slate-50 dark:bg-slate-800 text-slate-400 border-slate-200"
@@ -155,23 +156,23 @@ export function InventoryDetail() {
                   {item.status}
                 </span>
               </div>
-              <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white lg:max-w-md uppercase">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white uppercase">
                 {item.name}
               </h1>
-              <p className="text-slate-500 dark:text-slate-400 max-w-sm leading-relaxed font-medium">
+              <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
                 {item.sku} — {item.description || "High-performance product verified for logistics."}
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-8">
-              <div className="space-y-1">
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-0.5">
                 <p className="text-[10px] font-black tracking-widest uppercase text-slate-400">Inventory ID</p>
                 <div className="flex items-center gap-2">
                   <Hash className="size-3.5 text-teal-500" />
                   <span className="text-sm font-bold text-slate-900 dark:text-white">{item.id.slice(0, 8)}</span>
                 </div>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 <p className="text-[10px] font-black tracking-widest uppercase text-slate-400">Unit Price</p>
                 <div className="flex items-center gap-2">
                   <Tag className="size-3.5 text-emerald-500" />
@@ -182,58 +183,57 @@ export function InventoryDetail() {
               </div>
             </div>
 
-            <div className="pt-4 flex flex-wrap gap-3">
+            <div className="pt-2 flex flex-wrap gap-2">
               <Link href={`/quotes?search=${encodeURIComponent(item.name)}`}>
-                <Button variant="outlineNeutral" size="sm" className="h-10 rounded-xl px-5 border-slate-200">
-                  <ClipboardList className="size-4 mr-2" /> View Quotes
+                <Button variant="outlineNeutral" size="sm" className="h-8 rounded-lg px-3.5 text-xs border-slate-200">
+                  <ClipboardList className="size-3.5 mr-1.5" /> View Quotes
                 </Button>
               </Link>
               <Link href={`/orders?search=${encodeURIComponent(item.name)}`}>
-                <Button variant="outlineNeutral" size="sm" className="h-10 rounded-xl px-5 border-slate-200">
-                  <ShoppingCart className="size-4 mr-2" /> View Orders
+                <Button variant="outlineNeutral" size="sm" className="h-8 rounded-lg px-3.5 text-xs border-slate-200">
+                  <ShoppingCart className="size-3.5 mr-1.5" /> View Orders
                 </Button>
               </Link>
             </div>
           </div>
 
           {/* Stock Metrics Visualizer */}
-          <div className="lg:w-1/2 bg-slate-50/50 dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800 p-8 lg:p-12 flex flex-col justify-center">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-8 relative overflow-hidden">
-              {/* Accent circle */}
-              <div className="absolute -top-12 -right-12 size-40 bg-teal-500/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="lg:w-1/2 bg-slate-50/50 dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800 p-6 lg:p-8 flex flex-col justify-center">
+            <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-5 relative overflow-hidden">
+              <div className="absolute -top-8 -right-8 size-24 bg-teal-500/5 rounded-full blur-2xl pointer-events-none" />
 
               <div className="flex items-center justify-between relative">
-                <div className="space-y-1">
-                  <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400">Available to Promise</h3>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-6xl font-black tracking-tighter text-slate-900 dark:text-white">{atp}</span>
+                <div className="space-y-0.5">
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400">Available to Promise</h3>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white">{atp}</span>
                     <span className="text-slate-400 font-bold uppercase text-[10px]">Units</span>
                   </div>
                 </div>
                 <div className={cn(
-                  "size-12 rounded-2xl flex items-center justify-center shadow-lg transition-all",
+                  "size-10 rounded-xl flex items-center justify-center shadow-lg transition-all",
                   atp > 50 ? "bg-emerald-500 shadow-emerald-200 dark:shadow-none" :
                     atp > 0 ? "bg-amber-500 shadow-amber-200 dark:shadow-none" :
                       "bg-rose-500 shadow-rose-200 dark:shadow-none"
                 )}>
-                  {atp > 0 ? <TrendingUp className="size-6 text-white" /> : <AlertCircle className="size-6 text-white" />}
+                  {atp > 0 ? <TrendingUp className="size-5 text-white" /> : <AlertCircle className="size-5 text-white" />}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6 pt-4 border-t border-slate-100 dark:border-slate-800 relative">
-                <div className="space-y-1">
+              <div className="grid grid-cols-2 gap-4 pt-3 border-t border-slate-100 dark:border-slate-800 relative">
+                <div className="space-y-0.5">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Physical Stock</p>
-                  <p className="text-2xl font-black text-slate-800 dark:text-slate-200">{item.stockQuantity}</p>
+                  <p className="text-lg font-black text-slate-800 dark:text-slate-200">{item.stockQuantity}</p>
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reserved Hold</p>
-                  <p className="text-2xl font-black text-teal-600 dark:text-teal-400">{item.reservedQuantity || 0}</p>
+                  <p className="text-lg font-black text-teal-600 dark:text-teal-400">{item.reservedQuantity || 0}</p>
                 </div>
               </div>
 
-              <div className="p-4 bg-teal-50/30 dark:bg-teal-900/10 rounded-2xl flex items-center gap-3 border border-teal-100/50 dark:border-teal-800/20 relative">
-                <Layers className="size-5 text-teal-600 dark:text-teal-400 shrink-0" />
-                <p className="text-[11px] font-medium text-slate-600 dark:text-slate-400 leading-relaxed">
+              <div className="p-3 bg-teal-50/30 dark:bg-teal-900/10 rounded-xl flex items-center gap-2 border border-teal-100/50 dark:border-teal-800/20 relative">
+                <Layers className="size-4 text-teal-600 dark:text-teal-400 shrink-0" />
+                <p className="text-[10px] font-medium text-slate-600 dark:text-slate-400 leading-relaxed">
                   Reserved units are locked in active <span className="font-bold text-teal-700 dark:text-teal-300">Quotations</span> and pending <span className="font-bold text-teal-700 dark:text-teal-300">Sales Orders</span>.
                 </p>
               </div>
@@ -243,89 +243,110 @@ export function InventoryDetail() {
 
         {/* Detailed Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-5">
-            <div className="size-12 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
-              <ShoppingCart className="size-6 text-teal-500" />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Sales</p>
-              <p className="text-xl font-black text-slate-900 dark:text-white">{stats?.totalSold || 0} Units</p>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-5">
-            <div className="size-12 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
-              <ClipboardList className="size-6 text-teal-500" />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Current Enquiries</p>
-              <p className="text-xl font-black text-slate-900 dark:text-white">{stats?.totalEnquiries || 0} Active Quotes</p>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-5">
-            <div className="size-12 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
-              <History className="size-6 text-teal-500" />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Last Shipped</p>
-              <p className="text-xl font-black text-slate-900 dark:text-white">
-                {stats?.lastSold ? new Date(stats.lastSold).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Never'}
-              </p>
-            </div>
-          </div>
+          <StatCard
+            label="Total Sales"
+            value={`${stats?.totalSold || 0} Units`}
+            icon={<ShoppingCart className="size-5" />}
+            accentColor="teal"
+          />
+          <StatCard
+            label="Current Enquiries"
+            value={`${stats?.totalEnquiries || 0} Active Quotes`}
+            icon={<ClipboardList className="size-5" />}
+            accentColor="teal"
+          />
+          <StatCard
+            label="Last Shipped"
+            value={stats?.lastSold ? new Date(stats.lastSold).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Never'}
+            icon={<Clock className="size-5" />}
+            accentColor="teal"
+          />
         </div>
 
         {/* Audit / Recent Activity Section */}
-        <div className="bg-white dark:bg-slate-950 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-          <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <h2 className="text-sm font-black uppercase tracking-[0.1em] text-slate-900 dark:text-white flex items-center gap-3">
-              <History className="size-4 text-teal-600" />
-              Inventory Transaction History
-            </h2>
-          </div>
-          <div className="divide-y divide-slate-50 dark:divide-slate-800/50">
-            {itemTransactions.length === 0 ? (
-              <div className="py-12 text-center text-slate-400 font-medium text-xs">No transaction history recorded for this item.</div>
-            ) : (
-              itemTransactions.slice(0, 20).map((tx) => {
-                const isPositive = tx.quantityChange > 0
-                const typeConfig = {
-                  receipt: { label: 'Receipt', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-                  shipment: { label: 'Shipment', color: 'text-rose-600', bg: 'bg-rose-50 dark:bg-rose-900/20' },
-                  adjustment: { label: 'Adjustment', color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20' },
-                  reservation: { label: 'Reservation', color: 'text-teal-600', bg: 'bg-teal-50 dark:bg-teal-900/20' },
-                  release: { label: 'Release', color: 'text-slate-600', bg: 'bg-slate-50 dark:bg-slate-800/50' },
-                  return: { label: 'Return', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-                }
-                const config = typeConfig[tx.type as keyof typeof typeConfig] || typeConfig.adjustment
-
-                return (
-                  <div key={tx.id} className="p-6 flex items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className={cn("size-10 rounded-xl flex items-center justify-center", config.bg)}>
-                        <span className={cn("text-[10px] font-black uppercase tracking-widest", config.color)}>{config.label}</span>
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-tight">{tx.reason || tx.type}</p>
-                        <p className="text-[10px] text-slate-400 font-medium mt-0.5">
-                          {tx.referenceNumber || tx.referenceType} • {new Date(tx.createdAt).toLocaleDateString()} • {tx.userName}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-6">
+        <div>
+          <h2 className="text-sm font-black uppercase tracking-[0.1em] text-slate-900 dark:text-white flex items-center gap-2 mb-4">
+            <Clock className="size-4 text-teal-600" />
+            Inventory Transaction History
+          </h2>
+          <ProcurementDataTable
+            data={itemTransactions}
+            columns={
+              [
+                {
+                  header: "Type",
+                  render: (tx) => {
+                    const typeConfig = {
+                      receipt: { label: 'Receipt', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+                      shipment: { label: 'Shipment', color: 'text-rose-600', bg: 'bg-rose-50 dark:bg-rose-900/20' },
+                      adjustment: { label: 'Adjustment', color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20' },
+                      reservation: { label: 'Reservation', color: 'text-teal-600', bg: 'bg-teal-50 dark:bg-teal-900/20' },
+                      release: { label: 'Release', color: 'text-slate-600', bg: 'bg-slate-50 dark:bg-slate-800/50' },
+                      return: { label: 'Return', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+                    }
+                    const config = typeConfig[tx.type as keyof typeof typeConfig] || typeConfig.adjustment
+                    return (
+                      <span className={cn("px-2 py-1 text-[10px] font-black uppercase tracking-widest rounded", config.bg, config.color)}>
+                        {config.label}
+                      </span>
+                    )
+                  },
+                },
+                {
+                  header: "Reason",
+                  render: (tx) => (
+                    <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-tight">
+                      {tx.reason || tx.type}
+                    </span>
+                  ),
+                },
+                {
+                  header: "Reference",
+                  render: (tx) => (
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      {tx.referenceNumber || tx.referenceType}
+                    </span>
+                  ),
+                },
+                {
+                  header: "User",
+                  render: (tx) => (
+                    <span className="text-[10px] text-slate-400 font-medium">{tx.userName}</span>
+                  ),
+                },
+                {
+                  header: "Date",
+                  render: (tx) => (
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      {new Date(tx.createdAt).toLocaleDateString()}
+                    </span>
+                  ),
+                  align: "right",
+                },
+                {
+                  header: "Change",
+                  render: (tx) => {
+                    const isPositive = tx.quantityChange > 0
+                    return (
                       <div className="text-right">
                         <p className={cn("text-xs font-black", isPositive ? "text-emerald-600" : "text-rose-600")}>
-                          {isPositive ? '+' : ''}{tx.quantityChange} Units
+                          {isPositive ? '+' : ''}{tx.quantityChange}
                         </p>
                         <p className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">
                           {tx.quantityBefore} → {tx.quantityAfter}
                         </p>
                       </div>
-                    </div>
-                  </div>
-                )
-              })
-            )}
-          </div>
+                    )
+                  },
+                  align: "right",
+                },
+              ] as ProcurementColumn<InventoryTransaction>[]
+            }
+            emptyState={{
+              icon: <Clock className="w-12 h-12 text-slate-200" />,
+              message: "No transaction history recorded for this item.",
+            }}
+          />
         </div>
 
       </div>

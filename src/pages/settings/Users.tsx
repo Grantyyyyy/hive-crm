@@ -18,9 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import {
-  UserPlus,
   Shield,
   Trash2,
   Loader2,
@@ -38,6 +36,8 @@ import { ListSkeleton } from "@/components/ui/skeletons";
 import { Pagination } from "@/components/ui/Pagination";
 import { DeleteModal } from "@/components/ui/delete-modal";
 import { StatusTabs, type StatusTab } from '@/components/reusables/StatusTabs';
+import { UserSheet } from '@/components/crmComponent/UserSheet';
+import type { UserFormData } from '@/components/crmComponent/UserForm';
 
 // ── Actions dropdown ──────────────────────────────────────────────────────────
 
@@ -175,12 +175,9 @@ export function Users() {
   ];
 
   // Dialog State
-  const [showRoleDialog, setShowRoleDialog] = useState(false);
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [inviteMode, setInviteMode] = useState(true);
-  const [editingRoleUser, setEditingRoleUser] = useState<AppUser | null>(null);
-  const [newRoleId, setNewRoleId] = useState('');
-  const [addForm, setAddForm] = useState({ name: '', email: '', roleId: '' });
+  // Sheet State
+  const [userSheetOpen, setUserSheetOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
 
   // Delete Modal State
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -197,8 +194,8 @@ export function Users() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['app-users'] });
       queryClient.invalidateQueries({ queryKey: ['roles'] });
-      setAddForm({ name: '', email: '', roleId: '' });
-      setShowAddDialog(false);
+      setUserSheetOpen(false);
+      setSelectedUser(null);
       toast.success('Invitation sent!', {
         description: 'The user will receive an email to set up their account.',
       });
@@ -220,8 +217,8 @@ export function Users() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['app-users'] });
       queryClient.invalidateQueries({ queryKey: ['roles'] });
-      setAddForm({ name: '', email: '', roleId: '' });
-      setShowAddDialog(false);
+      setUserSheetOpen(false);
+      setSelectedUser(null);
       toast.success('User created!', {
         description: 'The account is ready. They can sign in immediately with password: "password"',
       });
@@ -291,9 +288,8 @@ export function Users() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['app-users'] });
       queryClient.invalidateQueries({ queryKey: ['roles'] });
-      setEditingRoleUser(null);
-      setNewRoleId('');
-      setShowRoleDialog(false);
+      setSelectedUser(null);
+      setUserSheetOpen(false);
       toast.success('Role updated successfully');
     },
     onError: (error) => {
@@ -338,27 +334,25 @@ export function Users() {
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
 
   // Handlers
-  const handleUpdateRole = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingRoleUser && newRoleId) {
-      updateRoleMutation.mutate({ appUserId: editingRoleUser.id, roleId: newRoleId });
-    }
-  };
-
-  const handleAddUser = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (addForm.name && addForm.email) {
-      if (inviteMode) {
+  const handleSaveUser = (data: UserFormData) => {
+    if (selectedUser) {
+      if (data.roleId) {
+        updateRoleMutation.mutate({ appUserId: selectedUser.id, roleId: data.roleId });
+      } else {
+          toast.error("Please select a role");
+      }
+    } else {
+      if (data.inviteMode) {
         inviteUserMutation.mutate({
-          name: addForm.name,
-          email: addForm.email,
-          roleId: addForm.roleId || undefined,
+          name: data.name,
+          email: data.email,
+          roleId: data.roleId || undefined,
         });
       } else {
         addUserMutation.mutate({
-          name: addForm.name,
-          email: addForm.email,
-          roleId: addForm.roleId || undefined,
+          name: data.name,
+          email: data.email,
+          roleId: data.roleId || undefined,
         });
       }
     }
@@ -381,9 +375,8 @@ export function Users() {
   };
 
   const openRoleDialog = (u: AppUser) => {
-    setEditingRoleUser(u);
-    setNewRoleId(u.roleId || '');
-    setShowRoleDialog(true);
+    setSelectedUser(u);
+    setUserSheetOpen(true);
   };
 
   if (!userLoaded || usersLoading) {
@@ -417,7 +410,10 @@ export function Users() {
             {canCreate && (
               <Button
                 variant="brand"
-                onClick={() => setShowAddDialog(true)}
+                onClick={() => {
+                  setSelectedUser(null);
+                  setUserSheetOpen(true);
+                }}
               >
                 <PlusCircle className="w-4 h-4" /> Create User
               </Button>
@@ -556,184 +552,15 @@ export function Users() {
         </div>
       </div>
 
-      {/* Role Dialog */}
-      <Dialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>
-        <DialogContent className="max-w-md rounded-xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Change User Role</DialogTitle>
-            <DialogDescription>
-              Updating role for <span className="font-semibold text-slate-900 dark:text-white">{editingRoleUser?.name}</span>
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleUpdateRole}>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="newRole" className="text-xs font-bold uppercase tracking-wider text-slate-500">New Role</Label>
-                <select
-                  id="newRole"
-                  className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-medium outline-none focus:ring-4 focus:ring-teal-600/20 transition-all appearance-none"
-                  value={newRoleId}
-                  onChange={(e) => setNewRoleId(e.target.value)}
-                  required
-                >
-                  <option value="">Select a role</option>
-                  {availableRoles.map((role) => (
-                    <option key={role.id} value={role.id}>
-                      {role.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button
-                type="button"
-                variant="outlineNeutral"
-                onClick={() => setShowRoleDialog(false)}
-                className="h-11 rounded-xl"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="h-11 rounded-xl bg-teal-600 hover:bg-teal-700 shadow-md shadow-teal-100 dark:shadow-none"
-                disabled={updateRoleMutation.isPending}
-              >
-                {updateRoleMutation.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Updating...
-                  </>
-                ) : (
-                  'Update Role'
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Add User Dialog */}
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="max-w-md rounded-xl sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Add New User</DialogTitle>
-            <DialogDescription>
-              {inviteMode
-                ? "Send an invitation email to create an account."
-                : "Add a user manually (they'll sign in to claim their account)."}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl mb-4">
-            <button
-              onClick={() => setInviteMode(true)}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all",
-                inviteMode ? "bg-white dark:bg-slate-800 text-teal-600 shadow-sm" : "text-slate-500"
-              )}
-            >
-              <Mail className="w-4 h-4" /> Send Invite
-            </button>
-            <button
-              onClick={() => setInviteMode(false)}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all",
-                !inviteMode ? "bg-white dark:bg-slate-800 text-teal-600 shadow-sm" : "text-slate-500"
-              )}
-            >
-              <UserPlus className="w-4 h-4" /> Manual Add
-            </button>
-          </div>
-
-          <form onSubmit={handleAddUser}>
-            <div className="space-y-4 py-2">
-              {inviteMode && (
-                <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 text-xs text-emerald-800 dark:text-emerald-400">
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-500 shrink-0" />
-                    <div>
-                      <p className="font-bold mb-1">Invitation Link</p>
-                      <p className="opacity-80">The user will receive an email to set their password and activate their account within your organization.</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-xs font-bold uppercase tracking-wider text-slate-500">Full Name</Label>
-                  <Input
-                    id="name"
-                    placeholder="John Doe"
-                    value={addForm.name}
-                    onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
-                    required
-                    className="h-12 rounded-xl"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-xs font-bold uppercase tracking-wider text-slate-500">Email Address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="john@example.com"
-                    value={addForm.email}
-                    onChange={(e) => setAddForm({ ...addForm, email: e.target.value })}
-                    required
-                    className="h-12 rounded-xl"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="addUserRole" className="text-xs font-bold uppercase tracking-wider text-slate-500">Initial Role</Label>
-                  <select
-                    id="addUserRole"
-                    className="w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-medium outline-none focus:ring-4 focus:ring-teal-600/20 transition-all appearance-none"
-                    value={addForm.roleId}
-                    onChange={(e) => setAddForm({ ...addForm, roleId: e.target.value })}
-                  >
-                    <option value="">Select a role (optional)</option>
-                    {availableRoles.map((role) => (
-                      <option key={role.id} value={role.id}>
-                        {role.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-            <DialogFooter className="mt-6">
-              <Button
-                type="button"
-                variant="outlineNeutral"
-                onClick={() => setShowAddDialog(false)}
-                className="h-11 rounded-xl"
-                disabled={inviteUserMutation.isPending || addUserMutation.isPending}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className={cn(
-                  "h-11 rounded-xl shadow-md",
-                  inviteMode ? "bg-teal-600 hover:bg-teal-700 shadow-teal-100" : "bg-teal-600 hover:bg-teal-700 shadow-teal-100",
-                  "dark:shadow-none"
-                )}
-                disabled={inviteMode ? inviteUserMutation.isPending : addUserMutation.isPending}
-              >
-                {inviteMode
-                  ? (inviteUserMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />)
-                  : (addUserMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <UserPlus className="w-4 h-4 mr-2" />)
-                }
-                {inviteMode
-                  ? (inviteUserMutation.isPending ? 'Sending...' : 'Send Invitation')
-                  : (addUserMutation.isPending ? 'Adding...' : 'Add User')
-                }
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      {/* Unified User Sheet */}
+      <UserSheet
+        open={userSheetOpen}
+        onOpenChange={setUserSheetOpen}
+        onSave={handleSaveUser}
+        initialData={selectedUser}
+        availableRoles={availableRoles}
+        isPending={inviteUserMutation.isPending || addUserMutation.isPending || updateRoleMutation.isPending}
+      />
 
       {/* Delete User Modal */}
       <DeleteModal

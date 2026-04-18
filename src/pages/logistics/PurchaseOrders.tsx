@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils"
 import type { PurchaseOrder, PurchaseOrderStatus, InventoryTransaction } from "@/lib/types"
 
 import { AddPurchaseOrderModal } from "@/components/logisticsComponent/AddPurchaseOrderModal"
-import type { JobAdapter } from "@/services/types"
+import type { JobAdapter, AtomicOp } from "@/services/types"
 import { useCRMContext, updateRow, insertRows, deleteRow } from "@/lib/CRMContext"
 import { toast } from "sonner"
 import type { Quote, SalesOrder, InventoryItem, PurchaseRequest, Task } from "@/lib/types"
@@ -67,6 +67,22 @@ export function PurchaseOrders() {
 
     getTasks: () => ctx.getResource<Task>('tasks').data,
     updateTask: (id, patch) => updateRow<Task>(ctx, 'tasks', id, patch),
+    getReturnToSuppliers: () => ctx.getResource<any>('return_to_suppliers').data,
+    insertReturnToSupplier: (rts) => insertRows<any>(ctx, 'return_to_suppliers', [rts as any]).then(rows => rows[0]),
+    updateReturnToSupplier: (id, patch) => updateRow<any>(ctx, 'return_to_suppliers', id, patch),
+    runAtomicUpdate: async (ops: AtomicOp[]) => {
+      const results: AtomicOp[] = [];
+      for (const op of ops) {
+        if (op.action === 'insert') {
+          const row = await insertRows<any>(ctx, op.resource as any, [op.patch]);
+          results.push({ ...op, id: row[0].id });
+        } else {
+          await updateRow(ctx, op.resource as any, op.id!, op.patch);
+          results.push(op);
+        }
+      }
+      return results;
+    },
   }), [ctx, orders, inventoryTransactions])
 
   const [search, setSearch] = useState("")

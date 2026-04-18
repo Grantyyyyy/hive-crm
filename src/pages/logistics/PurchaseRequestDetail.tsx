@@ -38,7 +38,7 @@ import type {
   Task,
 } from "@/lib/types"
 import { approvePurchaseRequest } from "@/services/procurementService"
-import type { JobAdapter } from "@/services/types"
+import type { JobAdapter, AtomicOp } from "@/services/types"
 
 // ---------- helpers ----------
 
@@ -263,6 +263,10 @@ export function PurchaseRequestDetail() {
         insertRows<PurchaseOrder>(ctx, "purchase_orders", [po as any]).then(
           (rows) => rows[0] as PurchaseOrder
         ),
+      getPurchaseReceipts: () => ctx.getResource<any>("purchase_receipts").data,
+      getPurchaseReceiptItems: () => ctx.getResource<any>("purchase_receipt_items").data,
+      insertPurchaseReceipt: (receipt) => insertRows<any>(ctx, "purchase_receipts", [receipt as any]).then(rows => rows[0]),
+      insertPurchaseReceiptItem: (item) => insertRows<any>(ctx, "purchase_receipt_items", [item as any]).then(rows => rows[0]),
       getInventoryTransactions: () => inventoryTransactions,
       insertInventoryTransaction: (tx) =>
         insertRows<InventoryTransaction>(ctx, "inventory_transactions", [
@@ -271,6 +275,22 @@ export function PurchaseRequestDetail() {
 
       getTasks: () => ctx.getResource<Task>("tasks").data,
       updateTask: (id, patch) => updateRow<Task>(ctx, "tasks", id, patch),
+      getReturnToSuppliers: () => ctx.getResource<any>("return_to_suppliers").data,
+      insertReturnToSupplier: (rts) => insertRows<any>(ctx, "return_to_suppliers", [rts as any]).then(rows => rows[0]),
+      updateReturnToSupplier: (id, patch) => updateRow<any>(ctx, "return_to_suppliers", id, patch),
+      runAtomicUpdate: async (ops: AtomicOp[]) => {
+        const results: AtomicOp[] = [];
+        for (const op of ops) {
+          if (op.action === "insert") {
+            const row = await insertRows<any>(ctx, op.resource as any, [op.patch]);
+            results.push({ ...op, id: row[0].id });
+          } else {
+            await updateRow(ctx, op.resource as any, op.id!, op.patch);
+            results.push(op);
+          }
+        }
+        return results;
+      },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [requests, inventoryTransactions]

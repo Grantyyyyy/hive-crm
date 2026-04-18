@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { createBrowserClient } from '@supabase/ssr'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
@@ -9,7 +9,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // Basic client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase: SupabaseClient<any> = createClient(supabaseUrl, supabaseAnonKey)
+
+// Re-export auth methods directly for easier access
+export const auth = supabase.auth
 
 /**
  * Creates a Supabase browser client with cookie-based auth.

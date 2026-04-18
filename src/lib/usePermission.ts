@@ -40,7 +40,7 @@ export async function can(
 ): Promise<boolean> {
   let uid = userId
   if (!uid) {
-    const { data: session } = await supabase.auth.getSession()
+    const { data: session } = await (supabase.auth as any).getSession()
     uid = session.session?.user?.id
   }
   if (!uid) return false

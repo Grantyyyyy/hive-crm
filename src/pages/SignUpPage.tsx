@@ -31,7 +31,7 @@ export function SignUpPage() {
     setLoading(true)
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { error } = await (supabase.auth as any).signUp({
         email,
         password,
       })

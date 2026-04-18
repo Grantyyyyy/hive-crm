@@ -55,8 +55,18 @@ const activityColorMap: Record<string, string> = {
   meeting: "bg-emerald-500",
 }
 
-function DealHealthBadge({ lastActivityDate, createdAt }: { lastActivityDate: string | null; createdAt?: string }) {
-  const health = getDealHealth(lastActivityDate, createdAt)
+function DealHealthBadge({ 
+  lastActivityDate, 
+  createdAt, 
+  expectedCloseDate, 
+  updatedAt 
+}: { 
+  lastActivityDate: string | null; 
+  createdAt?: string; 
+  expectedCloseDate?: string | null;
+  updatedAt?: string | null;
+}) {
+  const health = getDealHealth(lastActivityDate, createdAt, expectedCloseDate, updatedAt)
   const config = {
     green: {
       label: 'Healthy',

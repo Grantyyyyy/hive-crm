@@ -16,7 +16,7 @@ import { calculatePOFulfillment, createPurchaseReceipt } from "@/services/procur
 import { useCRMContext, insertRows, updateRow } from "@/lib/CRMContext"
 import { useUser } from "@/lib/AuthContext"
 import { toast } from "sonner"
-import type { JobAdapter } from "@/services/types"
+import type { JobAdapter, AtomicOp } from "@/services/types"
 import type { Quote, SalesOrder, InventoryItem, PurchaseRequest, InventoryTransaction, Task, PurchaseReceipt } from "@/lib/types"
 
 interface ReceiveItemsModalProps {
@@ -57,6 +57,22 @@ export function ReceiveItemsModal({ order, onClose, onSuccess }: ReceiveItemsMod
     insertInventoryTransaction: (tx) => insertRows<InventoryTransaction>(ctx, 'inventory_transactions', [tx as any]).then(rows => rows[0]),
     getTasks: () => ctx.getResource<Task>('tasks').data,
     updateTask: (id, patch) => updateRow<Task>(ctx, 'tasks', id, patch),
+    getReturnToSuppliers: () => ctx.getResource<any>('return_to_suppliers').data,
+    insertReturnToSupplier: (rts) => insertRows<any>(ctx, 'return_to_suppliers', [rts as any]).then(rows => rows[0]),
+    updateReturnToSupplier: (id, patch) => updateRow<any>(ctx, 'return_to_suppliers', id, patch),
+    runAtomicUpdate: async (ops: AtomicOp[]) => {
+      const results: AtomicOp[] = [];
+      for (const op of ops) {
+        if (op.action === 'insert') {
+          const row = await insertRows<any>(ctx, op.resource as any, [op.patch]);
+          results.push({ ...op, id: row[0].id });
+        } else {
+          await updateRow(ctx, op.resource as any, op.id!, op.patch);
+          results.push(op);
+        }
+      }
+      return results;
+    },
   }), [ctx, receipts, receiptItems, inventoryTransactions])
 
   const [vendorReference, setVendorReference] = useState("")

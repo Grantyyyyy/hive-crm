@@ -5,6 +5,8 @@
 import { supabase } from './supabaseClient'
 import type { Permission, Role, AppUser } from './types'
 
+export type { Permission, Role }
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 
@@ -53,7 +55,7 @@ export async function assertPermission(
   action: string,
 ): Promise<void> {
   // Get current auth user ID
-  const { data: session } = await client.auth.getSession()
+const { data: session } = await (client.auth as any).getSession()
   const authUserId = session.session?.user?.id
   if (!authUserId) throw new Error('Unauthorized')
 
@@ -418,7 +420,7 @@ export async function updateUserRole(
   await assertPermission(client, 'users', 'update');
   
   // Guard 1: Verify acting user's capacity to assign this role
-  const { data: session } = await client.auth.getSession();
+  const { data: session } = await (client.auth as any).getSession();
   if (session.session?.user?.id) {
     await assertRoleAssignmentPerms(client, roleId, session.session.user.id);
   }

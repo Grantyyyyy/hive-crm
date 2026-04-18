@@ -84,14 +84,14 @@ export function VendorDetail() {
     .filter(po => po.status !== 'cancelled')
     .reduce((sum, po) => sum + po.amount, 0)
   const activePOs = vendorPOs.filter(po => po.status === 'pending' || po.status === 'sent').length
-  const receivedPOs = vendorPOs.filter(po => po.status === 'received').length
+  const receivedPOs = vendorPOs.filter(po => po.status === 'fully_received').length
   const avgOrder = vendorPOs.length > 0 ? totalSpend / vendorPOs.length : 0
 
   const poStatusColors: Record<string, string> = {
     draft: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400',
     pending: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400',
     sent: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400',
-    received: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400',
+    fully_received: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400',
     cancelled: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400',
   }
 

@@ -63,7 +63,7 @@ export function VendorInvoiceModal({ order, onClose }: VendorInvoiceModalProps) 
     draft: "bg-slate-100 text-slate-600 ring-slate-200",
     pending: "bg-amber-50 text-amber-700 ring-amber-200",
     sent: "bg-blue-50 text-blue-700 ring-blue-200",
-    received: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+    fully_received: "bg-emerald-50 text-emerald-700 ring-emerald-200",
     cancelled: "bg-rose-50 text-rose-700 ring-rose-200",
   }
 
@@ -135,7 +135,7 @@ export function VendorInvoiceModal({ order, onClose }: VendorInvoiceModalProps) 
               </div>
               <div>
                 <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-1.5">Payment Status</p>
-                <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{order.status === 'received' ? 'Ready for Payment' : 'Pending Receipt'}</p>
+                <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{order.status === 'fully_received' ? 'Ready for Payment' : 'Pending Receipt'}</p>
               </div>
               <div>
                 <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-1.5">Reference</p>

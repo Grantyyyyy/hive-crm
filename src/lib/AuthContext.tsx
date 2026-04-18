@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react"
 import { supabase } from "./supabaseClient"
-import type { Session, User } from "@supabase/supabase-js"
+import type { AuthSession as Session, AuthUser as User } from "@supabase/supabase-js"
 
 // ── Context value ─────────────────────────────────────────────────────────────
 
@@ -55,12 +55,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+    (supabase.auth as any).getSession().then(({ data: { session: initialSession } }: any) => {
       setSession(initialSession)
       setUser(initialSession?.user ?? null)
       setOrganizationId(extractOrgId(initialSession))
       setIsLoaded(true)
-    }).catch((err) => {
+    }).catch((err: any) => {
       console.error('Failed to get initial session:', err)
       setIsLoaded(true)
     })
@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth state changes (sign-in, sign-out, token refresh, etc.)
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    } = (supabase.auth as any).onAuthStateChange((_event: string, newSession: any) => {
       setSession(newSession)
       setUser(newSession?.user ?? null)
       setOrganizationId(extractOrgId(newSession))
@@ -80,8 +80,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = useCallback(async () => {
     try {
-      await supabase.auth.signOut();
-    } catch (err) {
+      await (supabase.auth as any).signOut();
+    } catch (err: any) {
       console.error('Sign out failed:', err);
     }
     // onAuthStateChange will fire and update state; force-clear local state regardless

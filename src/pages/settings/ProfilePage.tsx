@@ -31,7 +31,7 @@ export function ProfilePage() {
     if (!user) return
     setSaving(true)
     try {
-      const { error } = await supabase.auth.updateUser({
+      const { error } = await (supabase.auth as any).updateUser({
         data: {
           full_name: `${firstName.trim()} ${lastName.trim()}`.trim(),
         },
@@ -66,7 +66,7 @@ export function ProfilePage() {
         .from("avatars")
         .getPublicUrl(fileName)
 
-      const { error: updateError } = await supabase.auth.updateUser({
+      const { error: updateError } = await (supabase.auth as any).updateUser({
         data: { avatar_url: publicUrl },
       })
       if (updateError) throw updateError

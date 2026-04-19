@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo, useRef, useEffect } from "react"
 import { useRoute, useLocation, Link } from "wouter"
 import {
   ArrowLeft,
@@ -15,6 +15,8 @@ import {
   Pencil,
   Download,
   Mail,
+  ChevronDown,
+  MoreHorizontal,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -31,10 +33,16 @@ import {
   releaseOrderStock,
   returnShippedOrderStock,
   cancelOrderWithStockReversal,
-  sendShippingNotification
+  sendShippingNotification,
+  reserveAvailableStock
 } from "@/services/orderService"
-import { useUser } from "@/lib/AuthContext"
 import { SendEmailModal } from "@/components/crmComponent/SendEmailModal"
+import { AddPurchaseRequestModal } from "@/components/logisticsComponent/AddPurchaseRequestModal"
+import { createPurchaseRequestFromShortages } from "@/services/procurementService"
+import { useUser } from "@/lib/AuthContext"
+import { updateRow, insertRows } from "@/lib/CRMContext"
+import type { JobAdapter, AtomicOp } from "@/services/types"
+import type { PurchaseRequest, InventoryItem, PurchaseOrder, InventoryTransaction, Task, PurchaseReceipt, PurchaseReceiptItem, PurchaseOrderItem } from "@/lib/types"
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -50,6 +58,9 @@ function relativeTime(iso: string): string {
 const STATUS_CONFIG: Record<SalesOrderStatus, { label: string; badge: string; dot: string }> = {
   draft: { label: "Draft", badge: "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 ring-1 ring-slate-200 dark:ring-slate-700", dot: "bg-slate-400" },
   pending: { label: "Pending", badge: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 ring-1 ring-amber-200 dark:ring-amber-800", dot: "bg-amber-500" },
+  pending_stock: { label: "Awaiting Stock", badge: "bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 ring-1 ring-orange-200 dark:ring-orange-800", dot: "bg-orange-500" },
+  partially_fulfilled: { label: "Partial", badge: "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 ring-1 ring-yellow-200 dark:ring-yellow-800", dot: "bg-yellow-500" },
+  fulfilled: { label: "Fulfilled", badge: "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 ring-1 ring-teal-200 dark:ring-teal-800", dot: "bg-teal-500" },
   shipped: { label: "Shipped", badge: "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 ring-1 ring-blue-200 dark:ring-blue-800", dot: "bg-blue-500" },
   delivered: { label: "Delivered", badge: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200 dark:ring-emerald-800", dot: "bg-emerald-500" },
   cancelled: { label: "Cancelled", badge: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 ring-1 ring-slate-200 dark:ring-slate-700", dot: "bg-slate-400" },
@@ -62,6 +73,70 @@ const TIMELINE: { status: SalesOrderStatus; label: string; icon: React.ElementTy
 ]
 
 const STATUS_ORDER: SalesOrderStatus[] = ["pending", "shipped", "delivered"]
+
+// ─── Dropdown Menu ────────────────────────────────────────────────────────────
+
+interface DropdownItem {
+  label: string
+  icon?: React.ElementType
+  onClick: () => void
+  danger?: boolean
+  disabled?: boolean
+}
+
+function ActionsDropdown({ items }: { items: DropdownItem[] }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", handle)
+    return () => document.removeEventListener("mousedown", handle)
+  }, [])
+
+  if (items.length === 0) return null
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="h-9 px-3 flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-xs font-bold uppercase tracking-wider"
+      >
+        <MoreHorizontal className="w-4 h-4" />
+        <span className="hidden sm:inline">More</span>
+        <ChevronDown className={cn("w-3 h-3 transition-transform", open && "rotate-180")} />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-1.5 w-52 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg shadow-slate-200/50 dark:shadow-none z-50 overflow-hidden">
+          {items.map((item, i) => {
+            const Icon = item.icon
+            return (
+              <button
+                key={i}
+                disabled={item.disabled}
+                onClick={() => { item.onClick(); setOpen(false) }}
+                className={cn(
+                  "w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed",
+                  item.danger
+                    ? "text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
+                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                )}
+              >
+                {Icon && <Icon className="w-3.5 h-3.5 shrink-0" />}
+                {item.label}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export function SalesOrderDetail() {
   const [, params] = useRoute("/orders/:id")
@@ -78,11 +153,16 @@ export function SalesOrderDetail() {
   const [returnOpen, setReturnOpen] = useState(false)
   const [isShipping, setIsShipping] = useState(false)
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
-  const [isCancelling, _setIsCancelling] = useState(false)
+  const [isCancelling] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isReturning, setIsReturning] = useState(false)
   const [confirmDeliver, setConfirmDeliver] = useState(false)
   const [confirmCancel, setConfirmCancel] = useState(false)
+  const [isProcuring, setIsProcuring] = useState(false)
+  const [isReserving, setIsReserving] = useState(false)
+  const [shortagePRModalOpen, setShortagePRModalOpen] = useState(false)
+  const [shortageData, setShortageData] = useState<Partial<PurchaseRequest> | undefined>()
+  const [sendEmailOpen, setSendEmailOpen] = useState(false)
 
   const order = useMemo(() => orders.find(o => o.id === orderId), [orders, orderId])
 
@@ -92,13 +172,36 @@ export function SalesOrderDetail() {
     return contact?.email
   }, [order?.customerId, contacts])
 
+  const handleReserveStock = async () => {
+    if (!order || isReserving) return
+    setIsReserving(true)
+    try {
+      const { reservedItems, shortages } = await reserveAvailableStock(
+        order, ctx,
+        user?.id || 'system',
+        user?.user_metadata?.full_name || 'System'
+      )
+      if (reservedItems > 0 && shortages.length === 0) {
+        toast.success('Stock Fully Reserved', { description: `All items reserved for #${order.orderNumber}.` })
+      } else if (reservedItems > 0) {
+        toast.success('Stock Partially Reserved', { description: `${reservedItems} item(s) reserved. ${shortages.length} still short.` })
+      } else {
+        toast.info('No Stock Available', { description: 'No additional stock could be reserved.' })
+      }
+    } catch (e: unknown) {
+      toast.error('Failed to reserve stock', { description: (e as Error).message })
+    } finally {
+      setIsReserving(false)
+    }
+  }
+
   const handleShip = async () => {
     if (!order || isShipping) return
     setIsShipping(true)
     try {
       await fulfillOrderStock(order, ctx, user?.id || 'system', user?.user_metadata?.full_name || 'Unknown User')
       sendShippingNotification(order)
-      toast.success("Order Marked as Shipped", { description: `#${order.orderNumber} — stock updated. Download the invoice PDF manually.` })
+      toast.success("Order Marked as Shipped", { description: `#${order.orderNumber} — stock updated.` })
     } catch (e: unknown) {
       toast.error("Failed to ship order", { description: (e as Error).message })
     } finally {
@@ -110,17 +213,10 @@ export function SalesOrderDetail() {
     if (!order || isUpdatingStatus) return
     setIsUpdatingStatus(true)
     try {
-      await updateItem(order.id, {
-        status: 'delivered',
-        updatedAt: new Date().toISOString()
-      })
-      toast.success('Order Delivered', {
-        description: `#${order.orderNumber} marked as delivered.`
-      })
+      await updateItem(order.id, { status: 'delivered', updatedAt: new Date().toISOString() })
+      toast.success('Order Delivered', { description: `#${order.orderNumber} marked as delivered.` })
     } catch (e: unknown) {
-      toast.error('Failed to update order', {
-        description: (e as Error).message
-      })
+      toast.error('Failed to update order', { description: (e as Error).message })
     } finally {
       setIsUpdatingStatus(false)
       setConfirmDeliver(false)
@@ -131,29 +227,68 @@ export function SalesOrderDetail() {
     if (!order || isUpdatingStatus) return
     setIsUpdatingStatus(true)
     try {
-      const { itemsReversed, type } =
-        await cancelOrderWithStockReversal(
-          order, ctx,
-          user?.id ?? 'system',
-          user?.user_metadata?.full_name ?? 'Unknown'
-        )
-
-      // Build toast description based on what happened
+      const { itemsReversed, type } = await cancelOrderWithStockReversal(
+        order, ctx,
+        user?.id ?? 'system',
+        user?.user_metadata?.full_name ?? 'Unknown'
+      )
       let description = `#${order.orderNumber} has been cancelled.`
-      if (type === 'return' && itemsReversed > 0) {
-        description += ` Stock returned for ${itemsReversed} item${itemsReversed !== 1 ? 's' : ''}.`
-      } else if (type === 'release' && itemsReversed > 0) {
-        description += ` Reservation released for ${itemsReversed} item${itemsReversed !== 1 ? 's' : ''}.`
+      if (type === 'mixed' && itemsReversed > 0) {
+        description += ` Stock released for ${itemsReversed} item${itemsReversed !== 1 ? 's' : ''}.`
       }
-
       toast.success('Order Cancelled', { description })
     } catch (e: unknown) {
-      toast.error('Failed to cancel order', {
-        description: (e as Error).message
-      })
+      toast.error('Failed to cancel order', { description: (e as Error).message })
     } finally {
       setIsUpdatingStatus(false)
       setConfirmCancel(false)
+    }
+  }
+
+  const handleProcureShortages = async () => {
+    if (!order) return
+    const shortages = order.items.filter(item => {
+      const pending = item.quantity - (item.reservedQuantity || 0) - (item.fulfilledQuantity || 0) - (item.procuredQuantity || 0)
+      return pending > 0
+    })
+    if (shortages.length === 0) {
+      toast.info("Nothing to procure", { description: "All items are already reserved or fulfilled." })
+      return
+    }
+    const prItems = shortages.map(item => {
+      const needed = item.quantity - (item.reservedQuantity || 0) - (item.fulfilledQuantity || 0) - (item.procuredQuantity || 0)
+      return {
+        id: crypto.randomUUID(),
+        name: item.name,
+        description: `Shortage for Sales Order ${order.orderNumber}`,
+        quantity: needed,
+        estimatedPrice: item.price,
+        inventoryItemId: item.inventoryItemId,
+        trackInInventory: true
+      }
+    })
+    setShortageData({
+      items: prItems as any,
+      justification: `Automated shortage procurement for Sales Order ${order.orderNumber}`,
+      urgent: true,
+      priority: 'high',
+      department: 'Sales Fulfillment'
+    })
+    setShortagePRModalOpen(true)
+  }
+
+  const handleProcureSuccess = async (pr: PurchaseRequest) => {
+    if (!order) return
+    try {
+      const updatedOrderItems = order.items.map(item => {
+        const shortageLine = pr.items.find(p => p.inventoryItemId === item.inventoryItemId)
+        if (!shortageLine) return item
+        return { ...item, procuredQuantity: (item.procuredQuantity || 0) + shortageLine.quantity }
+      })
+      await updateRow<SalesOrder>(ctx, 'orders', order.id, { items: updatedOrderItems })
+      toast.success("Order Updated", { description: "Shortages marked as procured." })
+    } catch (e: any) {
+      toast.error("Failed to update order status", { description: e.message })
     }
   }
 
@@ -162,30 +297,20 @@ export function SalesOrderDetail() {
     try {
       const { generateInvoicePDF } = await import("@/services/pdfService")
       await generateInvoicePDF(order)
-      toast.success("Invoice PDF Downloaded", { description: `${order.orderNumber} — ready to email to ${order.customerName}.` })
+      toast.success("Invoice PDF Downloaded")
     } catch (e: unknown) {
       toast.error("Failed to generate invoice PDF", { description: (e as Error).message })
     }
   }
-
-  const handleSendEmail = () => {
-    if (!order) return
-    setSendEmailOpen(true)
-  }
-
-  const [sendEmailOpen, setSendEmailOpen] = useState(false)
 
   const handleDelete = async () => {
     if (!order || isDeleting) return
     setIsDeleting(true)
     try {
       if (order.stockDeducted) {
-        toast.error("Cannot delete a shipped order", {
-          description: "Stock has already been deducted. Please create a return or adjustment instead."
-        })
+        toast.error("Cannot delete a shipped order")
         return
       }
-      // Release reservation if held
       if (order.stockReserved) {
         await releaseOrderStock(order, ctx, user?.id || 'system', user?.user_metadata?.full_name || 'Unknown User')
       }
@@ -213,7 +338,6 @@ export function SalesOrderDetail() {
     }
   }
 
-
   if (!userLoaded || !isLoaded) return <DetailSkeleton />
 
   if (!order) {
@@ -239,8 +363,70 @@ export function SalesOrderDetail() {
 
   const currentStepIdx = STATUS_ORDER.indexOf(order.status)
   const cfg = STATUS_CONFIG[order.status]
-
   const initials = order.customerName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
+
+  // ── Primary CTA: single most important action for current status ──────────
+  const primaryAction = (() => {
+    if (order.status === "pending_stock") return (
+      <button
+        onClick={handleReserveStock}
+        disabled={isReserving}
+        className="h-9 px-4 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-teal-100 dark:shadow-none disabled:opacity-50 transition-colors flex items-center gap-2"
+      >
+        <Package className="w-3.5 h-3.5" />
+        {isReserving ? 'Reserving…' : 'Reserve Stock'}
+      </button>
+    )
+    if (order.status === "pending") return (
+      <button
+        onClick={handleShip}
+        disabled={isShipping}
+        className="h-9 px-4 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-teal-100 dark:shadow-none disabled:opacity-50 transition-colors flex items-center gap-2"
+      >
+        <Truck className="w-3.5 h-3.5" />
+        {isShipping ? 'Shipping…' : 'Mark Shipped'}
+      </button>
+    )
+    if (order.status === "shipped" || order.status === "fulfilled") return (
+      <button
+        onClick={() => setConfirmDeliver(true)}
+        disabled={isUpdatingStatus}
+        className="h-9 px-4 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-teal-100 dark:shadow-none disabled:opacity-50 transition-colors flex items-center gap-2"
+      >
+        <PackageCheck className="w-3.5 h-3.5" />
+        Mark Delivered
+      </button>
+    )
+    return null
+  })()
+
+  // ── Secondary / overflow actions ──────────────────────────────────────────
+  const dropdownItems: DropdownItem[] = []
+
+  // Invoice actions (always available once order exists)
+  dropdownItems.push({ label: "View Invoice", icon: Receipt, onClick: () => setInvoiceOpen(true) })
+
+  // Download / email only for shipped+
+  if (["shipped", "delivered", "fulfilled"].includes(order.status)) {
+    dropdownItems.push(
+      { label: "Download Invoice", icon: Download, onClick: handleDownloadInvoice },
+      { label: "Send to Customer", icon: Mail, onClick: () => setSendEmailOpen(true) }
+    )
+  }
+
+  // Pending stock: procure shortages in dropdown
+  if (order.status === "pending_stock") {
+    dropdownItems.push({ label: "Procure Shortages", icon: Package, onClick: handleProcureShortages, disabled: isProcuring })
+  }
+
+  // Divider-ish: destructive actions at the bottom
+  if (order.status === "shipped" && order.stockDeducted) {
+    dropdownItems.push({ label: "Return & Cancel", icon: XCircle, onClick: () => setReturnOpen(true), danger: true })
+  }
+
+  if (!["delivered", "cancelled"].includes(order.status)) {
+    dropdownItems.push({ label: "Cancel Order", icon: XCircle, onClick: () => setConfirmCancel(true), danger: true })
+  }
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 font-sans min-h-screen text-slate-900 dark:text-slate-100">
@@ -278,57 +464,10 @@ export function SalesOrderDetail() {
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-wrap gap-2 shrink-0">
-              {order.status === "pending" && (
-                <Button variant="outlineNeutral" onClick={handleShip} disabled={isShipping}>
-                  <Truck className="w-4 h-4 mr-2 text-amber-500" /> {isShipping ? 'Shipping...' : 'Mark Shipped'}
-                </Button>
-              )}
-              {order.status === "shipped" && (
-                <button
-                  onClick={() => setConfirmDeliver(true)}
-                  disabled={isUpdatingStatus}
-                  className="border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl h-9 px-4 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  <PackageCheck className="w-3.5 h-3.5" />
-                  {isUpdatingStatus ? 'Updating...' : 'Mark Delivered'}
-                </button>
-              )}
-              <Button variant="outlineNeutral" onClick={() => setInvoiceOpen(true)}>
-                <Receipt className="w-4 h-4 mr-2 text-teal-500" /> View Invoice
-              </Button>
-              {(order.status === "shipped" || order.status === "delivered") && (
-                <div className="inline-flex items-center rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-900">
-                  <Button variant="outline" size="sm" onClick={handleDownloadInvoice} className="rounded-none border-none h-9 px-5 text-[10px] font-black uppercase tracking-widest hover:bg-teal-50 hover:text-teal-600">
-                    <Download className="w-4 h-4 mr-2" /> Download
-                  </Button>
-                  <div className="w-px h-4 bg-slate-200 dark:bg-slate-700" />
-                  <Button variant="outline" size="sm" onClick={handleSendEmail} className="rounded-none border-none h-9 px-5 text-[10px] font-black uppercase tracking-widest hover:bg-teal-50 hover:text-teal-600">
-                    <Mail className="w-4 h-4 mr-2" /> Send Email
-                  </Button>
-                </div>
-              )}
-              {(order.status === "pending" || order.status === "shipped") && (
-                <button
-                  onClick={() => setConfirmCancel(true)}
-                  disabled={isUpdatingStatus}
-                  className="border border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl h-9 px-4 text-xs font-bold uppercase tracking-wider text-red-600 dark:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  <XCircle className="w-3.5 h-3.5" />
-                  {isUpdatingStatus ? 'Updating...' : 'Cancel Order'}
-                </button>
-              )}
-              {order.status === "shipped" && order.stockDeducted === true && (
-                <Button variant="destructive" onClick={() => setReturnOpen(true)} disabled={isReturning}>
-                  <XCircle className="w-4 h-4 mr-2" /> {isReturning ? 'Returning...' : 'Return & Cancel'}
-                </Button>
-              )}
-              {order.status !== "delivered" && order.status !== "cancelled" && order.status !== "shipped" && (
-                <Button variant="destructive" onClick={() => setDeleteOpen(true)} disabled={isCancelling}>
-                  <XCircle className="w-4 h-4 mr-2" /> {isCancelling ? 'Cancelling...' : 'Cancel Order'}
-                </Button>
-              )}
+            {/* ── Consolidated Action Bar ── */}
+            <div className="flex items-center gap-2 shrink-0">
+              {primaryAction}
+              <ActionsDropdown items={dropdownItems} />
             </div>
           </div>
 
@@ -356,7 +495,10 @@ export function SalesOrderDetail() {
                           "text-[10px] font-bold uppercase tracking-widest whitespace-nowrap",
                           done ? "text-teal-600 dark:text-teal-400" : "text-slate-400"
                         )}>
-                          {active ? <span className="relative">{step.label}<span className="absolute -top-1 -right-2 w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" /></span> : step.label}
+                          {active
+                            ? <span className="relative">{step.label}<span className="absolute -top-1 -right-2 w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" /></span>
+                            : step.label
+                          }
                         </span>
                       </div>
                       {i < TIMELINE.length - 1 && (
@@ -397,15 +539,46 @@ export function SalesOrderDetail() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {order.items.map((item, i) => (
-                    <tr key={item.id} className="hover:bg-slate-50/40 dark:hover:bg-slate-800/20 transition-colors">
-                      <td className="px-6 py-4 text-xs font-bold text-slate-400">{String(i + 1).padStart(2, "0")}</td>
-                      <td className="px-6 py-4 text-sm font-semibold text-slate-900 dark:text-white">{item.name}</td>
-                      <td className="px-6 py-4 text-sm text-center text-slate-600 dark:text-slate-400">{item.quantity}</td>
-                      <td className="px-6 py-4 text-sm text-right text-slate-600 dark:text-slate-400">{fmt(item.price)}</td>
-                      <td className="px-6 py-4 text-sm font-bold text-right text-slate-900 dark:text-white">{fmt(item.quantity * item.price)}</td>
-                    </tr>
-                  ))}
+                  {order.items.map((item, i) => {
+                    const reserved = item.reservedQuantity || 0
+                    const procured = item.procuredQuantity || 0
+                    const fulfilled = item.fulfilledQuantity || 0
+                    const pending = item.quantity - (reserved + procured + fulfilled)
+
+                    return (
+                      <tr key={item.id} className="hover:bg-slate-50/40 dark:hover:bg-slate-800/20 transition-colors">
+                        <td className="px-6 py-4 text-xs font-bold text-slate-400">{String(i + 1).padStart(2, "0")}</td>
+                        <td className="px-6 py-4">
+                          <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.name}</p>
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {fulfilled > 0 && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tight bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800">
+                                {fulfilled} Fulfilled
+                              </span>
+                            )}
+                            {reserved > 0 && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tight bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 border border-teal-100 dark:border-teal-800">
+                                {reserved} Reserved
+                              </span>
+                            )}
+                            {procured > 0 && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tight bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800">
+                                {procured} Ordered
+                              </span>
+                            )}
+                            {pending > 0 && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tight bg-slate-50 dark:bg-slate-800/50 text-slate-400 border border-slate-100 dark:border-slate-800">
+                                {pending} Shortage
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-center text-slate-600 dark:text-slate-400">{item.quantity}</td>
+                        <td className="px-6 py-4 text-sm text-right text-slate-600 dark:text-slate-400">{fmt(item.price)}</td>
+                        <td className="px-6 py-4 text-sm font-bold text-right text-slate-900 dark:text-white">{fmt(item.quantity * item.price)}</td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
                 <tfoot>
                   <tr className="border-t border-slate-200 dark:border-slate-700">
@@ -501,61 +674,29 @@ export function SalesOrderDetail() {
                 <Receipt className="w-4 h-4 mr-2" /> View Invoice
               </Button>
             </div>
-
-            {/* Danger Zone */}
-            {order.status !== "delivered" && order.status !== "cancelled" && (
-              <div className="bg-rose-50 dark:bg-rose-950/20 rounded-2xl border border-rose-200 dark:border-rose-900/40 p-6">
-                <h2 className="text-[11px] font-bold uppercase tracking-widest text-rose-600 dark:text-rose-400 pb-3 mb-4">Danger Zone</h2>
-                <p className="text-xs text-rose-700 dark:text-rose-300 font-medium mb-4 leading-relaxed">
-                  Cancelling this order cannot be undone and will stop all fulfillment processes.
-                </p>
-                <Button
-                  variant="destructive"
-                  className="w-full rounded-xl"
-                  onClick={() => setDeleteOpen(true)}
-                  disabled={isCancelling}
-                >
-                  <XCircle className="w-4 h-4 mr-2" /> {isCancelling ? 'Cancelling...' : 'Cancel Order'}
-                </Button>
-              </div>
-            )}
           </div>
         </div>
       </div>
 
-      {/* Invoice Modal */}
+      {/* Modals */}
       <InvoiceModal order={invoiceOpen ? order : null} onClose={() => setInvoiceOpen(false)} />
 
-      {/* Cancel / Delete Confirmation */}
       <DeleteModal
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         title="Cancel Order"
-        description={
-          <>
-            Are you sure you want to cancel order{" "}
-            <strong className="text-slate-900 dark:text-slate-100">#{order.orderNumber}</strong>?
-            This will stop all fulfillment and cannot be undone.
-          </>
-        }
+        description={<>Are you sure you want to cancel order <strong className="text-slate-900 dark:text-slate-100">#{order.orderNumber}</strong>? This cannot be undone.</>}
         onDelete={handleDelete}
         cancelText="Keep Order"
         deleteText="Cancel Order"
         loading={isDeleting}
       />
 
-      {/* Return & Cancel Confirmation */}
       <ConfirmModal
         open={returnOpen}
         onOpenChange={setReturnOpen}
         title="Return & Cancel Order"
-        description={
-          <>
-            Are you sure you want to return and cancel order{" "}
-            <strong className="text-slate-900 dark:text-slate-100">#{order.orderNumber}</strong>?
-            This will return the stock to inventory and mark the order as cancelled.
-          </>
-        }
+        description={<>Are you sure you want to return and cancel <strong className="text-slate-900 dark:text-slate-100">#{order.orderNumber}</strong>? Stock will be returned to inventory.</>}
         confirmLabel="Return & Cancel"
         cancelLabel="Keep Order"
         confirmClassName="bg-rose-600 hover:bg-rose-700 text-white"
@@ -568,7 +709,7 @@ export function SalesOrderDetail() {
         onOpenChange={setConfirmDeliver}
         title="Mark as delivered?"
         description="This confirms the order has been received by the customer."
-        confirmLabel="Mark delivered"
+        confirmLabel="Mark Delivered"
         onConfirm={handleDeliver}
       />
 
@@ -577,17 +718,23 @@ export function SalesOrderDetail() {
         onOpenChange={setConfirmCancel}
         title="Cancel this order?"
         description="This will cancel the order. Stock will not be automatically returned — adjust inventory manually if needed."
-        confirmLabel="Cancel order"
+        confirmLabel="Cancel Order"
         confirmClassName="bg-rose-600 hover:bg-rose-700 text-white"
         onConfirm={handleCancel}
       />
 
-      {/* Send Email Modal */}
       <SendEmailModal
         open={sendEmailOpen}
         onOpenChange={setSendEmailOpen}
         document={order ? { type: "invoice" as const, data: order } : null}
         customerEmail={customerEmail}
+      />
+
+      <AddPurchaseRequestModal
+        open={shortagePRModalOpen}
+        onOpenChange={setShortagePRModalOpen}
+        onSuccess={handleProcureSuccess}
+        initialData={shortageData}
       />
     </div>
   )

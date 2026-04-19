@@ -15,9 +15,10 @@ interface AddPurchaseRequestModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess?: (request: PurchaseRequest) => void
+  initialData?: Partial<PurchaseRequest>
 }
 
-export function AddPurchaseRequestModal({ open, onOpenChange, onSuccess }: AddPurchaseRequestModalProps) {
+export function AddPurchaseRequestModal({ open, onOpenChange, onSuccess, initialData }: AddPurchaseRequestModalProps) {
   const ctx = useCRMContext()
   const { data: inventoryItems, isLoaded } = useCRMResource<InventoryItem>('inventory')
   const { data: vendors } = useCRMResource<Vendor>('vendors')
@@ -75,6 +76,7 @@ export function AddPurchaseRequestModal({ open, onOpenChange, onSuccess }: AddPu
           <PurchaseRequestForm
             onSave={handleSave}
             onCancel={() => onOpenChange(false)}
+            initialData={initialData}
             inventoryItems={inventoryItems}
             vendors={vendors.filter(v => v.status === 'active')}
           />

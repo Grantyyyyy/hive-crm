@@ -497,6 +497,9 @@ function StatusBadge({ status }: { status: SalesOrderStatus }) {
   const styles: Record<SalesOrderStatus, string> = {
     draft: "bg-slate-50 dark:bg-slate-900/20 text-slate-500 dark:text-slate-400",
     pending: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400",
+    pending_stock: "bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400",
+    partially_fulfilled: "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400",
+    fulfilled: "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400",
     shipped: "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400",
     delivered: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400",
     cancelled: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400",
@@ -504,7 +507,7 @@ function StatusBadge({ status }: { status: SalesOrderStatus }) {
 
   return (
     <span className={cn("px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm border border-transparent", styles[status])}>
-      {status}
+      {status.replace('_', ' ')}
     </span>
   )
 }

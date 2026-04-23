@@ -1,4 +1,4 @@
-import type { Quote, SalesOrder, InventoryItem, PurchaseRequest, PurchaseOrder, InventoryTransaction, Task, PurchaseReceipt, PurchaseReceiptItem } from "../lib/types";
+import type { Quote, SalesOrder, InventoryItem, PurchaseRequest, PurchaseOrder, InventoryTransaction, Task, PurchaseReceipt, PurchaseReceiptItem, OrderItem, PurchaseOrderItem } from "../lib/types";
 
 export const STOCK_THRESHOLDS = {
   low: 10,   // stockQuantity <= 10 → low_stock
@@ -18,6 +18,7 @@ export interface JobAdapter {
   // Sales Orders
   getSalesOrders: () => SalesOrder[];
   updateSalesOrder: (id: string, patch: Partial<SalesOrder>) => Promise<void>;
+  updateSalesOrderItem?: (orderId: string, itemId: string, patch: Partial<OrderItem>) => Promise<void>;
   insertSalesOrder: (order: Omit<SalesOrder, 'id' | 'createdAt' | 'updatedAt'>) => Promise<SalesOrder>;
 
   // Inventory
@@ -33,6 +34,7 @@ export interface JobAdapter {
   // Purchase Orders
   getPurchaseOrders: () => PurchaseOrder[];
   updatePurchaseOrder: (id: string, patch: Partial<PurchaseOrder>) => Promise<void>;
+  updatePurchaseOrderItem?: (poId: string, itemId: string, patch: Partial<PurchaseOrderItem>) => Promise<void>;
   insertPurchaseOrder: (po: Omit<PurchaseOrder, 'id' | 'createdAt' | 'updatedAt'>) => Promise<PurchaseOrder>;
 
   // Purchase Receipts

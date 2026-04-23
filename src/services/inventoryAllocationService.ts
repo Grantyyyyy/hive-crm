@@ -27,7 +27,6 @@ export async function allocateInventoryToPendingOrders(
 ): Promise<{ allocatedQuantity: number; updatedItems: number }> {
   const inventory = adapter.getInventoryItems()
   const orders = adapter.getSalesOrders()
-
   const invItem = inventory.find(i => i.id === params.inventoryItemId)
   if (!invItem) {
     throw new Error(`Inventory item ${params.inventoryItemId} not found`)
@@ -36,7 +35,6 @@ export async function allocateInventoryToPendingOrders(
   // Calculate available stock for allocation
   const currentReserved = invItem.reservedQuantity || 0
   const availableForAllocation = invItem.stockQuantity - currentReserved
-
   if (availableForAllocation <= 0) {
     console.log('[allocation] No available stock to allocate')
     return { allocatedQuantity: 0, updatedItems: 0 }
@@ -55,7 +53,6 @@ export async function allocateInventoryToPendingOrders(
     }
     for (const item of order.items) {
       if (item.inventoryItemId !== params.inventoryItemId) continue
-
       // We want to allocate to anything that isn't yet fulfilled or reserved.
       // Even if it was 'procured' (ordered), arrival of stock means we move it from Procured -> Reserved.
       const pendingQty = item.quantity - (item.fulfilledQuantity || 0) - (item.reservedQuantity || 0)
@@ -89,7 +86,6 @@ export async function allocateInventoryToPendingOrders(
     // SAFE: Add to reservedQuantity (not exceeding stock)
     const currentReservedOnInv = invItem.reservedQuantity || 0
     const newReservedOnInv = currentReservedOnInv + allocateQty
-
     // Invariant check: never exceed physical stock
     if (newReservedOnInv > invItem.stockQuantity) {
       console.warn('[allocation] Would exceed stock, capping allocation')
@@ -109,7 +105,6 @@ export async function allocateInventoryToPendingOrders(
     // 2. Update Sales Order Item Quantities
     const currentReservedOnItem = pending.orderItem.reservedQuantity || 0;
     const newReservedOnItem = currentReservedOnItem + allocateQty;
-
     // Decrement procuredQuantity as it is now satisfied by incoming stock (clamped at 0)
     const currentProcuredOnItem = pending.orderItem.procuredQuantity || 0;
     const newProcuredOnItem = Math.max(0, currentProcuredOnItem - allocateQty);
@@ -136,7 +131,6 @@ export async function allocateInventoryToPendingOrders(
     remaining -= allocateQty;
     allocatedQty += allocateQty;
     updatedCount++;
-
     // Update local invItem reference for next iteration's calculation
     invItem.reservedQuantity = newReservedOnInv;
   }
@@ -159,7 +153,6 @@ export function calculateShortage(
   inventoryItem: InventoryItem | null
 ): number {
   if (!inventoryItem) return orderItem.quantity // No inventory = full shortage
-
   const available = inventoryItem.stockQuantity - (inventoryItem.reservedQuantity || 0)
   const needed = orderItem.quantity
   const alreadyReserved = orderItem.reservedQuantity || 0
@@ -189,12 +182,10 @@ export function validateOrderItemQuantities(
   if (totalAssigned > orderItem.quantity) {
     errors.push(`Total assigned (${totalAssigned}) exceeds quantity (${orderItem.quantity})`)
   }
-
   // Invariant 2: reserved ≤ stock (if inventory exists)
   if (inventoryItem && reserved > inventoryItem.stockQuantity) {
     errors.push(`Reserved (${reserved}) exceeds stock (${inventoryItem.stockQuantity})`)
   }
-
   return {
     valid: errors.length === 0,
     errors
@@ -215,7 +206,6 @@ export function calculateSalesOrderStatus(
     const fulfilled = item.fulfilledQuantity || 0
     const reserved = item.reservedQuantity || 0
     const procured = item.procuredQuantity || 0
-
     if (fulfilled > 0 && fulfilled < item.quantity) {
       hasPartial = true
     }

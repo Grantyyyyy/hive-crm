@@ -27,7 +27,9 @@ import { ConfirmModal } from "@/components/ui/confirm-modal"
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
 import { useCRMContext } from "@/lib/CRMContext"
-import type { SalesOrder, SalesOrderStatus, Contact } from "@/lib/types"
+import type { JobAdapter, AtomicOp } from "@/services/types"
+import type { SalesOrder, SalesOrderStatus, Contact, OrderItem, PurchaseRequest, InventoryItem, PurchaseOrder, InventoryTransaction, Task, PurchaseReceipt, PurchaseReceiptItem, PurchaseOrderItem } from "@/lib/types"
+import { getPendingQuantity } from "@/lib/types"
 import {
   fulfillOrderStock,
   releaseOrderStock,
@@ -38,11 +40,8 @@ import {
 } from "@/services/orderService"
 import { SendEmailModal } from "@/components/crmComponent/SendEmailModal"
 import { AddPurchaseRequestModal } from "@/components/logisticsComponent/AddPurchaseRequestModal"
-import { createPurchaseRequestFromShortages } from "@/services/procurementService"
 import { useUser } from "@/lib/AuthContext"
-import { updateRow, insertRows } from "@/lib/CRMContext"
-import type { JobAdapter, AtomicOp } from "@/services/types"
-import type { PurchaseRequest, InventoryItem, PurchaseOrder, InventoryTransaction, Task, PurchaseReceipt, PurchaseReceiptItem, PurchaseOrderItem } from "@/lib/types"
+import { updateRow } from "@/lib/CRMContext"
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -187,6 +186,24 @@ export function SalesOrderDetail() {
       setIsShipping(false)
     }
   }
+
+  const handleReserveStock = async () => {
+    if (!order || isReserving) return
+    setIsReserving(true)
+    try {
+      const { reservedItems } = await reserveAvailableStock(order, ctx, user?.id || 'system', user?.user_metadata?.full_name || 'Unknown User')
+      if (reservedItems > 0) {
+        toast.success("Stock Reserved", { description: `Reserved stock for ${reservedItems} items.` })
+      } else {
+        toast.info("No stock available", { description: "All items are either already reserved or out of stock." })
+      }
+    } catch (e: unknown) {
+      toast.error("Failed to reserve stock", { description: (e as Error).message })
+    } finally {
+      setIsReserving(false)
+    }
+  }
+
   const handleShip = async () => {
     if (!order || isUpdatingStatus) return
     setIsUpdatingStatus(true)
@@ -244,7 +261,6 @@ export function SalesOrderDetail() {
 
   const handleProcureShortages = async () => {
     if (!order) return
-    const { getPendingQuantity } = await import("@/lib/types")
     const shortages = order.items.filter(item => getPendingQuantity(item) > 0)
     if (shortages.length === 0) {
       toast.info("Nothing to procure", { description: "All items are already reserved or fulfilled." })
@@ -359,10 +375,15 @@ export function SalesOrderDetail() {
   const currentStepIdx = STATUS_ORDER.indexOf(order.status)
   const cfg = STATUS_CONFIG[order.status]
   const initials = order.customerName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
+  // ── Action Buttons Logic ──────────────────────────────────────────────────
   const canDownloadInvoice = ["shipped", "delivered", "fulfilled"].includes(order.status)
 
-  // ── Primary Actions ────────────────────────────────────────────────────────
   const primaryAction = (() => {
+    if (order.status === "pending_stock") return (
+      <Button variant="brand" onClick={handleReserveStock} disabled={isReserving} className="rounded-xl h-9 px-4">
+        <Package className="w-4 h-4 mr-2" /> {isReserving ? 'Reserving...' : 'Reserve Stock'}
+      </Button>
+    )
     if (order.status === "pending") return (
       <Button variant="brand" onClick={handleFulfill} disabled={isShipping} className="rounded-xl h-9 px-4">
         <Package className="w-4 h-4 mr-2" /> {isShipping ? 'Fulfilling...' : 'Fulfill Order'}
@@ -381,7 +402,6 @@ export function SalesOrderDetail() {
     return null
   })()
 
-  // ── Secondary Actions ──────────────────────────────────────────────────────
   const dropdownItems: DropdownItem[] = []
 
   dropdownItems.push({ label: "View Invoice", icon: Receipt, onClick: () => setInvoiceOpen(true) })
@@ -393,10 +413,7 @@ export function SalesOrderDetail() {
     )
   }
 
-  const hasShortages = order.items.some(item => {
-    const { getPendingQuantity } = require("@/lib/types")
-    return getPendingQuantity(item) > 0
-  })
+  const hasShortages = order.items.some(item => getPendingQuantity(item) > 0)
 
   if (hasShortages) {
     dropdownItems.push({ label: "Procure Shortages", icon: Package, onClick: handleProcureShortages, disabled: isProcuring })
@@ -409,7 +426,6 @@ export function SalesOrderDetail() {
   if (!["delivered", "cancelled"].includes(order.status)) {
     dropdownItems.push({ label: "Cancel Order", icon: XCircle, onClick: () => setConfirmCancel(true), danger: true })
   }
-
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 font-sans min-h-screen text-slate-900 dark:text-slate-100">

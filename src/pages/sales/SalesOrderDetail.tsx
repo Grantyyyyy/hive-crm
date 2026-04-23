@@ -50,6 +50,9 @@ function relativeTime(iso: string): string {
 const STATUS_CONFIG: Record<SalesOrderStatus, { label: string; badge: string; dot: string }> = {
   draft: { label: "Draft", badge: "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 ring-1 ring-slate-200 dark:ring-slate-700", dot: "bg-slate-400" },
   pending: { label: "Pending", badge: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 ring-1 ring-amber-200 dark:ring-amber-800", dot: "bg-amber-500" },
+  pending_stock: { label: "Awaiting Stock", badge: "bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 ring-1 ring-orange-200 dark:ring-orange-800", dot: "bg-orange-500" },
+  partially_fulfilled: { label: "Partial", badge: "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 ring-1 ring-yellow-200 dark:ring-yellow-800", dot: "bg-yellow-500" },
+  fulfilled: { label: "Fulfilled", badge: "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 ring-1 ring-teal-200 dark:ring-teal-800", dot: "bg-teal-500" },
   shipped: { label: "Shipped", badge: "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 ring-1 ring-blue-200 dark:ring-blue-800", dot: "bg-blue-500" },
   delivered: { label: "Delivered", badge: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200 dark:ring-emerald-800", dot: "bg-emerald-500" },
   cancelled: { label: "Cancelled", badge: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 ring-1 ring-slate-200 dark:ring-slate-700", dot: "bg-slate-400" },
@@ -57,11 +60,12 @@ const STATUS_CONFIG: Record<SalesOrderStatus, { label: string; badge: string; do
 
 const TIMELINE: { status: SalesOrderStatus; label: string; icon: React.ElementType }[] = [
   { status: "pending", label: "Order Placed", icon: ShoppingCart },
+  { status: "fulfilled", label: "Fulfilled", icon: Package },
   { status: "shipped", label: "Shipped", icon: Truck },
   { status: "delivered", label: "Delivered", icon: PackageCheck },
 ]
 
-const STATUS_ORDER: SalesOrderStatus[] = ["pending", "shipped", "delivered"]
+const STATUS_ORDER: SalesOrderStatus[] = ["pending", "fulfilled", "shipped", "delivered"]
 
 export function SalesOrderDetail() {
   const [, params] = useRoute("/orders/:id")
@@ -92,17 +96,31 @@ export function SalesOrderDetail() {
     return contact?.email
   }, [order?.customerId, contacts])
 
-  const handleShip = async () => {
+
+
+  const handleFulfill = async () => {
     if (!order || isShipping) return
     setIsShipping(true)
     try {
       await fulfillOrderStock(order, ctx, user?.id || 'system', user?.user_metadata?.full_name || 'Unknown User')
-      sendShippingNotification(order)
-      toast.success("Order Marked as Shipped", { description: `#${order.orderNumber} — stock updated. Download the invoice PDF manually.` })
+      toast.success("Order Fulfilled", { description: `#${order.orderNumber} — stock deducted.` })
     } catch (e: unknown) {
-      toast.error("Failed to ship order", { description: (e as Error).message })
+      toast.error("Failed to fulfill order", { description: (e as Error).message })
     } finally {
       setIsShipping(false)
+    }
+  }
+  const handleShip = async () => {
+    if (!order || isUpdatingStatus) return
+    setIsUpdatingStatus(true)
+    try {
+      await updateItem(order.id, { status: 'shipped', updatedAt: new Date().toISOString() })
+      sendShippingNotification(order)
+      toast.success("Order Marked as Shipped", { description: `#${order.orderNumber} is on its way.` })
+    } catch (e: unknown) {
+      toast.error('Failed to update order', { description: (e as Error).message })
+    } finally {
+      setIsUpdatingStatus(false)
     }
   }
 
@@ -242,6 +260,7 @@ export function SalesOrderDetail() {
 
   const initials = order.customerName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
 
+
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 font-sans min-h-screen text-slate-900 dark:text-slate-100">
       <div className="mx-auto p-4 md:p-8 max-w-full space-y-6 animate-fade-in">
@@ -281,8 +300,13 @@ export function SalesOrderDetail() {
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-2 shrink-0">
               {order.status === "pending" && (
-                <Button variant="outlineNeutral" onClick={handleShip} disabled={isShipping}>
-                  <Truck className="w-4 h-4 mr-2 text-amber-500" /> {isShipping ? 'Shipping...' : 'Mark Shipped'}
+                <Button variant="outlineNeutral" onClick={handleFulfill} disabled={isShipping}>
+                  <Package className="w-4 h-4 mr-2 text-amber-500" /> {isShipping ? 'Fulfilling...' : 'Fulfill Order'}
+                </Button>
+              )}
+              {order.status === "fulfilled" && (
+                <Button variant="outlineNeutral" onClick={handleShip} disabled={isUpdatingStatus}>
+                  <Truck className="w-4 h-4 mr-2 text-blue-500" /> {isUpdatingStatus ? 'Updating...' : 'Mark Shipped'}
                 </Button>
               )}
               {order.status === "shipped" && (
@@ -309,7 +333,7 @@ export function SalesOrderDetail() {
                   </Button>
                 </div>
               )}
-              {(order.status === "pending" || order.status === "shipped") && (
+              {(order.status === "pending" || order.status === "fulfilled" || order.status === "shipped") && (
                 <button
                   onClick={() => setConfirmCancel(true)}
                   disabled={isUpdatingStatus}
@@ -319,12 +343,12 @@ export function SalesOrderDetail() {
                   {isUpdatingStatus ? 'Updating...' : 'Cancel Order'}
                 </button>
               )}
-              {order.status === "shipped" && order.stockDeducted === true && (
+              {(order.status === "shipped" || order.status === "fulfilled") && order.stockDeducted === true && (
                 <Button variant="destructive" onClick={() => setReturnOpen(true)} disabled={isReturning}>
                   <XCircle className="w-4 h-4 mr-2" /> {isReturning ? 'Returning...' : 'Return & Cancel'}
                 </Button>
               )}
-              {order.status !== "delivered" && order.status !== "cancelled" && order.status !== "shipped" && (
+              {order.status !== "delivered" && order.status !== "cancelled" && order.status !== "shipped" && order.status !== "fulfilled" && (
                 <Button variant="destructive" onClick={() => setDeleteOpen(true)} disabled={isCancelling}>
                   <XCircle className="w-4 h-4 mr-2" /> {isCancelling ? 'Cancelling...' : 'Cancel Order'}
                 </Button>

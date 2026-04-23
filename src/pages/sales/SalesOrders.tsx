@@ -8,6 +8,7 @@ import {
   MoreVertical,
   Truck,
   PackageCheck,
+  Package,
   FileDown,
   FileText,
   Mail,
@@ -85,10 +86,16 @@ function ActionsMenu({ order, onShip, onDeliver, onCancel, onViewInvoice, onView
 
   const items = [
     order.status === 'pending' && {
-      label: "Mark as Shipped",
-      icon: Truck,
+      label: "Fulfill Order",
+      icon: Package,
       color: "text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20",
       action: onShip,
+    },
+    order.status === 'fulfilled' && {
+      label: "Mark as Shipped",
+      icon: Truck,
+      color: "text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20",
+      action: onDeliver,
     },
     order.status === 'shipped' && {
       label: "Mark as Delivered",
@@ -206,12 +213,22 @@ export function SalesOrders() {
     })
   }
 
-  const handleShipOrder = async (order: SalesOrder) => {
+  const handleFulfillOrder = async (order: SalesOrder) => {
     try {
       await fulfillOrderStock(order, ctx, user?.id || 'system', user?.user_metadata?.full_name || 'Unknown User')
+      refresh()
+      toast.success("Order Fulfilled", { description: `#${order.orderNumber} — stock deducted.` })
+    } catch (e: unknown) {
+      toast.error("Failed to fulfill order", { description: (e as Error).message })
+    }
+  }
+
+  const handleShipOrder = async (order: SalesOrder) => {
+    try {
+      await updateRow<SalesOrder>(ctx, 'orders', order.id, { status: 'shipped' })
       sendShippingNotification(order)
       refresh()
-      toast.success("Order Marked as Shipped", { description: `#${order.orderNumber} — stock updated. Download the invoice PDF manually.` })
+      toast.success("Order Marked as Shipped", { description: `#${order.orderNumber} — notification sent.` })
     } catch (e: unknown) {
       toast.error("Failed to ship order", { description: (e as Error).message })
     }
@@ -266,6 +283,7 @@ export function SalesOrders() {
 
   const statusTabs: StatusTab<SalesOrderStatus>[] = [
     { value: 'pending', label: 'Pending' },
+    { value: 'fulfilled', label: 'Fulfilled' },
     { value: 'shipped', label: 'Shipped' },
     { value: 'delivered', label: 'Delivered' },
     { value: 'cancelled', label: 'Cancelled' },
@@ -319,8 +337,18 @@ export function SalesOrders() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={(e) => { e.stopPropagation(); handleShipOrder(order) }}
+              onClick={(e) => { e.stopPropagation(); handleFulfillOrder(order) }}
               className="text-[11px] h-7 px-3 font-bold text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Package className="w-3.5 h-3.5 mr-1" /> Fulfill
+            </Button>
+          )}
+          {order.status === 'fulfilled' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => { e.stopPropagation(); handleShipOrder(order) }}
+              className="text-[11px] h-7 px-3 font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <Truck className="w-3.5 h-3.5 mr-1" /> Ship
             </Button>
@@ -358,8 +386,11 @@ export function SalesOrders() {
           )}
           <ActionsMenu
             order={order}
-            onShip={() => handleShipOrder(order)}
-            onDeliver={() => handleDeliverOrder(order)}
+            onShip={() => handleFulfillOrder(order)}
+            onDeliver={() => {
+              if (order.status === 'fulfilled') handleShipOrder(order)
+              else if (order.status === 'shipped') handleDeliverOrder(order)
+            }}
             onCancel={() => handleCancelOrder(order)}
             onViewInvoice={() => setInvoiceOrder(order)}
             onViewDetails={() => navigate(`/orders/${order.id}`)}
@@ -497,6 +528,9 @@ function StatusBadge({ status }: { status: SalesOrderStatus }) {
   const styles: Record<SalesOrderStatus, string> = {
     draft: "bg-slate-50 dark:bg-slate-900/20 text-slate-500 dark:text-slate-400",
     pending: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400",
+    pending_stock: "bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400",
+    partially_fulfilled: "bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400",
+    fulfilled: "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400",
     shipped: "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400",
     delivered: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400",
     cancelled: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400",

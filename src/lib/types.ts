@@ -222,7 +222,7 @@ export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
   converted: 'Converted',
 }
 
-export type SalesOrderStatus = 'draft' | 'pending' | 'shipped' | 'delivered' | 'cancelled'
+export type SalesOrderStatus = 'draft' | 'pending' | 'pending_stock' | 'partially_fulfilled' | 'fulfilled' | 'shipped' | 'delivered' | 'cancelled'
 
 export interface OrderItem {
   id: string
@@ -230,6 +230,10 @@ export interface OrderItem {
   quantity: number
   price: number
   inventoryItemId?: string    // link to InventoryItem.id for stock deduction
+  // New fields for partial fulfillment (backwards compatible - default to 0)
+  fulfilledQuantity?: number
+  reservedQuantity?: number
+  procuredQuantity?: number
 }
 
 export interface SalesOrder {

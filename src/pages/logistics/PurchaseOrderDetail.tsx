@@ -173,6 +173,12 @@ export function PurchaseOrderDetail() {
     insertQuote: (q) => insertRows<Quote>(ctx, "quotes", [q as Quote]).then((r) => r[0] as Quote),
     getSalesOrders: () => ctx.getResource<SalesOrder>("orders").data,
     updateSalesOrder: (id, patch) => updateRow<SalesOrder>(ctx, "orders", id, patch),
+    updateSalesOrderItem: async (orderId, itemId, patch) => {
+      const order = ctx.getResource<SalesOrder>("orders").data.find(o => o.id === orderId);
+      if (!order) return;
+      const updatedItems = order.items.map(item => item.id === itemId ? { ...item, ...patch } : item);
+      await updateRow<SalesOrder>(ctx, "orders", orderId, { items: updatedItems });
+    },
     insertSalesOrder: (o) => insertRows<SalesOrder>(ctx, "orders", [o as SalesOrder]).then((r) => r[0] as SalesOrder),
     getInventoryItems: () => ctx.getResource<InventoryItem>("inventory").data,
     updateInventoryItem: (id, patch) => updateRow<InventoryItem>(ctx, "inventory", id, patch),
@@ -182,6 +188,12 @@ export function PurchaseOrderDetail() {
     insertPurchaseRequest: (pr) => insertRows<PurchaseRequest>(ctx, "purchase_requests", [pr as PurchaseRequest]).then((r) => r[0] as PurchaseRequest),
     getPurchaseOrders: () => orders,
     updatePurchaseOrder: (id, patch) => updateRow<PurchaseOrder>(ctx, "purchase_orders", id, patch),
+    updatePurchaseOrderItem: async (poId, itemId, patch) => {
+      const po = orders.find(p => p.id === poId);
+      if (!po) return;
+      const updatedItems = po.items.map(item => item.id === itemId) ? (po.items.map(item => item.id === itemId ? { ...item, ...patch } : item)) : po.items;
+      await updateRow<PurchaseOrder>(ctx, "purchase_orders", poId, { items: updatedItems as any });
+    },
     insertPurchaseOrder: (po) => insertRows<PurchaseOrder>(ctx, "purchase_orders", [po as PurchaseOrder]).then((r) => r[0] as PurchaseOrder),
     getPurchaseReceipts: () => ctx.getResource<PurchaseReceipt>("purchase_receipts").data,
     getPurchaseReceiptItems: () => ctx.getResource<PurchaseReceiptItem>("purchase_receipt_items").data,

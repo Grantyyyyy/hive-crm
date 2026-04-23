@@ -1,4 +1,4 @@
-import type { PurchaseRequest, PurchaseRequestItem, PurchaseOrder, Vendor } from "../lib/types";
+import type { PurchaseRequest, PurchaseRequestItem, PurchaseOrder, Vendor, SalesOrder, OrderItem } from "../lib/types";
 import type { JobAdapter } from "./types";
 import { generateNumber } from "./types";
 import { recalculateStockLevel } from "./inventoryService";
@@ -409,6 +409,31 @@ export async function createPurchaseReceipt(
   if (newStatus !== params.po.status) {
     await adapter.updatePurchaseOrder(params.po.id, { status: newStatus, updatedAt: new Date().toISOString() });
   }
+
+  // 9. ALLOCATE TO PENDING ORDERS (Post-receipt)
+  // After stock is updated, allocate to pending order items
+  const { allocateInventoryToPendingOrders } = await import("./inventoryAllocationService");
+  
+  for (const input of params.items) {
+    if (input.quantityAccepted > 0 && input.inventoryItemId) {
+      try {
+        await allocateInventoryToPendingOrders(
+          {
+            inventoryItemId: input.inventoryItemId,
+            receivedQuantity: input.quantityAccepted,
+            poItemId: input.poItemId,
+            poNumber: params.po.poNumber,
+            receiptNumber: params.receiptNumber,
+            userId: params.userId,
+            userName: params.userName || "System"
+          },
+          adapter
+        );
+      } catch (e) {
+        console.error(`[procurementService] Allocation failed for item ${input.inventoryItemId}:`, e);
+      }
+    }
+  }
 }
 
 
@@ -515,4 +540,75 @@ export async function consolidatePRsToPOs(
   }
 
   return results;
+}
+
+/**
+ * Generates a Purchase Request automatically for all shortages in a Sales Order.
+ * This facilitates "Back-to-Back" ordering workflows.
+ */
+export async function createPurchaseRequestFromShortages(
+  order: SalesOrder,
+  adapter: JobAdapter,
+  userId: string,
+  userName: string
+): Promise<PurchaseRequest | null> {
+  const shortages = order.items.filter(item => {
+    const qty = item.quantity;
+    const reserved = item.reservedQuantity || 0;
+    const fulfilled = item.fulfilledQuantity || 0;
+    const procured = item.procuredQuantity || 0;
+    return (qty - reserved - fulfilled - procured) > 0;
+  });
+
+  if (shortages.length === 0) return null;
+
+  const prItems: PurchaseRequestItem[] = shortages.map(item => {
+    const needed = item.quantity - (item.reservedQuantity || 0) - (item.fulfilledQuantity || 0) - (item.procuredQuantity || 0);
+    return {
+      id: generateId(),
+      name: item.name,
+      description: `Shortage for Sales Order ${order.orderNumber}`,
+      quantity: needed,
+      estimatedPrice: item.price, // Use sales price as estimate
+      inventoryItemId: item.inventoryItemId,
+      trackInInventory: true
+    };
+  });
+
+  const existingPRs = adapter.getPurchaseRequests().map(p => p.requestNumber);
+  const requestNumber = generateNumber('PR', existingPRs);
+
+  const newPR: Omit<PurchaseRequest, 'id' | 'createdAt' | 'updatedAt'> = {
+    requestNumber,
+    requesterId: userId,
+    requesterName: userName,
+    amount: prItems.reduce((sum, i) => sum + i.quantity * i.estimatedPrice, 0),
+    status: 'pending_review',
+    date: new Date().toISOString(),
+    department: 'Sales Fulfillment',
+    items: prItems,
+    justification: `Automated shortage procurement for Sales Order ${order.orderNumber}`,
+    urgent: true,
+    priority: 'high'
+  };
+
+  const createdPR = await adapter.insertPurchaseRequest(newPR);
+
+  // Update Sales Order items to reflect that they are now "Procured"
+  const updatedOrderItems = order.items.map(item => {
+    const shortageLine = prItems.find(p => p.inventoryItemId === item.inventoryItemId);
+    if (!shortageLine) return item;
+    
+    return {
+      ...item,
+      procuredQuantity: (item.procuredQuantity || 0) + shortageLine.quantity
+    };
+  });
+
+  await adapter.updateSalesOrder(order.id, {
+    items: updatedOrderItems
+  });
+
+  console.log(`[procurementService] PR ${requestNumber} generated for SO ${order.orderNumber} shortages.`);
+  return createdPR;
 }

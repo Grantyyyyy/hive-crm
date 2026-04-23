@@ -48,6 +48,12 @@ export function PurchaseOrders() {
     insertQuote: (q) => insertRows<Quote>(ctx, 'quotes', [q as any]).then(rows => rows[0]),
     getSalesOrders: () => ctx.getResource<SalesOrder>('orders').data,
     updateSalesOrder: (id, patch) => updateRow<SalesOrder>(ctx, 'orders', id, patch),
+    updateSalesOrderItem: async (orderId, itemId, patch) => {
+      const order = ctx.getResource<SalesOrder>('orders').data.find(o => o.id === orderId);
+      if (!order) return;
+      const updatedItems = order.items.map(item => item.id === itemId ? { ...item, ...patch } : item);
+      await updateRow<SalesOrder>(ctx, 'orders', orderId, { items: updatedItems });
+    },
     insertSalesOrder: (o) => insertRows<SalesOrder>(ctx, 'orders', [o as any]).then(rows => rows[0]),
     getInventoryItems: () => ctx.getResource<InventoryItem>('inventory').data,
     updateInventoryItem: (id, patch) => updateRow<InventoryItem>(ctx, 'inventory', id, patch),
@@ -57,6 +63,12 @@ export function PurchaseOrders() {
     insertPurchaseRequest: (pr) => insertRows<PurchaseRequest>(ctx, 'purchase_requests', [pr as any]).then(rows => rows[0]),
     getPurchaseOrders: () => orders,
     updatePurchaseOrder: (id, patch) => updateRow<PurchaseOrder>(ctx, 'purchase_orders', id, patch),
+    updatePurchaseOrderItem: async (poId, itemId, patch) => {
+      const po = orders.find(p => p.id === poId);
+      if (!po) return;
+      const updatedItems = po.items.map(item => item.id === itemId ? { ...item, ...patch } : item);
+      await updateRow<PurchaseOrder>(ctx, 'purchase_orders', poId, { items: updatedItems as any });
+    },
     insertPurchaseOrder: (po) => insertRows<PurchaseOrder>(ctx, 'purchase_orders', [po as any]).then(rows => rows[0]),
     getPurchaseReceipts: () => ctx.getResource<any>('purchase_receipts').data,
     getPurchaseReceiptItems: () => ctx.getResource<any>('purchase_receipt_items').data,

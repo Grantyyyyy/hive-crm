@@ -538,7 +538,7 @@ function StatusBadge({ status }: { status: SalesOrderStatus }) {
 
   return (
     <span className={cn("px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm border border-transparent", styles[status])}>
-      {status}
+      {status.replace('_', ' ')}
     </span>
   )
 }

@@ -13,7 +13,8 @@ interface QuoteAuditAdapter {
 }
 
 /**
- * Atomically reserves stock for a quote with duplicate item protection.
+ * Atomically reserves stock for a quote with partial fulfillment support.
+ * NO LONGER BLOCKS on shortage - computes shortage and allows quote to save.
  */
 export async function reserveStockForQuote(
   quote: Quote,
@@ -26,44 +27,65 @@ export async function reserveStockForQuote(
   const inventory = ctx.getResource<InventoryItem>('inventory').data;
   const updates: AtomicOp[] = [];
   const pendingTally: Record<string, number> = {};
+  const shortages: Record<string, number> = {};
 
-  // 1. Tally requirements and check availability
+  // 1. Tally requirements and reserve what's available (non-blocking)
   for (const item of quote.items) {
     if (!item.inventoryItemId) continue;
     const invItem = inventory.find(i => i.id === item.inventoryItemId);
     if (!invItem) {
-      throw new Error(
-        `Inventory item not found for "${item.name}" (ID: ${item.inventoryItemId}). It may have been deleted.`
-      );
+      // Item not in inventory - treat as full shortage
+      shortages[item.inventoryItemId] = (shortages[item.inventoryItemId] || 0) + item.quantity;
+      continue;
     }
-    const currentRequested = (pendingTally[item.inventoryItemId] || 0) + item.quantity;
 
     const available = invItem.stockQuantity - (invItem.reservedQuantity || 0);
-    if (currentRequested > available) {
-      throw new Error(`Insufficient Available Stock for ${invItem.name}. Available: ${available}, Total in Quote: ${currentRequested}`);
+    const needed = item.quantity;
+    
+    // Reserve what's available, track shortage for rest
+    const toReserve = Math.min(needed, available);
+    const shortage = needed - toReserve;
+    
+    if (toReserve > 0) {
+      pendingTally[item.inventoryItemId] = (pendingTally[item.inventoryItemId] || 0) + toReserve;
     }
-    pendingTally[item.inventoryItemId] = currentRequested;
+    if (shortage > 0) {
+      shortages[item.inventoryItemId] = (shortages[item.inventoryItemId] || 0) + shortage;
+    }
   }
 
-  // 2. Build Atomic Updates
-  Object.keys(pendingTally).forEach(itemId => {
-    const invItem = inventory.find(i => i.id === itemId)!;
-    const newReserved = (invItem.reservedQuantity || 0) + pendingTally[itemId];
-    updates.push({
-      resource: 'inventory',
-      id: itemId,
-      patch: {
-        reservedQuantity: newReserved,
-        stockLevel: recalculateStockLevel(invItem.stockQuantity, newReserved, invItem.reorderThreshold)
-      }
+  // 2. Build Atomic Updates (only if there's stock to reserve)
+  if (Object.keys(pendingTally).length > 0) {
+    Object.keys(pendingTally).forEach(itemId => {
+      const invItem = inventory.find(i => i.id === itemId);
+      if (!invItem) return;
+      const newReserved = (invItem.reservedQuantity || 0) + pendingTally[itemId];
+      updates.push({
+        resource: 'inventory',
+        id: itemId,
+        patch: {
+          reservedQuantity: newReserved,
+          stockLevel: recalculateStockLevel(invItem.stockQuantity, newReserved, invItem.reorderThreshold)
+        }
+      });
     });
-  });
+  }
 
-  updates.push({
-    resource: 'quotes',
-    id: quote.id,
-    patch: { stockReserved: true, status: 'sent' }
-  });
+  // 3. Update quote status (sent if reserved, keep draft if no stock available but allow save)
+  const hasShortage = Object.keys(shortages).length > 0;
+  const newStatus = hasShortage ? 'sent' : 'sent'; // Still mark as sent, shortage tracked in items
+  const patch: Record<string, unknown> = { stockReserved: true, status: newStatus };
+  
+  // If shortage exists, update items with shortageQuantity
+  if (hasShortage) {
+    const updatedItems = quote.items.map(item => {
+      const shortage = shortages[item.inventoryItemId || ''] || 0;
+      return { ...item, shortageQuantity: shortage };
+    });
+    patch.items = updatedItems;
+  }
+  
+  updates.push({ resource: 'quotes', id: quote.id, patch });
 
   await ctx.runAtomicUpdate(updates);
 

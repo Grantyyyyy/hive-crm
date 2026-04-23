@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo, useRef, useEffect } from "react"
 import { useRoute, useLocation, Link } from "wouter"
 import {
   ArrowLeft,
@@ -15,6 +15,8 @@ import {
   Pencil,
   Download,
   Mail,
+  ChevronDown,
+  MoreHorizontal,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -31,10 +33,16 @@ import {
   releaseOrderStock,
   returnShippedOrderStock,
   cancelOrderWithStockReversal,
-  sendShippingNotification
+  sendShippingNotification,
+  reserveAvailableStock
 } from "@/services/orderService"
-import { useUser } from "@/lib/AuthContext"
 import { SendEmailModal } from "@/components/crmComponent/SendEmailModal"
+import { AddPurchaseRequestModal } from "@/components/logisticsComponent/AddPurchaseRequestModal"
+import { createPurchaseRequestFromShortages } from "@/services/procurementService"
+import { useUser } from "@/lib/AuthContext"
+import { updateRow, insertRows } from "@/lib/CRMContext"
+import type { JobAdapter, AtomicOp } from "@/services/types"
+import type { PurchaseRequest, InventoryItem, PurchaseOrder, InventoryTransaction, Task, PurchaseReceipt, PurchaseReceiptItem, PurchaseOrderItem } from "@/lib/types"
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -67,6 +75,70 @@ const TIMELINE: { status: SalesOrderStatus; label: string; icon: React.ElementTy
 
 const STATUS_ORDER: SalesOrderStatus[] = ["pending", "fulfilled", "shipped", "delivered"]
 
+// ─── Dropdown Menu ────────────────────────────────────────────────────────────
+
+interface DropdownItem {
+  label: string
+  icon?: React.ElementType
+  onClick: () => void
+  danger?: boolean
+  disabled?: boolean
+}
+
+function ActionsDropdown({ items }: { items: DropdownItem[] }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", handle)
+    return () => document.removeEventListener("mousedown", handle)
+  }, [])
+
+  if (items.length === 0) return null
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="h-9 px-3 flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-xs font-bold uppercase tracking-wider"
+      >
+        <MoreHorizontal className="w-4 h-4" />
+        <span className="hidden sm:inline">More</span>
+        <ChevronDown className={cn("w-3 h-3 transition-transform", open && "rotate-180")} />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-1.5 w-52 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg shadow-slate-200/50 dark:shadow-none z-50 overflow-hidden">
+          {items.map((item, i) => {
+            const Icon = item.icon
+            return (
+              <button
+                key={i}
+                disabled={item.disabled}
+                onClick={() => { item.onClick(); setOpen(false) }}
+                className={cn(
+                  "w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed",
+                  item.danger
+                    ? "text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
+                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                )}
+              >
+                {Icon && <Icon className="w-3.5 h-3.5 shrink-0" />}
+                {item.label}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
 export function SalesOrderDetail() {
   const [, params] = useRoute("/orders/:id")
   const [, navigate] = useLocation()
@@ -82,11 +154,16 @@ export function SalesOrderDetail() {
   const [returnOpen, setReturnOpen] = useState(false)
   const [isShipping, setIsShipping] = useState(false)
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
-  const [isCancelling, _setIsCancelling] = useState(false)
+  const [isCancelling] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isReturning, setIsReturning] = useState(false)
   const [confirmDeliver, setConfirmDeliver] = useState(false)
   const [confirmCancel, setConfirmCancel] = useState(false)
+  const [isProcuring, setIsProcuring] = useState(false)
+  const [isReserving, setIsReserving] = useState(false)
+  const [shortagePRModalOpen, setShortagePRModalOpen] = useState(false)
+  const [shortageData, setShortageData] = useState<Partial<PurchaseRequest> | undefined>()
+  const [sendEmailOpen, setSendEmailOpen] = useState(false)
 
   const order = useMemo(() => orders.find(o => o.id === orderId), [orders, orderId])
 
@@ -128,17 +205,10 @@ export function SalesOrderDetail() {
     if (!order || isUpdatingStatus) return
     setIsUpdatingStatus(true)
     try {
-      await updateItem(order.id, {
-        status: 'delivered',
-        updatedAt: new Date().toISOString()
-      })
-      toast.success('Order Delivered', {
-        description: `#${order.orderNumber} marked as delivered.`
-      })
+      await updateItem(order.id, { status: 'delivered', updatedAt: new Date().toISOString() })
+      toast.success('Order Delivered', { description: `#${order.orderNumber} marked as delivered.` })
     } catch (e: unknown) {
-      toast.error('Failed to update order', {
-        description: (e as Error).message
-      })
+      toast.error('Failed to update order', { description: (e as Error).message })
     } finally {
       setIsUpdatingStatus(false)
       setConfirmDeliver(false)
@@ -149,40 +219,21 @@ export function SalesOrderDetail() {
     if (!order || isUpdatingStatus) return
     setIsUpdatingStatus(true)
     try {
-      const { itemsReversed, type } =
-        await cancelOrderWithStockReversal(
-          order, ctx,
-          user?.id ?? 'system',
-          user?.user_metadata?.full_name ?? 'Unknown'
-        )
-
-      // Build toast description based on what happened
+      const { itemsReversed, type } = await cancelOrderWithStockReversal(
+        order, ctx,
+        user?.id ?? 'system',
+        user?.user_metadata?.full_name ?? 'Unknown'
+      )
       let description = `#${order.orderNumber} has been cancelled.`
-      if (type === 'return' && itemsReversed > 0) {
-        description += ` Stock returned for ${itemsReversed} item${itemsReversed !== 1 ? 's' : ''}.`
-      } else if (type === 'release' && itemsReversed > 0) {
-        description += ` Reservation released for ${itemsReversed} item${itemsReversed !== 1 ? 's' : ''}.`
+      if (type === 'mixed' && itemsReversed > 0) {
+        description += ` Stock released for ${itemsReversed} item${itemsReversed !== 1 ? 's' : ''}.`
       }
-
       toast.success('Order Cancelled', { description })
     } catch (e: unknown) {
-      toast.error('Failed to cancel order', {
-        description: (e as Error).message
-      })
+      toast.error('Failed to cancel order', { description: (e as Error).message })
     } finally {
       setIsUpdatingStatus(false)
       setConfirmCancel(false)
-    }
-  }
-
-  const handleDownloadInvoice = async () => {
-    if (!order) return
-    try {
-      const { generateInvoicePDF } = await import("@/services/pdfService")
-      await generateInvoicePDF(order)
-      toast.success("Invoice PDF Downloaded", { description: `${order.orderNumber} — ready to email to ${order.customerName}.` })
-    } catch (e: unknown) {
-      toast.error("Failed to generate invoice PDF", { description: (e as Error).message })
     }
   }
 
@@ -191,19 +242,70 @@ export function SalesOrderDetail() {
     setSendEmailOpen(true)
   }
 
-  const [sendEmailOpen, setSendEmailOpen] = useState(false)
+  const handleProcureShortages = async () => {
+    if (!order) return
+    const { getPendingQuantity } = await import("@/lib/types")
+    const shortages = order.items.filter(item => getPendingQuantity(item) > 0)
+    if (shortages.length === 0) {
+      toast.info("Nothing to procure", { description: "All items are already reserved or fulfilled." })
+      return
+    }
+    const prItems = shortages.map(item => {
+      const needed = getPendingQuantity(item)
+      return {
+        id: crypto.randomUUID(),
+        name: item.name,
+        description: `Shortage for Sales Order ${order.orderNumber}`,
+        quantity: needed,
+        estimatedPrice: item.price,
+        inventoryItemId: item.inventoryItemId,
+        trackInInventory: true
+      }
+    })
+    setShortageData({
+      items: prItems as any,
+      justification: `Automated shortage procurement for Sales Order ${order.orderNumber}`,
+      urgent: true,
+      priority: 'high',
+      department: 'Sales Fulfillment'
+    })
+    setShortagePRModalOpen(true)
+  }
+
+  const handleProcureSuccess = async (pr: PurchaseRequest) => {
+    if (!order) return
+    try {
+      const updatedOrderItems = order.items.map(item => {
+        const shortageLine = pr.items.find(p => p.inventoryItemId === item.inventoryItemId)
+        if (!shortageLine) return item
+        return { ...item, procuredQuantity: (item.procuredQuantity || 0) + shortageLine.quantity }
+      })
+      await updateRow<SalesOrder>(ctx, 'orders', order.id, { items: updatedOrderItems })
+      toast.success("Order Updated", { description: "Shortages marked as procured." })
+    } catch (e: any) {
+      toast.error("Failed to update order status", { description: e.message })
+    }
+  }
+
+  const handleDownloadInvoice = async () => {
+    if (!order) return
+    try {
+      const { generateInvoicePDF } = await import("@/services/pdfService")
+      await generateInvoicePDF(order)
+      toast.success("Invoice PDF Downloaded")
+    } catch (e: unknown) {
+      toast.error("Failed to generate invoice PDF", { description: (e as Error).message })
+    }
+  }
 
   const handleDelete = async () => {
     if (!order || isDeleting) return
     setIsDeleting(true)
     try {
       if (order.stockDeducted) {
-        toast.error("Cannot delete a shipped order", {
-          description: "Stock has already been deducted. Please create a return or adjustment instead."
-        })
+        toast.error("Cannot delete a shipped order")
         return
       }
-      // Release reservation if held
       if (order.stockReserved) {
         await releaseOrderStock(order, ctx, user?.id || 'system', user?.user_metadata?.full_name || 'Unknown User')
       }
@@ -231,7 +333,6 @@ export function SalesOrderDetail() {
     }
   }
 
-
   if (!userLoaded || !isLoaded) return <DetailSkeleton />
 
   if (!order) {
@@ -257,8 +358,57 @@ export function SalesOrderDetail() {
 
   const currentStepIdx = STATUS_ORDER.indexOf(order.status)
   const cfg = STATUS_CONFIG[order.status]
-
   const initials = order.customerName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
+  const canDownloadInvoice = ["shipped", "delivered", "fulfilled"].includes(order.status)
+
+  // ── Primary Actions ────────────────────────────────────────────────────────
+  const primaryAction = (() => {
+    if (order.status === "pending") return (
+      <Button variant="brand" onClick={handleFulfill} disabled={isShipping} className="rounded-xl h-9 px-4">
+        <Package className="w-4 h-4 mr-2" /> {isShipping ? 'Fulfilling...' : 'Fulfill Order'}
+      </Button>
+    )
+    if (order.status === "fulfilled") return (
+      <Button variant="brand" onClick={handleShip} disabled={isUpdatingStatus} className="rounded-xl h-9 px-4">
+        <Truck className="w-4 h-4 mr-2" /> {isUpdatingStatus ? 'Updating...' : 'Mark Shipped'}
+      </Button>
+    )
+    if (order.status === "shipped") return (
+      <Button variant="brand" onClick={() => setConfirmDeliver(true)} disabled={isUpdatingStatus} className="rounded-xl h-9 px-4">
+        <PackageCheck className="w-4 h-4 mr-2" /> Mark Delivered
+      </Button>
+    )
+    return null
+  })()
+
+  // ── Secondary Actions ──────────────────────────────────────────────────────
+  const dropdownItems: DropdownItem[] = []
+
+  dropdownItems.push({ label: "View Invoice", icon: Receipt, onClick: () => setInvoiceOpen(true) })
+
+  if (canDownloadInvoice) {
+    dropdownItems.push(
+      { label: "Download Invoice", icon: Download, onClick: handleDownloadInvoice },
+      { label: "Send to Customer", icon: Mail, onClick: handleSendEmail }
+    )
+  }
+
+  const hasShortages = order.items.some(item => {
+    const { getPendingQuantity } = require("@/lib/types")
+    return getPendingQuantity(item) > 0
+  })
+
+  if (hasShortages) {
+    dropdownItems.push({ label: "Procure Shortages", icon: Package, onClick: handleProcureShortages, disabled: isProcuring })
+  }
+
+  if (["shipped", "fulfilled"].includes(order.status) && order.stockDeducted) {
+    dropdownItems.push({ label: "Return & Cancel", icon: XCircle, onClick: () => setReturnOpen(true), danger: true })
+  }
+
+  if (!["delivered", "cancelled"].includes(order.status)) {
+    dropdownItems.push({ label: "Cancel Order", icon: XCircle, onClick: () => setConfirmCancel(true), danger: true })
+  }
 
 
   return (
@@ -298,110 +448,63 @@ export function SalesOrderDetail() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-wrap gap-2 shrink-0">
-              {order.status === "pending" && (
-                <Button variant="outlineNeutral" onClick={handleFulfill} disabled={isShipping}>
-                  <Package className="w-4 h-4 mr-2 text-amber-500" /> {isShipping ? 'Fulfilling...' : 'Fulfill Order'}
-                </Button>
-              )}
-              {order.status === "fulfilled" && (
-                <Button variant="outlineNeutral" onClick={handleShip} disabled={isUpdatingStatus}>
-                  <Truck className="w-4 h-4 mr-2 text-blue-500" /> {isUpdatingStatus ? 'Updating...' : 'Mark Shipped'}
-                </Button>
-              )}
-              {order.status === "shipped" && (
-                <button
-                  onClick={() => setConfirmDeliver(true)}
-                  disabled={isUpdatingStatus}
-                  className="border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl h-9 px-4 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  <PackageCheck className="w-3.5 h-3.5" />
-                  {isUpdatingStatus ? 'Updating...' : 'Mark Delivered'}
-                </button>
-              )}
-              <Button variant="outlineNeutral" onClick={() => setInvoiceOpen(true)}>
-                <Receipt className="w-4 h-4 mr-2 text-teal-500" /> View Invoice
-              </Button>
-              {(order.status === "shipped" || order.status === "delivered") && (
-                <div className="inline-flex items-center rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-900">
-                  <Button variant="outline" size="sm" onClick={handleDownloadInvoice} className="rounded-none border-none h-9 px-5 text-[10px] font-black uppercase tracking-widest hover:bg-teal-50 hover:text-teal-600">
-                    <Download className="w-4 h-4 mr-2" /> Download
-                  </Button>
-                  <div className="w-px h-4 bg-slate-200 dark:bg-slate-700" />
-                  <Button variant="outline" size="sm" onClick={handleSendEmail} className="rounded-none border-none h-9 px-5 text-[10px] font-black uppercase tracking-widest hover:bg-teal-50 hover:text-teal-600">
-                    <Mail className="w-4 h-4 mr-2" /> Send Email
-                  </Button>
-                </div>
-              )}
-              {(order.status === "pending" || order.status === "fulfilled" || order.status === "shipped") && (
-                <button
-                  onClick={() => setConfirmCancel(true)}
-                  disabled={isUpdatingStatus}
-                  className="border border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl h-9 px-4 text-xs font-bold uppercase tracking-wider text-red-600 dark:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  <XCircle className="w-3.5 h-3.5" />
-                  {isUpdatingStatus ? 'Updating...' : 'Cancel Order'}
-                </button>
-              )}
-              {(order.status === "shipped" || order.status === "fulfilled") && order.stockDeducted === true && (
-                <Button variant="destructive" onClick={() => setReturnOpen(true)} disabled={isReturning}>
-                  <XCircle className="w-4 h-4 mr-2" /> {isReturning ? 'Returning...' : 'Return & Cancel'}
-                </Button>
-              )}
-              {order.status !== "delivered" && order.status !== "cancelled" && order.status !== "shipped" && order.status !== "fulfilled" && (
-                <Button variant="destructive" onClick={() => setDeleteOpen(true)} disabled={isCancelling}>
-                  <XCircle className="w-4 h-4 mr-2" /> {isCancelling ? 'Cancelling...' : 'Cancel Order'}
-                </Button>
-              )}
+            <div className="flex items-center gap-2 shrink-0">
+              {primaryAction}
+              <ActionsDropdown items={dropdownItems} />
             </div>
           </div>
 
           {/* Fulfillment Timeline */}
-          {order.status !== "cancelled" && (
-            <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-5">Fulfillment Progress</p>
-              <div className="flex items-center gap-0">
-                {TIMELINE.map((step, i) => {
-                  const done = currentStepIdx >= i
-                  const active = currentStepIdx === i
-                  const Icon = step.icon
-                  return (
-                    <div key={step.status} className="flex items-center flex-1 last:flex-none">
-                      <div className="flex flex-col items-center gap-2">
-                        <div className={cn(
-                          "size-10 rounded-full flex items-center justify-center transition-all shrink-0",
-                          done
-                            ? "bg-teal-600 text-white shadow-lg shadow-teal-200 dark:shadow-none"
-                            : "bg-slate-100 dark:bg-slate-800 text-slate-400"
-                        )}>
-                          <Icon className="w-5 h-5" />
+          {
+            order.status !== "cancelled" && (
+              <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-5">Fulfillment Progress</p>
+                <div className="flex items-center gap-0">
+                  {TIMELINE.map((step, i) => {
+                    const done = currentStepIdx >= i
+                    const active = currentStepIdx === i
+                    const Icon = step.icon
+                    return (
+                      <div key={step.status} className="flex items-center flex-1 last:flex-none">
+                        <div className="flex flex-col items-center gap-2">
+                          <div className={cn(
+                            "size-10 rounded-full flex items-center justify-center transition-all shrink-0",
+                            done
+                              ? "bg-teal-600 text-white shadow-lg shadow-teal-200 dark:shadow-none"
+                              : "bg-slate-100 dark:bg-slate-800 text-slate-400"
+                          )}>
+                            <Icon className="w-5 h-5" />
+                          </div>
+                          <span className={cn(
+                            "text-[10px] font-bold uppercase tracking-widest whitespace-nowrap",
+                            done ? "text-teal-600 dark:text-teal-400" : "text-slate-400"
+                          )}>
+                            {active
+                              ? <span className="relative">{step.label}<span className="absolute -top-1 -right-2 w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" /></span>
+                              : step.label
+                            }
+                          </span>
                         </div>
-                        <span className={cn(
-                          "text-[10px] font-bold uppercase tracking-widest whitespace-nowrap",
-                          done ? "text-teal-600 dark:text-teal-400" : "text-slate-400"
-                        )}>
-                          {active ? <span className="relative">{step.label}<span className="absolute -top-1 -right-2 w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" /></span> : step.label}
-                        </span>
+                        {i < TIMELINE.length - 1 && (
+                          <div className={cn(
+                            "flex-1 h-0.5 mx-2 rounded-full mb-5 transition-colors",
+                            currentStepIdx > i ? "bg-teal-600" : "bg-slate-200 dark:bg-slate-800"
+                          )} />
+                        )}
                       </div>
-                      {i < TIMELINE.length - 1 && (
-                        <div className={cn(
-                          "flex-1 h-0.5 mx-2 rounded-full mb-5 transition-colors",
-                          currentStepIdx > i ? "bg-teal-600" : "bg-slate-200 dark:bg-slate-800"
-                        )} />
-                      )}
-                    </div>
-                  )
-                })}
+                    )
+                  })}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )
+          }
+        </div >
 
         {/* Main Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        < div className="grid grid-cols-1 lg:grid-cols-3 gap-6" >
 
           {/* Left — Line Items */}
-          <div className="lg:col-span-2 space-y-6">
+          < div className="lg:col-span-2 space-y-6" >
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
               <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2">
@@ -421,15 +524,46 @@ export function SalesOrderDetail() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {order.items.map((item, i) => (
-                    <tr key={item.id} className="hover:bg-slate-50/40 dark:hover:bg-slate-800/20 transition-colors">
-                      <td className="px-6 py-4 text-xs font-bold text-slate-400">{String(i + 1).padStart(2, "0")}</td>
-                      <td className="px-6 py-4 text-sm font-semibold text-slate-900 dark:text-white">{item.name}</td>
-                      <td className="px-6 py-4 text-sm text-center text-slate-600 dark:text-slate-400">{item.quantity}</td>
-                      <td className="px-6 py-4 text-sm text-right text-slate-600 dark:text-slate-400">{fmt(item.price)}</td>
-                      <td className="px-6 py-4 text-sm font-bold text-right text-slate-900 dark:text-white">{fmt(item.quantity * item.price)}</td>
-                    </tr>
-                  ))}
+                  {order.items.map((item, i) => {
+                    const reserved = item.reservedQuantity || 0
+                    const procured = item.procuredQuantity || 0
+                    const fulfilled = item.fulfilledQuantity || 0
+                    const pending = item.quantity - (reserved + procured + fulfilled)
+
+                    return (
+                      <tr key={item.id} className="hover:bg-slate-50/40 dark:hover:bg-slate-800/20 transition-colors">
+                        <td className="px-6 py-4 text-xs font-bold text-slate-400">{String(i + 1).padStart(2, "0")}</td>
+                        <td className="px-6 py-4">
+                          <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.name}</p>
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {fulfilled > 0 && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tight bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800">
+                                {fulfilled} Fulfilled
+                              </span>
+                            )}
+                            {reserved > 0 && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tight bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 border border-teal-100 dark:border-teal-800">
+                                {reserved} Reserved
+                              </span>
+                            )}
+                            {procured > 0 && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tight bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800">
+                                {procured} Ordered
+                              </span>
+                            )}
+                            {pending > 0 && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tight bg-slate-50 dark:bg-slate-800/50 text-slate-400 border border-slate-100 dark:border-slate-800">
+                                {pending} Shortage
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-center text-slate-600 dark:text-slate-400">{item.quantity}</td>
+                        <td className="px-6 py-4 text-sm text-right text-slate-600 dark:text-slate-400">{fmt(item.price)}</td>
+                        <td className="px-6 py-4 text-sm font-bold text-right text-slate-900 dark:text-white">{fmt(item.quantity * item.price)}</td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
                 <tfoot>
                   <tr className="border-t border-slate-200 dark:border-slate-700">
@@ -447,13 +581,13 @@ export function SalesOrderDetail() {
                 </tfoot>
               </table>
             </div>
-          </div>
+          </div >
 
           {/* Right — Sidebar */}
-          <div className="space-y-6">
+          < div className="space-y-6" >
 
             {/* Order Details */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
+            < div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6" >
               <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 border-b border-slate-100 dark:border-slate-800 pb-3 mb-4">Order Details</h2>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
@@ -494,10 +628,10 @@ export function SalesOrderDetail() {
                   </div>
                 </div>
               </div>
-            </div>
+            </div >
 
             {/* Summary */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
+            < div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6" >
               <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 border-b border-slate-100 dark:border-slate-800 pb-3 mb-4">Summary</h2>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
@@ -524,62 +658,31 @@ export function SalesOrderDetail() {
               >
                 <Receipt className="w-4 h-4 mr-2" /> View Invoice
               </Button>
-            </div>
+            </div >
+          </div >
+        </div >
+      </div >
 
-            {/* Danger Zone */}
-            {order.status !== "delivered" && order.status !== "cancelled" && (
-              <div className="bg-rose-50 dark:bg-rose-950/20 rounded-2xl border border-rose-200 dark:border-rose-900/40 p-6">
-                <h2 className="text-[11px] font-bold uppercase tracking-widest text-rose-600 dark:text-rose-400 pb-3 mb-4">Danger Zone</h2>
-                <p className="text-xs text-rose-700 dark:text-rose-300 font-medium mb-4 leading-relaxed">
-                  Cancelling this order cannot be undone and will stop all fulfillment processes.
-                </p>
-                <Button
-                  variant="destructive"
-                  className="w-full rounded-xl"
-                  onClick={() => setDeleteOpen(true)}
-                  disabled={isCancelling}
-                >
-                  <XCircle className="w-4 h-4 mr-2" /> {isCancelling ? 'Cancelling...' : 'Cancel Order'}
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Modals */}
+      < InvoiceModal order={invoiceOpen ? order : null} onClose={() => setInvoiceOpen(false)
+      } />
 
-      {/* Invoice Modal */}
-      <InvoiceModal order={invoiceOpen ? order : null} onClose={() => setInvoiceOpen(false)} />
-
-      {/* Cancel / Delete Confirmation */}
-      <DeleteModal
+      < DeleteModal
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         title="Cancel Order"
-        description={
-          <>
-            Are you sure you want to cancel order{" "}
-            <strong className="text-slate-900 dark:text-slate-100">#{order.orderNumber}</strong>?
-            This will stop all fulfillment and cannot be undone.
-          </>
-        }
+        description={<> Are you sure you want to cancel order < strong className="text-slate-900 dark:text-slate-100" >#{order.orderNumber}</strong >? This cannot be undone.</>}
         onDelete={handleDelete}
         cancelText="Keep Order"
         deleteText="Cancel Order"
         loading={isDeleting}
       />
 
-      {/* Return & Cancel Confirmation */}
       <ConfirmModal
         open={returnOpen}
         onOpenChange={setReturnOpen}
         title="Return & Cancel Order"
-        description={
-          <>
-            Are you sure you want to return and cancel order{" "}
-            <strong className="text-slate-900 dark:text-slate-100">#{order.orderNumber}</strong>?
-            This will return the stock to inventory and mark the order as cancelled.
-          </>
-        }
+        description={<>Are you sure you want to return and cancel <strong className="text-slate-900 dark:text-slate-100">#{order.orderNumber}</strong>? Stock will be returned to inventory.</>}
         confirmLabel="Return & Cancel"
         cancelLabel="Keep Order"
         confirmClassName="bg-rose-600 hover:bg-rose-700 text-white"
@@ -592,7 +695,7 @@ export function SalesOrderDetail() {
         onOpenChange={setConfirmDeliver}
         title="Mark as delivered?"
         description="This confirms the order has been received by the customer."
-        confirmLabel="Mark delivered"
+        confirmLabel="Mark Delivered"
         onConfirm={handleDeliver}
       />
 
@@ -601,18 +704,24 @@ export function SalesOrderDetail() {
         onOpenChange={setConfirmCancel}
         title="Cancel this order?"
         description="This will cancel the order. Stock will not be automatically returned — adjust inventory manually if needed."
-        confirmLabel="Cancel order"
+        confirmLabel="Cancel Order"
         confirmClassName="bg-rose-600 hover:bg-rose-700 text-white"
         onConfirm={handleCancel}
       />
 
-      {/* Send Email Modal */}
       <SendEmailModal
         open={sendEmailOpen}
         onOpenChange={setSendEmailOpen}
         document={order ? { type: "invoice" as const, data: order } : null}
         customerEmail={customerEmail}
       />
-    </div>
+
+      <AddPurchaseRequestModal
+        open={shortagePRModalOpen}
+        onOpenChange={setShortagePRModalOpen}
+        onSuccess={handleProcureSuccess}
+        initialData={shortageData}
+      />
+    </div >
   )
 }

@@ -236,6 +236,16 @@ export interface OrderItem {
   procuredQuantity?: number
 }
 
+// Helper to compute pending quantity: quantity - fulfilled - reserved - procured
+export function getPendingQuantity(item: OrderItem): number {
+  return item.quantity - (item.fulfilledQuantity || 0) - (item.reservedQuantity || 0) - (item.procuredQuantity || 0)
+}
+
+// Helper to get available to promise (ATP): stock - reserved
+export function getAvailableQuantity(item: { stockQuantity: number; reservedQuantity: number }): number {
+  return item.stockQuantity - (item.reservedQuantity || 0)
+}
+
 export interface SalesOrder {
   id: string
   orderNumber: string
@@ -247,8 +257,9 @@ export interface SalesOrder {
   status: SalesOrderStatus
   orderDate: string
   items: OrderItem[]
-  stockDeducted?: boolean      // guards against double-deduction on re-ship
-  stockReserved?: boolean      // indicates if this order is holding a reservation
+  // Legacy fields for backward compatibility
+  stockDeducted?: boolean
+  stockReserved?: boolean
   createdAt: string
   updatedAt: string
 }
@@ -262,6 +273,8 @@ export interface QuoteItem {
   quantity: number
   price: number
   inventoryItemId?: string    // link to InventoryItem.id if sourced from catalog
+  // NEW: track shortage without blocking
+  shortageQuantity?: number
 }
 
 export interface Quote {
@@ -324,6 +337,19 @@ export interface InventoryItem {
 
 export type PurchaseOrderStatus = 'draft' | 'pending' | 'sent' | 'partially_received' | 'fully_received' | 'cancelled'
 
+export interface PurchaseOrderItem {
+  id: string
+  name: string
+  description?: string
+  quantity: number          // qty ordered from vendor
+  receivedQuantity?: number // qty already received
+  price: number
+  inventoryItemId?: string
+  linkedSalesOrderItemId?: string // CRITICAL: link back to source order item
+  trackInInventory?: boolean
+  status?: 'active' | 'cancelled' | 'received'
+}
+
 export interface PurchaseOrder {
   id: string
   poNumber: string
@@ -333,20 +359,11 @@ export interface PurchaseOrder {
   status: PurchaseOrderStatus
   date: string
   expectedDelivery?: string
-  items: Array<{
-    id: string
-    name: string
-    description?: string
-    quantity: number
-    price: number
-    inventoryItemId?: string
-    trackInInventory?: boolean
-  }>
+  items: PurchaseOrderItem[]
   referenceId?: string         // reference back to source PurchaseRequest
   shippingInfo?: string
   internalNotes?: string
   vendorInstructions?: string
-
   createdAt: string
   updatedAt: string
 }

@@ -18,6 +18,7 @@ import type { PurchaseRequest, PurchaseRequestStatus, InventoryTransaction } fro
 import { AddPurchaseRequestModal } from "@/components/logisticsComponent/AddPurchaseRequestModal"
 import { PurchaseRequestReviewModal } from "@/components/logisticsComponent/PurchaseRequestReviewModal"
 import { approvePurchaseRequest } from "@/services/procurementService"
+import { testProcurementTrigger } from "@/services/testProcurementTrigger"
 import type { JobAdapter, AtomicOp } from "@/services/types"
 import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
 import { toast } from "sonner"
@@ -45,6 +46,12 @@ export function PurchaseRequests() {
     insertQuote: (q) => insertRows<Quote>(ctx, 'quotes', [q as any]).then(rows => rows[0]),
     getSalesOrders: () => ctx.getResource<SalesOrder>('orders').data,
     updateSalesOrder: (id, patch) => updateRow<SalesOrder>(ctx, 'orders', id, patch),
+    updateSalesOrderItem: async (orderId, itemId, patch) => {
+      const order = ctx.getResource<SalesOrder>('orders').data.find(o => o.id === orderId);
+      if (!order) return;
+      const updatedItems = order.items.map(item => item.id === itemId ? { ...item, ...patch } : item);
+      await updateRow<SalesOrder>(ctx, 'orders', orderId, { items: updatedItems });
+    },
     insertSalesOrder: (o) => insertRows<SalesOrder>(ctx, 'orders', [o as any]).then(rows => rows[0]),
     getInventoryItems: () => ctx.getResource<InventoryItem>('inventory').data,
     updateInventoryItem: (id, patch) => updateRow<InventoryItem>(ctx, 'inventory', id, patch),
@@ -54,6 +61,12 @@ export function PurchaseRequests() {
     insertPurchaseRequest: (pr) => insertRows<PurchaseRequest>(ctx, 'purchase_requests', [pr as any]).then(rows => rows[0]),
     getPurchaseOrders: () => ctx.getResource<PurchaseOrder>('purchase_orders').data,
     updatePurchaseOrder: (id, patch) => updateRow<PurchaseOrder>(ctx, 'purchase_orders', id, patch),
+    updatePurchaseOrderItem: async (poId, itemId, patch) => {
+      const po = ctx.getResource<PurchaseOrder>('purchase_orders').data.find(p => p.id === poId);
+      if (!po) return;
+      const updatedItems = po.items.map(item => item.id === itemId ? { ...item, ...patch } : item);
+      await updateRow<PurchaseOrder>(ctx, 'purchase_orders', poId, { items: updatedItems as any });
+    },
     insertPurchaseOrder: (po) => insertRows<PurchaseOrder>(ctx, 'purchase_orders', [po as any]).then(rows => rows[0]),
     getPurchaseReceipts: () => ctx.getResource<any>('purchase_receipts').data,
     getPurchaseReceiptItems: () => ctx.getResource<any>('purchase_receipt_items').data,

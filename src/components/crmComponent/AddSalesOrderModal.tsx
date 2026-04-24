@@ -1,3 +1,4 @@
+import { useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -21,30 +22,38 @@ interface AddSalesOrderModalProps {
 
 export function AddSalesOrderModal({ open, onOpenChange, onSuccess }: AddSalesOrderModalProps) {
 
+  const [isSaving, setIsSaving] = useState(false)
   const ctx = useCRMContext()
   const { data: contacts } = useCRMResource<Contact>('contacts')
   const { data: inventory } = useCRMResource<InventoryItem>('inventory')
   const { data: orders } = useCRMResource<SalesOrder>('orders')
 
   const handleSave = async (order: SalesOrder) => {
+    setIsSaving(true)
     try {
       const existingNumbers = orders.map(v => v.orderNumber)
       order.orderNumber = generateNumber('SO', existingNumbers)
-      
-      await createOrderWithReservation(order, ctx)
-      
-      onOpenChange(false)
-      if (onSuccess) onSuccess(order)
-    } catch (error: any) {
-      toast.error("Failed to create order", { 
-        description: error.message || "An unexpected error occurred." 
+
+      const newOrder = await createOrderWithReservation(order, ctx)
+
+      toast.success("Order Created", {
+        description: `Sales Order ${order.orderNumber} has been logged successfully.`,
       })
+
+      onOpenChange(false)
+      if (onSuccess) onSuccess(newOrder)
+    } catch (error: any) {
+      toast.error("Process Failed", {
+        description: error.message || "Fulfillment initialization failed. Please retry."
+      })
+    } finally {
+      setIsSaving(false)
     }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl h-[95vh] p-0 bg-slate-50 dark:bg-slate-950 border-none rounded-3xl overflow-hidden shadow-2xl flex flex-col">
+      <DialogContent className="max-w-5xl h-[90vh] p-0 bg-slate-50 dark:bg-slate-950 border-none rounded-md overflow-hidden shadow-2xl flex flex-col">
         <button
           onClick={() => onOpenChange(false)}
           className="absolute right-6 top-6 z-50 p-2 rounded-full bg-white/50 dark:bg-slate-800/50 backdrop-blur-md hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -74,10 +83,11 @@ export function AddSalesOrderModal({ open, onOpenChange, onSuccess }: AddSalesOr
             onCancel={() => onOpenChange(false)}
             contacts={contacts}
             inventory={inventory}
+            isSaving={isSaving}
             className="flex-1"
           />
         </div>
       </DialogContent>
     </Dialog>
   )
-}
+}

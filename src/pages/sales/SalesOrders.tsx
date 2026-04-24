@@ -85,14 +85,14 @@ function ActionsMenu({ order, onShip, onDeliver, onCancel, onViewInvoice, onView
   }
 
   const items = [
-    order.status === 'pending' && {
-      label: "Fulfill Order",
+    (order.status === 'pending' || order.status === 'partially_fulfilled') && {
+      label: order.status === 'partially_fulfilled' ? "Fulfill Remaining" : "Fulfill Order",
       icon: Package,
       color: "text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20",
       action: onShip,
     },
-    order.status === 'fulfilled' && {
-      label: "Mark as Shipped",
+    (order.status === 'fulfilled' || (order.status === 'partially_fulfilled' && order.stockDeducted)) && {
+      label: order.status === 'partially_fulfilled' ? "Ship Partial" : "Mark as Shipped",
       icon: Truck,
       color: "text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20",
       action: onDeliver,
@@ -333,24 +333,24 @@ export function SalesOrders() {
       render: (order) => (
         <div className="flex justify-end items-center gap-2">
           {/* Quick action inline buttons for common next-step */}
-          {order.status === 'pending' && (
+          {(order.status === 'pending' || order.status === 'partially_fulfilled') && (
             <Button
               variant="ghost"
               size="sm"
               onClick={(e) => { e.stopPropagation(); handleFulfillOrder(order) }}
-              className="text-[11px] h-7 px-3 font-bold text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+              className="text-[11px] h-7 px-3 font-bold text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg"
             >
-              <Package className="w-3.5 h-3.5 mr-1" /> Fulfill
+              <Package className="w-3.5 h-3.5 mr-1" /> {order.status === 'partially_fulfilled' ? 'Fulfill Remaining' : 'Fulfill'}
             </Button>
           )}
-          {order.status === 'fulfilled' && (
+          {(order.status === 'fulfilled' || order.status === 'partially_fulfilled') && order.stockDeducted && (
             <Button
               variant="ghost"
               size="sm"
               onClick={(e) => { e.stopPropagation(); handleShipOrder(order) }}
-              className="text-[11px] h-7 px-3 font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+              className="text-[11px] h-7 px-3 font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
             >
-              <Truck className="w-3.5 h-3.5 mr-1" /> Ship
+              <Truck className="w-3.5 h-3.5 mr-1" /> {order.status === 'partially_fulfilled' ? 'Ship Partial' : 'Ship'}
             </Button>
           )}
           {order.status === 'shipped' && (
@@ -358,7 +358,7 @@ export function SalesOrders() {
               variant="ghost"
               size="sm"
               onClick={(e) => { e.stopPropagation(); handleDeliverOrder(order) }}
-              className="text-[11px] h-7 px-3 font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+              className="text-[11px] h-7 px-3 font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg"
             >
               <PackageCheck className="w-3.5 h-3.5 mr-1" /> Deliver
             </Button>

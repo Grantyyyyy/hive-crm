@@ -17,6 +17,7 @@ import {
   Mail,
   ChevronDown,
   MoreHorizontal,
+  Plus,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -259,25 +260,45 @@ export function SalesOrderDetail() {
     setSendEmailOpen(true)
   }
 
-  const handleProcureShortages = async () => {
+  const handleClearProcurement = async () => {
     if (!order) return
-    const shortages = order.items.filter(item => getPendingQuantity(item) > 0)
-    if (shortages.length === 0) {
+    try {
+      const updatedOrderItems = order.items.map(item => ({ ...item, procuredQuantity: 0 }))
+      await updateItem(order.id, { items: updatedOrderItems })
+      toast.success("Procurement Status Reset", { description: "You can now use 'Procure Shortages' again." })
+    } catch (e: any) {
+      toast.error("Failed to reset status", { description: e.message })
+    }
+  }
+
+  const handleProcureShortages = async (force: boolean = false) => {
+    if (!order) return
+    const shortages = force ? order.items : order.items.filter(item => getPendingQuantity(item) > 0)
+    
+    if (shortages.length === 0 && !force) {
       toast.info("Nothing to procure", { description: "All items are already reserved or fulfilled." })
       return
     }
+
     const prItems = shortages.map(item => {
-      const needed = getPendingQuantity(item)
+      const needed = force ? item.quantity : getPendingQuantity(item)
+      if (needed <= 0 && !force) return null
       return {
         id: crypto.randomUUID(),
         name: item.name,
-        description: `Shortage for Sales Order ${order.orderNumber}`,
-        quantity: needed,
+        description: `Additional Procurement for Sales Order ${order.orderNumber}`,
+        quantity: force ? item.quantity : needed,
         estimatedPrice: item.price,
         inventoryItemId: item.inventoryItemId,
         trackInInventory: true
       }
-    })
+    }).filter(Boolean)
+
+    if (prItems.length === 0) {
+      toast.info("No items to add to PR")
+      return
+    }
+
     setShortageData({
       items: prItems as any,
       justification: `Automated shortage procurement for Sales Order ${order.orderNumber}`,
@@ -372,33 +393,52 @@ export function SalesOrderDetail() {
   const tax = subtotal * 0.1
   const total = subtotal + tax
 
-  const currentStepIdx = STATUS_ORDER.indexOf(order.status)
+  const statusOrderMap: Record<SalesOrderStatus, number> = {
+    cancelled: -1,
+    draft: -1,
+    pending_stock: 0,
+    pending: 0,
+    partially_fulfilled: 1,
+    fulfilled: 1,
+    shipped: 2,
+    delivered: 3,
+  }
+  const currentStepIdx = statusOrderMap[order.status]
   const cfg = STATUS_CONFIG[order.status]
   const initials = order.customerName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
   // ── Action Buttons Logic ──────────────────────────────────────────────────
   const canDownloadInvoice = ["shipped", "delivered", "fulfilled"].includes(order.status)
 
   const primaryAction = (() => {
+    // 1. Awaiting stock reservation
     if (order.status === "pending_stock") return (
       <Button variant="brand" onClick={handleReserveStock} disabled={isReserving} className="rounded-xl h-9 px-4">
         <Package className="w-4 h-4 mr-2" /> {isReserving ? 'Reserving...' : 'Reserve Stock'}
       </Button>
     )
-    if (order.status === "pending") return (
+
+    // 2. Ready to fulfill (either fully pending or partially fulfilled with new stock)
+    const canFulfillMore = order.items.some(i => (i.reservedQuantity || 0) > 0);
+    if (order.status === "pending" || (order.status === "partially_fulfilled" && canFulfillMore)) return (
       <Button variant="brand" onClick={handleFulfill} disabled={isShipping} className="rounded-xl h-9 px-4">
-        <Package className="w-4 h-4 mr-2" /> {isShipping ? 'Fulfilling...' : 'Fulfill Order'}
+        <Package className="w-4 h-4 mr-2" /> {isShipping ? 'Fulfilling...' : order.status === 'partially_fulfilled' ? 'Fulfill Remaining' : 'Fulfill Order'}
       </Button>
     )
-    if (order.status === "fulfilled") return (
+
+    // 3. Ready to ship (either fully fulfilled or partially fulfilled with nothing more to deduct right now)
+    if (order.status === "fulfilled" || (order.status === "partially_fulfilled" && order.stockDeducted)) return (
       <Button variant="brand" onClick={handleShip} disabled={isUpdatingStatus} className="rounded-xl h-9 px-4">
-        <Truck className="w-4 h-4 mr-2" /> {isUpdatingStatus ? 'Updating...' : 'Mark Shipped'}
+        <Truck className="w-4 h-4 mr-2" /> {isUpdatingStatus ? 'Updating...' : order.status === 'partially_fulfilled' ? 'Ship Partial' : 'Mark Shipped'}
       </Button>
     )
+
+    // 4. Out for delivery
     if (order.status === "shipped") return (
       <Button variant="brand" onClick={() => setConfirmDeliver(true)} disabled={isUpdatingStatus} className="rounded-xl h-9 px-4">
         <PackageCheck className="w-4 h-4 mr-2" /> Mark Delivered
       </Button>
     )
+
     return null
   })()
 
@@ -417,6 +457,14 @@ export function SalesOrderDetail() {
 
   if (hasShortages) {
     dropdownItems.push({ label: "Procure Shortages", icon: Package, onClick: handleProcureShortages, disabled: isProcuring })
+  }
+
+  if (!["delivered", "cancelled"].includes(order.status)) {
+    dropdownItems.push({ label: "Additional Purchase Request", icon: Plus, onClick: () => handleProcureShortages(true) })
+  }
+
+  if (order.items.some(i => (i.procuredQuantity || 0) > 0)) {
+    dropdownItems.push({ label: "Clear Procurement Status", icon: XCircle, onClick: handleClearProcurement, danger: true })
   }
 
   if (["shipped", "fulfilled"].includes(order.status) && order.stockDeducted) {

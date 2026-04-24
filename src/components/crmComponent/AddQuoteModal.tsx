@@ -1,3 +1,4 @@
+import { useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -21,6 +22,7 @@ interface AddQuoteModalProps {
 }
 
 export function AddQuoteModal({ open, onOpenChange, onSuccess }: AddQuoteModalProps) {
+  const [isSaving, setIsSaving] = useState(false)
   const ctx = useCRMContext()
   const { user } = useUser()
   const { data: contacts } = useCRMResource<Contact>('contacts')
@@ -28,6 +30,7 @@ export function AddQuoteModal({ open, onOpenChange, onSuccess }: AddQuoteModalPr
   const { data: quotes } = useCRMResource<Quote>('quotes')
 
   const handleSave = async (quote: Quote) => {
+    setIsSaving(true)
     try {
       const existingNumbers = quotes.map(q => q.quoteNumber)
       quote.quoteNumber = generateNumber('QT', existingNumbers)
@@ -41,16 +44,24 @@ export function AddQuoteModal({ open, onOpenChange, onSuccess }: AddQuoteModalPr
         await reserveStockForQuote(newQuote, ctx, user?.id || 'system', user?.user_metadata?.full_name || 'Unknown User')
       }
 
+      toast.success("Quote Created", {
+        description: `Estimate ${quote.quoteNumber} has been logged successfully.`,
+      })
+
       onOpenChange(false)
       if (onSuccess) onSuccess(newQuote)
     } catch (error: any) {
-      toast.error("Failed to create quote", { description: error.message })
+      toast.error("Process Failed", { 
+        description: error.message || "Failed to finalize quote. Please retry." 
+      })
+    } finally {
+      setIsSaving(false)
     }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl h-[95vh] p-0 bg-slate-50 dark:bg-slate-950 border-none rounded-3xl overflow-hidden shadow-2xl flex flex-col">
+      <DialogContent className="max-w-5xl h-[90vh] p-0 bg-slate-50 dark:bg-slate-950 border-none rounded-md overflow-hidden shadow-2xl flex flex-col">
         <button
           onClick={() => onOpenChange(false)}
           className="absolute right-6 top-6 z-50 p-2 rounded-full bg-white/50 dark:bg-slate-800/50 backdrop-blur-md hover:bg-white dark:hover:bg-slate-800 transition-all text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -80,6 +91,7 @@ export function AddQuoteModal({ open, onOpenChange, onSuccess }: AddQuoteModalPr
             onCancel={() => onOpenChange(false)}
             contacts={contacts}
             inventory={inventory}
+            isSaving={isSaving}
             className="flex-1"
           />
         </div>

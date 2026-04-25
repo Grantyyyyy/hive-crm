@@ -99,7 +99,7 @@ export async function reserveAvailableStock(
 
   if (updates.length > 0) {
     // Calculate new order status based on updated items
-    const newStatus = calculateSalesOrderStatus(updatedOrderItems);
+    const newStatus = calculateSalesOrderStatus(updatedOrderItems, order.status);
     
     // Update order with items and status
     updates.push({
@@ -192,7 +192,7 @@ export async function fulfillOrderStock(
   }
 
   // Calculate new order status
-  const newStatus = calculateSalesOrderStatus(updatedOrderItems);
+  const newStatus = calculateSalesOrderStatus(updatedOrderItems, order.status);
 
   updates.push({
     resource: 'orders',
@@ -340,7 +340,7 @@ export async function createOrderWithReservation(
   }
 
   // 2. Determine Order Status
-  const newStatus = calculateSalesOrderStatus(updatedItems);
+  const newStatus = calculateSalesOrderStatus(updatedItems, order.status);
 
   // 3. Build Inventory Reservation Updates
   Object.keys(reservationTally).forEach(itemId => {

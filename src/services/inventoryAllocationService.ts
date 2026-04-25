@@ -1,4 +1,4 @@
-import type { InventoryItem, OrderItem, SalesOrder, InventoryTransaction } from '../lib/types'
+import type { InventoryItem, OrderItem, SalesOrder, InventoryTransaction, SalesOrderStatus } from '../lib/types'
 import { recalculateStockLevel } from './inventoryService'
 import { createReceiptTransaction } from './inventoryTransactionService'
 import type { JobAdapter, AtomicOp } from './types'
@@ -116,7 +116,7 @@ export async function allocateInventoryToPendingOrders(
         : i
     );
 
-    const newStatus = calculateSalesOrderStatus(updatedItems);
+    const newStatus = calculateSalesOrderStatus(updatedItems, pending.salesOrder.status);
 
     updates.push({
       resource: 'orders',
@@ -195,30 +195,62 @@ export function validateOrderItemQuantities(
 /**
  * Determine correct sales order status based on item quantities
  */
+/**
+ * Determine correct sales order status based on item quantities
+ */
 export function calculateSalesOrderStatus(
-  orderItems: OrderItem[]
-): 'draft' | 'pending' | 'pending_stock' | 'partially_fulfilled' | 'fulfilled' | 'cancelled' {
-  let hasPending = false
-  let hasFulfilled = false
-  let hasPartial = false
+  orderItems: OrderItem[],
+  currentStatus?: SalesOrderStatus
+): SalesOrderStatus {
+  // Terminal statuses should be preserved unless explicitly changed
+  if (currentStatus === 'cancelled' || currentStatus === 'delivered' || currentStatus === 'shipped') {
+    return currentStatus;
+  }
+
+  const totalItems = orderItems.length;
+  if (totalItems === 0) return currentStatus || 'pending';
+
+  let fullyFulfilledCount = 0;
+  let partiallyFulfilledCount = 0;
+  let hasShortage = false;
+  let hasReservation = false;
 
   for (const item of orderItems) {
-    const fulfilled = item.fulfilledQuantity || 0
-    const reserved = item.reservedQuantity || 0
-    const procured = item.procuredQuantity || 0
-    if (fulfilled > 0 && fulfilled < item.quantity) {
-      hasPartial = true
+    const fulfilled = item.fulfilledQuantity || 0;
+    const reserved = item.reservedQuantity || 0;
+    const procured = item.procuredQuantity || 0;
+    const quantity = item.quantity;
+
+    if (fulfilled >= quantity) {
+      fullyFulfilledCount++;
+    } else if (fulfilled > 0) {
+      partiallyFulfilledCount++;
     }
-    if (fulfilled >= item.quantity) {
-      hasFulfilled = true
+
+    if (fulfilled + reserved + procured < quantity) {
+      hasShortage = true;
     }
-    if (reserved + procured + fulfilled < item.quantity) {
-      hasPending = true
+    
+    if (reserved > 0) {
+      hasReservation = true;
     }
   }
 
-  if (hasPartial) return 'partially_fulfilled'
-  if (hasFulfilled && !hasPending) return 'fulfilled'
-  if (hasPending) return 'pending_stock'
-  return 'pending' // If no shortages and not fulfilled, it is pending/ready to ship
-}
+  // 1. All items fully fulfilled -> fulfilled
+  if (fullyFulfilledCount === totalItems) {
+    return 'fulfilled';
+  }
+
+  // 2. Some items fulfilled or partially fulfilled -> partially_fulfilled
+  if (fullyFulfilledCount > 0 || partiallyFulfilledCount > 0) {
+    return 'partially_fulfilled';
+  }
+
+  // 3. No fulfillment, but some shortages -> pending_stock
+  if (hasShortage) {
+    return 'pending_stock';
+  }
+
+  // 4. No fulfillment, no shortages -> pending (ready to fulfill)
+  return 'pending';
+}

@@ -1,7 +1,9 @@
+import { useState } from "react"
 import {
   Dialog,
   DialogHeader,
   DialogTitle,
+  DialogContent,
 } from "@/components/ui/dialog"
 import { PurchaseOrderForm } from "./PurchaseOrderForm"
 import { useCRMContext, insertRows } from "@/lib/CRMContext"
@@ -18,11 +20,13 @@ interface AddPurchaseOrderModalProps {
 }
 
 export function AddPurchaseOrderModal({ open, onOpenChange, onSuccess }: AddPurchaseOrderModalProps) {
+  const [isSaving, setIsSaving] = useState(false)
   const ctx = useCRMContext()
   const { data: inventoryItems, isLoaded } = useCRMResource<InventoryItem>('inventory')
   const { data: purchaseOrders } = useCRMResource<PurchaseOrder>('purchase_orders')
 
   const handleSave = async (order: PurchaseOrder) => {
+    setIsSaving(true)
     try {
       const existingNumbers = purchaseOrders.map(o => o.poNumber)
       order.poNumber = generateNumber('PO', existingNumbers)
@@ -35,16 +39,17 @@ export function AddPurchaseOrderModal({ open, onOpenChange, onSuccess }: AddPurc
         description: `Order ${newOrder.poNumber} has been saved.`
       })
     } catch (error: any) {
-      toast.error("Failed to create PO", { description: error.message })
+      toast.error("Process Failed", { 
+        description: error.message || "Failed to create order. Please retry." 
+      })
+    } finally {
+      setIsSaving(false)
     }
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={onOpenChange}
-      className="max-w-[1100px] w-[95vw] h-[85vh] max-h-[85vh] flex flex-col bg-white dark:bg-slate-950 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden p-0"
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-5xl h-[90vh] p-0 bg-slate-50 dark:bg-slate-950 border-none rounded-md overflow-hidden shadow-2xl flex flex-col">
       <button
         onClick={() => onOpenChange(false)}
         className="absolute right-6 top-8 z-50 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
@@ -75,6 +80,7 @@ export function AddPurchaseOrderModal({ open, onOpenChange, onSuccess }: AddPurc
             onSave={handleSave}
             onCancel={() => onOpenChange(false)}
             inventoryItems={inventoryItems}
+            isSaving={isSaving}
           />
         ) : (
           <div className="flex items-center justify-center h-full text-slate-400 font-bold animate-pulse">
@@ -82,6 +88,7 @@ export function AddPurchaseOrderModal({ open, onOpenChange, onSuccess }: AddPurc
           </div>
         )}
       </div>
+      </DialogContent>
     </Dialog>
   )
 }

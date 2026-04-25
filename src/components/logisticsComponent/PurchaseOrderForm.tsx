@@ -15,19 +15,21 @@ interface PurchaseOrderFormProps {
   onCancel: () => void
   initialData?: Partial<PurchaseOrder>
   inventoryItems?: InventoryItem[]  // Added: inventory catalog for selection
+  isSaving?: boolean
 }
 
-export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItems = [] }: PurchaseOrderFormProps) {
+export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItems = [], isSaving }: PurchaseOrderFormProps) {
   const [vendorName, setVendorName] = useState(initialData?.vendorName ?? "")
   const [vendorId, setVendorId] = useState(initialData?.vendorId ?? "")
   const [vendorSearch, setVendorSearch] = useState("")
   const [showVendorSelector, setShowVendorSelector] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [showResults, setShowResults] = useState(false)
   const { data: vendors } = useCRMResource<Vendor>("vendors")
   const [poNumber] = useState(initialData?.poNumber ?? `PO-${Math.floor(10000 + Math.random() * 90000)}`)
   const [referenceId, setReferenceId] = useState(initialData?.referenceId ?? "")
   const [date] = useState(initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0])
   const [expectedDelivery, setExpectedDelivery] = useState(initialData?.expectedDelivery ? new Date(initialData.expectedDelivery).toISOString().split('T')[0] : "")
-  const [showInventory, setShowInventory] = useState(false)
   const [items, setItems] = useState(initialData?.items ?? [
     { id: generateId(), name: "", quantity: 1, price: 0, inventoryItemId: "" }
   ])
@@ -36,24 +38,44 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
   const [vendorInstructions, setVendorInstructions] = useState(initialData?.vendorInstructions ?? "")
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const totalAmount = useMemo(() => {
+  const subtotal = useMemo(() => {
     return items.reduce((sum, item) => sum + (item.quantity * item.price), 0)
+  }, [items])
+
+  const tax = subtotal * 0.12 // 12% VAT
+  const totalAmount = subtotal + tax
+
+  const canAddNewItem = useMemo(() => {
+    if (items.length === 0) return true
+    const lastItem = items[items.length - 1]
+    return lastItem.name.trim() !== "" || lastItem.price > 0
   }, [items])
 
   const addItem = () => {
     setItems([...items, { id: generateId(), name: "", quantity: 1, price: 0, inventoryItemId: "" }])
-    setShowInventory(false)
+    setShowResults(false)
   }
 
-  const addFromInventory = (item: InventoryItem) => {
-    setItems([...items, {
-      id: generateId(),
-      name: item.name,
-      quantity: 10, // Default order quantity
-      price: item.price * 0.7, // Default vendor price (70% of retail)
-      inventoryItemId: item.id
-    }])
-    setShowInventory(false)
+  const handleInventorySelect = (itemId: string) => {
+    const item = inventoryItems.find(i => i.id === itemId)
+    if (!item) return
+
+    const existingItemIndex = items.findIndex(i => i.inventoryItemId === itemId)
+    if (existingItemIndex > -1) {
+      const newItems = [...items]
+      newItems[existingItemIndex].quantity += 1
+      setItems(newItems)
+    } else {
+      setItems([...items, {
+        id: generateId(),
+        inventoryItemId: item.id,
+        name: item.name,
+        quantity: 1,
+        price: item.price * 0.9, // Wholesale discount estimate
+      }])
+    }
+    setShowResults(false)
+    setSearchTerm("")
   }
 
   const selectVendor = (vendor: Vendor) => {
@@ -120,29 +142,31 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto px-8 py-10 space-y-12 pb-32">
 
-        {/* Section: Order Details */}
-        <section className="space-y-6">
-          <div className="flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
-            <Info className="w-4 h-4 text-slate-400" />
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Order Details</h3>
+        {/* Section 1: Order Identity */}
+        <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Order Details</h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2 space-y-2">
-              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-widest">Select Vendor</Label>
+              <Label className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Select Vendor</Label>
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setShowVendorSelector(!showVendorSelector)}
                   className={cn(
                     "w-full h-12 flex items-center justify-between px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm transition-all",
-                    errors.vendorName ? "border-red-500 ring-1 ring-red-100" : "hover:border-teal-300",
-                    !vendorName && "text-slate-400"
+                    errors.vendorName ? "border-red-500 ring-1 ring-red-100" : "hover:border-teal-300 shadow-none",
+                    !vendorName && "text-slate-400",
+                    isSaving && "opacity-50 cursor-not-allowed"
                   )}
+                  disabled={isSaving}
                 >
                   <div className="flex items-center gap-3">
                     <Building2 className={cn("size-4", vendorName ? "text-teal-600" : "text-slate-400")} />
-                    <span className="font-semibold">{vendorName || "Choose a vendor..."}</span>
+                    <span className="font-bold">{vendorName || "Choose a vendor catalog..."}</span>
                   </div>
                   <ChevronDown className={cn("size-4 text-slate-400 transition-transform", showVendorSelector && "rotate-180")} />
                 </button>
@@ -174,18 +198,18 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
                             )}
                           >
                             <div className="flex-1 min-w-0">
-                              <p className={cn("text-xs font-bold truncate", vendorId === vendor.id ? "text-teal-600" : "text-slate-900 dark:text-white group-hover:text-teal-600")}>
+                              <p className={cn("text-xs font-black truncate", vendorId === vendor.id ? "text-teal-600" : "text-slate-900 dark:text-white group-hover:text-teal-600")}>
                                 {vendor.name}
                               </p>
-                              <p className="text-[10px] text-slate-500 font-medium truncate uppercase tracking-tight mt-0.5">
-                                {vendor.category || "General Vendor"} • {vendor.status}
+                              <p className="text-[10px] text-slate-500 font-bold truncate uppercase tracking-tight mt-0.5">
+                                {vendor.category || "General Vendor"} · {vendor.status}
                               </p>
                             </div>
                           </button>
                         ))
                       ) : (
-                        <div className="py-8 text-center">
-                          <p className="text-xs font-medium text-slate-400">No vendors found.</p>
+                        <div className="py-8 text-center bg-slate-50/30">
+                          <p className="text-xs font-black uppercase tracking-widest text-slate-400">No matching vendors</p>
                         </div>
                       )}
                     </div>
@@ -196,210 +220,273 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+              <Label className="text-[11px] font-black text-slate-500 uppercase tracking-widest">
                 Reference ID
                 {initialData?.referenceId && (
                   <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400">
-                    Auto-linked
+                    Auto-Linked
                   </span>
                 )}
               </Label>
               <Input
-                placeholder="—"
+                placeholder="External ID or PR Link..."
                 value={referenceId}
                 readOnly={!!initialData?.referenceId}
                 disabled={!!initialData?.referenceId}
                 onChange={(e) => setReferenceId(e.target.value)}
                 className={cn(
-                  "h-12 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900",
+                  "h-12 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 font-bold",
                   initialData?.referenceId && "opacity-60 cursor-not-allowed select-none bg-slate-50 dark:bg-slate-800/50 font-mono text-xs text-slate-500"
                 )}
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">Expected Delivery</Label>
+              <Label className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Expected Delivery</Label>
               <DatePicker
                 value={expectedDelivery}
                 onChange={setExpectedDelivery}
-                className="h-12 py-3 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
+                className="h-12 py-3 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 font-bold"
               />
             </div>
           </div>
         </section>
 
-        {/* Section: Shipping Information */}
-        <section className="space-y-6">
-          <div className="flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
-            <Truck className="w-4 h-4 text-slate-400" />
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Shipping Information</h3>
+        {/* Section 2: Logistics & Destination */}
+        <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md">
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Shipping & Logistics</h3>
           </div>
           <Textarea
-            placeholder="Enter destination address and shipping method..."
+            placeholder="Enter precise destination address and shipping method instructions..."
             value={shippingInfo}
             onChange={(e) => setShippingInfo(e.target.value)}
-            className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[100px] p-5 focus:ring-teal-500 shadow-sm"
+            className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[100px] p-5 focus:ring-teal-500 shadow-none border-dashed"
           />
         </section>
 
-        {/* Section: Products & Items */}
-        <section className="space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-            <div className="flex items-center gap-3">
-              <Package className="w-4 h-4 text-slate-400" />
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Products & Items</h3>
-            </div>
+        {/* Section 3: Line Items */}
+        <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md">
+          <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-2">
-              {inventoryItems && inventoryItems.length > 0 && (
+              <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Line Items & Catalog</h3>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={addItem}
+              disabled={!canAddNewItem}
+              className={cn(
+                "h-9 px-6 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border border-slate-200 dark:border-slate-800 transition-all active:scale-95",
+                !canAddNewItem
+                  ? "opacity-40 grayscale cursor-not-allowed"
+                  : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
+              )}
+            >
+              <Plus className="w-3 h-3 mr-2" /> Add Manual Row
+            </Button>
+          </div>
+
+          <div className="space-y-6">
+            {/* Improved Item Selector: Quick Search and Add */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Quick Add from Catalog</Label>
+                {inventoryItems.length > 0 && (
+                  <span className="text-[9px] font-bold text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+                    {inventoryItems.filter(i => i.status === 'active').length} Active Products
+                  </span>
+                )}
+              </div>
+
+              <div className="relative group">
                 <div className="relative">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowInventory(!showInventory)}
-                    className="h-8 text-[11px] font-bold text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-900/10 px-3"
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none group-focus-within:text-teal-500 transition-colors" />
+                  <input
+                    type="text"
+                    placeholder="Type name or SKU to instantly add items..."
+                    className="w-full h-12 pl-12 pr-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-medium focus:ring-2 focus:ring-teal-500 outline-none transition-all shadow-none"
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    value={searchTerm}
+                    onFocus={() => setShowResults(true)}
+                  />
+                </div>
+
+                {/* Search Results Dropdown */}
+                {showResults && searchTerm.length >= 1 && (
+                  <div
+                    className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden max-h-[320px] divide-y divide-slate-50 dark:divide-slate-800 flex flex-col animate-in fade-in slide-in-from-top-2 duration-200"
+                    onMouseLeave={() => setShowResults(false)}
                   >
-                    Quick Add
-                  </Button>
-                  {showInventory && (
-                    <div className="absolute right-0 top-full mt-1 w-72 max-h-64 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl z-50 p-1 divide-y divide-slate-50 dark:divide-slate-800">
+                    <div className="overflow-y-auto flex-1">
                       {inventoryItems
-                        .filter(item => item.status === 'active')
-                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .filter(item =>
+                          item.status === 'active' &&
+                          (item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            item.sku.toLowerCase().includes(searchTerm.toLowerCase()))
+                        )
                         .map((item) => {
                           const atp = item.stockQuantity - (item.reservedQuantity || 0)
                           return (
                             <button
                               key={item.id}
-                              onClick={() => addFromInventory(item)}
-                              className="w-full text-left p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors rounded-lg group"
+                              type="button"
+                              onClick={() => handleInventorySelect(item.id)}
+                              className="w-full text-left px-5 py-4 hover:bg-teal-50 dark:hover:bg-teal-900/10 transition-colors flex items-center justify-between group/item"
                             >
-                              <div className="text-[12px] font-bold text-slate-900 dark:text-white group-hover:text-teal-600">{item.name}</div>
-                              <div className="text-[10px] text-slate-500 mt-0.5">
-                                ATP: {atp} • ${item.price.toFixed(2)} • SKU: {item.sku}
+                              <div className="flex flex-col min-w-0 flex-1 pr-4">
+                                <span className="text-sm font-black text-slate-900 dark:text-white group-hover/item:text-teal-600 transition-colors truncate">
+                                  {item.name}
+                                </span>
+                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tight mt-0.5 truncate">
+                                  SKU: {item.sku} · {item.category}
+                                </span>
+                              </div>
+                              <div className="flex flex-col items-end shrink-0">
+                                <span className="text-[13px] font-black text-slate-900 dark:text-white">
+                                  ${item.price.toFixed(2)}
+                                </span>
+                                <span className={cn(
+                                  "text-[9px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded-md mt-1",
+                                  atp > 0 
+                                    ? "bg-teal-50 text-teal-600 dark:bg-teal-900/30" 
+                                    : "bg-amber-50 text-amber-600 dark:bg-amber-900/30"
+                                )}>
+                                  {atp} Available
+                                </span>
                               </div>
                             </button>
                           )
                         })}
                     </div>
-                  )}
-                </div>
-              )}
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={addItem}
-                className="h-8 text-[11px] font-bold text-teal-600 dark:text-teal-400 hover:bg-transparent px-3"
-              >
-                <Plus className="w-3.5 h-3.5 mr-1" /> Add Item
-              </Button>
+                    {inventoryItems.filter(item =>
+                      item.status === 'active' &&
+                      (item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        item.sku.toLowerCase().includes(searchTerm.toLowerCase()))
+                    ).length === 0 && (
+                        <div className="px-5 py-8 text-center bg-slate-50/30 dark:bg-slate-800/30">
+                          <p className="text-xs font-black uppercase tracking-widest text-slate-400">No matching products</p>
+                          <p className="text-[10px] text-slate-500 mt-1 font-bold">Try searching by category or full SKU</p>
+                        </div>
+                      )}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
 
-          {inventoryItems && inventoryItems.length === 0 && (
-            <p className="text-[10px] font-medium text-amber-600 dark:text-amber-400 flex items-center gap-2">
-              <Info className="w-3.5 h-3.5" />
-              No active inventory items found. Items must be created in the Inventory module first.
-            </p>
-          )}
-
-          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm">
-            <table className="w-full text-left text-sm">
+          <div className="rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-slate-50/30 dark:bg-slate-900/30 overflow-hidden shadow-none">
+            <table className="w-full text-left border-collapse table-fixed">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/50 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-200 dark:border-slate-800">
-                  <th className="px-5 py-4">Product / SKU</th>
-                  <th className="px-5 py-4 w-24 text-center">Qty</th>
-                  <th className="px-5 py-4 w-32 text-right">Unit Price</th>
-                  <th className="px-5 py-4 w-32 text-right">Total</th>
-                  <th className="px-5 py-4 w-12"></th>
+                <tr className="bg-slate-50/50 dark:bg-slate-800/50 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-200/60 dark:border-slate-800/60">
+                  <th className="px-6 py-4 w-1/2">Product / SKU</th>
+                  <th className="px-4 py-4 w-[12%] text-center">Qty</th>
+                  <th className="px-4 py-4 w-[18%] text-right">Unit Price</th>
+                  <th className="px-4 py-4 w-[15%] text-right">Total</th>
+                  <th className="px-4 py-4 w-[60px] text-right"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
                 {items.map((item, index) => (
-                  <tr key={item.id} className="group transition-colors">
-                    <td className="px-5 py-4">
+                  <tr key={item.id} className="group hover:bg-white dark:hover:bg-slate-800/20 transition-colors">
+                    <td className="px-6 py-4">
                       <input
-                        className="w-full bg-transparent border-none focus:ring-0 p-0 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 text-sm font-medium"
-                        placeholder="Item name or SKU..."
+                        className="w-full bg-transparent border-none focus:ring-0 p-0 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 text-sm font-bold"
+                        placeholder="Line item name or SKU..."
                         value={item.name}
                         onChange={(e) => updateItem(item.id, { name: e.target.value })}
                       />
-                      {errors[`item_${index}_name`] && <p className="text-[8px] font-bold text-red-500 uppercase mt-1">{errors[`item_${index}_name`]}</p>}
+                      {errors[`item_${index}_name`] && <p className="text-[8px] font-bold text-red-500 uppercase mt-1 tracking-wider">{errors[`item_${index}_name`]}</p>}
                     </td>
-                    <td className="px-5 py-4 text-center">
+                    <td className="px-4 py-4 text-center">
                       <input
                         type="number"
-                        className="w-full bg-transparent border-none focus:ring-0 p-0 text-slate-900 dark:text-slate-100 text-sm font-medium text-center"
+                        className="w-full bg-transparent border-none focus:ring-0 p-0 text-slate-900 dark:text-slate-100 text-sm font-black text-center"
                         value={item.quantity}
                         onChange={(e) => updateItem(item.id, { quantity: parseInt(e.target.value) || 0 })}
                       />
                     </td>
-                    <td className="px-5 py-4 text-right">
+                    <td className="px-4 py-4 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <span className="text-slate-400">$</span>
+                        <span className="text-slate-400 text-[10px] font-bold">$</span>
                         <input
                           type="number"
-                          className="w-24 bg-transparent border-none focus:ring-0 p-0 text-slate-900 dark:text-slate-100 text-sm font-medium text-right"
+                          className="w-24 bg-transparent border-none focus:ring-0 p-0 text-slate-900 dark:text-slate-100 text-sm font-black text-right"
                           value={item.price}
                           onChange={(e) => updateItem(item.id, { price: parseFloat(e.target.value) || 0 })}
                         />
                       </div>
                     </td>
-                    <td className="px-5 py-4 text-right font-bold text-slate-900 dark:text-white">
+                    <td className="px-4 py-4 text-right font-black text-slate-900 dark:text-white tabular-nums">
                       ${(item.quantity * item.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="px-5 py-4 text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
+                    <td className="px-4 py-4 text-right">
+                      <button
+                        type="button"
                         onClick={() => removeItem(item.id)}
-                        className="h-8 w-8 text-slate-300 hover:text-red-500"
+                        className="text-slate-300 hover:text-red-500 transition-all scale-100 hover:scale-110 active:scale-90 p-1"
                       >
                         <Trash2 className="w-4 h-4" />
-                      </Button>
+                      </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
-              <tfoot>
-                <tr className="bg-slate-50/50 dark:bg-slate-800/30">
-                  <td colSpan={3} className="px-5 py-5 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400">Total Amount</td>
-                  <td className="px-5 py-5 text-right text-lg font-black text-slate-900 dark:text-white">
-                    ${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                  </td>
-                  <td></td>
-                </tr>
-              </tfoot>
+                <tfoot>
+                  <tr className="bg-slate-50/80 dark:bg-slate-800/40">
+                    <td colSpan={5} className="px-6 py-10">
+                      <div className="flex flex-col items-end gap-4">
+                        <div className="flex items-center gap-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                          <span>Line Total</span>
+                          <span className="text-slate-900 dark:text-white min-w-[100px] text-right">${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                        <div className="flex items-center gap-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                          <span>VAT (12%)</span>
+                          <span className="text-slate-900 dark:text-white min-w-[100px] text-right">${tax.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                        <div className="w-48 h-px bg-slate-200 dark:border-slate-800 my-1" />
+                        <div className="flex items-center gap-12">
+                          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-teal-600">Total Amount</span>
+                          <span className="text-4xl font-black text-slate-900 dark:text-white tabular-nums tracking-tighter">
+                            ${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td></td>
+                  </tr>
+                </tfoot>
             </table>
           </div>
-          {errors.items && <p className="text-[10px] font-bold text-red-500 uppercase tracking-wider">{errors.items}</p>}
+          </div>
+          {errors.items && <p className="text-[10px] font-bold text-red-500 uppercase tracking-wider mt-2">{errors.items}</p>}
         </section>
 
-        {/* Section: Internal Notes & Vendor Instructions */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-10">
+        {/* Section 4: Remarks & Documentation */}
+        <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-4">
-            <div className="flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
-              <MessageSquare className="w-4 h-4 text-slate-400" />
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Internal Notes</h3>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Internal Notes</h3>
             </div>
             <Textarea
-              placeholder="Notes for internal used only..."
+              placeholder="Private notes for internal procurement team only..."
               value={internalNotes}
               onChange={(e) => setInternalNotes(e.target.value)}
-              className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[120px] p-4 text-sm focus:ring-teal-500"
+              className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[120px] p-4 text-sm font-medium focus:ring-teal-500 border-dashed"
             />
           </div>
           <div className="space-y-4">
-            <div className="flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
-              <Info className="w-4 h-4 text-slate-400" />
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Vendor Instructions</h3>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Vendor Instructions</h3>
             </div>
             <Textarea
-              placeholder="Specific instructions for the vendor..."
+              placeholder="Specific delivery or billing instructions for the vendor..."
               value={vendorInstructions}
               onChange={(e) => setVendorInstructions(e.target.value)}
-              className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[120px] p-4 text-sm focus:ring-teal-500"
+              className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[120px] p-4 text-sm font-medium focus:ring-teal-500 border-dashed"
             />
           </div>
         </section>
@@ -411,15 +498,17 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
           variant="ghost"
           size="sm"
           onClick={() => handleSave('draft')}
+          disabled={isSaving}
           className="h-10 px-4 font-bold text-[11px] text-slate-500"
         >
-          Save as Draft
+          {isSaving ? "Saving..." : "Save as Draft"}
         </Button>
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="sm"
             onClick={onCancel}
+            disabled={isSaving}
             className="h-10 px-4 font-bold text-[11px]"
           >
             Cancel
@@ -428,9 +517,10 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
             variant="default"
             size="sm"
             onClick={() => handleSave('pending')}
-            className="h-10 px-6 font-black bg-teal-600 hover:bg-teal-700 text-white text-[11px] rounded-lg shadow-sm"
+            disabled={isSaving}
+            className="h-10 px-6 font-black bg-teal-600 hover:bg-teal-700 text-white text-[11px] rounded-lg shadow-sm disabled:bg-slate-200"
           >
-            Create Purchase Order
+            {isSaving ? "Creating..." : "Create Purchase Order"}
           </Button>
         </div>
       </div>

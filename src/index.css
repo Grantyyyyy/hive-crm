@@ -53,6 +53,7 @@
   /* Font Families */
   --font-sans: "DM Sans", system-ui, sans-serif;
   --font-outfit: "Outfit", sans-serif;
+  --font-display: var(--font-outfit);
 }
 
 @layer base {

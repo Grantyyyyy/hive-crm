@@ -1,14 +1,28 @@
 import { useMemo, useState } from "react"
-import { Calendar, ChevronDown, TrendingUp, Banknote, Package, Users } from "lucide-react"
+import {
+  Calendar,
+  ChevronDown,
+  TrendingUp,
+  Banknote,
+  Package,
+  Users,
+  LayoutDashboard,
+  Trophy,
+  Star,
+  Layers,
+  Activity,
+  ArrowUpRight,
+  ArrowDownRight
+} from "lucide-react"
+import { cn } from "@/lib/utils"
 import { useCRMResource } from "@/lib/hooks"
 import { ListSkeleton } from "@/components/ui/skeletons"
-import type { SalesOrder, Quote, Deal, InventoryItem, Contact, Lead } from "@/lib/types"
+import type { SalesOrder, Quote, Deal, InventoryItem, Contact, Lead, InventoryTransaction } from "@/lib/types"
 import { StatCard } from "@/components/reusables/StatCard"
+import { formatCurrency } from "@/lib/helpers"
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, ComposedChart, Line
 } from "recharts"
-
-// ── Period Filter ────────────────────────────────────────────────────────────
 
 type Period = "30d" | "6m" | "1y" | "all"
 
@@ -47,12 +61,11 @@ function isInRange(dateStr: string | undefined, range: { start: Date; end: Date 
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-const fmtCurrency = (v: number) =>
-  v.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 })
+const fmtCurrency = (v: number) => formatCurrency(v)
 
 const fmtPct = (v: number) => `${v.toFixed(1)}%`
 
-const COLORS = ["#0d9488", "#14b8a6", "#f59e0b", "#ef4444", "#06b6d4"]
+const COLORS = ["#0d9488", "#0ea5e9", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"]
 
 function getMonthKey(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-US", { month: "short", year: "2-digit" })
@@ -67,19 +80,21 @@ export function Reports() {
   const { data: inventory, isLoaded: invLoaded } = useCRMResource<InventoryItem>("inventory")
   const { data: contacts, isLoaded: contactsLoaded } = useCRMResource<Contact>("contacts")
   const { data: leads, isLoaded: leadsLoaded } = useCRMResource<Lead>("leads")
+  const { data: transactions, isLoaded: txLoaded } = useCRMResource<InventoryTransaction>("inventory_transactions")
 
   const [period, setPeriod] = useState<Period>("6m")
   const [periodOpen, setPeriodOpen] = useState(false)
   const range = useMemo(() => getDateRange(period), [period])
 
-  const allLoaded = ordersLoaded && quotesLoaded && dealsLoaded && invLoaded && contactsLoaded && leadsLoaded
+  const allLoaded = ordersLoaded && quotesLoaded && dealsLoaded && invLoaded && contactsLoaded && leadsLoaded && txLoaded
   if (!allLoaded) return <ListSkeleton />
 
   // ── Filtered Data ──────────────────────────────────────────────────────────
 
   const filteredOrders = orders.filter(o => isInRange(o.orderDate, range))
   const filteredQuotes = quotes.filter(q => isInRange(q.date, range))
-  const filteredLeads = leads.filter(l => isInRange(l.createdAt, range))
+  const filteredDeals = deals.filter(d => isInRange(d.createdAt, range))
+  const filteredTransactions = transactions.filter(t => isInRange(t.createdAt, range))
 
   // ── KPI Calculations ───────────────────────────────────────────────────────
 
@@ -106,15 +121,14 @@ export function Reports() {
     ? (wonDeals.length / (wonDeals.length + lostDeals.length)) * 100
     : 0
 
-  const inStock = inventory.filter(i => i.status === "active" && i.stockLevel === "in_stock").length
-  const lowStock = inventory.filter(i => i.status === "active" && i.stockLevel === "low_stock").length
-  const outOfStock = inventory.filter(i => i.status === "active" && i.stockLevel === "out_of_stock").length
-  const totalActive = inventory.filter(i => i.status === "active").length
-  const inventoryHealth = totalActive > 0 ? (inStock / totalActive) * 100 : 0
-  const totalInventoryValue = inventory.reduce((sum, i) => sum + i.stockQuantity * i.price, 0)
+  // Inventory Turnover Calculation
+  // Turnover = COGS / Average Inventory
+  const cogs = filteredTransactions
+    .filter(t => t.type === 'shipment')
+    .reduce((sum, t) => sum + (t.totalCost || 0), 0)
 
-  const acceptedQuotes = filteredQuotes.filter(q => q.status === "accepted").length
-  const conversionRate = filteredQuotes.length > 0 ? (acceptedQuotes / filteredQuotes.length) * 100 : 0
+  const totalStockValue = inventory.reduce((sum, i) => sum + (i.stockQuantity * (i.movingAverageCost || i.price)), 0)
+  const inventoryTurnover = totalStockValue > 0 ? (cogs / totalStockValue) : 0
 
   // ── Chart Data ─────────────────────────────────────────────────────────────
 
@@ -138,12 +152,53 @@ export function Reports() {
         map.set(key, entry)
       })
     return Array.from(map.values()).sort((a, b) => {
-      // Sort by actual date, not string
       return new Date(a.month).getTime() - new Date(b.month).getTime()
     })
   }, [filteredOrders, filteredQuotes])
 
-  // Deals by stage
+  // Top 5 Products by Sales Volume
+  const topProducts = useMemo(() => {
+    const productMap = new Map<string, { name: string; quantity: number; revenue: number }>()
+    filteredOrders.forEach(order => {
+      order.items.forEach(item => {
+        const entry = productMap.get(item.name) || { name: item.name, quantity: 0, revenue: 0 }
+        entry.quantity += item.quantity
+        entry.revenue += item.quantity * item.price
+        productMap.set(item.name, entry)
+      })
+    })
+    return Array.from(productMap.values())
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 5)
+  }, [filteredOrders])
+
+  // Revenue by Category
+  const revenueByCategory = useMemo(() => {
+    const catMap = new Map<string, number>()
+    filteredOrders.forEach(order => {
+      order.items.forEach(item => {
+        // Find category from inventory
+        const invItem = inventory.find(i => i.name === item.name || i.id === item.inventoryItemId)
+        const category = invItem?.category || "Uncategorized"
+        catMap.set(category, (catMap.get(category) || 0) + (item.quantity * item.price))
+      })
+    })
+    return Array.from(catMap.entries()).map(([name, value]) => ({ name, value }))
+  }, [filteredOrders, inventory])
+
+  // Top Customers by Revenue
+  const topCustomers = useMemo(() => {
+    const custMap = new Map<string, number>()
+    filteredOrders.forEach(order => {
+      custMap.set(order.customerName, (custMap.get(order.customerName) || 0) + order.totalValue)
+    })
+    return Array.from(custMap.entries())
+      .map(([name, revenue]) => ({ name, revenue }))
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 5)
+  }, [filteredOrders])
+
+  // Deals by stage (Funnel)
   const dealsByStage = useMemo(() => {
     const stages = ["discovery", "proposal", "negotiation", "won", "lost"]
     return stages.map(stage => ({
@@ -153,56 +208,38 @@ export function Reports() {
     }))
   }, [deals])
 
-  // Leads by source
-  const leadsBySource = useMemo(() => {
-    const sources = [...new Set(leads.map(l => l.source))]
-    return sources.map(source => ({
-      source: source.charAt(0).toUpperCase() + source.slice(1).replace("-", " "),
-      count: leads.filter(l => l.source === source).length,
-    }))
-  }, [leads])
-
-  // Contacts by status
-  const contactsByStatus = useMemo(() => {
-    const raw = contacts.map(c => c.status ?? "unknown")
-    const statuses = [...new Set(raw)]
-    return statuses.map(status => ({
-      status: status.charAt(0).toUpperCase() + status.slice(1),
-      count: contacts.filter(c => (c.status ?? "unknown") === status).length,
-    }))
-  }, [contacts])
-
   const selectedPeriodLabel = PERIOD_OPTIONS.find(p => p.value === period)?.label || "Last 6 Months"
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen">
-      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
+      <div className="mx-auto p-4 md:p-6 max-w-full animate-fade-in space-y-4">
 
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">Analytics</p>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Reports & Analytics</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">View and analyze your business performance.</p>
+          <div className="flex items-center gap-4">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">Intelligence</p>
+              <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Reports</h1>
+              <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Actionable insights for your business operations.</p>
+            </div>
           </div>
           <div className="flex items-center gap-3 shrink-0">
-            {/* Period Selector */}
             <div className="relative">
               <button
                 onClick={() => setPeriodOpen(v => !v)}
-                className="flex items-center gap-2 h-10 px-4 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                className="flex items-center gap-2 h-10 px-4 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95 shadow-sm"
               >
                 <Calendar className="w-4 h-4" />
                 {selectedPeriodLabel}
-                <ChevronDown className="w-3.5 h-3.5" />
+                <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", periodOpen && "rotate-180")} />
               </button>
               {periodOpen && (
-                <div className="absolute right-0 top-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg z-50 min-w-[180px] py-1 overflow-hidden">
+                <div className="absolute right-0 top-full mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl z-50 min-w-[180px] py-1 overflow-hidden animate-in fade-in slide-in-from-top-2">
                   {PERIOD_OPTIONS.map(opt => (
                     <button
                       key={opt.value}
                       onClick={() => { setPeriod(opt.value); setPeriodOpen(false) }}
-                      className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                      className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                     >
                       {opt.label}
                     </button>
@@ -214,8 +251,7 @@ export function Reports() {
         </div>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Total Revenue */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             label="Total Revenue"
             value={fmtCurrency(deliveredRevenue)}
@@ -225,236 +261,204 @@ export function Reports() {
             badgeColor={revenueChange >= 0 ? "emerald" : "rose"}
           />
 
-          {/* Pipeline Value */}
           <StatCard
             label="Pipeline Value"
             value={fmtCurrency(pipelineValue)}
             icon={<TrendingUp className="w-5 h-5" />}
-            accentColor="teal"
-            badge="Active"
-            badgeColor="slate"
+            accentColor="blue"
+            badge={`${deals.length} deals`}
+            badgeColor="blue"
           />
 
-          {/* Win Rate */}
           <StatCard
             label="Win Rate"
-            value={`${wonDeals.length} / ${wonDeals.length + lostDeals.length} deals`}
-            icon={<Users className="w-5 h-5" />}
-            accentColor="teal"
-            badge={fmtPct(winRate)}
-            badgeColor={winRate >= 50 ? "emerald" : winRate >= 25 ? "amber" : "rose"}
+            value={fmtPct(winRate)}
+            icon={<Trophy className="w-5 h-5" />}
+            accentColor="amber"
+            badge={`${wonDeals.length} Won`}
+            badgeColor="emerald"
           />
 
-          {/* Inventory Health */}
           <StatCard
-            label="Inventory Health"
-            value={fmtPct(inventoryHealth)}
-            icon={<Package className="w-5 h-5" />}
-            accentColor="amber"
-            badge={`${outOfStock} out`}
-            badgeColor={inventoryHealth >= 70 ? "emerald" : inventoryHealth >= 40 ? "amber" : "rose"}
+            label="Inv. Turnover"
+            value={inventoryTurnover.toFixed(2)}
+            icon={<Activity className="w-5 h-5" />}
+            accentColor="rose"
+            badge={inventoryTurnover > 1.5 ? "High" : inventoryTurnover > 0.5 ? "Good" : "Low"}
+            badgeColor={inventoryTurnover > 1.5 ? "rose" : inventoryTurnover > 0.5 ? "emerald" : "amber"}
           />
         </div>
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Revenue Trends */}
-          <div className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-            <div className="flex justify-between items-center mb-6">
-              <h4 className="font-bold text-lg text-slate-900 dark:text-white">Revenue Trends</h4>
-              <div className="flex gap-4 text-xs font-medium text-slate-500">
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-teal-600" /> Revenue</span>
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-cyan-500" /> Quotes</span>
+        {/* Primary Row: Sales Trends & Pipeline */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Sales Pipeline Funnel */}
+          <div className="p-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-lg group">
+            <div className="flex justify-between items-center mb-8">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                  <Layers className="w-4 h-4 text-blue-600" />
+                </div>
+                <h4 className="font-black text-lg text-slate-900 dark:text-white uppercase tracking-tight">Sales Pipeline</h4>
               </div>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{deals.length} total deals</span>
             </div>
-            <div className="h-64">
+            <div className="relative h-[220px] w-full min-h-[220px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueByMonth}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#94a3b8" }} />
-                  <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} tickFormatter={v => `$${v / 1000}k`} />
-                  <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", fontSize: "13px" }} />
-                  <Area type="monotone" dataKey="revenue" stroke="#0d9488" fill="#0d9488" fillOpacity={0.1} strokeWidth={2} />
-                  <Area type="monotone" dataKey="quotes" stroke="#06b6d4" fill="#06b6d4" fillOpacity={0.1} strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Deal Pipeline */}
-          <div className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-            <div className="flex justify-between items-center mb-6">
-              <h4 className="font-bold text-lg text-slate-900 dark:text-white">Deal Pipeline</h4>
-              <span className="text-xs font-medium text-slate-500">{deals.length} total deals</span>
-            </div>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dealsByStage}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                  <XAxis dataKey="stage" tick={{ fontSize: 11, fill: "#94a3b8" }} />
-                  <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} />
-                  <Tooltip
-                    contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", fontSize: "13px" }}
+                <BarChart data={dealsByStage} layout="vertical" margin={{ left: 0, right: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
+                  <XAxis type="number" hide />
+                  <YAxis
+                    dataKey="stage"
+                    type="category"
+                    tick={{ fontSize: 10, fontWeight: 700, fill: "#64748b" }}
+                    width={70}
                   />
-                  <Legend />
-                  <Bar dataKey="count" fill="#0d9488" radius={[6, 6, 0, 0]} name="Deals" />
+                  <Tooltip
+                    cursor={{ fill: 'transparent' }}
+                    contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: "12px", fontWeight: 700 }}
+                    formatter={(v: number) => fmtCurrency(v)}
+                  />
+                  <Bar dataKey="value" fill="#0d9488" radius={[0, 10, 10, 0]} name="Value ($)" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
+
+          {/* Revenue Trends */}
+          <div className="p-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-lg group">
+            <div className="flex justify-between items-center mb-8">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-teal-100 dark:bg-teal-900/30 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-4 h-4 text-teal-600" />
+                </div>
+                <h4 className="font-black text-lg text-slate-900 dark:text-white uppercase tracking-tight">Revenue Trends</h4>
+              </div>
+              <div className="flex gap-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-teal-600" /> Revenue</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-cyan-500" /> Quotes</span>
+              </div>
+            </div>
+            <div className="relative h-[220px] w-full min-h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={revenueByMonth}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis dataKey="month" tick={{ fontSize: 10, fontWeight: 700, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fontWeight: 700, fill: "#64748b" }} axisLine={false} tickLine={false} tickFormatter={v => `$${v / 1000}k`} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: "12px", fontWeight: 700 }}
+                    formatter={(v: number, name: string) => name === "revenue" ? fmtCurrency(v) : v}
+                  />
+                  <Area type="monotone" dataKey="revenue" fill="#0d9488" fillOpacity={0.05} stroke="#0d9488" strokeWidth={3} />
+                  <Line type="monotone" dataKey="quotes" stroke="#06b6d4" strokeWidth={2} dot={{ r: 4, fill: "#06b6d4", strokeWidth: 2, stroke: "#fff" }} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         </div>
 
-        {/* Lower Section */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          {/* Performance Metrics Table */}
-          <div className="xl:col-span-2 p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-            <h4 className="font-bold text-lg mb-6 text-slate-900 dark:text-white">Performance Metrics</h4>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-800">
-                  <tr>
-                    <th className="pb-4 font-semibold">Category</th>
-                    <th className="pb-4 font-semibold">Volume</th>
-                    <th className="pb-4 font-semibold">Conversion</th>
-                    <th className="pb-4 font-semibold text-right">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50 text-sm">
-                  <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors">
-                    <td className="py-4 font-bold text-slate-900 dark:text-white">Delivered Orders</td>
-                    <td className="py-4 text-slate-500 dark:text-slate-400">{fmtCurrency(deliveredRevenue)}</td>
-                    <td className="py-4 font-medium text-slate-600 dark:text-slate-300">{filteredOrders.filter(o => o.status === "delivered").length} orders</td>
-                    <td className="py-4 text-right">
-                      <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm ${revenueChange >= 0 ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400" : "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400"
-                        }`}>
-                        {revenueChange >= 0 ? "Growing" : "Declining"}
-                      </span>
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors">
-                    <td className="py-4 font-bold text-slate-900 dark:text-white">Accepted Quotes</td>
-                    <td className="py-4 text-slate-500 dark:text-slate-400">{acceptedQuotes} of {filteredQuotes.length}</td>
-                    <td className="py-4 font-medium text-teal-600 dark:text-teal-500">{fmtPct(conversionRate)}</td>
-                    <td className="py-4 text-right">
-                      <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm ${conversionRate >= 50 ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400" : "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400"
-                        }`}>
-                        {conversionRate >= 50 ? "Strong" : "Watch"}
-                      </span>
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors">
-                    <td className="py-4 font-bold text-slate-900 dark:text-white">Won Deals</td>
-                    <td className="py-4 text-slate-500 dark:text-slate-400">{wonDeals.length} won</td>
-                    <td className="py-4 font-medium text-slate-600 dark:text-slate-300">{fmtPct(winRate)} win rate</td>
-                    <td className="py-4 text-right">
-                      <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm ${winRate >= 50 ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400" : winRate >= 25 ? "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400" : "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400"
-                        }`}>
-                        {winRate >= 50 ? "Healthy" : winRate >= 25 ? "Watch" : "Critical"}
-                      </span>
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors">
-                    <td className="py-4 font-bold text-slate-900 dark:text-white">New Leads</td>
-                    <td className="py-4 text-slate-500 dark:text-slate-400">{filteredLeads.length} leads</td>
-                    <td className="py-4 font-medium text-slate-600 dark:text-slate-300">{filteredLeads.filter(l => l.status === "qualified").length} qualified</td>
-                    <td className="py-4 text-right">
-                      <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm">
-                        Tracking
-                      </span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+        {/* Secondary Row: Products & Categories */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Top Products */}
+          <div className="lg:col-span-2 p-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div className="flex justify-between items-center mb-8">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-amber-100 dark:bg-amber-900/30 rounded-lg flex items-center justify-center">
+                  <Star className="w-4 h-4 text-amber-600" />
+                </div>
+                <h4 className="font-black text-lg text-slate-900 dark:text-white uppercase tracking-tight">Top Products by Volume</h4>
+              </div>
+            </div>
+            <div className="relative h-[220px] w-full min-h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={topProducts} layout="vertical" margin={{ left: 0, right: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
+                  <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 700, fill: "#64748b" }} />
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    tick={{ fontSize: 10, fontWeight: 700, fill: "#64748b" }}
+                    width={80}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    cursor={{ fill: 'rgba(0,0,0,0.02)' }}
+                    contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: "12px", fontWeight: 700 }}
+                    formatter={(v: number) => v.toLocaleString()}
+                  />
+                  <Bar dataKey="quantity" fill="#f59e0b" radius={[0, 10, 10, 0]} name="Units Sold" barSize={32} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
-          {/* Contact Distribution */}
-          <div className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center text-center">
-            <h4 className="font-bold text-lg mb-6 w-full text-left text-slate-900 dark:text-white">Contact Distribution</h4>
-            <div className="w-48 h-48 mb-4">
+          {/* Category Distribution */}
+          <div className="p-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col items-center">
+            <h4 className="font-black text-sm text-slate-900 dark:text-white uppercase tracking-tight w-full mb-4">Revenue by Category</h4>
+            <div className="relative w-full h-[180px] min-h-[180px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={contactsByStatus}
-                    dataKey="count"
-                    nameKey="status"
+                    data={revenueByCategory}
+                    dataKey="value"
+                    nameKey="name"
                     cx="50%"
                     cy="50%"
                     outerRadius={80}
-                    innerRadius={50}
-                    label
+                    innerRadius={60}
+                    paddingAngle={5}
                   >
-                    {contactsByStatus.map((_, i) => (
+                    {revenueByCategory.map((_, i) => (
                       <Cell key={`cell-${i}`} fill={COLORS[i % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip formatter={(v: number) => fmtCurrency(v)} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <div className="flex flex-wrap gap-3 justify-center mb-4">
-              {contactsByStatus.map((item, i) => (
-                <div key={item.status} className="flex items-center gap-1.5 text-xs">
-                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                  <span className="text-slate-500 dark:text-slate-400">{item.status} ({item.count})</span>
+            <div className="w-full space-y-3 mt-4">
+              {revenueByCategory.slice(0, 4).map((item, i) => (
+                <div key={item.name} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                    <span className="text-xs font-bold text-slate-600 dark:text-slate-400">{item.name}</span>
+                  </div>
+                  <span className="text-xs font-black text-slate-900 dark:text-white">{fmtCurrency(item.value)}</span>
                 </div>
               ))}
             </div>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 px-4">
-              {contacts.length} total contacts across all statuses.
-            </p>
           </div>
         </div>
 
-        {/* Inventory & Lead Source Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Inventory Breakdown */}
-          <div className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-            <h4 className="font-bold text-lg mb-6 text-slate-900 dark:text-white">Inventory Breakdown</h4>
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 text-center">
-                <p className="text-2xl font-black text-emerald-700 dark:text-emerald-400">{inStock}</p>
-                <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-500 mt-1">In Stock</p>
-              </div>
-              <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-900/20 text-center">
-                <p className="text-2xl font-black text-amber-700 dark:text-amber-400">{lowStock}</p>
-                <p className="text-[10px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-500 mt-1">Low Stock</p>
-              </div>
-              <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-900/20 text-center">
-                <p className="text-2xl font-black text-rose-700 dark:text-rose-400">{outOfStock}</p>
-                <p className="text-[10px] font-black uppercase tracking-widest text-rose-600 dark:text-rose-500 mt-1">Out of Stock</p>
-              </div>
+        {/* Lower Row: Top Customers */}
+        <div className="p-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center">
+              <Users className="w-4 h-4 text-emerald-600" />
             </div>
-            <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-800">
-              <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Value</span>
-              <span className="text-xl font-black text-teal-600 dark:text-teal-400">{fmtCurrency(totalInventoryValue)}</span>
-            </div>
+            <h4 className="font-black text-lg text-slate-900 dark:text-white uppercase tracking-tight">Top Customers by Revenue</h4>
           </div>
-
-          {/* Lead Sources */}
-          <div className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-            <h4 className="font-bold text-lg mb-6 text-slate-900 dark:text-white">Lead Sources</h4>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={leadsBySource}
-                    dataKey="count"
-                    nameKey="source"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    innerRadius={50}
-                    label
-                  >
-                    {leadsBySource.map((_, i) => (
-                      <Cell key={`cell-${i}`} fill={COLORS[i % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+            {topCustomers.map((customer, i) => (
+              <div key={customer.name} className="p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-teal-600/30 transition-all hover:shadow-lg bg-slate-50/30 dark:bg-slate-800/30">
+                <div className="flex justify-between items-start mb-4">
+                  <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs shadow-sm",
+                    i === 0 ? "bg-teal-600 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400"
+                  )}>
+                    #{i + 1}
+                  </div>
+                  {i === 0 && <ArrowUpRight className="w-4 h-4 text-emerald-500" />}
+                </div>
+                <p className="text-sm font-black text-slate-900 dark:text-white mb-1 truncate">{customer.name}</p>
+                <p className="text-lg font-black text-teal-600 dark:text-teal-400">{fmtCurrency(customer.revenue)}</p>
+                <div className="w-full bg-slate-200 dark:bg-slate-700 h-1 rounded-full mt-4 overflow-hidden">
+                  <div
+                    className="bg-teal-600 h-full rounded-full"
+                    style={{ width: `${(customer.revenue / topCustomers[0].revenue) * 100}%` }}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -462,3 +466,4 @@ export function Reports() {
     </div>
   )
 }
+

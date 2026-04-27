@@ -5,7 +5,11 @@ import { useTheme } from "@/lib/ThemeProvider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useLocation } from "wouter";
 
-export function Header() {
+interface HeaderProps {
+  onSearchClick?: () => void;
+}
+
+export function Header({ onSearchClick }: HeaderProps) {
   const { user } = useUser();
   const { signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -16,14 +20,16 @@ export function Header() {
   return (
     <header className="h-16 shrink-0 flex items-center justify-between px-8 bg-bg-surface/80 backdrop-blur-md border-b border-border sticky top-0 z-30">
       <div className="flex-1 max-w-xl">
-        <div className="relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
-          <input
-            type="text"
-            placeholder="Search leads, products, or orders..."
-            className="w-full h-11 pl-11 pr-4 bg-bg-elevated border-transparent rounded-xl text-sm focus:bg-bg-surface focus:border-accent/20 focus:ring-4 focus:ring-accent/5 transition-all outline-none"
-          />
-        </div>
+        <button 
+          onClick={onSearchClick}
+          className="relative group w-full flex items-center text-left h-11 px-4 bg-bg-elevated border-transparent rounded-xl text-sm hover:bg-bg-surface hover:border-accent/20 focus:ring-4 focus:ring-accent/5 transition-all outline-none cursor-text"
+        >
+          <Search className="w-4 h-4 text-slate-400 group-hover:text-teal-500 transition-colors mr-3" />
+          <span className="flex-1 text-slate-400">Search leads, products, or orders...</span>
+          <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border border-border bg-bg-surface px-1.5 font-mono text-[10px] font-medium text-slate-400 opacity-100">
+            <span className="text-xs">⌘</span>K
+          </kbd>
+        </button>
       </div>
 
       <div className="flex items-center gap-2">

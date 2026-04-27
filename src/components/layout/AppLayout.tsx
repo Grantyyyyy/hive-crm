@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { MobileTopBar } from "./MobileTopBar";
+import { GlobalSearch } from "./GlobalSearch";
 import { cn } from "@/lib/utils";
 
 interface AppLayoutProps {
@@ -11,9 +12,22 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     setCollapsed(localStorage.getItem("crm_sidebar_collapsed") === "true");
+  }, []);
+
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setSearchOpen((open) => !open);
+      }
+    };
+
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
   }, []);
 
   return (
@@ -32,8 +46,8 @@ export function AppLayout({ children }: AppLayoutProps) {
         )}
       >
         <MobileTopBar setMobileOpen={setMobileOpen} />
-        <div className="hidden md:block">
-          <Header />
+        <div className="hidden md:block sticky top-0 z-30">
+          <Header onSearchClick={() => setSearchOpen(true)} />
         </div>
 
         {/* Main Content Area */}
@@ -41,6 +55,8 @@ export function AppLayout({ children }: AppLayoutProps) {
           {children}
         </main>
       </div>
+
+      <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
     </div>
   );
 }

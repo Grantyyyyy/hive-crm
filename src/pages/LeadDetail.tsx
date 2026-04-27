@@ -39,6 +39,7 @@ import { useCRMResource } from "@/lib/hooks"
 import { DetailSkeleton } from "@/components/ui/skeletons"
 import { DeleteModal } from "@/components/ui/delete-modal"
 import { toast } from "sonner"
+import { AuditTimeline } from "@/components/reusables/AuditTimeline"
 
 const STATUS_COLORS: Record<string, string> = {
   new: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400",
@@ -409,6 +410,16 @@ export function LeadDetail() {
                     <div className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-1">Last Updated</div>
                     <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{relativeTime(lead.updatedAt)}</p>
                   </div>
+                </div>
+              </div>
+
+              {/* Audit Log */}
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-4 md:p-6">
+                <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 border-b border-slate-100 dark:border-slate-800 pb-3 mb-4 flex items-center gap-2">
+                  <ActivityIcon className="w-4 h-4" /> Activity History
+                </h2>
+                <div className="max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                  <AuditTimeline entityType="leads" entityId={lead.id} />
                 </div>
               </div>
 

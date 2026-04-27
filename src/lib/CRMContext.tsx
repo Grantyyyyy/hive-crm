@@ -6,7 +6,7 @@ import React, {
   useRef,
   useState,
 } from "react"
-import { useAuth } from "./AuthContext"
+import { useAuth, useUser } from "./AuthContext"
 import { supabase } from "./supabaseClient"
 
 // ── Table mapping ────────────────────────────────────────────────────────────
@@ -32,6 +32,7 @@ export const TABLE_MAP: Record<string, string> = {
   task_activities: "task_activities",
   return_to_suppliers: "return_to_suppliers",
   organizations: "organizations",
+  audit_log: "audit_log",
 }
 
 // ── Case converters ──────────────────────────────────────────────────────────
@@ -106,9 +107,83 @@ export interface CRMContextValue {
   setResourceData: <T>(name: string, updater: (prev: T[]) => T[]) => void
   getClient: () => Promise<typeof supabase | null>
   runAtomicUpdate: (ops: AtomicOp[]) => Promise<AtomicOp[]>
+  fetchAuditLogs: (entityType: string, entityId: string) => Promise<any[]>
+  fetchAllAuditLogs: () => Promise<any[]>
 }
 
 const CRMContext = createContext<CRMContextValue | null>(null)
+
+// ── Audit actor resolver ──────────────────────────────────────────────────────
+// changed_by stores the user's UID. We resolve display names from the app_users table via auth_user_id.
+
+async function resolveAuditActors(client: any, logs: any[], currentUser?: any): Promise<any[]> {
+  if (logs.length === 0) return logs
+
+  // Collect unique auth UIDs from the logs
+  const authIds = [...new Set(logs.map((l: any) => l.changedBy).filter(Boolean))]
+  if (authIds.length === 0) return logs
+
+  // In Project 2 (the active one), the table is app_users and it lacks an avatarurl column.
+  // We match against both id and auth_user_id to be safe.
+  const { data: users } = await client
+    .from("app_users")
+    .select("id, auth_user_id, name")
+    .or(`id.in.(${authIds.map(id => `"${id}"`).join(',')}),auth_user_id.in.(${authIds.map(id => `"${id}"`).join(',')})`)
+
+  const userMap: Record<string, { name: string, avatarUrl: string }> = {}
+  
+  // Initialize with current user if provided
+  if (currentUser) {
+    const profile = { 
+      name: currentUser.user_metadata?.full_name || currentUser.email || "Me", 
+      avatarUrl: currentUser.user_metadata?.avatar_url || "" 
+    }
+    userMap[currentUser.id] = profile
+  }
+
+  for (const u of (users ?? [])) {
+    // Don't overwrite current user's rich metadata if we already have it
+    if (userMap[u.id] && userMap[u.id].avatarUrl) continue;
+    if (u.auth_user_id && userMap[u.auth_user_id] && userMap[u.auth_user_id].avatarUrl) continue;
+
+    const profile = { name: u.name, avatarUrl: "" }
+    userMap[u.id] = profile
+    if (u.auth_user_id) userMap[u.auth_user_id] = profile
+  }
+
+  return logs.map((log: any) => ({
+    ...log,
+    changedBy: userMap[log.changedBy] ?? { name: "Unknown", avatarUrl: "" },
+  }))
+}
+
+/**
+ * calculateDiff — compares a patch against existing data to only log 
+ * fields that actually changed. Prevents "UPDATE" logs from showing 
+ * identical values for every field.
+ */
+function calculateDiff(oldItem: any, patch: any) {
+  if (!oldItem) return patch
+  const diff: any = {}
+  const skip = ['id', 'createdAt', 'updatedAt', 'organizationId', 'userId', 'ownerId', 'activities', 'tags']
+  
+  const normalize = (v: any) => (v === "" || v === undefined || v === null) ? null : v
+
+  Object.keys(patch).forEach(key => {
+    if (skip.includes(key)) return
+    
+    const oldVal = normalize(oldItem[key])
+    const newVal = normalize(patch[key])
+
+    if (JSON.stringify(newVal) !== JSON.stringify(oldVal)) {
+      diff[key] = {
+        from: oldItem[key],
+        to: patch[key]
+      }
+    }
+  })
+  return diff
+}
 
 // ── Provider ─────────────────────────────────────────────────────────────────
 
@@ -127,6 +202,7 @@ const PRELOAD_RESOURCES = [
  */
 export function CRMProvider({ children }: { children: React.ReactNode }) {
   const { userId, organizationId, isLoaded } = useAuth()
+  const { user } = useUser()
 
   // Single map holding arrays for every resource
   const [store, setStore] = useState<Record<string, ResourceState<any>>>(() =>
@@ -227,6 +303,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
 
       const errors: Array<{ resource: string; id?: string; error: unknown }> = []
       const successes: Array<AtomicOp & { action: "insert" | "update" }> = []
+      const auditLogs: any[] = []
 
       // 1. Database Phase
       for (const op of ops) {
@@ -279,6 +356,16 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
             }
             const created = toCamel(resultItem || {})
             successes.push({ ...op, action, patch: created })
+
+            // Audit log insert
+            auditLogs.push({
+              entity_type: op.resource,
+              entity_id: resultItem?.id,
+              action: "INSERT",
+              changed_by: userId,
+              organization_id: organizationId,
+              diff: { new: created }
+            })
           }
         } else if (action === "update") {
           const { error } = await client.from(tableName).update(snakePatch).eq("id", op.id)
@@ -291,6 +378,19 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
               await handleTaskRelations(client, op.id as string, nestedData, true)
             }
             successes.push({ ...op, action })
+
+            // Audit log update
+            const oldItem = getResource<any>(op.resource).data.find(i => i.id === op.id)
+            const diff = calculateDiff(oldItem, op.patch)
+
+            auditLogs.push({
+              entity_type: op.resource,
+              entity_id: op.id,
+              action: "UPDATE",
+              changed_by: userId,
+              organization_id: organizationId,
+              diff: { updates: diff }
+            })
           }
         }
       }
@@ -298,6 +398,13 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       if (errors.length > 0) {
         console.error("[CRMContext] Atomic update failed:", errors)
         throw new Error(`Atomic update failed with ${errors.length} errors. Local state not committed.`)
+      }
+
+      // Emit audit logs in background
+      if (auditLogs.length > 0) {
+        client.from('audit_log').insert(auditLogs).then(({ error }: any) => {
+          if (error) console.error("[CRMContext] Failed to emit audit logs:", error)
+        })
       }
 
       // 2. React state Phase: Only runs if all DB calls succeeded
@@ -317,8 +424,47 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     [getClient, setResourceData, userId, organizationId]
   )
 
+  const fetchAuditLogs = useCallback(
+    async (entityType: string, entityId: string) => {
+      const client = await getClient()
+      if (!client) return []
+      const { data, error } = await client
+        .from("audit_log")
+        .select("*")
+        .eq("entity_type", entityType)
+        .eq("entity_id", entityId)
+        .order("changed_at", { ascending: false })
+
+      if (error) {
+        console.error("[CRMContext] fetchAuditLogs error:", error)
+        return []
+      }
+      return resolveAuditActors(client, toCamel(data || []), user)
+    },
+    [getClient, user]
+  )
+
+  const fetchAllAuditLogs = useCallback(
+    async () => {
+      const client = await getClient()
+      if (!client) return []
+      const { data, error } = await client
+        .from("audit_log")
+        .select("*")
+        .order("changed_at", { ascending: false })
+        .limit(200)
+
+      if (error) {
+        console.error("[CRMContext] fetchAllAuditLogs error:", error)
+        return []
+      }
+      return resolveAuditActors(client, toCamel(data || []), user)
+    },
+    [getClient, user]
+  )
+
   return (
-    <CRMContext.Provider value={{ userId, organizationId, getResource, setResourceData, getClient, runAtomicUpdate }}>
+    <CRMContext.Provider value={{ userId, organizationId, getResource, setResourceData, getClient, runAtomicUpdate, fetchAuditLogs, fetchAllAuditLogs }}>
       {children}
     </CRMContext.Provider>
   )
@@ -376,6 +522,21 @@ export async function insertRows<T extends { id: string }>(
   }
 
   const mapped = (result ?? []).map(toCamel) as T[]
+
+  // Audit Logging
+  if (mapped.length > 0) {
+    const auditLogs = mapped.map(item => ({
+      entity_type: resourceName,
+      entity_id: item.id,
+      action: "INSERT",
+      changed_by: ctx.userId,
+      organization_id: ctx.organizationId,
+      diff: { new: item }
+    }))
+    client.from('audit_log').insert(auditLogs).then(({ error }: any) => {
+      if (error) console.error("[CRMContext] Failed to emit audit logs:", error)
+    })
+  }
 
   // Task-specific post-processing for relations
   if (resourceName === 'tasks') {
@@ -453,6 +614,21 @@ export async function updateRow<T extends { id: string }>(
     throw error
   }
 
+  // Audit Logging
+  const oldItem = ctx.getResource<T>(resourceName).data.find(i => i.id === id)
+  const diff = calculateDiff(oldItem, updates)
+
+  client.from('audit_log').insert({
+    entity_type: resourceName,
+    entity_id: id,
+    action: "UPDATE",
+    changed_by: ctx.userId,
+    organization_id: ctx.organizationId,
+    diff: { updates: diff }
+  }).then(({ error }: any) => {
+    if (error) console.error("[CRMContext] Failed to emit audit log:", error)
+  })
+
   if (isTask) {
     await handleTaskRelations(client, id, nestedData, true)
   }
@@ -473,6 +649,18 @@ export async function deleteRow<T extends { id: string }>(
   const tableName = TABLE_MAP[resourceName]
   const { error } = await client.from(tableName).delete().eq("id", id)
   if (error) throw error
+
+  // Audit Logging
+  client.from('audit_log').insert({
+    entity_type: resourceName,
+    entity_id: id,
+    action: "DELETE",
+    changed_by: ctx.userId,
+    organization_id: ctx.organizationId,
+    diff: { id }
+  }).then(({ error }: any) => {
+    if (error) console.error("[CRMContext] Failed to emit audit log:", error)
+  })
 
   ctx.setResourceData(resourceName, (prev: T[]) => prev.filter((item) => item.id !== id))
 }

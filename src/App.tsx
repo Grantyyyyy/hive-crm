@@ -30,6 +30,7 @@ import { Users } from "@/pages/settings/Users";
 import { Roles } from "@/pages/settings/Roles";
 import { OrganizationsPage } from "./pages/settings/OrganizationsPage";
 import { ProfilePage } from "@/pages/settings/ProfilePage";
+import { AuditLogs } from "@/pages/settings/AuditLogs";
 import { Navbar } from "@/components/Navbar";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -312,6 +313,9 @@ function AppContent() {
               </Route>
               <Route path="/settings/profile">
                 {() => <Protected component={ProfilePage} />}
+              </Route>
+              <Route path="/settings/audit-logs">
+                {() => <PermissionProtected module="users" component={AuditLogs} />}
               </Route>
               <Route path="/in-progress">
                 {() => <Protected component={InProgress} />}

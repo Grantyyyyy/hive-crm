@@ -284,28 +284,24 @@ export function OrganizationsPage() {
   }
 
   return (
-    <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen font-sans">
-      <div className="mx-auto p-4 md:p-8 max-w-7xl animate-fade-in space-y-8">
-        
-        {/* Header Region */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-1">Infrastructure</p>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Organizations</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Manage multi-tenant isolation and platform entities.</p>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <BackButton href="/settings/users" />
-            {isSuperAdmin && (
-              <Button 
-                onClick={() => setShowAddDialog(true)}
-                className="bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-teal-200 dark:shadow-none h-11 px-6"
-              >
-                <PlusCircle className="w-4 h-4 mr-2" /> New Organization
-              </Button>
-            )}
-          </div>
+    <div className="animate-fade-in space-y-8">
+      {/* Header Region */}
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Tenants & Organizations</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">Manage multi-tenant isolation and platform entities.</p>
         </div>
+        <div className="flex items-center gap-3 shrink-0">
+          {isSuperAdmin && (
+            <Button 
+              onClick={() => setShowAddDialog(true)}
+              className="bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-teal-200 dark:shadow-none h-11 px-6"
+            >
+              <PlusCircle className="w-4 h-4 mr-2" /> New Organization
+            </Button>
+          )}
+        </div>
+      </div>
 
         {/* Search Bar */}
         <div className="relative max-w-md w-full">
@@ -427,7 +423,6 @@ export function OrganizationsPage() {
             </table>
           </div>
         </Card>
-      </div>
 
       {/* Add Organization Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>

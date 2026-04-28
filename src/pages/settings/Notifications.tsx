@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Bell, Check, Trash2, Clock, Inbox, AlertCircle, Info } from "lucide-react"
 import { useCRMResource } from "@/lib/hooks"
 import type { Notification } from "@/lib/types"
@@ -6,10 +6,13 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ListSkeleton } from "@/components/ui/skeletons"
 import { StatusTabs, type StatusTab } from "@/components/reusables/StatusTabs"
+import { Pagination } from "@/components/ui/Pagination"
 
 export function Notifications() {
   const { data: notifications, updateItem, deleteItem, isLoaded } = useCRMResource<Notification>('notifications')
   const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'read'>('all')
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 8
 
   const handleMarkAsRead = async (id: string) => {
     await updateItem(id, { isRead: true })
@@ -37,6 +40,17 @@ export function Notifications() {
 
     return result
   }, [notifications, activeTab])
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage)
+  const paginated = filtered.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
+  // Reset page when tab changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [activeTab])
 
   const renderMessage = (message: string) => {
     const parts = message.split(/(\*\*.*?\*\*)/g)
@@ -69,29 +83,24 @@ export function Notifications() {
   if (!isLoaded) return <ListSkeleton />
 
   return (
-    <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen font-sans">
-      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
-        
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">System Updates</p>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Notifications</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Stay updated with your system alerts and events.</p>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            {notifications.some(n => !n.isRead) && (
-              <Button 
-                variant="outline" 
-                onClick={handleMarkAllAsRead} 
-                className="border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
-              >
-                <Check className="w-4 h-4" />
-                Mark all as read
-              </Button>
-            )}
-          </div>
+    <div className="animate-fade-in space-y-8">
+      {/* Header Section (compact for sub-page) */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Recent Alerts</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">Stay updated with system events.</p>
         </div>
+        {notifications.some(n => !n.isRead) && (
+          <Button 
+            variant="outline" 
+            onClick={handleMarkAllAsRead} 
+            className="border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
+          >
+            <Check className="w-4 h-4" />
+            Mark all as read
+          </Button>
+        )}
+      </div>
 
         {/* Tabs Section */}
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
@@ -119,7 +128,7 @@ export function Notifications() {
               </div>
             </div>
           ) : (
-            filtered.map((n) => (
+            paginated.map((n) => (
               <div 
                 key={n.id}
                 onClick={() => {
@@ -205,7 +214,17 @@ export function Notifications() {
             ))
           )}
         </div>
-      </div>
+
+        {isLoaded && filtered.length > itemsPerPage && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            totalItems={filtered.length}
+            itemsPerPage={itemsPerPage}
+            itemLabel="alerts"
+          />
+        )}
     </div>
   )
 }

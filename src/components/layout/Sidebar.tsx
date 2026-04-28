@@ -24,6 +24,7 @@ import {
   FolderOpen,
   LogOut,
   History as HistoryIcon,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -145,13 +146,9 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
       ]
     },
     {
-      title: "Settings",
+      title: "System",
       links: [
-        { href: "/settings/profile", label: "Profile", icon: UserCog },
-        { href: "/settings/users", label: "Users", icon: Users, perm: "users" as const },
-        { href: "/settings/roles", label: "Roles", icon: Shield, perm: "roles" as const },
-        { href: "/settings/organizations", label: "Organizations", icon: Building2, perm: "organizations" as const },
-        { href: "/settings/audit-logs", label: "Audit Logs", icon: HistoryIcon, perm: "users" as const },
+        { href: "/settings", label: "Settings", icon: SettingsIcon },
       ]
     },
   ], [])

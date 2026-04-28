@@ -35,6 +35,7 @@ import { Notifications } from "@/pages/settings/Notifications";
 import { Navbar } from "@/components/Navbar";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { SettingsLayout } from "@/components/layout/SettingsLayout";
 import { InProgress } from "@/pages/InProgress";
 import { Inventory } from "@/pages/logistics/Inventory";
 import { InventoryDetail } from "@/pages/logistics/InventoryDetail";
@@ -310,23 +311,72 @@ function AppContent() {
               <Route path="/vendors/:id">
                 {() => <PermissionProtected module="vendors" component={VendorDetail} />}
               </Route>
+              {/* Settings Routes wrapped in SettingsLayout */}
               <Route path="/settings/users">
-                {() => <PermissionProtected module="users" component={Users} />}
+                {() => (
+                  <AppLayout>
+                    <SettingsLayout>
+                      <RequirePermission module="users" action="read" component={Users} />
+                    </SettingsLayout>
+                  </AppLayout>
+                )}
               </Route>
               <Route path="/settings/roles">
-                {() => <PermissionProtected module="roles" component={Roles} />}
+                {() => (
+                  <AppLayout>
+                    <SettingsLayout>
+                      <RequirePermission module="roles" action="read" component={Roles} />
+                    </SettingsLayout>
+                  </AppLayout>
+                )}
               </Route>
               <Route path="/settings/organizations">
-                {() => <PermissionProtected module="organizations" component={OrganizationsPage} />}
+                {() => (
+                  <AppLayout>
+                    <SettingsLayout>
+                      <RequirePermission module="organizations" action="read" component={OrganizationsPage} />
+                    </SettingsLayout>
+                  </AppLayout>
+                )}
               </Route>
               <Route path="/settings/profile">
-                {() => <Protected component={ProfilePage} />}
+                {() => (
+                  <AppLayout>
+                    <SettingsLayout>
+                      <ProtectedRoute component={ProfilePage} />
+                    </SettingsLayout>
+                  </AppLayout>
+                )}
               </Route>
               <Route path="/settings/audit-logs">
-                {() => <PermissionProtected module="users" component={AuditLogs} />}
+                {() => (
+                  <AppLayout>
+                    <SettingsLayout>
+                      <RequirePermission module="users" action="read" component={AuditLogs} />
+                    </SettingsLayout>
+                  </AppLayout>
+                )}
+              </Route>
+              <Route path="/settings/notifications">
+                {() => (
+                  <AppLayout>
+                    <SettingsLayout>
+                      <ProtectedRoute component={Notifications} />
+                    </SettingsLayout>
+                  </AppLayout>
+                )}
               </Route>
               <Route path="/notifications">
                 {() => <Protected component={Notifications} />}
+              </Route>
+              <Route path="/settings">
+                {() => (
+                  <AppLayout>
+                    <SettingsLayout>
+                      <ProtectedRoute component={ProfilePage} />
+                    </SettingsLayout>
+                  </AppLayout>
+                )}
               </Route>
               <Route path="/in-progress">
                 {() => <Protected component={InProgress} />}

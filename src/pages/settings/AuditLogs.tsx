@@ -1,15 +1,18 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useMemo } from "react"
 import { useCRMContext } from "@/lib/CRMContext"
 import { formatDistanceToNow } from "date-fns"
 import { History, Search, Filter, ArrowRight } from "lucide-react"
 import { Link } from "wouter"
 import { cn } from "@/lib/utils"
+import { Pagination } from "@/components/ui/Pagination"
 
 export function AuditLogs() {
   const ctx = useCRMContext()
   const [logs, setLogs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
 
   useEffect(() => {
     if (ctx?.fetchAllAuditLogs) {
@@ -20,40 +23,51 @@ export function AuditLogs() {
     }
   }, [ctx])
 
-  const filteredLogs = logs.filter(log => 
-    log.entityType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.changedBy?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredLogs = useMemo(() => {
+    return logs.filter(log => 
+      log.entityType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log.changedBy?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  }, [logs, searchTerm])
+
+  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage)
+  const paginatedLogs = filteredLogs.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   )
 
-  return (
-    <div className="flex-1 bg-slate-50 dark:bg-slate-950 font-sans min-h-screen">
-      <div className="mx-auto p-4 md:p-8 max-w-full space-y-6 animate-fade-in">
-        
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight italic">AUDIT LOGS</h1>
-            <p className="text-sm font-medium text-slate-500 uppercase tracking-widest text-[10px]">Track all administrative and data actions across the organization.</p>
-          </div>
+  // Reset to first page on search
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm])
 
-          <div className="flex items-center gap-3">
-             <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input 
-                  type="text" 
-                  placeholder="Filter logs by user, action, or entity..." 
-                  className="pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none w-80 shadow-sm transition-all"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-             </div>
-             <button className="p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-500 hover:text-teal-500 transition-colors shadow-sm">
-                <Filter className="w-4 h-4" />
-             </button>
-          </div>
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">System Audit Logs</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">Monitor all administrative actions.</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden">
+        <div className="flex items-center gap-3">
+           <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input 
+                type="text" 
+                placeholder="Filter logs..." 
+                className="pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none w-64 shadow-sm transition-all"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+           </div>
+           <button className="p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-500 hover:text-teal-500 transition-colors shadow-sm">
+              <Filter className="w-4 h-4" />
+           </button>
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -75,7 +89,7 @@ export function AuditLogs() {
                       </td>
                     </tr>
                    ))
-                ) : filteredLogs.length === 0 ? (
+                ) : paginatedLogs.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-32 text-center text-slate-400">
                        <History className="w-16 h-16 mx-auto mb-4 opacity-10" />
@@ -83,7 +97,7 @@ export function AuditLogs() {
                     </td>
                   </tr>
                 ) : (
-                  filteredLogs.map(log => (
+                  paginatedLogs.map(log => (
                     <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group">
                       <td className="px-6 py-5 whitespace-nowrap">
                         <div className="text-sm font-black text-slate-900 dark:text-white italic tracking-tight">
@@ -163,7 +177,17 @@ export function AuditLogs() {
               </tbody>
             </table>
           </div>
-        </div>
+
+          {!loading && filteredLogs.length > itemsPerPage && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              totalItems={filteredLogs.length}
+              itemsPerPage={itemsPerPage}
+              itemLabel="logs"
+            />
+          )}
       </div>
     </div>
   )

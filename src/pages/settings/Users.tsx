@@ -396,30 +396,27 @@ export function Users() {
   }
 
   return (
-    <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen font-sans">
-      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
-
-        {/* Header Region */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">Organization Settings</p>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Users</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Manage and track your organization members and their access levels.</p>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            {canCreate && (
-              <Button
-                variant="brand"
-                onClick={() => {
-                  setSelectedUser(null);
-                  setUserSheetOpen(true);
-                }}
-              >
-                <PlusCircle className="w-4 h-4" /> Create User
-              </Button>
-            )}
-          </div>
+    <div className="animate-fade-in space-y-8">
+      {/* Header Region */}
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Organization Members</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">Manage and track your team members.</p>
         </div>
+        <div className="flex items-center gap-3 shrink-0">
+          {canCreate && (
+            <Button
+              variant="brand"
+              onClick={() => {
+                setSelectedUser(null);
+                setUserSheetOpen(true);
+              }}
+            >
+              <PlusCircle className="w-4 h-4" /> Create User
+            </Button>
+          )}
+        </div>
+      </div>
         {/* Search and Filters Bar (Match Leads.tsx Style exactly) */}
         <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
           <div className="relative flex-1 w-full lg:max-w-md">
@@ -550,7 +547,6 @@ export function Users() {
             />
           )}
         </div>
-      </div>
 
       {/* Unified User Sheet */}
       <UserSheet

@@ -90,26 +90,9 @@ export function ProfilePage() {
   if (!isLoaded) return <DetailSkeleton />
 
   return (
-    <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen">
-      <div className="mx-auto p-4 md:p-8 max-w-[1400px] animate-content-in space-y-8">
-
-        {/* Page Header */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">
-              Personal Settings
-            </p>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white font-outfit">
-              Profile
-            </h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">
-              Manage your personal information and profile visibility.
-            </p>
-          </div>
-        </div>
-
-        {/* content grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <div className="animate-content-in space-y-8">
+      {/* Content grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
           {/* LEFT COLUMN — Avatar Card */}
           <div className="lg:col-span-4 space-y-6">
@@ -290,7 +273,6 @@ export function ProfilePage() {
 
           </div>
         </div>
-      </div>
     </div>
   )
 }

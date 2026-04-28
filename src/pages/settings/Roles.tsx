@@ -154,9 +154,9 @@ export function Roles() {
   const handleEdit = (role: Role) => {
     setEditingRole(role);
     const allPermIds = permissionsData
-      ? Object.values(permissionsData).flat().map(p => p.id)
+      ? (Object.values(permissionsData).flat() as Permission[]).map(p => p.id)
       : [];
-    const rolePermIds = role.permissions?.map(p => p.id) || [];
+    const rolePermIds = role.permissions?.map((p: Permission) => p.id) || [];
     const isFull = allPermIds.length > 0 && allPermIds.every(id => rolePermIds.includes(id));
     setFormData({
       name: role.name,
@@ -206,9 +206,9 @@ export function Roles() {
         // Add all for this module
         const newIds = [...new Set([...prev.permissionIds, ...moduleIds])];
         const allPermIds = permissionsData
-          ? Object.values(permissionsData).flat().map(p => p.id)
+          ? (Object.values(permissionsData).flat() as Permission[]).map(p => p.id)
           : [];
-        const isFull = allPermIds.every(id => newIds.includes(id));
+        const isFull = allPermIds.length > 0 && allPermIds.every(id => newIds.includes(id));
         return { ...prev, permissionIds: newIds, fullAccess: isFull };
       }
     });
@@ -221,7 +221,7 @@ export function Roles() {
         return { ...prev, fullAccess: false, permissionIds: [] };
       }
       const allPermIds = permissionsData
-        ? Object.values(permissionsData).flat().map(p => p.id)
+        ? (Object.values(permissionsData).flat() as Permission[]).map(p => p.id)
         : [];
       return { ...prev, fullAccess: true, permissionIds: allPermIds };
     });
@@ -269,28 +269,25 @@ export function Roles() {
   }
 
   return (
-    <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen font-sans">
-      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
-
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-slate-500 mb-1">Access Control</p>
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Roles & Permissions</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">Define roles and granular permissions to control user access across modules.</p>
-          </div>
-          <div className="flex items-center gap-3">
-            {canCreate && (
-              <Button
-                variant="brand"
-                onClick={() => setShowCreateDialog(true)}
-                className="shadow-md shadow-teal-100 dark:shadow-none"
-              >
-                <PlusCircle className="w-4 h-4" /> Create Role
-              </Button>
-            )}
-          </div>
+    <div className="animate-fade-in space-y-8">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Role Management</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">Define granular access permissions for your team.</p>
         </div>
+        <div className="flex items-center gap-3">
+          {canCreate && (
+            <Button
+              variant="brand"
+              onClick={() => setShowCreateDialog(true)}
+              className="shadow-md shadow-teal-100 dark:shadow-none"
+            >
+              <PlusCircle className="w-4 h-4" /> Create Role
+            </Button>
+          )}
+        </div>
+      </div>
 
         {/* Search Bar */}
         <div className="relative">
@@ -366,9 +363,9 @@ export function Roles() {
                 {/* Full Access badge */}
                 {(() => {
                   const allPermIds = permissionsData
-                    ? Object.values(permissionsData).flat().map(p => p.id)
+                    ? (Object.values(permissionsData).flat() as Permission[]).map(p => p.id)
                     : [];
-                  const rolePermIds = role.permissions?.map(p => p.id) || [];
+                  const rolePermIds = role.permissions?.map((p: Permission) => p.id) || [];
                   const isFullAccess = allPermIds.length > 0 && allPermIds.every(id => rolePermIds.includes(id));
                   if (isFullAccess) {
                     return (
@@ -430,7 +427,6 @@ export function Roles() {
             </div>
           </div>
         )}
-      </div>
 
       {/* Create/Edit Dialog */}
       <Dialog
@@ -551,7 +547,7 @@ export function Roles() {
                 </div>
 
                 <div className="space-y-6 border border-slate-100 dark:border-slate-800 rounded-xl p-6 bg-slate-50/50 dark:bg-slate-900/30">
-                  {Object.entries(permissionsData || {})
+                  {Object.entries((permissionsData || {}) as Record<string, Permission[]>)
                     .filter(([module]) => module === 'organizations' ? isSuperAdmin : true)
                     .map(([module, permissions]) => {
                     const moduleAllSelected = isModuleAllSelected(permissions);

@@ -169,11 +169,11 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
   return (
     <div className={cn("flex flex-col h-full bg-slate-50 dark:bg-slate-950 font-sans", className)}>
       {/* Scrollable Content Area */}
-      <div className="flex-1 overflow-y-auto px-8 py-8 space-y-10 scroll-smooth">
+      <div className="flex-1 overflow-y-auto px-8 py-10 space-y-8 scroll-smooth pb-10">
 
-        <div className="grid grid-cols-1 gap-y-10">
+        <div className="grid grid-cols-1 gap-y-8">
           {/* Section 1: Quote Identity & Timeline */}
-          <section className="bg-white dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
+          <section className="bg-white dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Proposal Context</h3>
@@ -271,8 +271,8 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
           </section>
 
           {/* Section 2: Items & Financials */}
-          <section className="bg-white dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
-            <div className="flex items-center justify-between mb-6">
+          <section className="bg-white dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <div id="items" className="w-1 h-3.5 bg-teal-500 rounded-full" />
                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Line Items & Catalog</h3>
@@ -473,7 +473,7 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
           </section>
 
           {/* Section 3: Legal & Terms */}
-          <section className="bg-white dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
+          <section className="bg-white dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-1 h-3.5 bg-amber-500 rounded-full" />
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Legal Agreement & Terms</h3>

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react"
-import { Plus, Trash2, Package, AlertTriangle, Layers, Search } from "lucide-react"
+import { Plus, Trash2, Package, AlertTriangle, Layers, Search, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -25,11 +25,11 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
   const [date] = useState(initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0])
   const [priority, setPriority] = useState<PurchaseRequest['priority']>(initialData?.priority ?? "medium")
   const [searchTerm, setSearchTerm] = useState("")
-  const [showResults, setShowResults] = useState(false)
-  const [items, setItems] = useState(initialData?.items ?? [
-    { id: generateId(), name: "", quantity: 1, estimatedPrice: 0, inventoryItemId: "", vendorId: "", vendorName: "", trackInInventory: false }
-  ])
+  const [showInventory, setShowInventory] = useState(false)
+  const [items, setItems] = useState(initialData?.items ?? [])
   const [purpose, setPurpose] = useState(initialData?.purpose ?? "")
+  const [vendorSearch, setVendorSearch] = useState("")
+  const [activeVendorItemId, setActiveVendorItemId] = useState<string | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const subtotal = useMemo(() => {
@@ -70,13 +70,29 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
     }
   }
 
+  const filteredVendors = useMemo(() => {
+    // Get unique vendor IDs already used in this PR
+    const usedVendorIds = new Set(items.map(i => i.vendorId).filter(id => !!id))
+
+    return [...vendors]
+      .filter(v =>
+        v.name.toLowerCase().includes(vendorSearch.toLowerCase()) ||
+        (v.category?.toLowerCase() ?? "").includes(vendorSearch.toLowerCase())
+      )
+      .sort((a, b) => {
+        const aUsed = usedVendorIds.has(a.id) ? 1 : 0
+        const bUsed = usedVendorIds.has(b.id) ? 1 : 0
+        return bUsed - aUsed // Prioritize used vendors
+      })
+  }, [vendors, vendorSearch, items])
+
   const handleInventorySelect = (inventoryItemId: string) => {
     const invItem = inventoryItems.find(i => i.id === inventoryItemId)
     if (invItem) {
       const existingItem = items.find(i => i.inventoryItemId === invItem.id)
       if (existingItem) {
-        setItems(items.map(i => 
-          i.inventoryItemId === invItem.id 
+        setItems(items.map(i =>
+          i.inventoryItemId === invItem.id
             ? { ...i, quantity: i.quantity + 10 } // Add default reorder qty
             : i
         ))
@@ -145,13 +161,13 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950">
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto px-8 py-10 space-y-12 pb-32">
+      <div className="flex-1 overflow-y-auto px-8 py-10 space-y-8 pb-10">
 
         {/* Section 1: Identity & Priority */}
-        <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
-          <div className="flex items-center gap-2 mb-6">
+        <section className="bg-white dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
+          <div className="flex items-center gap-2 mb-4">
             <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Request Information</h3>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Request Context</h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -202,67 +218,47 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                 placeholder="Explain why this purchase is needed..."
                 value={purpose}
                 onChange={(e) => setPurpose(e.target.value)}
-                className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[100px] p-5 focus:ring-teal-500 shadow-none border-dashed"
+                className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[80px] p-5 focus:ring-teal-500 shadow-none border-dashed"
               />
             </div>
           </div>
         </section>
 
         {/* Section 2: Items & Procurement */}
-        <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
-          <div className="flex items-center justify-between mb-8">
+        <section className="bg-white dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Line Items & Catalog</h3>
+              <div id="items" className="w-1 h-3.5 bg-teal-500 rounded-full" />
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Products & Procurement</h3>
             </div>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={addItem}
-              disabled={!canAddNewItem}
-              className={cn(
-                "h-9 px-6 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border border-slate-200 dark:border-slate-800 transition-all active:scale-95",
-                !canAddNewItem
-                  ? "opacity-40 grayscale cursor-not-allowed"
-                  : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
-              )}
-            >
-              <Plus className="w-3 h-3 mr-2" /> Add Manual Row
-            </Button>
-          </div>
-
-          <div className="space-y-6">
-            {/* Improved Item Selector: Quick Search and Add */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Quick Add from Catalog</Label>
-                {inventoryItems.length > 0 && (
-                  <span className="text-[9px] font-bold text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded-full">
-                    {inventoryItems.filter(i => i.status === 'active').length} Active Products
-                  </span>
-                )}
-              </div>
-
-              <div className="relative group">
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none group-focus-within:text-teal-500 transition-colors" />
-                  <input
-                    type="text"
-                    placeholder="Type name or SKU to instantly add items..."
-                    className="w-full h-12 pl-12 pr-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-medium focus:ring-2 focus:ring-teal-500 outline-none transition-all shadow-none"
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    value={searchTerm}
-                    onFocus={() => setShowResults(true)}
-                  />
-                </div>
-
-                {/* Search Results Dropdown */}
-                {showResults && searchTerm.length >= 1 && (
-                  <div
-                    className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden max-h-[320px] divide-y divide-slate-50 dark:divide-slate-800 flex flex-col animate-in fade-in slide-in-from-top-2 duration-200"
-                    onMouseLeave={() => setShowResults(false)}
-                  >
-                    <div className="overflow-y-auto flex-1">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={!canAddNewItem}
+                  onClick={() => setShowInventory(!showInventory)}
+                  className={cn(
+                    "h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                    !canAddNewItem ? "opacity-40 grayscale cursor-not-allowed" :
+                      showInventory ? "bg-teal-50 text-teal-700 underline underline-offset-4" : "text-teal-600 hover:bg-teal-50/50"
+                  )}
+                >
+                  Quick Add
+                </Button>
+                {showInventory && canAddNewItem && (
+                  <div className="absolute right-0 top-full mt-3 w-80 max-h-96 overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[60] flex flex-col animate-in fade-in slide-in-from-top-2 duration-200 ring-1 ring-slate-950/5">
+                    <div className="p-3 border-b border-slate-50 dark:border-slate-800">
+                      <input
+                        type="text"
+                        autoFocus
+                        placeholder="Search catalog..."
+                        className="w-full h-9 px-3 bg-slate-50 dark:bg-slate-800/50 border-none rounded-lg text-xs font-bold focus:ring-2 focus:ring-teal-500 outline-none"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
+                    <div className="overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800 flex-1">
                       {inventoryItems
                         .filter(item =>
                           item.status === 'active' &&
@@ -278,26 +274,22 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                               onClick={() => {
                                 handleInventorySelect(item.id)
                                 setSearchTerm("")
-                                setShowResults(false)
+                                setShowInventory(false)
                               }}
-                              className="w-full text-left px-5 py-4 hover:bg-teal-50 dark:hover:bg-teal-900/10 transition-colors flex items-center justify-between group/item"
+                              className="w-full text-left p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group flex items-start justify-between gap-4"
                             >
-                              <div className="flex flex-col min-w-0 flex-1 pr-4">
-                                <span className="text-sm font-black text-slate-900 dark:text-white group-hover/item:text-teal-600 transition-colors truncate">
-                                  {item.name}
-                                </span>
-                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tight mt-0.5 truncate">
-                                  SKU: {item.sku} · {item.category}
-                                </span>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-[13px] font-black text-slate-900 dark:text-white group-hover:text-teal-600 truncate">{item.name}</div>
+                                <div className="text-[10px] font-bold text-slate-400 mt-0.5 tracking-tight line-clamp-1">{item.sku} • {item.category}</div>
                               </div>
-                              <div className="flex flex-col items-end shrink-0">
-                                <span className="text-[13px] font-black text-slate-900 dark:text-white">
+                              <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                                <div className="text-[13px] font-black text-slate-900 dark:text-white">
                                   ${item.price.toFixed(2)}
-                                </span>
+                                </div>
                                 <span className={cn(
-                                  "text-[9px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded-md mt-1",
-                                  atp > 0 
-                                    ? "bg-teal-50 text-teal-600 dark:bg-teal-900/30" 
+                                  "text-[9px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded-md",
+                                  atp > 0
+                                    ? "bg-teal-50 text-teal-600 dark:bg-teal-900/30"
                                     : "bg-amber-50 text-amber-600 dark:bg-amber-900/30"
                                 )}>
                                   {atp} Available
@@ -306,21 +298,40 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                             </button>
                           )
                         })}
+                      {inventoryItems.filter(item =>
+                        item.status === 'active' &&
+                        (item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          item.sku.toLowerCase().includes(searchTerm.toLowerCase()))
+                      ).length === 0 && (
+                          <div className="p-8 text-center flex flex-col items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
+                              <Package className="w-4 h-4 text-slate-300" />
+                            </div>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">No products found</p>
+                          </div>
+                        )}
                     </div>
-                    {inventoryItems.filter(item =>
-                      item.status === 'active' &&
-                      (item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        item.sku.toLowerCase().includes(searchTerm.toLowerCase()))
-                    ).length === 0 && (
-                        <div className="px-5 py-8 text-center bg-slate-50/30 dark:bg-slate-800/30">
-                          <p className="text-xs font-black uppercase tracking-widest text-slate-400">No matching products</p>
-                          <p className="text-[10px] text-slate-500 mt-1 font-bold">Try searching by category or full SKU</p>
-                        </div>
-                      )}
                   </div>
                 )}
               </div>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={addItem}
+                disabled={!canAddNewItem}
+                className={cn(
+                  "h-9 px-6 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border border-slate-200 dark:border-slate-800 transition-all active:scale-95",
+                  !canAddNewItem
+                    ? "opacity-40 grayscale cursor-not-allowed"
+                    : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
+                )}
+              >
+                <Plus className="w-3 h-3 mr-2" /> Add Manual Row
+              </Button>
             </div>
+          </div>
+
+          <div className="space-y-6">
 
             <div className="rounded-xl border border-slate-200/60 dark:border-slate-800/60 overflow-hidden shadow-none bg-slate-50/30 dark:bg-slate-900/30">
               <table className="w-full text-left border-collapse table-fixed">
@@ -328,68 +339,101 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                   <tr className="bg-slate-50/50 dark:bg-slate-800/50 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-200/60 dark:border-slate-800/60">
                     <th className="px-6 py-4 w-1/2">Product / SKU</th>
                     <th className="px-4 py-4 w-48">Vendor</th>
-                    <th className="px-4 py-4 w-[8%] text-center">Qty</th>
+                    <th className="px-4 py-4 w-[10%] text-center">Qty</th>
                     <th className="px-4 py-4 w-[15%] text-right">Unit Price</th>
-                    <th className="px-4 py-4 w-[12%] text-right">Total</th>
-                    <th className="px-4 py-4 w-[60px] text-right"></th>
+                    <th className="px-4 py-4 w-[15%] text-right">Total</th>
+                    <th className="px-6 py-4 w-12 text-right"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
                   {items.map((item, index) => (
-                    <tr key={item.id} className="group hover:bg-white dark:hover:bg-slate-800/20 transition-colors">
-                      <td className="px-6 py-4">
+                    <tr key={item.id} className="group hover:bg-slate-50/30 dark:hover:bg-slate-800/10 transition-colors">
+                      <td className="px-6 py-4 align-top">
                         <input
-                          className="w-full bg-transparent border-none focus:ring-0 p-0 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 text-sm font-bold"
+                          className={cn(
+                            "w-full bg-transparent border-none focus:ring-0 p-0 text-[13px] font-black placeholder:text-slate-300 transition-colors focus:placeholder:text-teal-400",
+                            errors[`item_${index}_name`] ? "text-red-500 placeholder:text-red-300" : "text-slate-900 dark:text-slate-100"
+                          )}
                           placeholder="Line item name or SKU..."
                           value={item.name}
                           onChange={(e) => updateItem(item.id, { name: e.target.value })}
                         />
                         {errors[`item_${index}_name`] && <p className="text-[8px] font-bold text-red-500 uppercase mt-1 tracking-wider">{errors[`item_${index}_name`]}</p>}
                       </td>
-                      <td className="px-4 py-4">
-                        {vendors.length > 0 ? (
-                          <select
-                            className="w-full bg-transparent border-none focus:ring-0 p-0 text-slate-900 dark:text-slate-100 text-sm font-bold cursor-pointer hover:text-teal-600 transition-colors"
-                            value={item.vendorId || ''}
-                            onChange={(e) => handleVendorChange(item.id, e.target.value)}
+                      <td className="px-4 py-4 align-top">
+                        <div className="relative group/vendor pt-1">
+                          <div
+                            onClick={() => !isSaving && setActiveVendorItemId(activeVendorItemId === item.id ? null : item.id)}
+                            className={cn(
+                              "flex items-center justify-between cursor-pointer group-hover/vendor:text-teal-600 transition-colors",
+                              activeVendorItemId === item.id && "text-teal-600"
+                            )}
                           >
-                            <option value="">Choose Vendor...</option>
-                            {vendors.map(v => (
-                              <option key={v.id} value={v.id}>{v.name}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          <input
-                            className="w-full bg-transparent border-none focus:ring-0 p-0 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 text-sm font-bold"
-                            placeholder="Type Vendor..."
-                            value={item.vendorName || ''}
-                            onChange={(e) => updateItem(item.id, { vendorName: e.target.value })}
-                          />
-                        )}
+                            <span className={cn("text-[11px] font-black uppercase tracking-tighter truncate", !item.vendorId && "text-slate-300")}>
+                              {item.vendorName || "Select Vendor..."}
+                            </span>
+                            <ChevronDown className={cn("w-3 h-3 text-slate-300 transition-transform", activeVendorItemId === item.id && "rotate-180 text-teal-500")} />
+                          </div>
+
+                          {activeVendorItemId === item.id && (
+                            <div className="absolute left-0 top-full mt-2 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[80] p-2 flex flex-col animate-in fade-in slide-in-from-top-1 duration-200">
+                              <div className="px-2 pb-2 pt-1">
+                                <input
+                                  autoFocus
+                                  className="w-full h-9 px-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-xs font-bold focus:ring-2 focus:ring-teal-500 outline-none placeholder:text-slate-400"
+                                  placeholder="Search vendors..."
+                                  value={vendorSearch}
+                                  onChange={(e) => setVendorSearch(e.target.value)}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              </div>
+                              <div className="max-h-48 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800 scrollbar-thin scrollbar-thumb-slate-200">
+                                {filteredVendors.length > 0 ? (
+                                  filteredVendors.map(v => (
+                                    <button
+                                      key={v.id}
+                                      type="button"
+                                      onClick={() => {
+                                        handleVendorChange(item.id, v.id)
+                                        setActiveVendorItemId(null)
+                                        setVendorSearch("")
+                                      }}
+                                      className="w-full text-left p-3 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors flex flex-col gap-0.5 first:rounded-t-lg last:rounded-b-lg"
+                                    >
+                                      <span className="text-[13px] font-bold text-slate-900 dark:text-white">{v.name}</span>
+                                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{v.category || "General"}</span>
+                                    </button>
+                                  ))
+                                ) : (
+                                  <div className="p-4 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    No vendors found
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </td>
-                      <td className="px-4 py-4 text-center">
+                      <td className="px-4 py-4 align-top">
                         <input
                           type="number"
-                          className="w-full bg-transparent border-none focus:ring-0 p-0 text-slate-900 dark:text-slate-100 text-sm font-black text-center"
+                          className="w-full h-9 bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl focus:ring-4 focus:ring-teal-500/10 p-0 text-[13px] font-black text-slate-900 dark:text-slate-100 text-center transition-all outline-none"
                           value={item.quantity}
                           onChange={(e) => updateItem(item.id, { quantity: parseInt(e.target.value) || 0 })}
                         />
                       </td>
-                      <td className="px-4 py-4 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <span className="text-slate-400 text-[10px] font-bold">$</span>
-                          <input
-                            type="number"
-                            className="w-24 bg-transparent border-none focus:ring-0 p-0 text-slate-900 dark:text-slate-100 text-sm font-black text-right"
-                            value={item.estimatedPrice}
-                            onChange={(e) => updateItem(item.id, { estimatedPrice: parseFloat(e.target.value) || 0 })}
-                          />
-                        </div>
+                      <td className="px-4 py-4 align-top">
+                        <input
+                          type="number"
+                          className="w-full h-9 bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl focus:ring-4 focus:ring-teal-500/10 pl-2 pr-2 text-[13px] font-black text-slate-900 dark:text-slate-100 text-right transition-all outline-none"
+                          value={item.estimatedPrice}
+                          onChange={(e) => updateItem(item.id, { estimatedPrice: parseFloat(e.target.value) || 0 })}
+                        />
                       </td>
-                      <td className="px-4 py-4 text-right font-black text-slate-900 dark:text-white">
+                      <td className="px-4 py-4 align-top text-right pt-5 font-black text-slate-900 dark:text-white text-[13px] tracking-tight">
                         ${(item.quantity * item.estimatedPrice).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="px-4 py-4 text-right">
+                      <td className="px-6 py-4 align-top text-right pt-5">
                         <button
                           type="button"
                           onClick={() => removeItem(item.id)}
@@ -422,7 +466,6 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                         </div>
                       </div>
                     </td>
-                    <td></td>
                   </tr>
                 </tfoot>
               </table>

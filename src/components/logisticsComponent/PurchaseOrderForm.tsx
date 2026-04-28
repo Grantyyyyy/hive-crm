@@ -23,16 +23,14 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
   const [vendorId, setVendorId] = useState(initialData?.vendorId ?? "")
   const [vendorSearch, setVendorSearch] = useState("")
   const [showVendorSelector, setShowVendorSelector] = useState(false)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [showResults, setShowResults] = useState(false)
+  const [inventorySearch, setInventorySearch] = useState("")
+  const [showInventory, setShowInventory] = useState(false)
   const { data: vendors } = useCRMResource<Vendor>("vendors")
   const [poNumber] = useState(initialData?.poNumber ?? `PO-${Math.floor(10000 + Math.random() * 90000)}`)
   const [referenceId, setReferenceId] = useState(initialData?.referenceId ?? "")
   const [date] = useState(initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0])
   const [expectedDelivery, setExpectedDelivery] = useState(initialData?.expectedDelivery ? new Date(initialData.expectedDelivery).toISOString().split('T')[0] : "")
-  const [items, setItems] = useState(initialData?.items ?? [
-    { id: generateId(), name: "", quantity: 1, price: 0, inventoryItemId: "" }
-  ])
+  const [items, setItems] = useState(initialData?.items ?? [])
   const [shippingInfo, setShippingInfo] = useState(initialData?.shippingInfo ?? "")
   const [internalNotes, setInternalNotes] = useState(initialData?.internalNotes ?? "")
   const [vendorInstructions, setVendorInstructions] = useState(initialData?.vendorInstructions ?? "")
@@ -53,7 +51,7 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
 
   const addItem = () => {
     setItems([...items, { id: generateId(), name: "", quantity: 1, price: 0, inventoryItemId: "" }])
-    setShowResults(false)
+    setShowInventory(false)
   }
 
   const handleInventorySelect = (itemId: string) => {
@@ -74,8 +72,8 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
         price: item.price * 0.9, // Wholesale discount estimate
       }])
     }
-    setShowResults(false)
-    setSearchTerm("")
+    setShowInventory(false)
+    setInventorySearch("")
   }
 
   const selectVendor = (vendor: Vendor) => {
@@ -87,9 +85,17 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
   const filteredVendors = useMemo(() => {
     return vendors.filter(v => 
       v.name.toLowerCase().includes(vendorSearch.toLowerCase()) ||
-      v.category?.toLowerCase().includes(vendorSearch.toLowerCase())
+      (v.category?.toLowerCase() ?? "").includes(vendorSearch.toLowerCase())
     )
   }, [vendors, vendorSearch])
+
+  const filteredInventory = useMemo(() => {
+    return inventoryItems.filter(item => 
+      item.status === 'active' &&
+      (item.name.toLowerCase().includes(inventorySearch.toLowerCase()) ||
+       item.sku.toLowerCase().includes(inventorySearch.toLowerCase()))
+    )
+  }, [inventoryItems, inventorySearch])
 
   const removeItem = (id: string) => {
     setItems(items.filter(i => i.id !== id))
@@ -138,13 +144,13 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
   }
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950 translate-x-0 transition-transform duration-300 ease-in-out">
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-950">
       {/* Scrollable Content */}
-      <div className="flex-1 overflow-y-auto px-8 py-10 space-y-12 pb-32">
+      <div className="flex-1 overflow-y-auto px-8 py-10 space-y-8 pb-10">
 
         {/* Section 1: Order Identity */}
-        <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
-          <div className="flex items-center gap-2 mb-6">
+        <section className="bg-white dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
+          <div className="flex items-center gap-2 mb-4">
             <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Order Details</h3>
           </div>
@@ -253,8 +259,8 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
         </section>
 
         {/* Section 2: Logistics & Destination */}
-        <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md">
-          <div className="flex items-center gap-2 mb-6">
+        <section className="bg-white dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md">
+          <div className="flex items-center gap-2 mb-4">
             <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Shipping & Logistics</h3>
           </div>
@@ -262,119 +268,104 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
             placeholder="Enter precise destination address and shipping method instructions..."
             value={shippingInfo}
             onChange={(e) => setShippingInfo(e.target.value)}
-            className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[100px] p-5 focus:ring-teal-500 shadow-none border-dashed"
+            className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[80px] p-5 focus:ring-teal-500 shadow-none border-dashed"
           />
         </section>
 
         {/* Section 3: Line Items */}
-        <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md">
-          <div className="flex items-center justify-between mb-8">
+        <section className="bg-white dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Line Items & Catalog</h3>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Products & Catalog</h3>
             </div>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={addItem}
-              disabled={!canAddNewItem}
-              className={cn(
-                "h-9 px-6 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border border-slate-200 dark:border-slate-800 transition-all active:scale-95",
-                !canAddNewItem
-                  ? "opacity-40 grayscale cursor-not-allowed"
-                  : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
-              )}
-            >
-              <Plus className="w-3 h-3 mr-2" /> Add Manual Row
-            </Button>
-          </div>
-
-          <div className="space-y-6">
-            {/* Improved Item Selector: Quick Search and Add */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Quick Add from Catalog</Label>
-                {inventoryItems.length > 0 && (
-                  <span className="text-[9px] font-bold text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded-full">
-                    {inventoryItems.filter(i => i.status === 'active').length} Active Products
-                  </span>
-                )}
-              </div>
-
-              <div className="relative group">
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none group-focus-within:text-teal-500 transition-colors" />
-                  <input
-                    type="text"
-                    placeholder="Type name or SKU to instantly add items..."
-                    className="w-full h-12 pl-12 pr-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-medium focus:ring-2 focus:ring-teal-500 outline-none transition-all shadow-none"
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    value={searchTerm}
-                    onFocus={() => setShowResults(true)}
-                  />
-                </div>
-
-                {/* Search Results Dropdown */}
-                {showResults && searchTerm.length >= 1 && (
-                  <div
-                    className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden max-h-[320px] divide-y divide-slate-50 dark:divide-slate-800 flex flex-col animate-in fade-in slide-in-from-top-2 duration-200"
-                    onMouseLeave={() => setShowResults(false)}
-                  >
-                    <div className="overflow-y-auto flex-1">
-                      {inventoryItems
-                        .filter(item =>
-                          item.status === 'active' &&
-                          (item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            item.sku.toLowerCase().includes(searchTerm.toLowerCase()))
-                        )
-                        .map((item) => {
-                          const atp = item.stockQuantity - (item.reservedQuantity || 0)
-                          return (
-                            <button
-                              key={item.id}
-                              type="button"
-                              onClick={() => handleInventorySelect(item.id)}
-                              className="w-full text-left px-5 py-4 hover:bg-teal-50 dark:hover:bg-teal-900/10 transition-colors flex items-center justify-between group/item"
-                            >
-                              <div className="flex flex-col min-w-0 flex-1 pr-4">
-                                <span className="text-sm font-black text-slate-900 dark:text-white group-hover/item:text-teal-600 transition-colors truncate">
-                                  {item.name}
-                                </span>
-                                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tight mt-0.5 truncate">
-                                  SKU: {item.sku} · {item.category}
-                                </span>
-                              </div>
-                              <div className="flex flex-col items-end shrink-0">
-                                <span className="text-[13px] font-black text-slate-900 dark:text-white">
-                                  ${item.price.toFixed(2)}
-                                </span>
-                                <span className={cn(
-                                  "text-[9px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded-md mt-1",
-                                  atp > 0 
-                                    ? "bg-teal-50 text-teal-600 dark:bg-teal-900/30" 
-                                    : "bg-amber-50 text-amber-600 dark:bg-amber-900/30"
-                                )}>
-                                  {atp} Available
-                                </span>
-                              </div>
-                            </button>
-                          )
-                        })}
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={!canAddNewItem}
+                  onClick={() => setShowInventory(!showInventory)}
+                  className={cn(
+                    "h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                    !canAddNewItem ? "opacity-40 grayscale cursor-not-allowed" :
+                      showInventory ? "bg-teal-50 text-teal-700 underline underline-offset-4" : "text-teal-600 hover:bg-teal-50/50"
+                  )}
+                >
+                  Quick Add
+                </Button>
+                {showInventory && canAddNewItem && (
+                  <div className="absolute right-0 top-full mt-3 w-80 max-h-96 overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[60] flex flex-col animate-in fade-in slide-in-from-top-2 duration-200 ring-1 ring-slate-950/5">
+                    <div className="p-3 border-b border-slate-50 dark:border-slate-800">
+                      <input
+                        type="text"
+                        autoFocus
+                        placeholder="Search catalog..."
+                        className="w-full h-9 px-3 bg-slate-50 dark:bg-slate-800/50 border-none rounded-lg text-xs font-bold focus:ring-2 focus:ring-teal-500 outline-none"
+                        value={inventorySearch}
+                        onChange={(e) => setInventorySearch(e.target.value)}
+                      />
                     </div>
-                    {inventoryItems.filter(item =>
-                      item.status === 'active' &&
-                      (item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        item.sku.toLowerCase().includes(searchTerm.toLowerCase()))
-                    ).length === 0 && (
-                        <div className="px-5 py-8 text-center bg-slate-50/30 dark:bg-slate-800/30">
-                          <p className="text-xs font-black uppercase tracking-widest text-slate-400">No matching products</p>
-                          <p className="text-[10px] text-slate-500 mt-1 font-bold">Try searching by category or full SKU</p>
+                    <div className="overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800 flex-1">
+                      {filteredInventory.map((item) => {
+                        const atp = item.stockQuantity - (item.reservedQuantity || 0)
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => handleInventorySelect(item.id)}
+                            className="w-full text-left p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group flex items-start justify-between gap-4"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="text-[13px] font-black text-slate-900 dark:text-white group-hover:text-teal-600 truncate">{item.name}</div>
+                              <div className="text-[10px] font-bold text-slate-400 mt-0.5 tracking-tight line-clamp-1">{item.sku} • {item.category}</div>
+                            </div>
+                            <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                              <div className="text-[13px] font-black text-slate-900 dark:text-white">
+                                ${item.price.toFixed(2)}
+                              </div>
+                              <span className={cn(
+                                "text-[9px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded-md",
+                                atp > 0
+                                  ? "bg-teal-50 text-teal-600 dark:bg-teal-900/30"
+                                  : "bg-amber-50 text-amber-600 dark:bg-amber-900/30"
+                              )}>
+                                {atp} Available
+                              </span>
+                            </div>
+                          </button>
+                        )
+                      })}
+                      {filteredInventory.length === 0 && (
+                        <div className="p-8 text-center flex flex-col items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
+                            <Package className="w-4 h-4 text-slate-300" />
+                          </div>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">No products found</p>
                         </div>
                       )}
+                    </div>
                   </div>
                 )}
               </div>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={addItem}
+                disabled={!canAddNewItem}
+                className={cn(
+                  "h-9 px-6 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border border-slate-200 dark:border-slate-800 transition-all active:scale-95",
+                  !canAddNewItem
+                    ? "opacity-40 grayscale cursor-not-allowed"
+                    : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800"
+                )}
+              >
+                <Plus className="w-3 h-3 mr-2" /> Add Manual Row
+              </Button>
             </div>
+          </div>
+
+
 
           <div className="rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-slate-50/30 dark:bg-slate-900/30 overflow-hidden shadow-none">
             <table className="w-full text-left border-collapse table-fixed">
@@ -389,39 +380,39 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
                 {items.map((item, index) => (
-                  <tr key={item.id} className="group hover:bg-white dark:hover:bg-slate-800/20 transition-colors">
-                    <td className="px-6 py-4">
+                  <tr key={item.id} className="group hover:bg-slate-50/30 dark:hover:bg-slate-800/10 transition-colors">
+                    <td className="px-6 py-4 align-top">
                       <input
-                        className="w-full bg-transparent border-none focus:ring-0 p-0 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 text-sm font-bold"
+                        className={cn(
+                          "w-full bg-transparent border-none focus:ring-0 p-0 text-[13px] font-black placeholder:text-slate-300 transition-colors focus:placeholder:text-teal-400",
+                          errors[`item_${index}_name`] ? "text-red-500 placeholder:text-red-300" : "text-slate-900 dark:text-slate-100"
+                        )}
                         placeholder="Line item name or SKU..."
                         value={item.name}
                         onChange={(e) => updateItem(item.id, { name: e.target.value })}
                       />
                       {errors[`item_${index}_name`] && <p className="text-[8px] font-bold text-red-500 uppercase mt-1 tracking-wider">{errors[`item_${index}_name`]}</p>}
                     </td>
-                    <td className="px-4 py-4 text-center">
+                    <td className="px-4 py-4 align-top">
                       <input
                         type="number"
-                        className="w-full bg-transparent border-none focus:ring-0 p-0 text-slate-900 dark:text-slate-100 text-sm font-black text-center"
+                        className="w-full h-9 bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl focus:ring-4 focus:ring-teal-500/10 p-0 text-[13px] font-black text-slate-900 dark:text-slate-100 text-center transition-all outline-none"
                         value={item.quantity}
                         onChange={(e) => updateItem(item.id, { quantity: parseInt(e.target.value) || 0 })}
                       />
                     </td>
-                    <td className="px-4 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <span className="text-slate-400 text-[10px] font-bold">$</span>
-                        <input
-                          type="number"
-                          className="w-24 bg-transparent border-none focus:ring-0 p-0 text-slate-900 dark:text-slate-100 text-sm font-black text-right"
-                          value={item.price}
-                          onChange={(e) => updateItem(item.id, { price: parseFloat(e.target.value) || 0 })}
-                        />
-                      </div>
+                    <td className="px-4 py-4 align-top">
+                      <input
+                        type="number"
+                        className="w-full h-9 bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl focus:ring-4 focus:ring-teal-500/10 pl-2 pr-2 text-[13px] font-black text-slate-900 dark:text-slate-100 text-right transition-all outline-none"
+                        value={item.price}
+                        onChange={(e) => updateItem(item.id, { price: parseFloat(e.target.value) || 0 })}
+                      />
                     </td>
-                    <td className="px-4 py-4 text-right font-black text-slate-900 dark:text-white tabular-nums">
+                    <td className="px-4 py-4 align-top text-right pt-5 font-black text-slate-900 dark:text-white text-[13px] tracking-tight">
                       ${(item.quantity * item.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="px-4 py-4 text-right">
+                    <td className="px-6 py-4 align-top text-right pt-5">
                       <button
                         type="button"
                         onClick={() => removeItem(item.id)}
@@ -459,12 +450,11 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
                 </tfoot>
             </table>
           </div>
-          </div>
           {errors.items && <p className="text-[10px] font-bold text-red-500 uppercase tracking-wider mt-2">{errors.items}</p>}
         </section>
 
         {/* Section 4: Remarks & Documentation */}
-        <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md grid grid-cols-1 md:grid-cols-2 gap-8">
+        <section className="bg-white dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
@@ -474,7 +464,7 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
               placeholder="Private notes for internal procurement team only..."
               value={internalNotes}
               onChange={(e) => setInternalNotes(e.target.value)}
-              className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[120px] p-4 text-sm font-medium focus:ring-teal-500 border-dashed"
+              className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[100px] p-4 text-sm font-medium focus:ring-teal-500 border-dashed"
             />
           </div>
           <div className="space-y-4">
@@ -486,7 +476,7 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
               placeholder="Specific delivery or billing instructions for the vendor..."
               value={vendorInstructions}
               onChange={(e) => setVendorInstructions(e.target.value)}
-              className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[120px] p-4 text-sm font-medium focus:ring-teal-500 border-dashed"
+              className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[100px] p-4 text-sm font-medium focus:ring-teal-500 border-dashed"
             />
           </div>
         </section>

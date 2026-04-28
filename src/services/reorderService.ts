@@ -1,14 +1,11 @@
 import type { InventoryItem, PurchaseRequest, PurchaseRequestItem } from "@/lib/types"
 import type { JobAdapter } from "./types"
 
-export async function createReorderDraft(
+export function prepareReorderDraftData(
   items: InventoryItem[],
-  adapter: JobAdapter,
   userId: string,
   userName: string
-): Promise<PurchaseRequest> {
-  if (items.length === 0) throw new Error("No items selected for reorder")
-
+): Partial<PurchaseRequest> {
   const prItems: PurchaseRequestItem[] = items.map(item => ({
     id: crypto.randomUUID(),
     name: item.name,
@@ -16,13 +13,14 @@ export async function createReorderDraft(
     quantity: item.reorderQuantity || Math.max(0, (item.reorderThreshold || 0) * 2 - item.stockQuantity),
     estimatedPrice: item.price,
     inventoryItemId: item.id,
-    trackInInventory: true
+    trackInInventory: true,
+    vendorId: "",
+    vendorName: ""
   }))
 
   const totalAmount = prItems.reduce((sum, item) => sum + (item.quantity * item.estimatedPrice), 0)
 
-  const newPR: Omit<PurchaseRequest, 'id'> = {
-    requestNumber: `PR-RE-${Math.floor(1000 + Math.random() * 9000)}`,
+  return {
     requesterId: userId,
     requesterName: userName,
     amount: totalAmount,
@@ -34,9 +32,17 @@ export async function createReorderDraft(
     urgent: items.some(i => i.stockQuantity === 0),
     purpose: 'Stock Replenishment',
     priority: items.some(i => i.stockQuantity === 0) ? 'high' : 'medium',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
   }
+}
 
+export async function createReorderDraft(
+  items: InventoryItem[],
+  adapter: JobAdapter,
+  userId: string,
+  userName: string
+): Promise<PurchaseRequest> {
+  if (items.length === 0) throw new Error("No items selected for reorder")
+  const newPR = prepareReorderDraftData(items, userId, userName)
   return await adapter.insertPurchaseRequest(newPR as any)
 }
+

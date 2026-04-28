@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from "react"
+import { useLocation } from "wouter"
 import { useCRMResource } from "@/lib/hooks"
 import type { InventoryItem, Notification } from "@/lib/types"
 import { toast } from "sonner"
@@ -6,6 +7,7 @@ import { toast } from "sonner"
 export function useInventoryAlerts() {
   const { data: inventory, isLoaded: inventoryLoaded } = useCRMResource<InventoryItem>('inventory')
   const { data: notifications, addItems, isLoaded: notificationsLoaded } = useCRMResource<Notification>('notifications')
+  const [, setLocation] = useLocation()
   
   // Stable refs to avoid re-triggering the effect when notifications/addItems change
   const notificationsRef = useRef(notifications)
@@ -85,7 +87,7 @@ export function useInventoryAlerts() {
           duration: 8000,
           action: {
             label: "View",
-            onClick: () => window.location.hash = `#/inventory/${item.id}`
+            onClick: () => setLocation(`/inventory/${item.id}`)
           }
         })
 

@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react"
 import { Bell, Check, Trash2, Clock, Inbox, AlertCircle, Info } from "lucide-react"
+import { useLocation } from "wouter"
 import { useCRMResource } from "@/lib/hooks"
 import type { Notification } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -10,6 +11,7 @@ import { Pagination } from "@/components/ui/Pagination"
 
 export function Notifications() {
   const { data: notifications, updateItem, deleteItem, isLoaded } = useCRMResource<Notification>('notifications')
+  const [, setLocation] = useLocation()
   const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'read'>('all')
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 8
@@ -133,7 +135,7 @@ export function Notifications() {
                 key={n.id}
                 onClick={() => {
                   if (!n.isRead) handleMarkAsRead(n.id)
-                  if (n.link) window.location.hash = `#${n.link}`
+                  if (n.link) setLocation(n.link)
                 }}
                 className={cn(
                   "bg-white dark:bg-slate-900 rounded-2xl border transition-all cursor-pointer group relative overflow-hidden",

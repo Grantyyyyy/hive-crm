@@ -1,5 +1,5 @@
-import { useMemo } from "react"
-import { Link } from "wouter"
+import { useMemo, useState } from "react"
+import { Link, useLocation } from "wouter"
 import {
   Activity,
   CreditCard,
@@ -21,6 +21,8 @@ import { createReorderDraft } from "@/services/reorderService"
 import { toast } from "sonner"
 import type { JobAdapter } from "@/services/types"
 import { useUser } from "@/lib/AuthContext"
+import { AddPurchaseRequestModal } from "@/components/logisticsComponent/AddPurchaseRequestModal"
+import { prepareReorderDraftData } from "@/services/reorderService"
 
 export function Dashboard() {
   const { data: deals, isLoaded: dealsLoaded } = useCRMResource<Deal>('deals')
@@ -28,6 +30,10 @@ export function Dashboard() {
   const { data: inventory, isLoaded: inventoryLoaded } = useCRMResource<InventoryItem>('inventory')
   const ctx = useCRMContext()
   const { user } = useUser()
+  const [, setLocation] = useLocation()
+
+  const [isReorderModalOpen, setIsReorderModalOpen] = useState(false)
+  const [reorderData, setReorderData] = useState<Partial<PurchaseRequest> | null>(null)
 
   const lowStockItems = useMemo(() => {
     return inventory.filter(item => {
@@ -78,25 +84,15 @@ export function Dashboard() {
     runAtomicUpdate: (ops) => ctx.runAtomicUpdate(ops),
   }), [ctx])
 
-  const handleAutoReorder = async () => {
+  const handleAutoReorder = () => {
     if (lowStockItems.length === 0) return
-    try {
-      const pr = await createReorderDraft(
-        lowStockItems,
-        adapter,
-        user?.id || '',
-        user?.user_metadata?.full_name || user?.email || 'User'
-      )
-      toast.success("Purchase Request Drafted", {
-        description: `Created ${pr.requestNumber} for ${lowStockItems.length} items.`,
-        action: {
-          label: "View PR",
-          onClick: () => window.location.hash = `#/purchase-requests/${pr.id}`
-        }
-      })
-    } catch (e: any) {
-      toast.error("Failed to create reorder draft", { description: e.message })
-    }
+    const draft = prepareReorderDraftData(
+      lowStockItems,
+      user?.id || '',
+      user?.user_metadata?.full_name || user?.email || 'User'
+    )
+    setReorderData(draft ?? null)
+    setIsReorderModalOpen(true)
   }
 
   const openDeals = useMemo(
@@ -411,6 +407,14 @@ export function Dashboard() {
           </div>
         </div>
 
+        <AddPurchaseRequestModal
+          open={isReorderModalOpen}
+          onOpenChange={setIsReorderModalOpen}
+          initialData={reorderData || undefined}
+          onSuccess={(pr) => {
+            setLocation(`/purchase-requests/${pr.id}`)
+          }}
+        />
       </div>
     </div>
   )

@@ -27,6 +27,7 @@ import { recalculateStockLevel } from "@/services/inventoryService"
 import { createAdjustmentTransaction } from "@/services/inventoryTransactionService"
 import { toast } from "sonner"
 import { useUser } from "@/lib/AuthContext"
+import { EditInventorySheet } from "@/components/logisticsComponent/EditInventorySheet"
 
 export function InventoryDetail() {
   const [, params] = useRoute("/inventory/:id")
@@ -40,6 +41,7 @@ export function InventoryDetail() {
   const { data: allTransactions } = useCRMResource<InventoryTransaction>("inventory_transactions")
 
   const [adjustmentOpen, setAdjustmentOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
   const item = useMemo(() => items.find(i => i.id === itemId), [items, itemId])
 
   // Statistics & Derived Data
@@ -133,7 +135,12 @@ export function InventoryDetail() {
             <Button variant="outlineNeutral" size="sm" className="h-8 px-3.5 text-xs" onClick={() => setAdjustmentOpen(true)}>
               <Activity className="size-3.5 mr-1.5" /> Stock Adjustment
             </Button>
-            <Button variant="default" size="sm" className="h-8 px-5 text-xs bg-teal-600 hover:bg-teal-700">
+            <Button 
+              variant="default" 
+              size="sm" 
+              className="h-8 px-5 text-xs bg-teal-600 hover:bg-teal-700"
+              onClick={() => setEditOpen(true)}
+            >
               <Pencil className="size-3.5 mr-1.5" /> Edit Product
             </Button>
           </div>
@@ -228,6 +235,17 @@ export function InventoryDetail() {
                 <div className="space-y-0.5">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reserved Hold</p>
                   <p className="text-lg font-black text-teal-600 dark:text-teal-400">{item.reservedQuantity || 0}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-3 border-t border-slate-100 dark:border-slate-800 relative">
+                <div className="space-y-0.5">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reorder Threshold</p>
+                  <p className="text-lg font-black text-amber-600">{item.reorderThreshold ?? 'None'}</p>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reorder Quantity</p>
+                  <p className="text-lg font-black text-slate-800 dark:text-slate-200">{item.reorderQuantity ?? 'N/A'}</p>
                 </div>
               </div>
 
@@ -356,6 +374,13 @@ export function InventoryDetail() {
         onOpenChange={setAdjustmentOpen}
         item={item}
         onConfirm={handleStockAdjustment}
+      />
+
+      {/* Edit Product Sheet */}
+      <EditInventorySheet
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        item={item}
       />
     </div>
   )

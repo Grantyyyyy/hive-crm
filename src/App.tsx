@@ -31,6 +31,7 @@ import { Roles } from "@/pages/settings/Roles";
 import { OrganizationsPage } from "./pages/settings/OrganizationsPage";
 import { ProfilePage } from "@/pages/settings/ProfilePage";
 import { AuditLogs } from "@/pages/settings/AuditLogs";
+import { Notifications } from "@/pages/settings/Notifications";
 import { Navbar } from "@/components/Navbar";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -44,6 +45,7 @@ import { Fonts } from "@/pages/Fonts";
 import { Toaster } from "sonner";
 import { CRMProvider, useCRMContext, updateRow, insertRows } from "@/lib/CRMContext";
 import { useCRMResource } from "@/lib/hooks";
+import { useInventoryAlerts } from "@/lib/hooks/useInventoryAlerts";
 import { AuthProvider, useUser } from "@/lib/AuthContext"
 import { RequirePermission } from "@/components/RequirePermission";
 import type { Quote, SalesOrder, InventoryItem, PurchaseRequest, PurchaseOrder, InventoryTransaction, Task, PurchaseReceipt, PurchaseReceiptItem, ReturnToSupplier } from "@/lib/types";
@@ -151,6 +153,11 @@ function AutomationRunner() {
   return null
 }
 
+function InventoryAlertRunner() {
+  useInventoryAlerts()
+  return null
+}
+
 function AppContent() {
   const { isSignedIn, isLoaded: authLoaded, getToken, userId } = useAuth();
   const { user } = useUser();
@@ -223,6 +230,7 @@ function AppContent() {
           <Navbar />
           <main className="flex-[1_0_auto] flex flex-col">
             <AutomationRunner />
+            <InventoryAlertRunner />
             <Switch>
               <Route path="/" component={LandingPage} />
               <Route path="/sign-in" component={SignInPage} />
@@ -316,6 +324,9 @@ function AppContent() {
               </Route>
               <Route path="/settings/audit-logs">
                 {() => <PermissionProtected module="users" component={AuditLogs} />}
+              </Route>
+              <Route path="/notifications">
+                {() => <Protected component={Notifications} />}
               </Route>
               <Route path="/in-progress">
                 {() => <Protected component={InProgress} />}

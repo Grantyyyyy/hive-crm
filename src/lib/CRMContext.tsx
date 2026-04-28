@@ -33,6 +33,7 @@ export const TABLE_MAP: Record<string, string> = {
   return_to_suppliers: "return_to_suppliers",
   organizations: "organizations",
   audit_log: "audit_log",
+  notifications: "notifications",
 }
 
 // ── Case converters ──────────────────────────────────────────────────────────
@@ -189,7 +190,7 @@ function calculateDiff(oldItem: any, patch: any) {
 
 const PRELOAD_RESOURCES = [
   "leads", "contacts", "deals", "tasks", "activities", "projects",
-  "task_tags", "task_tag_links",
+  "task_tags", "task_tag_links", "notifications",
 ]
 
 /**

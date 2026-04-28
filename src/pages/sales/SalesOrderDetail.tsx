@@ -18,6 +18,7 @@ import {
   ChevronDown,
   MoreHorizontal,
   Plus,
+  History as HistoryIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -43,6 +44,7 @@ import { SendEmailModal } from "@/components/crmComponent/SendEmailModal"
 import { AddPurchaseRequestModal } from "@/components/logisticsComponent/AddPurchaseRequestModal"
 import { useUser } from "@/lib/AuthContext"
 import { updateRow } from "@/lib/CRMContext"
+import { AuditTimeline } from "@/components/reusables/AuditTimeline"
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -722,9 +724,19 @@ export function SalesOrderDetail() {
               >
                 <Receipt className="w-4 h-4 mr-2" /> View Invoice
               </Button>
-            </div >
-          </div >
-        </div >
+            </div>
+
+            {/* Audit Log */}
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
+              <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 border-b border-slate-100 dark:border-slate-800 pb-3 mb-4 flex items-center gap-2">
+                <HistoryIcon className="w-4 h-4" /> Activity History
+              </h2>
+              <div className="max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                <AuditTimeline entityType="orders" entityId={order.id} />
+              </div>
+            </div>
+          </div>
+        </div>
       </div >
 
       {/* Modals */}

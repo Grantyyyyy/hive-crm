@@ -17,6 +17,7 @@ import {
   MoreVertical,
   Download,
   Mail,
+  History as HistoryIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -36,6 +37,7 @@ import {
 } from "@/services/quoteService"
 import { useUser } from "@/lib/AuthContext"
 import { SendEmailModal } from "@/components/crmComponent/SendEmailModal"
+import { AuditTimeline } from "@/components/reusables/AuditTimeline"
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -540,6 +542,16 @@ export function QuoteDetail() {
                   <Send className="w-4 h-4 mr-2" /> {isSending ? 'Sending...' : 'Send to Customer'}
                 </Button>
               )}
+            </div>
+
+            {/* Audit Log */}
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
+              <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 border-b border-slate-100 dark:border-slate-800 pb-3 mb-4 flex items-center gap-2">
+                <HistoryIcon className="w-4 h-4" /> Activity History
+              </h2>
+              <div className="max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                <AuditTimeline entityType="quotes" entityId={quote.id} />
+              </div>
             </div>
           </div>
         </div>

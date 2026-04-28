@@ -13,13 +13,91 @@ import {
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/helpers"
-import type { Deal, Activity as ActivityT } from "@/lib/types"
 import { useCRMResource } from "@/lib/hooks"
 import { DashboardSkeleton } from "@/components/ui/skeletons"
+import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
+import type { Deal, Activity as ActivityT, InventoryItem, PurchaseRequest, PurchaseOrder, Quote, SalesOrder, Task, InventoryTransaction, PurchaseReceipt, PurchaseReceiptItem, ReturnToSupplier } from "@/lib/types"
+import { createReorderDraft } from "@/services/reorderService"
+import { toast } from "sonner"
+import type { JobAdapter } from "@/services/types"
+import { useUser } from "@/lib/AuthContext"
 
 export function Dashboard() {
   const { data: deals, isLoaded: dealsLoaded } = useCRMResource<Deal>('deals')
   const { data: activities, isLoaded: activitiesLoaded } = useCRMResource<ActivityT>('activities')
+  const { data: inventory, isLoaded: inventoryLoaded } = useCRMResource<InventoryItem>('inventory')
+  const ctx = useCRMContext()
+  const { user } = useUser()
+
+  const lowStockItems = useMemo(() => {
+    return inventory.filter(item => {
+      const threshold = item.reorderThreshold || 0
+      return item.stockQuantity <= threshold && item.status === 'active'
+    })
+  }, [inventory])
+
+  const adapter = useMemo<JobAdapter>(() => ({
+    getQuotes: () => ctx.getResource<Quote>('quotes').data,
+    updateQuote: (id, patch) => updateRow<Quote>(ctx, 'quotes', id, patch),
+    insertQuote: (q) => insertRows<Quote>(ctx, 'quotes', [q as any]).then(rows => rows[0] as Quote),
+    getSalesOrders: () => ctx.getResource<SalesOrder>('orders').data,
+    updateSalesOrder: (id, patch) => updateRow<SalesOrder>(ctx, 'orders', id, patch),
+    updateSalesOrderItem: async (orderId, itemId, patch) => {
+      const order = ctx.getResource<SalesOrder>('orders').data.find(o => o.id === orderId);
+      if (!order) return;
+      const updatedItems = order.items.map(item => item.id === itemId ? { ...item, ...patch } : item);
+      await updateRow<SalesOrder>(ctx, 'orders', orderId, { items: updatedItems });
+    },
+    insertSalesOrder: (o) => insertRows<SalesOrder>(ctx, 'orders', [o as any]).then(rows => rows[0] as SalesOrder),
+    getInventoryItems: () => ctx.getResource<InventoryItem>('inventory').data,
+    updateInventoryItem: (id, patch) => updateRow<InventoryItem>(ctx, 'inventory', id, patch),
+    insertInventoryItem: (item: Omit<InventoryItem, 'id'>) => insertRows<InventoryItem>(ctx, 'inventory', [item as any]).then(rows => rows[0] as InventoryItem),
+    getPurchaseRequests: () => ctx.getResource<PurchaseRequest>('purchase_requests').data,
+    updatePurchaseRequest: (id, patch) => updateRow<PurchaseRequest>(ctx, 'purchase_requests', id, patch),
+    insertPurchaseRequest: (pr) => insertRows<PurchaseRequest>(ctx, 'purchase_requests', [pr as any]).then(rows => rows[0] as PurchaseRequest),
+    getPurchaseOrders: () => ctx.getResource<PurchaseOrder>('purchase_orders').data,
+    updatePurchaseOrder: (id, patch) => updateRow<PurchaseOrder>(ctx, 'purchase_orders', id, patch),
+    updatePurchaseOrderItem: async (poId, itemId, patch) => {
+      const po = ctx.getResource<PurchaseOrder>('purchase_orders').data.find(p => p.id === poId);
+      if (!po) return;
+      const updatedItems = po.items.map(item => item.id === itemId ? { ...item, ...patch } : item);
+      await updateRow<PurchaseOrder>(ctx, 'purchase_orders', poId, { items: updatedItems as any });
+    },
+    insertPurchaseOrder: (po) => insertRows<PurchaseOrder>(ctx, 'purchase_orders', [po as any]).then(rows => rows[0] as PurchaseOrder),
+    getInventoryTransactions: () => ctx.getResource<InventoryTransaction>('inventory_transactions').data,
+    insertInventoryTransaction: (tx) => insertRows<InventoryTransaction>(ctx, 'inventory_transactions', [tx as any]).then(rows => rows[0] as InventoryTransaction),
+    getTasks: () => ctx.getResource<Task>('tasks').data,
+    updateTask: (id, patch) => updateRow<Task>(ctx, 'tasks', id, patch),
+    getPurchaseReceipts: () => ctx.getResource<PurchaseReceipt>('purchase_receipts').data,
+    getPurchaseReceiptItems: () => ctx.getResource<PurchaseReceiptItem>('purchase_receipt_items').data,
+    insertPurchaseReceipt: (r) => insertRows<PurchaseReceipt>(ctx, 'purchase_receipts', [r as any]).then(rows => rows[0] as PurchaseReceipt),
+    insertPurchaseReceiptItem: (i) => insertRows<PurchaseReceiptItem>(ctx, 'purchase_receipt_items', [i as any]).then(rows => rows[0] as PurchaseReceiptItem),
+    getReturnToSuppliers: () => ctx.getResource<ReturnToSupplier>('return_to_suppliers').data,
+    insertReturnToSupplier: (rts) => insertRows<ReturnToSupplier>(ctx, 'return_to_suppliers', [rts as any]).then(rows => rows[0] as ReturnToSupplier),
+    updateReturnToSupplier: (id, patch) => updateRow<ReturnToSupplier>(ctx, 'return_to_suppliers', id, patch),
+    runAtomicUpdate: (ops) => ctx.runAtomicUpdate(ops),
+  }), [ctx])
+
+  const handleAutoReorder = async () => {
+    if (lowStockItems.length === 0) return
+    try {
+      const pr = await createReorderDraft(
+        lowStockItems,
+        adapter,
+        user?.id || '',
+        user?.user_metadata?.full_name || user?.email || 'User'
+      )
+      toast.success("Purchase Request Drafted", {
+        description: `Created ${pr.requestNumber} for ${lowStockItems.length} items.`,
+        action: {
+          label: "View PR",
+          onClick: () => window.location.hash = `#/purchase-requests/${pr.id}`
+        }
+      })
+    } catch (e: any) {
+      toast.error("Failed to create reorder draft", { description: e.message })
+    }
+  }
 
   const openDeals = useMemo(
     () => deals.filter((d) => !["won", "lost"].includes(d.stage)),
@@ -123,7 +201,7 @@ export function Dashboard() {
               </div>
               <div className="space-y-1">
                 <p className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Low Stock Alerts</p>
-                <h3 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">12</h3>
+                <h3 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">{lowStockItems.length}</h3>
               </div>
             </div>
           </Link>
@@ -283,33 +361,52 @@ export function Dashboard() {
             </div>
           </div>
 
-          {/* Low Stock Items */}
+          {/* Low Stock Items & Reorder Suggestions */}
           <div className="bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
-            <div className="px-8 py-6 border-b border-slate-200 dark:border-slate-800">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Low Stock Items</h2>
+            <div className="px-8 py-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Shortage Summary</h2>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Items below reorder threshold</p>
+              </div>
+              {lowStockItems.length > 0 && (
+                <Button 
+                  variant="brand" 
+                  size="sm" 
+                  onClick={handleAutoReorder}
+                  className="h-8 px-3 text-[10px] font-black uppercase tracking-widest"
+                >
+                  Auto-Draft PR
+                </Button>
+              )}
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
-              {[
-                { name: "Wireless Keyboard", sku: "WKB-001", stock: 2 },
-                { name: "USB-C Adapter", sku: "UCA-220", stock: 5 },
-                { name: "Office Chair v2", sku: "CHV2-BL", stock: 1 },
-                { name: "Monitor 24\" IPS", sku: "MON24-IPS", stock: 3 },
-              ].map((item) => (
-                <div key={item.sku} className="flex items-center justify-between p-4 rounded-md border border-slate-200 dark:border-slate-800 hover:border-teal-600/20 transition-colors">
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{item.name}</p>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-tight">{item.sku}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className={cn(
-                      "text-sm font-bold",
-                      item.stock < 3 ? "text-red-600" : "text-amber-600"
-                    )}>
-                      {item.stock} left
-                    </p>
-                  </div>
+              {lowStockItems.length === 0 ? (
+                <div className="p-8 text-center text-slate-500 dark:text-slate-400 text-sm">
+                  No items currently low on stock.
                 </div>
-              ))}
+              ) : (
+                lowStockItems.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between p-4 rounded-md border border-slate-200 dark:border-slate-800 hover:border-teal-600/20 transition-all group">
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-900 dark:text-white truncate group-hover:text-teal-600 transition-colors">{item.name}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-tight font-mono">{item.sku}</span>
+                        <span className="text-[10px] text-slate-400">•</span>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-tight">Threshold: {item.reorderThreshold}</span>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className={cn(
+                        "text-sm font-black",
+                        item.stockQuantity === 0 ? "text-rose-600 animate-pulse" : "text-amber-600"
+                      )}>
+                        {item.stockQuantity} {item.stockQuantity === 1 ? 'unit' : 'units'}
+                      </p>
+                      <Link href={`/inventory/${item.id}`} className="text-[9px] font-bold text-teal-600 uppercase hover:underline">Details</Link>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>

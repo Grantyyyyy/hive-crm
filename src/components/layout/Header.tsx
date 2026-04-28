@@ -4,6 +4,9 @@ import { useUser, useAuth } from "@/lib/AuthContext";
 import { useTheme } from "@/lib/ThemeProvider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useLocation } from "wouter";
+import { NotificationPanel } from "./NotificationPanel";
+import { useCRMResource } from "@/lib/hooks";
+import type { Notification } from "@/lib/types";
 
 interface HeaderProps {
   onSearchClick?: () => void;
@@ -15,6 +18,8 @@ export function Header({ onSearchClick }: HeaderProps) {
   const { theme, toggleTheme } = useTheme();
   const [, setLocation] = useLocation();
 
+  const { data: notifications } = useCRMResource<Notification>('notifications');
+  const unreadCount = notifications.filter(n => !n.isRead).length;
   const initials = (user?.email ?? "U").slice(0, 2).toUpperCase();
 
   return (
@@ -33,10 +38,21 @@ export function Header({ onSearchClick }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="relative transition-all hover:bg-accent/5 hover:text-accent">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red border-2 border-bg-surface rounded-full"></span>
-        </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon" className="relative transition-all hover:bg-accent/5 hover:text-accent">
+              <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute top-2 right-2 w-4 h-4 bg-red-600 border-2 border-bg-surface rounded-full flex items-center justify-center text-[8px] font-black text-white">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0 border-none shadow-none" align="end" sideOffset={8}>
+            <NotificationPanel />
+          </PopoverContent>
+        </Popover>
         <Button variant="ghost" size="icon" className="transition-all hover:bg-accent/5 hover:text-accent">
           <HelpCircle className="w-5 h-5" />
         </Button>

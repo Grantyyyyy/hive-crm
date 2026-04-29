@@ -563,7 +563,7 @@ export async function insertRows<T extends { id?: string }>(
   const mapped = (result ?? []).map(toCamel) as T[]
 
   // Audit Logging
-  if (mapped.length > 0) {
+  if (mapped.length > 0 && resourceName !== 'notifications') {
     const auditLogs = mapped.map(item => ({
       entity_type: resourceName,
       entity_id: item.id!,

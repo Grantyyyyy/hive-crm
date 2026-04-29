@@ -4,7 +4,17 @@ import type { AuthSession as Session, AuthUser as User } from "@supabase/supabas
 
 // ── Audit Logging for Auth Events ────────────────────────────────────────────
 
+let lastAuthLogTime = 0;
+let lastAuthAction = "";
+
 function logAuthEvent(action: string) {
+  const now = Date.now();
+  // Throttle only if it's the SAME action (prevent double-logging LOGIN on load)
+  if (action === lastAuthAction && now - lastAuthLogTime < 5000) return;
+
+  lastAuthLogTime = now;
+  lastAuthAction = action;
+
   supabase.auth.getUser().then(({ data: { user } }) => {
     if (!user) return;
 
@@ -20,10 +30,10 @@ function logAuthEvent(action: string) {
       supabase.from('audit_log').insert({
         entity_type: 'auth',
         entity_id: user.id,
-        action,
+        action: action, // Use actual LOGIN/LOGOUT action
         changed_by: user.id,
         organization_id: organizationId,
-        diff: { timestamp: new Date().toISOString() }
+        diff: { event: action, timestamp: new Date().toISOString() }
       }).then(({ error }: any) => {
         if (error) console.error("[AuthContext] Failed to emit auth audit log:", error);
       });

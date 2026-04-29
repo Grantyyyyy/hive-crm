@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react"
 import { useCRMContext } from "@/lib/CRMContext"
-import { formatDistanceToNow } from "date-fns"
-import { History, Search, Filter, ArrowRight } from "lucide-react"
+import { format } from "date-fns"
+import { History, Search, Filter, ArrowRight, Clock, Activity, CheckCircle2, Plus, Trash2 } from "lucide-react"
 import { Link } from "wouter"
 import { cn } from "@/lib/utils"
 import { Pagination } from "@/components/ui/Pagination"
@@ -25,9 +25,11 @@ export function AuditLogs() {
 
   const filteredLogs = useMemo(() => {
     return logs.filter(log => 
-      log.entityType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.changedBy?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      log.entityType !== 'notifications' && (
+        log.entityType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        log.changedBy?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
     )
   }, [logs, searchTerm])
 
@@ -37,159 +39,249 @@ export function AuditLogs() {
     currentPage * itemsPerPage
   )
 
-  // Reset to first page on search
   useEffect(() => {
     setCurrentPage(1)
   }, [searchTerm])
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-8 animate-fade-in font-sans">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">System Audit Logs</h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">Monitor all administrative actions.</p>
+          <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white uppercase italic">System Activity Stream</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Real-time audit trail of all administrative operations.</p>
         </div>
 
         <div className="flex items-center gap-3">
-           <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+           <div className="relative group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
               <input 
                 type="text" 
-                placeholder="Filter logs..." 
-                className="pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none w-64 shadow-sm transition-all"
+                placeholder="Search activity..." 
+                className="pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none w-72 shadow-sm transition-all"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
            </div>
-           <button className="p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-500 hover:text-teal-500 transition-colors shadow-sm">
+           <button className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-500 hover:text-teal-500 transition-all shadow-sm active:scale-95">
               <Filter className="w-4 h-4" />
            </button>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50/50 dark:bg-slate-800/30 border-b border-slate-100 dark:border-slate-800">
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Timestamp</th>
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">User</th>
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Action</th>
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Entity</th>
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Details</th>
-                  <th className="px-6 py-4"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {loading ? (
-                   Array.from({ length: 8 }).map((_, i) => (
-                    <tr key={i} className="animate-pulse">
-                      <td colSpan={6} className="px-6 py-6">
-                        <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded-lg w-full"></div>
-                      </td>
-                    </tr>
-                   ))
-                ) : paginatedLogs.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-32 text-center text-slate-400">
-                       <History className="w-16 h-16 mx-auto mb-4 opacity-10" />
-                       <p className="text-sm font-bold uppercase tracking-widest opacity-50">No activity logs found matching your criteria</p>
-                    </td>
-                  </tr>
-                ) : (
-                  paginatedLogs.map(log => (
-                    <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group">
-                      <td className="px-6 py-5 whitespace-nowrap">
-                        <div className="text-sm font-black text-slate-900 dark:text-white italic tracking-tight">
-                          {formatDistanceToNow(new Date(log.changedAt), { addSuffix: true })}
-                        </div>
-                        <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
-                          {new Date(log.changedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 whitespace-nowrap">
+      <div className="relative">
+        {/* Timeline Thread */}
+        <div className="absolute left-[23px] top-0 bottom-0 w-0.5 bg-slate-200 dark:bg-slate-800/40 rounded-full" />
+
+        <div className="space-y-4">
+          {loading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="relative pl-14 animate-pulse">
+                <div className="absolute left-[23px] top-0 -translate-x-1/2 w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-slate-50 dark:border-slate-950" />
+                <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 h-24 border border-slate-100 dark:border-slate-800/50" />
+              </div>
+            ))
+          ) : paginatedLogs.length === 0 ? (
+            <div className="py-20 text-center text-slate-400">
+               <History className="w-12 h-12 mx-auto mb-4 opacity-10" />
+               <p className="text-xs font-black uppercase tracking-widest opacity-40">No activity logs found</p>
+            </div>
+          ) : (
+            paginatedLogs.map((log, idx) => (
+              <div 
+                key={log.id} 
+                className="relative pl-14 group animate-in fade-in slide-in-from-left-4 duration-300"
+              >
+                {/* Timeline Marker Icon */}
+                <div className={cn(
+                  "absolute left-[23px] top-0 -translate-x-1/2 w-8 h-8 rounded-full flex items-center justify-center z-10 border-2 border-white dark:border-zinc-950 transition-transform duration-300",
+                  log.action === 'INSERT' || log.action === 'LOGIN' ? "bg-emerald-500 text-white" :
+                  log.action === 'UPDATE' ? "bg-blue-500 text-white" :
+                  "bg-rose-500 text-white"
+                )}>
+                  <ActionIcon action={log.action} />
+                </div>
+
+                {/* Content Card */}
+                <div className="bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-slate-800/60 rounded-2xl p-5 shadow-sm transition-colors duration-300 relative overflow-hidden group-hover:border-slate-300 dark:group-hover:border-slate-700">
+                   <div className="flex flex-col gap-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                          <div className="flex items-center gap-3">
-                            <img 
-                              src={log.changedBy?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(log.changedBy?.name || 'U')}&background=0d9488&color=fff`} 
-                              className="w-10 h-10 rounded-full ring-4 ring-slate-50 dark:ring-slate-800 shadow-sm object-cover"
-                              alt=""
-                            />
+                            <div className="relative shrink-0">
+                              <img 
+                                src={log.changedBy?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(log.changedBy?.name || 'U')}&background=0f172a&color=fff`} 
+                                className="w-9 h-9 rounded-full ring-2 ring-slate-50 dark:ring-slate-800 object-cover"
+                                alt=""
+                              />
+                            </div>
                             <div className="flex flex-col">
-                              <span className="text-sm font-bold text-slate-900 dark:text-white">
+                              <span className="text-sm font-black text-slate-900 dark:text-white tracking-tight">
                                 {log.changedBy?.name || "System"}
                               </span>
-                              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Actor</span>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-[9px] text-teal-600 dark:text-teal-400 font-bold uppercase tracking-widest">{log.entityType.replace(/_/g, ' ')}</span>
+                              </div>
                             </div>
                          </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <span className={cn(
-                          "px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-[0.1em] shadow-sm",
-                          log.action === 'INSERT' ? "bg-emerald-50 text-emerald-600 border border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800" :
-                          log.action === 'UPDATE' ? "bg-amber-50 text-amber-600 border border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800" :
-                          "bg-rose-50 text-rose-600 border border-rose-100 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-800"
-                        )}>
-                          {log.action}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="flex flex-col">
-                          <span className="text-sm font-black text-slate-700 dark:text-slate-300 uppercase tracking-tighter italic">
-                            {log.entityType.replace(/_/g, ' ')}
-                          </span>
-                          <span className="text-[10px] text-slate-400 font-mono tracking-widest">
-                            ID: {log.entityId.slice(0, 8).toUpperCase()}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="max-w-xs text-xs text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
-                          {log.action === 'UPDATE' && log.diff?.updates ? (
-                             <div className="flex flex-col gap-1.5 mt-1">
-                                {Object.entries(log.diff.updates).map(([k, val]: [string, any]) => (
-                                  <div key={k} className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 px-2 py-1 rounded-lg border border-slate-100 dark:border-slate-800">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{k}:</span>
-                                    <div className="flex items-center gap-1.5">
-                                      <span className="line-through opacity-40 italic">{String(val?.from ?? '—')}</span>
-                                      <ArrowRight className="w-3 h-3 text-slate-300" />
-                                      <span className="font-bold text-teal-600 dark:text-teal-400">{String(val?.to ?? val)}</span>
-                                    </div>
-                                  </div>
-                                ))}
-                             </div>
-                          ) : log.action === 'INSERT' ? (
-                             <span className="italic opacity-60 font-bold uppercase tracking-widest text-[10px]">New Resource Initialization</span>
-                          ) : <span className="text-rose-500 font-bold uppercase tracking-widest text-[10px]">Permanent Resource Deletion</span>}
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 text-right">
-                        {log.entityId && log.action !== 'DELETE' && (
-                          <Link href={getEntityLink(log.entityType, log.entityId)}>
-                            <button className="p-3 bg-slate-50 dark:bg-slate-800/50 text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-all rounded-2xl group-hover:scale-110">
-                              <ArrowRight className="w-4 h-4" />
-                            </button>
-                          </Link>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                         
+                         <div className="flex items-center gap-3">
+                            <div className="text-[9px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-2 bg-slate-50 dark:bg-slate-900/50 px-3 py-1.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                               <Clock className="w-3 h-3 opacity-50" />
+                               {format(new Date(log.changedAt), 'MMM d, h:mm a')}
+                            </div>
+                            
+                            {log.entityId && log.action !== 'DELETE' && log.entityType !== 'auth' && (
+                              <Link href={getEntityLink(log.entityType, log.entityId)}>
+                                <button className="p-1.5 text-slate-400 hover:text-teal-600 transition-colors">
+                                  <ArrowRight className="w-4 h-4" />
+                                </button>
+                              </Link>
+                            )}
+                         </div>
+                      </div>
 
-          {!loading && filteredLogs.length > itemsPerPage && (
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              totalItems={filteredLogs.length}
-              itemsPerPage={itemsPerPage}
-              itemLabel="logs"
-            />
+                      <div className="bg-slate-50/30 dark:bg-slate-950/40 p-4 rounded-xl border border-slate-100/50 dark:border-slate-800/40">
+                         <DescriptionFormatter log={log} />
+                      </div>
+                   </div>
+                </div>
+              </div>
+            ))
           )}
+        </div>
       </div>
+
+      {!loading && filteredLogs.length > itemsPerPage && (
+        <div className="pt-8 border-t border-slate-100 dark:border-slate-800">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            totalItems={filteredLogs.length}
+            itemsPerPage={itemsPerPage}
+            itemLabel="activity logs"
+          />
+        </div>
+      )}
     </div>
+  )
+}
+
+function ActionIcon({ action }: { action: string }) {
+  switch (action) {
+    case 'INSERT': return <Plus className="w-5 h-5" />
+    case 'UPDATE': return <CheckCircle2 className="w-5 h-5" />
+    case 'DELETE': return <Trash2 className="w-5 h-5" />
+    case 'LOGIN': return <Plus className="w-5 h-5" />
+    case 'LOGOUT': return <Trash2 className="w-5 h-5" />
+    default: return <Activity className="w-5 h-5" />
+  }
+}
+
+function DescriptionFormatter({ log }: { log: any }) {
+  const { action, diff, entityType } = log
+  const entityName = entityType.replace(/s$/, '').replace(/_/g, ' ')
+  
+  if (entityType === 'auth') {
+    const event = diff?.event || action
+    const isLogin = event === 'LOGIN' || event === 'SIGNED_IN'
+    return (
+      <div className="flex items-center gap-3">
+        <span className="text-slate-500 font-medium">
+          {isLogin ? "User authenticated successfully" : "User session terminated"}
+        </span>
+        <Badge 
+          text={isLogin ? "LOGIN" : "LOGOUT"} 
+          variant={isLogin ? "accent" : "muted"} 
+        />
+      </div>
+    )
+  }
+
+  if (action === 'INSERT') {
+    return (
+      <div className="flex items-center gap-3">
+        <span className="text-slate-500 font-medium">Initialized new system resource:</span>
+        <span className="px-3 py-1 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 rounded-xl font-black uppercase text-[10px] tracking-[0.2em] border border-emerald-100 dark:border-emerald-800 shadow-sm">
+          {entityName}
+        </span>
+      </div>
+    )
+  }
+
+  if (action === 'DELETE') {
+    return (
+      <div className="flex items-center gap-3">
+        <span className="text-slate-500 font-medium">Permanently purged record:</span>
+        <span className="px-3 py-1 bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400 rounded-xl font-black uppercase text-[10px] tracking-[0.2em] border border-rose-100 dark:border-rose-800 shadow-sm">
+          {entityName}
+        </span>
+      </div>
+    )
+  }
+
+  if (action === 'UPDATE' && diff?.updates) {
+    const changes = Object.entries(diff.updates)
+      .filter(([key]) => !['id', 'updatedAt', 'createdAt', 'organizationId', 'userId', 'ownerId'].includes(key))
+
+    if (changes.length === 0) {
+      return (
+        <p className="text-slate-600 dark:text-slate-400 font-medium italic">Executed structural update on <span className="text-slate-900 dark:text-white font-black">{entityName}</span> metadata.</p>
+      )
+    }
+
+    if (changes.length === 1) {
+      const [key, val]: [string, any] = changes[0]
+      const label = key.replace(/([A-Z])/g, ' $1').toLowerCase()
+      const isStatus = key.toLowerCase().includes('status')
+      
+      return (
+        <span className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-slate-600 dark:text-slate-400 font-medium">
+          Updated {label} of <span className="text-slate-900 dark:text-white font-black italic tracking-tight">{entityName}</span> 
+          from 
+          <Badge text={String(val?.from ?? 'empty')} variant="muted" />
+          to 
+          <Badge text={String(val?.to ?? val)} variant={isStatus ? "accent" : "primary"} />
+        </span>
+      )
+    }
+
+    return (
+      <div className="space-y-4">
+        <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Synchronized multiple <span className="text-slate-900 dark:text-white italic">{entityName}</span> properties:</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {changes.map(([key, val]: [string, any]) => (
+            <div key={key} className="flex flex-col p-4 rounded-[20px] bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800/60 shadow-sm transition-all hover:border-blue-500/30">
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2.5">{key.replace(/([A-Z])/g, ' $1')}</span>
+              <div className="flex items-center gap-3 text-xs">
+                <span className="text-slate-400 line-through opacity-40 truncate max-w-[100px] italic">{String(val?.from ?? '—')}</span>
+                <ArrowRight className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                <span className="text-blue-600 dark:text-blue-400 font-black truncate">{String(val?.to ?? val)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <p className="text-slate-600 dark:text-slate-400 font-medium">Performed interaction with <span className="text-slate-900 dark:text-white font-black italic">{entityName}</span> system module.</p>
+  )
+}
+
+
+function Badge({ text, variant }: { text: string, variant: 'muted' | 'accent' | 'primary' }) {
+  return (
+    <span className={cn(
+      "px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm border transition-all",
+      variant === 'muted' 
+        ? "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700" 
+        : variant === 'accent'
+        ? "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 border-blue-100 dark:border-blue-800 shadow-[0_0_15px_rgba(59,130,246,0.1)]"
+        : "bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400 border-teal-100 dark:border-teal-800 shadow-[0_0_15px_rgba(20,184,166,0.1)]"
+    )}>
+      {text}
+    </span>
   )
 }
 

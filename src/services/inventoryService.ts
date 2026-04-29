@@ -92,3 +92,4 @@ export async function checkAndAlertLowStock(adapter: JobAdapter, ctx: CRMContext
   await insertRows<PurchaseRequest>(ctx, 'purchase_requests', [newPR as any]);
   console.log(`[inventoryService] Consolidated PurchaseRequest ${prNumber} auto-created for ${lowStockItems.length} item(s).`);
 }
+

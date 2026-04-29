@@ -87,27 +87,34 @@ export function InventoryDetail() {
       },
     }])
 
-    // Create audit trail entry
+    // Create audit trail entry with a full JobAdapter
     const auditAdapter = {
-      getInventoryTransactions: () => ctx.getResource<InventoryTransaction>('inventory_transactions').data,
-      insertInventoryTransaction: async (tx: Omit<InventoryTransaction, 'id' | 'createdAt'>) => {
+      getInventoryItems: () => ctx.getResource<InventoryItem>('inventory').data,
+      insertInventoryTransaction: async (tx: any) => {
         const { insertRows } = await import('../../lib/CRMContext')
-        return insertRows<InventoryTransaction>(ctx, 'inventory_transactions', [tx as any]).then(rows => rows[0])
-      },
+        return insertRows<InventoryTransaction>(ctx, 'inventory_transactions', [tx]).then(rows => rows[0])
+      }
     }
 
-    await createAdjustmentTransaction({
-      inventoryItemId: item.id,
-      inventoryItemName: item.name,
-      quantityChange: newQuantity - item.stockQuantity,
-      quantityBefore: item.stockQuantity,
-      quantityAfter: newQuantity,
-      reason,
-      userId,
-      userName,
-    }, auditAdapter as any)
+    try {
+      await createAdjustmentTransaction({
+        inventoryItemId: item.id,
+        inventoryItemName: item.name,
+        quantityChange: newQuantity - item.stockQuantity,
+        quantityBefore: item.stockQuantity,
+        quantityAfter: newQuantity,
+        reason,
+        userId,
+        userName,
+      }, auditAdapter as any)
 
-    toast.success("Stock Adjusted", { description: `${item.name}: ${item.stockQuantity} → ${newQuantity}` })
+      toast.success("Stock Adjusted", { 
+        description: `${item.name}: ${item.stockQuantity} → ${newQuantity}` 
+      })
+    } catch (err) {
+      console.error('[InventoryDetail] Adjustment transaction failed:', err)
+      toast.error("Adjustment recorded but transaction history failed")
+    }
   }
 
   if (!userLoaded || !isLoaded) return <DetailSkeleton />

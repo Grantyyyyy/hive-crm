@@ -57,7 +57,7 @@ export interface JobAdapter {
   updateReturnToSupplier: (id: string, patch: Partial<import("../lib/types").ReturnToSupplier>) => Promise<void>;
 
   // Atomic Transactions
-  runAtomicUpdate: (ops: import("./types").AtomicOp[]) => Promise<import("./types").AtomicOp[]>;
+  runAtomicUpdate: (ops: AtomicOp[]) => Promise<AtomicOp[]>;
 }
 
 export interface AtomicOp {

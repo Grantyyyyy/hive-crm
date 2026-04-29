@@ -1,4 +1,4 @@
-import { Bell, Check, Clock, Info, AlertCircle, ExternalLink } from "lucide-react"
+import { Bell, Check, Clock, Info, AlertCircle, ExternalLink, X } from "lucide-react"
 import { useCRMResource } from "@/lib/hooks"
 import type { Notification } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -15,6 +15,11 @@ export function NotificationPanel() {
     await updateItem(id, { isRead: true }, true)
   }
 
+  const handleDismiss = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation()
+    await updateItem(id, { isRead: true }, true)
+  }
+
   const handleMarkAllAsRead = async () => {
     const unread = notifications.filter(n => !n.isRead)
     for (const n of unread) {
@@ -22,25 +27,45 @@ export function NotificationPanel() {
     }
   }
 
-  const renderMessage = (message: string) => {
+  // Sort: unresolved first, then by date
+  const sortedNotifications = [...notifications].sort((a, b) => {
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  })
+
+  const renderMessage = (message: string, isRead: boolean) => {
     const parts = message.split(/(\*\*.*?\*\*)/g)
     return parts.map((part, i) => {
       if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={i} className="font-black text-slate-900 dark:text-white">{part.slice(2, -2)}</strong>
+        return (
+          <strong 
+            key={i} 
+            className={cn(
+              "font-black",
+              isRead ? "text-slate-500 dark:text-slate-600" : "text-slate-900 dark:text-white"
+            )}
+          >
+            {part.slice(2, -2)}
+          </strong>
+        )
       }
       return part
     })
   }
 
-  const getIcon = (type: string) => {
+  const getIcon = (type: string, isRead: boolean) => {
+    const iconClass = cn(
+      "w-4 h-4",
+      isRead ? "text-slate-500 dark:text-slate-600" : ""
+    )
+
     switch (type) {
       case 'low_stock':
       case 'out_of_stock':
-        return <AlertCircle className="w-4 h-4 text-rose-500" />
+        return <AlertCircle className={cn(iconClass, !isRead && "text-rose-500")} />
       case 'info':
-        return <Info className="w-4 h-4 text-blue-500" />
+        return <Info className={cn(iconClass, !isRead && "text-blue-500")} />
       default:
-        return <Bell className="w-4 h-4 text-teal-500" />
+        return <Bell className={cn(iconClass, !isRead && "text-teal-500")} />
     }
   }
 
@@ -77,7 +102,7 @@ export function NotificationPanel() {
           </div>
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-800/50">
-            {notifications.map((notification) => (
+            {sortedNotifications.map((notification) => (
               <div 
                 key={notification.id}
                 className={cn(
@@ -91,22 +116,32 @@ export function NotificationPanel() {
               >
                 <div className="flex gap-3">
                   <div className="shrink-0 mt-0.5">
-                    {getIcon(notification.type)}
+                    {getIcon(notification.type, notification.isRead)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <p className={cn(
-                        "text-sm leading-tight",
-                        notification.isRead ? "text-slate-600 dark:text-slate-400 font-medium" : "text-slate-900 dark:text-white font-bold"
-                      )}>
-                        {notification.title.replace(/^(Low Stock|Out of Stock): /i, '')}
-                      </p>
-                      {!notification.isRead && (
-                        <div className="w-2 h-2 bg-teal-600 rounded-full shrink-0 mt-1.5" />
-                      )}
+                      <div className="flex flex-col gap-1">
+                        <p className={cn(
+                          "text-sm leading-tight",
+                          notification.isRead ? "text-slate-600 dark:text-slate-400 font-medium" : "text-slate-900 dark:text-white font-bold"
+                        )}>
+                          {notification.title.replace(/^(Low Stock|Out of Stock): /i, '')}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {!notification.isRead && (
+                          <div className="w-2 h-2 bg-teal-600 rounded-full shrink-0" />
+                        )}
+                        <button 
+                          onClick={(e) => handleDismiss(e, notification.id)}
+                          className="opacity-0 group-hover:opacity-100 p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-all"
+                        >
+                          <X className="w-3 h-3 text-slate-400" />
+                        </button>
+                      </div>
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">
-                      {renderMessage(notification.message)}
+                      {renderMessage(notification.message, notification.isRead)}
                     </p>
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-tight">

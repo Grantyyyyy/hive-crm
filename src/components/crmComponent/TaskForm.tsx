@@ -1,5 +1,6 @@
-import { useState, useRef } from "react"
-import { useUser } from "@/lib/AuthContext"
+import { useState, useRef, useMemo } from "react"
+import { useUser, useAuth } from "@/lib/AuthContext"
+import { useCRMResource } from "@/lib/hooks"
 import {
   Type,
   AlignLeft,
@@ -15,7 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/ui/date-picker"
-import type { Task, Contact, Deal, Lead, Project } from "@/lib/types"
+import type { Task, Contact, Deal, Lead, Project, AppUser } from "@/lib/types"
 import { TagSelector } from '@/components/crmComponent/TagSelector'
 import { generateId } from "@/lib/helpers"
 import { cn } from "@/lib/utils"
@@ -46,6 +47,15 @@ export function TaskForm({
   userId
 }: TaskFormProps) {
   const { user } = useUser()
+  const { organizationId } = useAuth()
+  const { data: allUsers } = useCRMResource<AppUser>('users')
+
+  const users = useMemo(() => {
+    if (!allUsers) return []
+    if (!organizationId) return allUsers
+    return allUsers.filter(u => u.organizationId === organizationId)
+  }, [allUsers, organizationId])
+
   const [title, setTitle] = useState(initialData?.title ?? "")
   const [description, setDescription] = useState(initialData?.description ?? "")
   const [dueDate, setDueDate] = useState(initialData?.dueDate ? initialData.dueDate.split('T')[0] : "")
@@ -64,6 +74,37 @@ export function TaskForm({
   const [recurrenceInterval, setRecurrenceInterval] = useState(initialData?.recurrenceInterval ?? 1)
   const [recurrenceEndDate, setRecurrenceEndDate] = useState(initialData?.recurrenceEndDate ? initialData.recurrenceEndDate.split('T')[0] : "")
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const [showAssigneeDropdown, setShowAssigneeDropdown] = useState(false)
+  const [assigneeSearch, setAssigneeSearch] = useState("")
+  const [showProjectDropdown, setShowProjectDropdown] = useState(false)
+  const [projectSearch, setProjectSearch] = useState("")
+
+  const filteredAssignees = useMemo(() => {
+    if (!users) return []
+    const search = assigneeSearch.toLowerCase()
+    return users.filter(u =>
+      u.name.toLowerCase().includes(search) ||
+      (u.email?.toLowerCase() ?? "").includes(search)
+    )
+  }, [users, assigneeSearch])
+
+  const selectedAssignee = useMemo(() => {
+    const id = assignedTo[0]
+    if (!id) return null
+    // Check global users first, then fallback to current user if ID matches
+    return users.find(u => u.id === id) || (id === userId ? { id: userId, name: "Me (Individual)" } : null)
+  }, [users, assignedTo, userId])
+
+  const filteredProjectsList = useMemo(() => {
+    if (!projects) return []
+    const search = projectSearch.toLowerCase()
+    return projects.filter(p => p.name.toLowerCase().includes(search))
+  }, [projects, projectSearch])
+
+  const selectedProject = useMemo(() => {
+    return projects.find(p => p.id === projectId)
+  }, [projects, projectId])
 
   const recurrenceOptionsRef = useRef<HTMLDivElement>(null)
 
@@ -140,12 +181,12 @@ export function TaskForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col h-full overflow-hidden">
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto px-8 py-8 space-y-10">
+      <div className="flex-1 overflow-y-auto px-8 py-8 space-y-6">
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-6">
           {/* Column 1: Primary Info & Tags */}
           <div className="space-y-6">
-            <section className="h-full flex flex-col space-y-6 bg-white dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
+            <section className="h-full flex flex-col space-y-4 bg-white dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
               <div className="flex items-center gap-2 mb-1">
                 <div className="w-1 h-3.5 bg-teal-600 rounded-full" />
                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Basic Details</h3>
@@ -279,22 +320,70 @@ export function TaskForm({
             <div className="space-y-1.5">
               <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Project Association</Label>
               <div className="relative group">
-                <FolderOpen className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-teal-600 transition-colors" />
-                <select
-                  value={projectId}
-                  disabled={!!fixedProjectId}
-                  onChange={(e) => setProjectId(e.target.value)}
+                <div
                   className={cn(
-                    "w-full h-11 pl-10 pr-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-teal-500/10 transition-all shadow-sm",
+                    "w-full h-11 pl-10 pr-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between cursor-pointer focus-within:ring-4 focus-within:ring-teal-500/10 transition-all shadow-sm",
                     !!fixedProjectId && "opacity-75 cursor-not-allowed bg-slate-50"
                   )}
+                  onClick={() => !fixedProjectId && setShowProjectDropdown(!showProjectDropdown)}
                 >
-                  <option value="">None</option>
-                  {projects.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <FolderOpen className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-teal-600 transition-colors" />
+                  <span className={cn("text-[13px] font-bold truncate", !projectId && "text-slate-400")}>
+                    {selectedProject ? selectedProject.name : "None / Individual"}
+                  </span>
+                  {!fixedProjectId && (
+                    <ChevronDown className={cn("w-3.5 h-3.5 text-slate-400 transition-transform", showProjectDropdown && "rotate-180")} />
+                  )}
+                </div>
+
+                {showProjectDropdown && !fixedProjectId && (
+                  <div className="absolute left-0 right-0 bottom-full mb-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[70] p-2 overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-200">
+                    <div className="px-2 pb-2">
+                      <input
+                        type="text"
+                        autoFocus
+                        placeholder="Search projects..."
+                        className="w-full h-9 px-3 bg-slate-50 dark:bg-slate-800/50 border-none rounded-lg text-xs font-bold focus:ring-2 focus:ring-teal-500 outline-none"
+                        value={projectSearch}
+                        onChange={(e) => setProjectSearch(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                    <div className="max-h-60 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProjectId("")
+                          setShowProjectDropdown(false)
+                        }}
+                        className="w-full text-left p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                      >
+                        <span className="text-[13px] font-bold text-slate-400">None / Individual</span>
+                      </button>
+                      {filteredProjectsList.map(p => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => {
+                            setProjectId(p.id)
+                            setShowProjectDropdown(false)
+                            setProjectSearch("")
+                          }}
+                          className="w-full text-left p-3 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors flex items-center gap-3"
+                        >
+                          <div
+                            className="w-2.5 h-2.5 rounded-full shadow-sm"
+                            style={{ backgroundColor: p.color || '#94a3b8' }}
+                          />
+                          <span className="text-[13px] font-bold text-slate-900 dark:text-white">{p.name}</span>
+                        </button>
+                      ))}
+                      {filteredProjectsList.length === 0 && (
+                        <div className="p-4 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">No projects found</div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -302,16 +391,85 @@ export function TaskForm({
               <div className="space-y-1.5">
                 <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Assignee</Label>
                 <div className="relative group">
-                  <Users className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-teal-600 transition-colors" />
-                  <select
-                    value={assignedTo[0] || ""}
-                    onChange={(e) => setAssignedTo(e.target.value ? [e.target.value] : [])}
-                    className="w-full h-11 pl-10 pr-8 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-teal-500/10 transition-all shadow-sm"
+                  <div
+                    className={cn(
+                      "w-full h-11 pl-10 pr-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between cursor-pointer focus-within:ring-4 focus-within:ring-teal-500/10 transition-all shadow-sm",
+                      errors.assignedTo && "border-red-500 ring-4 ring-red-500/10"
+                    )}
+                    onClick={() => setShowAssigneeDropdown(!showAssigneeDropdown)}
                   >
-                    <option value="">Unassigned</option>
-                    <option value={userId}>Me (Individual)</option>
-                  </select>
-                  <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    <Users className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-teal-600 transition-colors" />
+                    <span className={cn("text-[13px] font-bold truncate", !assignedTo[0] && "text-slate-400")}>
+                      {selectedAssignee
+                        ? (typeof selectedAssignee === 'string' ? selectedAssignee : selectedAssignee.name)
+                        : "Select an assignee..."}
+                    </span>
+                    <ChevronDown className={cn("w-3.5 h-3.5 text-slate-400 transition-transform", showAssigneeDropdown && "rotate-180")} />
+                  </div>
+
+                  {showAssigneeDropdown && (
+                    <div className="absolute left-0 right-0 bottom-full mb-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[70] p-2 overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-200">
+                      <div className="px-2 pb-2">
+                        <input
+                          type="text"
+                          autoFocus
+                          placeholder="Search team members..."
+                          className="w-full h-9 px-3 bg-slate-50 dark:bg-slate-800/50 border-none rounded-lg text-xs font-bold focus:ring-2 focus:ring-teal-500 outline-none"
+                          value={assigneeSearch}
+                          onChange={(e) => setAssigneeSearch(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                      <div className="max-h-60 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAssignedTo([])
+                            setShowAssigneeDropdown(false)
+                          }}
+                          className="w-full text-left p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors flex items-center gap-2"
+                        >
+                          <span className="text-[13px] font-bold text-slate-400">Unassigned</span>
+                        </button>
+                        {filteredAssignees.map(u => (
+                          <button
+                            key={u.id}
+                            type="button"
+                            onClick={() => {
+                              setAssignedTo([u.id])
+                              setShowAssigneeDropdown(false)
+                              setAssigneeSearch("")
+                            }}
+                            className="w-full text-left p-3 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors flex flex-col gap-0.5"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-[13px] font-bold text-slate-900 dark:text-white">
+                                {u.name} {u.id === userId ? "(Me)" : ""}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-slate-500 font-medium">{u.email}</span>
+                          </button>
+                        ))}
+                        {/* Always offer 'Me' if not already in list */}
+                        {!users?.find(u => u.id === userId) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAssignedTo([userId])
+                              setShowAssigneeDropdown(false)
+                              setAssigneeSearch("")
+                            }}
+                            className="w-full text-left p-3 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors flex flex-col gap-0.5"
+                          >
+                            <span className="text-[13px] font-bold text-slate-900 dark:text-white">Me (Individual)</span>
+                          </button>
+                        )}
+                        {filteredAssignees.length === 0 && !users?.find(u => u.id === userId) && (
+                          <div className="p-4 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">No members found</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="space-y-1.5">

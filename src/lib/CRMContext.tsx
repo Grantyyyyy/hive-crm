@@ -50,14 +50,49 @@ const UUID_FIELDS = [
   "receipt_id", "receipt_item_id", "po_id", "po_item_id"
 ]
 
+const CAMEL_TO_DB: Record<string, string> = {
+  isRead: "is_read",
+  userId: "user_id",
+  createdAt: "created_at",
+  updatedAt: "updated_at",
+  organizationId: "organization_id",
+  ownerId: "owner_id",
+  contactId: "contact_id",
+  dealId: "deal_id",
+  leadId: "lead_id",
+  projectId: "project_id",
+  taskId: "task_id",
+  tagId: "tag_id",
+  assigneeId: "assignee_id",
+  createdById: "created_by_id",
+  delegatedById: "delegated_by_id",
+  delegatedAt: "delegated_at",
+  completedAt: "completed_at",
+  stepId: "step_id",
+  authorId: "author_id",
+  authorName: "author_name",
+  attachmentUrl: "attachment_url",
+  attachmentName: "attachment_name",
+  attachmentType: "attachment_type",
+  userName: "user_name",
+  notificationEmail: "notification_email",
+  emailNotificationsEnabled: "email_notifications_enabled",
+}
+
+const DB_TO_CAMEL: Record<string, string> = Object.fromEntries(
+  Object.entries(CAMEL_TO_DB).map(([k, v]) => [v, k])
+)
+
 export function toSnake(obj: any): any {
   if (Array.isArray(obj)) {
-    return obj.map(item => toSnake(item))
+    return obj.map((item) => toSnake(item))
   }
-  if (obj !== null && typeof obj === 'object') {
+  if (obj !== null && typeof obj === "object") {
     const result: SnakeObject = {}
     for (const key in obj) {
-      const snakeKey = key.replace(/[A-Z]/g, (l) => `_${l.toLowerCase()}`)
+      const mappedKey = CAMEL_TO_DB[key]
+      const snakeKey =
+        mappedKey || key.replace(/[A-Z]/g, (l) => `_${l.toLowerCase()}`)
       let value = obj[key]
       if (UUID_FIELDS.includes(snakeKey) && value === "") value = null
       result[snakeKey] = toSnake(value)
@@ -69,14 +104,17 @@ export function toSnake(obj: any): any {
 
 export function toCamel(obj: any): any {
   if (Array.isArray(obj)) {
-    return obj.map(item => toCamel(item))
+    return obj.map((item) => toCamel(item))
   }
-  if (obj !== null && typeof obj === 'object') {
+  if (obj !== null && typeof obj === "object") {
     const result: CamelObject = {}
     for (const key in obj) {
-      const camelKey = key.replace(/([-_][a-z])/g, (g) =>
-        g.toUpperCase().replace("-", "").replace("_", "")
-      )
+      const mappedKey = DB_TO_CAMEL[key]
+      const camelKey =
+        mappedKey ||
+        key.replace(/([-_][a-z])/g, (g) =>
+          g.toUpperCase().replace("-", "").replace("_", "")
+        )
       result[camelKey] = toCamel(obj[key])
     }
     return result
@@ -481,7 +519,7 @@ export function useCRMContext() {
 
 // ── Typed mutation helpers (used by useCRMResource) ───────────────────────────
 
-export async function insertRows<T extends { id: string }>(
+export async function insertRows<T extends { id?: string }>(
   ctx: CRMContextValue,
   resourceName: string,
   newItems: T[]
@@ -528,7 +566,7 @@ export async function insertRows<T extends { id: string }>(
   if (mapped.length > 0) {
     const auditLogs = mapped.map(item => ({
       entity_type: resourceName,
-      entity_id: item.id,
+      entity_id: item.id!,
       action: "INSERT",
       changed_by: ctx.userId,
       organization_id: ctx.organizationId,
@@ -546,7 +584,7 @@ export async function insertRows<T extends { id: string }>(
       const resultItem = mapped[i]
       if (!resultItem) continue
 
-      await handleTaskRelations(client, resultItem.id, {
+      await handleTaskRelations(client, resultItem.id!, {
         activities: item.activities,
         tags: item.tags
       })

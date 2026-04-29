@@ -22,8 +22,8 @@ export function useCRMResource<T extends { id: string }>(
   const [search, setSearch] = useState(initialSearch)
 
   const addItems = useCallback(
-    async (newItems: T[], silent: boolean = false) => {
-      const promise = insertRows<T>(ctx, String(resourceName), newItems)
+    async (newItems: (Omit<T, "id"> & { id?: string })[], silent: boolean = false) => {
+      const promise = insertRows<T>(ctx, String(resourceName), newItems as T[])
       if (!silent) {
         toast.promise(promise, {
           loading: `Saving ${resourceName}...`,

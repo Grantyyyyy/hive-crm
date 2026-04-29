@@ -70,6 +70,31 @@ export function SendEmailModal({ open, onOpenChange, document, customerEmail: co
       toast.success("Email Sent", {
         description: `${isQuote ? "Quote" : "Invoice"} #${docNumber} emailed to ${customerEmail}.`,
       })
+
+      // Audit log
+      const { supabase } = await import("@/lib/supabaseClient")
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: { session } } = await supabase.auth.getSession()
+        let organizationId = null
+        if (session?.access_token) {
+          try {
+            const payload = JSON.parse(atob(session.access_token.split('.')[1]))
+            organizationId = payload?.org_id ?? null
+          } catch {}
+        }
+        supabase.from('audit_log').insert({
+          entity_type: isQuote ? 'quotes' : 'orders',
+          entity_id: document.data.id,
+          action: isQuote ? 'EMAIL_SENT' : 'INVOICE_EMAILED',
+          changed_by: user.id,
+          organization_id: organizationId,
+          diff: { email: customerEmail, timestamp: new Date().toISOString() }
+        }).then(({ error }: any) => {
+          if (error) console.error("Failed to emit audit log:", error)
+        })
+      }
+
       onOpenChange(false)
       onSuccess?.()
     } catch (e: unknown) {

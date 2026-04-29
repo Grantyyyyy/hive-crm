@@ -262,6 +262,30 @@ export function SalesOrders() {
       const { generateInvoicePDF } = await import("@/services/pdfService")
       await generateInvoicePDF(order)
       toast.success("Invoice PDF Downloaded", { description: `${order.orderNumber} — ready to email to ${order.customerName}.` })
+
+      // Audit log
+      const { supabase } = await import("@/lib/supabaseClient")
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: { session } } = await supabase.auth.getSession()
+        let organizationId = null
+        if (session?.access_token) {
+          try {
+            const payload = JSON.parse(atob(session.access_token.split('.')[1]))
+            organizationId = payload?.org_id ?? null
+          } catch {}
+        }
+        supabase.from('audit_log').insert({
+          entity_type: 'orders',
+          entity_id: order.id,
+          action: 'DOWNLOAD_INVOICE',
+          changed_by: user.id,
+          organization_id: organizationId,
+          diff: { timestamp: new Date().toISOString() }
+        }).then(({ error }: any) => {
+          if (error) console.error("Failed to emit audit log:", error)
+        })
+      }
     } catch (e: unknown) {
       toast.error("Failed to generate invoice PDF", { description: (e as Error).message })
     }

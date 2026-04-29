@@ -40,10 +40,10 @@ export function Header({ onSearchClick }: HeaderProps) {
       <div className="flex items-center gap-2">
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative transition-all hover:bg-accent/5 hover:text-accent">
-              <Bell className="w-5 h-5" />
+            <Button variant="ghost" size="icon" className="relative transition-all hover:bg-accent/5 group">
+              <Bell className="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-accent transition-colors" />
               {unreadCount > 0 && (
-                <span className="absolute top-2 right-2 w-4 h-4 bg-red-600 border-2 border-bg-surface rounded-full flex items-center justify-center text-[8px] font-black text-white">
+                <span className="absolute top-1 right-1 w-4 h-4 bg-red-600 border-2 border-bg-surface rounded-full flex items-center justify-center text-[8px] font-black text-white animate-pulse shadow-sm">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -31,14 +31,14 @@ export function StockAdjustmentModal({
   const [reason, setReason] = useState("")
   const [isAdjusting, setIsAdjusting] = useState(false)
 
-  // Reset form when modal opens with a new item
-  useState(() => {
+  // Reset form every time the modal opens
+  useEffect(() => {
     if (open && item) {
       setNewQuantity(item.stockQuantity.toString())
       setReason("")
       setIsAdjusting(false)
     }
-  })
+  }, [open, item])
 
   const handleConfirm = async () => {
     if (!item) return

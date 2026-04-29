@@ -2,6 +2,35 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { supabase } from "./supabaseClient"
 import type { AuthSession as Session, AuthUser as User } from "@supabase/supabase-js"
 
+// ── Audit Logging for Auth Events ────────────────────────────────────────────
+
+function logAuthEvent(action: string) {
+  supabase.auth.getUser().then(({ data: { user } }) => {
+    if (!user) return;
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      let organizationId = null;
+      if (session?.access_token) {
+        try {
+          const payload = JSON.parse(atob(session.access_token.split('.')[1]));
+          organizationId = payload?.org_id ?? null;
+        } catch {}
+      }
+
+      supabase.from('audit_log').insert({
+        entity_type: 'auth',
+        entity_id: user.id,
+        action,
+        changed_by: user.id,
+        organization_id: organizationId,
+        diff: { timestamp: new Date().toISOString() }
+      }).then(({ error }: any) => {
+        if (error) console.error("[AuthContext] Failed to emit auth audit log:", error);
+      });
+    });
+  });
+}
+
 // ── Context value ─────────────────────────────────────────────────────────────
 
 interface AuthContextValue {
@@ -60,6 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(initialSession?.user ?? null)
       setOrganizationId(extractOrgId(initialSession))
       setIsLoaded(true)
+      if (initialSession?.user) logAuthEvent('LOGIN')
     }).catch((err: any) => {
       console.error('Failed to get initial session:', err)
       setIsLoaded(true)
@@ -73,6 +103,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(newSession?.user ?? null)
       setOrganizationId(extractOrgId(newSession))
       setIsLoaded(true)
+      if (_event === 'SIGNED_IN' && newSession?.user) logAuthEvent('LOGIN')
+      if (_event === 'SIGNED_OUT') logAuthEvent('LOGOUT')
     })
 
     return () => subscription.unsubscribe()

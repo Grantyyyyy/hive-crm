@@ -69,7 +69,9 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
         inventoryItemId: item.id,
         name: item.name,
         quantity: 1,
-        price: item.price * 0.9, // Wholesale discount estimate
+        price: item.movingAverageCost && item.movingAverageCost > 0
+          ? item.movingAverageCost
+          : item.price, // Fallback to retail price if no cost data is available
       }])
     }
     setShowInventory(false)

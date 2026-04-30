@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { useUser, useAuth } from "@/lib/AuthContext";
 import { usePermission } from "@/lib/usePermission";
 import { supabase } from "@/lib/supabaseClient";
+import { useCRMContext } from "@/lib/CRMContext";
 import {
   LayoutDashboard,
   Users,
@@ -29,6 +30,20 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import type { Organization } from "@/lib/types";
+
+
+interface NavLink {
+  href: string;
+  label: string;
+  icon: any;
+  perm?: string;
+}
+
+interface NavGroup {
+  title: string;
+  links: NavLink[];
+}
 
 
 interface SidebarProps {
@@ -43,6 +58,9 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
   const { user } = useUser();
   const { userId, signOut } = useAuth();
   const { can, hasFullAccess, isLoaded: permLoaded } = usePermission();
+  const ctx = useCRMContext();
+  const { data: organizations } = ctx.getResource<Organization>("organizations");
+  const org = organizations[0];
   const [roleName, setRoleName] = useState<string | null>(null);
 
   // Preserve sidebar nav scroll position across remounts (e.g. Protected ↔ PermissionProtected)
@@ -99,7 +117,7 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
 
   // Define nav groups with permission requirements
   // Organized by workflow: Overview → Pipeline → Projects → Sales → Supply Chain → Reports → Settings
-  const navGroups = useMemo(() => [
+  const navGroups: NavGroup[] = useMemo(() => [
     {
       title: "Overview",
       links: [
@@ -237,16 +255,20 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
         {/* Top Section / Logo */}
         <div className="flex h-20 shrink-0 items-center px-6">
           <div className="flex items-center gap-3 w-full overflow-hidden">
-            <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-accent/20">
-              <BarChart3 className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-accent/20 overflow-hidden">
+              {org?.appLogoUrl ? (
+                <img src={org.appLogoUrl} alt="Logo" className="w-full h-full object-cover" />
+              ) : (
+                <BarChart3 className="w-6 h-6 text-white" />
+              )}
             </div>
             {!collapsed && (
               <div className="flex flex-col min-w-0">
                 <span className="text-[15px] font-bold text-text-primary truncate leading-tight">
-                  CRM Hub
+                  {org?.appName || "CRM Hub"}
                 </span>
                 <span className="text-[11px] text-text-muted font-medium truncate uppercase tracking-wider">
-                  Enterprise Suite
+                  {org?.appTagline || "Enterprise Suite"}
                 </span>
               </div>
             )}

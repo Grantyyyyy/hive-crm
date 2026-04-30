@@ -78,6 +78,9 @@ const CAMEL_TO_DB: Record<string, string> = {
   userName: "user_name",
   notificationEmail: "notification_email",
   emailNotificationsEnabled: "email_notifications_enabled",
+  appName: "app_name",
+  appLogoUrl: "app_logo_url",
+  appTagline: "app_tagline",
 }
 
 const DB_TO_CAMEL: Record<string, string> = Object.fromEntries(
@@ -229,7 +232,7 @@ function calculateDiff(oldItem: any, patch: any) {
 
 const PRELOAD_RESOURCES = [
   "leads", "contacts", "deals", "tasks", "activities", "projects",
-  "task_tags", "task_tag_links", "notifications", "users",
+  "task_tags", "task_tag_links", "notifications", "users", "organizations",
 ]
 
 /**

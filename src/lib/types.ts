@@ -500,6 +500,9 @@ export interface Organization {
   slug: string
   createdAt: string
   updatedAt: string
+  appName?: string
+  appLogoUrl?: string
+  appTagline?: string
   memberCount?: number // Virtual field from SQL function
 }
 

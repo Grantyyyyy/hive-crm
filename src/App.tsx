@@ -32,6 +32,7 @@ import { OrganizationsPage } from "./pages/settings/OrganizationsPage";
 import { ProfilePage } from "@/pages/settings/ProfilePage";
 import { AuditLogs } from "@/pages/settings/AuditLogs";
 import { Notifications } from "@/pages/settings/Notifications";
+import { BrandingSettings } from "@/pages/settings/BrandingSettings";
 import { Navbar } from "@/components/Navbar";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -49,7 +50,7 @@ import { useCRMResource } from "@/lib/hooks";
 import { useInventoryAlerts } from "@/lib/hooks/useInventoryAlerts";
 import { AuthProvider, useUser } from "@/lib/AuthContext"
 import { RequirePermission } from "@/components/RequirePermission";
-import type { Quote, SalesOrder, InventoryItem, PurchaseRequest, PurchaseOrder, InventoryTransaction, Task, PurchaseReceipt, PurchaseReceiptItem, ReturnToSupplier } from "@/lib/types";
+import type { Organization, Quote, SalesOrder, InventoryItem, PurchaseRequest, PurchaseOrder, InventoryTransaction, Task, PurchaseReceipt, PurchaseReceiptItem, ReturnToSupplier } from "@/lib/types";
 import { runScheduledJobs } from "@/services/scheduledJobs";
 import type { JobAdapter } from "@/services/types";
 import { setAuthToken, subscribeAuth } from "@/lib/api";
@@ -214,6 +215,14 @@ function AppContent() {
       }
     });
   }, [user, userId]);
+  
+  const ctx = useCRMContext();
+  const { data: organizations } = ctx.getResource<Organization>("organizations");
+  const appName = organizations[0]?.appName || "CRM Hub";
+
+  useEffect(() => {
+    document.title = appName;
+  }, [appName]);
 
   if (!authLoaded || !authReady) {
     return (
@@ -335,6 +344,15 @@ function AppContent() {
                   <AppLayout>
                     <SettingsLayout>
                       <RequirePermission module="organizations" action="read" component={OrganizationsPage} />
+                    </SettingsLayout>
+                  </AppLayout>
+                )}
+              </Route>
+              <Route path="/settings/branding">
+                {() => (
+                  <AppLayout>
+                    <SettingsLayout>
+                      <RequirePermission module="organizations" action="read" component={BrandingSettings} />
                     </SettingsLayout>
                   </AppLayout>
                 )}

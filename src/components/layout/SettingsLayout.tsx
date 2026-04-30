@@ -7,7 +7,8 @@ import {
   Bell, 
   History, 
   Settings as SettingsIcon,
-  ChevronRight
+  ChevronRight,
+  Palette
 } from "lucide-react";
 import { usePermission } from "@/lib/usePermission";
 
@@ -25,6 +26,7 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
     { href: "/settings/users", label: "Users", icon: User, perm: "users" },
     { href: "/settings/roles", label: "Roles", icon: Shield, perm: "roles" },
     { href: "/settings/organizations", label: "Organizations", icon: Building2, perm: "organizations" },
+    { href: "/settings/branding", label: "Branding", icon: Palette, perm: "organizations" },
     { href: "/settings/audit-logs", label: "Audit Logs", icon: History, perm: "users" },
   ];
 

@@ -1,12 +1,14 @@
-import { useState, useMemo, useRef, useEffect } from "react"
+import { useState, useMemo, useRef, useEffect, useCallback } from "react"
 import { Trash2, Info, ChevronDown, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { DatePicker } from "@/components/ui/date-picker"
 import { cn } from "@/lib/utils"
-import type { SalesOrder, SalesOrderStatus, Contact, InventoryItem } from "@/lib/types"
+import type { SalesOrder, SalesOrderStatus, Contact, InventoryItem, Discount, DiscountType } from "@/lib/types"
+import { useCRMResource } from "@/lib/hooks"
 import { generateId } from "@/lib/helpers"
+import { toast } from 'sonner'
 
 interface SalesOrderFormProps {
   onSave: (order: SalesOrder) => void
@@ -23,6 +25,14 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
   const [orderDate] = useState(initialData?.orderDate ? new Date(initialData.orderDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0])
   const [items, setItems] = useState<any[]>(initialData?.items ?? [])
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const { data: allDiscounts } = useCRMResource<Discount>('discounts');
+  const activeLineDiscounts = useMemo(() => allDiscounts.filter(d => d.isActive && d.scope === 'line_item'), [allDiscounts]);
+  const activeOrderDiscounts = useMemo(() => allDiscounts.filter(d => d.isActive && d.scope === 'order'), [allDiscounts]);
+
+  const [orderDiscountId, setOrderDiscountId] = useState<string | undefined>(initialData?.orderDiscountId);
+  const [orderDiscountValue, setOrderDiscountValue] = useState<number | undefined>(initialData?.orderDiscountValue);
+  const [orderDiscountType, setOrderDiscountType] = useState<DiscountType | undefined>(initialData?.orderDiscountType);
   const [showInventory, setShowInventory] = useState(false)
   const [customerSearch, setCustomerSearch] = useState("")
   const [inventorySearch, setInventorySearch] = useState("")
@@ -54,12 +64,76 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
     }
   }, [items.length])
 
+  // Raw subtotal before any order-level discount (but after line-item discounts)
   const subtotal = useMemo(() => {
-    return items.reduce((sum, item) => sum + (item.quantity * item.price), 0)
+    return items.reduce((sum, item) => {
+      let itemTotal = item.quantity * item.price;
+      if (item.discountId && item.discountValue !== undefined) {
+        if (item.discountType === 'percentage') {
+          itemTotal = itemTotal * (1 - item.discountValue / 100);
+        } else if (item.discountType === 'fixed') {
+          itemTotal = Math.max(0, itemTotal - item.discountValue);
+        }
+      }
+      return sum + itemTotal;
+    }, 0)
   }, [items])
 
-  const tax = subtotal * 0.12 // 12% VAT
-  const totalValue = subtotal + tax
+  // Check if an order discount's minOrderAmount is met
+  const isOrderDiscountValid = useCallback((discountId: string | undefined) => {
+    if (!discountId) return true;
+    const discount = activeOrderDiscounts.find(d => d.id === discountId);
+    if (!discount || !discount.minOrderAmount) return true;
+    return subtotal >= discount.minOrderAmount;
+  }, [activeOrderDiscounts, subtotal]);
+
+  // Auto-remove order discount if subtotal drops below minimum
+  useEffect(() => {
+    if (orderDiscountId && !isOrderDiscountValid(orderDiscountId)) {
+      const discount = activeOrderDiscounts.find(d => d.id === orderDiscountId);
+      if (discount?.minOrderAmount) {
+        toast.warning(`Order discount "${discount.name}" removed`, {
+          description: `Subtotal ($${subtotal.toFixed(2)}) is below the minimum of $${discount.minOrderAmount.toFixed(2)}.`
+        });
+        setOrderDiscountId(undefined);
+        setOrderDiscountValue(undefined);
+        setOrderDiscountType(undefined);
+      }
+    }
+  }, [subtotal, orderDiscountId, activeOrderDiscounts, isOrderDiscountValid]);
+
+  // Auto-remove line-item discounts if line total drops below minimum
+  useEffect(() => {
+    let changed = false;
+    const updated = items.map(item => {
+      if (!item.discountId) return item;
+      const disc = activeLineDiscounts.find(d => d.id === item.discountId);
+      if (!disc || !disc.minOrderAmount) return item;
+      const lineTotal = item.quantity * item.price;
+      if (lineTotal < disc.minOrderAmount) {
+        toast.warning(`Discount "${disc.name}" removed from ${item.name}`, {
+          description: `Line total ($${lineTotal.toFixed(2)}) is below the minimum of $${disc.minOrderAmount.toFixed(2)}.`
+        });
+        changed = true;
+        return { ...item, discountId: undefined, discountValue: undefined, discountType: undefined };
+      }
+      return item;
+    });
+    if (changed) setItems(updated);
+  }, [items, activeLineDiscounts]);
+
+  const orderDiscountAmount = useMemo(() => {
+    if (!orderDiscountId || orderDiscountValue === undefined) return 0;
+    if (orderDiscountType === 'percentage') {
+      return subtotal * (orderDiscountValue / 100);
+    } else {
+      return Math.min(subtotal, orderDiscountValue);
+    }
+  }, [subtotal, orderDiscountId, orderDiscountValue, orderDiscountType]);
+
+  const discountedSubtotal = subtotal - orderDiscountAmount;
+  const tax = discountedSubtotal * 0.12 // 12% VAT
+  const totalValue = discountedSubtotal + tax
 
   const canAddNewItem = useMemo(() => {
     if (items.length === 0) return true
@@ -110,6 +184,13 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
       if (!item.name.trim()) newErrors[`item_${index}_name`] = "Name required"
     })
 
+    if (orderDiscountId) {
+      const discount = activeOrderDiscounts.find(d => d.id === orderDiscountId);
+      if (discount && discount.minOrderAmount && subtotal < discount.minOrderAmount) {
+        newErrors.orderDiscount = `Minimum order amount of $${discount.minOrderAmount} required for this discount.`;
+      }
+    }
+
     setErrors(newErrors)
 
     if (Object.keys(newErrors).length > 0) {
@@ -143,6 +224,9 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
       status,
       orderDate: new Date(orderDate).toISOString(),
       items,
+      orderDiscountId,
+      orderDiscountValue,
+      orderDiscountType,
       createdAt: initialData?.createdAt ?? new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }
@@ -395,11 +479,56 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
                           value={item.price}
                           onChange={(e) => updateItem(item.id, { price: parseFloat(e.target.value) || 0 })}
                         />
+                        <div className="mt-2">
+                          <select
+                            className="w-full h-7 text-[10px] bg-slate-50 border border-slate-200 rounded text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400"
+                            value={item.discountId || ""}
+                            onChange={e => {
+                              const val = e.target.value;
+                              if (!val) {
+                                updateItem(item.id, { discountId: undefined, discountValue: undefined, discountType: undefined });
+                              } else {
+                                const d = activeLineDiscounts.find(x => x.id === val);
+                                if (d) {
+                                  // Check minOrderAmount against line total
+                                  const lineTotal = item.quantity * item.price;
+                                  if (d.minOrderAmount && lineTotal < d.minOrderAmount) {
+                                    toast.error(`Cannot apply "${d.name}"`, {
+                                      description: `Line total ($${lineTotal.toFixed(2)}) must be at least $${d.minOrderAmount.toFixed(2)}.`
+                                    });
+                                    e.target.value = item.discountId || "";
+                                    return;
+                                  }
+                                  updateItem(item.id, { discountId: d.id, discountValue: d.value, discountType: d.type });
+                                }
+                              }
+                            }}
+                          >
+                            <option value="">No Discount</option>
+                            {activeLineDiscounts.map(d => (
+                              <option key={d.id} value={d.id}>{d.name} ({d.type === 'percentage' ? `${d.value}%` : `$${d.value}`})</option>
+                            ))}
+                          </select>
+                        </div>
                       </td>
                       <td className="px-4 py-4 align-top text-right pt-5">
-                        <p className="text-[13px] font-black text-slate-900 dark:text-white tracking-tight">
-                          ${(item.quantity * item.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                        </p>
+                        <div className="flex flex-col items-end gap-1">
+                          {item.discountId && item.discountValue !== undefined && (
+                            <span className="text-[10px] text-slate-400 line-through">
+                              ${(item.quantity * item.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            </span>
+                          )}
+                          <p className="text-[13px] font-black text-slate-900 dark:text-white tracking-tight">
+                            ${(() => {
+                              let total = item.quantity * item.price;
+                              if (item.discountId && item.discountValue !== undefined) {
+                                if (item.discountType === 'percentage') total *= (1 - item.discountValue / 100);
+                                else if (item.discountType === 'fixed') total = Math.max(0, total - item.discountValue);
+                              }
+                              return total;
+                            })().toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                          </p>
+                        </div>
                       </td>
                       <td className="px-6 py-4 align-top text-right pt-5">
                         <button
@@ -417,16 +546,70 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
 
             <div className="mt-8 flex justify-end">
               <div className="flex flex-col items-end min-w-[320px] gap-4">
-                <div className="flex items-center gap-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                <div className="flex items-center gap-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 w-full justify-between">
                   <span>Line Total</span>
                   <span className="text-slate-900 dark:text-white min-w-[100px] text-right">${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                 </div>
-                <div className="flex items-center gap-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+
+                <div className="flex items-center gap-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 w-full justify-between">
+                  <span>Order Discount</span>
+                  <div className="flex flex-col items-end gap-1">
+                    <select
+                      className={cn(
+                        "h-7 text-[10px] bg-slate-50 border border-slate-200 rounded text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400 max-w-[140px]",
+                        errors.orderDiscount && "border-red-500"
+                      )}
+                      value={orderDiscountId || ""}
+                      onChange={e => {
+                        const val = e.target.value;
+                        if (!val) {
+                          setOrderDiscountId(undefined);
+                          setOrderDiscountValue(undefined);
+                          setOrderDiscountType(undefined);
+                        } else {
+                          const d = activeOrderDiscounts.find(x => x.id === val);
+                          if (d) {
+                            // Check minOrderAmount against subtotal
+                            if (d.minOrderAmount && subtotal < d.minOrderAmount) {
+                              toast.error(`Cannot apply "${d.name}"`, {
+                                description: `Subtotal ($${subtotal.toFixed(2)}) must be at least $${d.minOrderAmount.toFixed(2)}.`
+                              });
+                              e.target.value = orderDiscountId || "";
+                              return;
+                            }
+                            setOrderDiscountId(d.id);
+                            setOrderDiscountValue(d.value);
+                            setOrderDiscountType(d.type);
+                          }
+                        }
+                        if (errors.orderDiscount) {
+                          setErrors(prev => { const n = { ...prev }; delete n.orderDiscount; return n; });
+                        }
+                      }}
+                    >
+                      <option value="">No Order Discount</option>
+                      {activeOrderDiscounts.map(d => (
+                        <option key={d.id} value={d.id}>{d.name} ({d.type === 'percentage' ? `${d.value}%` : `$${d.value}`})</option>
+                      ))}
+                    </select>
+                    {orderDiscountAmount > 0 && (
+                      <span className="text-teal-600 dark:text-teal-400">-${orderDiscountAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                    )}
+                  </div>
+                </div>
+                {errors.orderDiscount && <p className="text-[9px] font-bold text-red-500 uppercase mt-[-8px] text-right">{errors.orderDiscount}</p>}
+
+                <div className="flex items-center gap-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 w-full justify-between">
+                  <span>Discounted Total</span>
+                  <span className="text-slate-900 dark:text-white min-w-[100px] text-right">${discountedSubtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                </div>
+
+                <div className="flex items-center gap-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 w-full justify-between">
                   <span>VAT (12%)</span>
                   <span className="text-slate-900 dark:text-white min-w-[100px] text-right">${tax.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                 </div>
-                <div className="w-48 h-px bg-slate-200 dark:bg-slate-800 my-1" />
-                <div className="flex items-center gap-12">
+                <div className="w-full h-px bg-slate-200 dark:bg-slate-800 my-1" />
+                <div className="flex items-center gap-12 w-full justify-between">
                   <span className="text-[10px] font-black uppercase tracking-[0.3em] text-teal-600">Total Amount</span>
                   <span className="text-4xl font-black text-slate-900 dark:text-white tabular-nums tracking-tighter">
                     ${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}

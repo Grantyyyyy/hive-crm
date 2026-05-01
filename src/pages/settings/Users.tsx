@@ -137,7 +137,8 @@ function UserRoleBadge({ roleName }: { roleName?: string }) {
         return 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400';
       default:
         return 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400';
-    }  };
+    }
+  };
 
   return (
     <div className={cn("px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest w-fit border border-transparent shadow-sm", getRoleStyle(roleName))}>
@@ -339,7 +340,7 @@ export function Users() {
       if (data.roleId) {
         updateRoleMutation.mutate({ appUserId: selectedUser.id, roleId: data.roleId });
       } else {
-          toast.error("Please select a role");
+        toast.error("Please select a role");
       }
     } else {
       if (data.inviteMode) {
@@ -417,136 +418,136 @@ export function Users() {
           )}
         </div>
       </div>
-        {/* Search and Filters Bar (Match Leads.tsx Style exactly) */}
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
-          <div className="relative flex-1 w-full lg:max-w-md">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              placeholder="Search by name or email..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
-            />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-            <StatusTabs<string>
-              tabs={roleTabs}
-              value={roleFilter}
-              onChange={setRoleFilter}
-              allLabel="All Users"
-            />
-            <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
-            <Button variant="outlineNeutral" className="h-10 px-4 rounded-md font-bold text-xs uppercase tracking-widest">
-              <Filter className="w-4 h-4" /> More Filters
-            </Button>
-          </div>
+      {/* Search and Filters Bar (Match Leads.tsx Style exactly) */}
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+        <div className="relative flex-1 w-full lg:max-w-md">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <input
+            placeholder="Search by name or email..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
+          />
         </div>
 
-        {/* Main Table Container */}
-        <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left table-auto">
-              <thead>
-                <tr className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
-                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Member</th>
-                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Email Address</th>
-                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Role</th>
-                  <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
+        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+          <StatusTabs<string>
+            tabs={roleTabs}
+            value={roleFilter}
+            onChange={setRoleFilter}
+            allLabel="All Users"
+          />
+          <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
+          <Button variant="outlineNeutral" className="h-10 px-4 rounded-md font-bold text-xs uppercase tracking-widest">
+            <Filter className="w-4 h-4" /> More Filters
+          </Button>
+        </div>
+      </div>
+
+      {/* Main Table Container */}
+      <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left table-auto">
+            <thead>
+              <tr className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
+                <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Member</th>
+                <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Email Address</th>
+                <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400">Role</th>
+                <th className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
+              {paginatedUsers.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="py-20 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <UserIcon className="w-10 h-10 text-slate-300" />
+                      <p className="text-slate-500 font-medium">No members found.</p>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
-                {paginatedUsers.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="py-20 text-center">
-                      <div className="flex flex-col items-center gap-3">
-                        <UserIcon className="w-10 h-10 text-slate-300" />
-                        <p className="text-slate-500 font-medium">No members found.</p>
+              ) : (
+                paginatedUsers.map((u) => (
+                  <tr
+                    key={u.id}
+                    className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors cursor-pointer group border-l-2 border-l-transparent hover:border-l-teal-500"
+                  >
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="size-9 rounded-full bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center text-teal-600 dark:text-teal-400 text-sm font-bold uppercase shadow-sm">
+                          {u.name?.charAt(0) || 'U'}
+                        </div>
+                        <div>
+                          <p className="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            {u.name}
+                            {u.role?.name === 'Admin' && (
+                              <span title="Admin User"><Shield className="w-3.5 h-3.5 text-amber-500" /></span>
+                            )}
+                            {u.authUserId === userId && (
+                              <Badge variant="secondary" className="text-[9px] uppercase tracking-tighter h-4 px-1 bg-teal-50 text-teal-600 dark:bg-teal-900/20 dark:text-teal-400 border-teal-100 dark:border-teal-800">You</Badge>
+                            )}
+                          </p>
+                          <p className="text-[11px] text-slate-400 font-medium md:hidden">{u.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 hidden md:table-cell">
+                      <span className="text-[13px] font-medium text-slate-600 dark:text-slate-400">{u.email}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <UserRoleBadge roleName={u.role?.name} />
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex justify-end items-center gap-2">
+                        {(() => {
+                          const isProtectedAdmin = u.role?.name === 'Admin' || u.role?.name === 'Super Admin' || !!u.isSuperadmin;
+                          const rowCanEdit = isSuperAdmin || (isAdmin && !isProtectedAdmin);
+                          const rowCanDelete = isSuperAdmin || (isAdmin && !isProtectedAdmin);
+
+                          return (
+                            <>
+                              {canUpdate && rowCanEdit && u.authUserId !== user?.id && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openRoleDialog(u)}
+                                  className="text-[11px] h-7 px-3 font-bold text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <Shield className="w-3.5 h-3.5 mr-1" /> Role
+                                </Button>
+                              )}
+                              <UserActionsMenu
+                                u={u}
+                                currentUserId={user?.id}
+                                onChangeRole={() => openRoleDialog(u)}
+                                onRemove={() => handleRemoveUser(u)}
+                                removePending={removeUserMutation.isPending}
+                                canUpdate={canUpdate && rowCanEdit}
+                                canDelete={canDelete && rowCanDelete}
+                              />
+                            </>
+                          );
+                        })()}
                       </div>
                     </td>
                   </tr>
-                ) : (
-                  paginatedUsers.map((u) => (
-                    <tr
-                      key={u.id}
-                      className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors cursor-pointer group border-l-2 border-l-transparent hover:border-l-teal-500"
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="size-9 rounded-full bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center text-teal-600 dark:text-teal-400 text-sm font-bold uppercase shadow-sm">
-                            {u.name?.charAt(0) || 'U'}
-                          </div>
-                          <div>
-                            <p className="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                              {u.name}
-                              {u.role?.name === 'Admin' && (
-                                <span title="Admin User"><Shield className="w-3.5 h-3.5 text-amber-500" /></span>
-                              )}
-                              {u.authUserId === userId && (
-                                <Badge variant="secondary" className="text-[9px] uppercase tracking-tighter h-4 px-1 bg-teal-50 text-teal-600 dark:bg-teal-900/20 dark:text-teal-400 border-teal-100 dark:border-teal-800">You</Badge>
-                              )}
-                            </p>
-                            <p className="text-[11px] text-slate-400 font-medium md:hidden">{u.email}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 hidden md:table-cell">
-                        <span className="text-[13px] font-medium text-slate-600 dark:text-slate-400">{u.email}</span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <UserRoleBadge roleName={u.role?.name} />
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end items-center gap-2">
-                          {(() => {
-                            const isProtectedAdmin = u.role?.name === 'Admin' || u.role?.name === 'Super Admin' || !!u.isSuperadmin;
-                            const rowCanEdit = isSuperAdmin || (isAdmin && !isProtectedAdmin);
-                            const rowCanDelete = isSuperAdmin || (isAdmin && !isProtectedAdmin);
-                            
-                            return (
-                              <>
-                                {canUpdate && rowCanEdit && u.authUserId !== user?.id && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => openRoleDialog(u)}
-                                    className="text-[11px] h-7 px-3 font-bold text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                                  >
-                                    <Shield className="w-3.5 h-3.5 mr-1" /> Role
-                                  </Button>
-                                )}
-                                <UserActionsMenu
-                                  u={u}
-                                  currentUserId={user?.id}
-                                  onChangeRole={() => openRoleDialog(u)}
-                                  onRemove={() => handleRemoveUser(u)}
-                                  removePending={removeUserMutation.isPending}
-                                  canUpdate={canUpdate && rowCanEdit}
-                                  canDelete={canDelete && rowCanDelete}
-                                />
-                              </>
-                            );
-                          })()}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {totalPages > 1 && (
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              totalItems={filteredUsers.length}
-              itemsPerPage={itemsPerPage}
-              itemLabel="users"
-            />
-          )}
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
+
+        {totalPages > 1 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            totalItems={filteredUsers.length}
+            itemsPerPage={itemsPerPage}
+            itemLabel="users"
+          />
+        )}
+      </div>
 
       {/* Unified User Sheet */}
       <UserSheet

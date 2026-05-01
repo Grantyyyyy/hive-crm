@@ -27,6 +27,7 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
     { href: "/settings/roles", label: "Roles", icon: Shield, perm: "roles" },
     { href: "/settings/organizations", label: "Organizations", icon: Building2, perm: "organizations" },
     { href: "/settings/branding", label: "Branding", icon: Palette, perm: "organizations" },
+    { href: "/settings/discounts", label: "Discounts", icon: SettingsIcon, perm: "organizations" },
     { href: "/settings/audit-logs", label: "Audit Logs", icon: History, perm: "users" },
   ];
 

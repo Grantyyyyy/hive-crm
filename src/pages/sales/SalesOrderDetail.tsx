@@ -391,9 +391,30 @@ export function SalesOrderDetail() {
   const fmt = (n: number) =>
     new Intl.NumberFormat("en-US", { style: "currency", currency: order.currency || "USD", minimumFractionDigits: 2 }).format(n)
 
-  const subtotal = order.items.reduce((s, i) => s + i.quantity * i.price, 0)
-  const tax = subtotal * 0.1
-  const total = subtotal + tax
+  const subtotal = order.items.reduce((s, i) => {
+    let itemTotal = i.quantity * i.price;
+    if (i.discountId && i.discountValue !== undefined) {
+      if (i.discountType === 'percentage') {
+         itemTotal *= (1 - i.discountValue / 100);
+      } else if (i.discountType === 'fixed') {
+         itemTotal = Math.max(0, itemTotal - i.discountValue);
+      }
+    }
+    return s + itemTotal;
+  }, 0)
+
+  let orderDiscountAmount = 0;
+  if (order.orderDiscountId && order.orderDiscountValue !== undefined) {
+    if (order.orderDiscountType === 'percentage') {
+       orderDiscountAmount = subtotal * (order.orderDiscountValue / 100);
+    } else if (order.orderDiscountType === 'fixed') {
+       orderDiscountAmount = Math.min(subtotal, order.orderDiscountValue);
+    }
+  }
+
+  const discountedSubtotal = subtotal - orderDiscountAmount;
+  const tax = discountedSubtotal * 0.12 // 12% VAT
+  const total = discountedSubtotal + tax
 
   const statusOrderMap: Record<SalesOrderStatus, number> = {
     cancelled: -1,
@@ -586,6 +607,7 @@ export function SalesOrderDetail() {
                     <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">Product</th>
                     <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-center">Qty</th>
                     <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Unit Price</th>
+                    <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Discount</th>
                     <th className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Total</th>
                   </tr>
                 </thead>
@@ -626,22 +648,50 @@ export function SalesOrderDetail() {
                         </td>
                         <td className="px-6 py-4 text-sm text-center text-slate-600 dark:text-slate-400">{item.quantity}</td>
                         <td className="px-6 py-4 text-sm text-right text-slate-600 dark:text-slate-400">{fmt(item.price)}</td>
-                        <td className="px-6 py-4 text-sm font-bold text-right text-slate-900 dark:text-white">{fmt(item.quantity * item.price)}</td>
+                        <td className="px-6 py-4 text-sm text-right text-slate-600 dark:text-slate-400">
+                           {item.discountId && item.discountValue !== undefined ? (
+                              <span className="text-teal-600 dark:text-teal-400 font-medium">
+                                -{item.discountType === 'fixed' ? fmt(item.discountValue) : `${item.discountValue}%`}
+                              </span>
+                           ) : <span className="text-slate-300">-</span>}
+                        </td>
+                        <td className="px-6 py-4 text-sm font-bold text-right text-slate-900 dark:text-white">
+                           {fmt((() => {
+                             let t = item.quantity * item.price;
+                             if (item.discountId && item.discountValue !== undefined) {
+                               if (item.discountType === 'percentage') t *= (1 - item.discountValue/100);
+                               else t = Math.max(0, t - item.discountValue);
+                             }
+                             return t;
+                           })())}
+                        </td>
                       </tr>
                     )
                   })}
                 </tbody>
                 <tfoot>
                   <tr className="border-t border-slate-200 dark:border-slate-700">
-                    <td colSpan={4} className="px-6 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400">Subtotal</td>
+                    <td colSpan={5} className="px-6 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400">Line Subtotal</td>
                     <td className="px-6 py-3 text-right text-sm font-bold text-slate-700 dark:text-slate-300">{fmt(subtotal)}</td>
                   </tr>
+                  {orderDiscountAmount > 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400">Order Discount</td>
+                      <td className="px-6 py-2 text-right text-sm font-bold text-teal-600 dark:text-teal-400">-{fmt(orderDiscountAmount)}</td>
+                    </tr>
+                  )}
+                  {orderDiscountAmount > 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400">Discounted Subtotal</td>
+                      <td className="px-6 py-2 text-right text-sm font-bold text-slate-700 dark:text-slate-300">{fmt(discountedSubtotal)}</td>
+                    </tr>
+                  )}
                   <tr>
-                    <td colSpan={4} className="px-6 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400">Tax (10%)</td>
+                    <td colSpan={5} className="px-6 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400">Tax (12%)</td>
                     <td className="px-6 py-2 text-right text-sm font-semibold text-slate-600 dark:text-slate-400">{fmt(tax)}</td>
                   </tr>
                   <tr className="bg-slate-50/50 dark:bg-slate-800/30">
-                    <td colSpan={4} className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300">Total Due</td>
+                    <td colSpan={5} className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300">Total Due</td>
                     <td className="px-6 py-4 text-right text-lg font-black text-teal-600 dark:text-teal-400">{fmt(total)}</td>
                   </tr>
                 </tfoot>
@@ -708,8 +758,20 @@ export function SalesOrderDetail() {
                   <span className="text-slate-500 font-medium">Subtotal</span>
                   <span className="font-semibold text-slate-700 dark:text-slate-300">{fmt(subtotal)}</span>
                 </div>
+                {orderDiscountAmount > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 font-medium">Order Discount</span>
+                    <span className="font-semibold text-teal-600 dark:text-teal-400">-{fmt(orderDiscountAmount)}</span>
+                  </div>
+                )}
+                {orderDiscountAmount > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 font-medium">Discounted Subtotal</span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">{fmt(discountedSubtotal)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
-                  <span className="text-slate-500 font-medium">Tax (10%)</span>
+                  <span className="text-slate-500 font-medium">Tax (12%)</span>
                   <span className="font-semibold text-slate-600 dark:text-slate-400">{fmt(tax)}</span>
                 </div>
                 <div className="flex justify-between pt-3 border-t border-slate-200 dark:border-slate-700">

@@ -42,7 +42,7 @@ import { format } from 'date-fns';
 
 function OrganizationMembers({ organizationId }: { organizationId: string }) {
   const { isLoaded: authLoaded } = useAuth();
-  
+
   const { data: members, isLoading } = useQuery({
     queryKey: ['org-members', organizationId],
     queryFn: async () => {
@@ -57,7 +57,7 @@ function OrganizationMembers({ organizationId }: { organizationId: string }) {
           )
         `)
         .eq('organization_id', organizationId);
-      
+
       if (error) throw error;
       return data as any[];
     },
@@ -85,8 +85,8 @@ function OrganizationMembers({ organizationId }: { organizationId: string }) {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {members.map((member) => (
-            <div 
-              key={member.id} 
+            <div
+              key={member.id}
               className="flex items-center justify-between p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm"
             >
               <div className="flex items-center gap-3">
@@ -124,7 +124,7 @@ export function OrganizationsPage() {
   // Page State
   const [search, setSearch] = useState("");
   const [expandedOrgId, setExpandedOrgId] = useState<string | null>(null);
-  
+
   // Dialog State
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -158,8 +158,8 @@ export function OrganizationsPage() {
 
       // Fetch member counts for each org
       const orgsWithCounts = await Promise.all(mappedData.map(async (org) => {
-        const { data: count, error: countError } = await supabase.rpc('get_organization_member_count', { 
-          org_id_param: org.id 
+        const { data: count, error: countError } = await supabase.rpc('get_organization_member_count', {
+          org_id_param: org.id
         });
         return { ...org, memberCount: count || 0 };
       }));
@@ -234,8 +234,8 @@ export function OrganizationsPage() {
 
   const filteredOrgs = useMemo(() => {
     if (!orgs) return [];
-    return orgs.filter(o => 
-      o.name.toLowerCase().includes(search.toLowerCase()) || 
+    return orgs.filter(o =>
+      o.name.toLowerCase().includes(search.toLowerCase()) ||
       o.slug.toLowerCase().includes(search.toLowerCase())
     );
   }, [orgs, search]);
@@ -286,16 +286,29 @@ export function OrganizationsPage() {
   return (
     <div className="animate-fade-in space-y-8">
       {/* Header Region */}
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Tenants & Organizations</h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm">Manage multi-tenant isolation and platform entities.</p>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
+
+        <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
+          {/* Minimized Search Bar */}
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              placeholder="Search organizations..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
+            />
+          </div>
+
           {isSuperAdmin && (
-            <Button 
+            <Button
+              variant="brand"
               onClick={() => setShowAddDialog(true)}
-              className="bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-teal-200 dark:shadow-none h-11 px-6"
+              className="shadow-md shadow-teal-100 dark:shadow-none w-full sm:w-auto h-10"
             >
               <PlusCircle className="w-4 h-4 mr-2" /> New Organization
             </Button>
@@ -303,126 +316,115 @@ export function OrganizationsPage() {
         </div>
       </div>
 
-        {/* Search Bar */}
-        <div className="relative max-w-md w-full">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input
-            placeholder="Search organizations by name or slug..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-11 h-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
-          />
-        </div>
-
-        {/* Main Content Card */}
-        <Card className="bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
-                  <th className="w-12 px-4 py-3"></th>
-                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-tight text-slate-400">Organization Name</th>
-                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-tight text-slate-400">URL Slug</th>
-                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-tight text-slate-400">Members</th>
-                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-tight text-slate-400">Created At</th>
-                  <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-tight text-slate-400 text-right">Actions</th>
+      {/* Main Content Card */}
+      <Card className="bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
+                <th className="w-12 px-4 py-3"></th>
+                <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-tight text-slate-400">Organization Name</th>
+                <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-tight text-slate-400">URL Slug</th>
+                <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-tight text-slate-400">Members</th>
+                <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-tight text-slate-400">Created At</th>
+                <th className="px-4 py-3 text-[11px] font-bold uppercase tracking-tight text-slate-400 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
+              {filteredOrgs.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-20 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <Building2 className="w-10 h-10 text-slate-200" />
+                      <p className="text-slate-500 font-medium">No organizations found.</p>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
-                {filteredOrgs.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-20 text-center">
-                      <div className="flex flex-col items-center gap-3">
-                        <Building2 className="w-10 h-10 text-slate-200" />
-                        <p className="text-slate-500 font-medium">No organizations found.</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredOrgs.map((org) => (
-                    <React.Fragment key={org.id}>
-                      <tr 
-                        className={cn(
-                          "hover:bg-slate-50 dark:hover:bg-slate-800/30 border-l-4 border-transparent hover:border-teal-600 transition-all cursor-pointer group",
-                          expandedOrgId === org.id && "bg-slate-50/50 dark:bg-slate-800/20 border-teal-600"
+              ) : (
+                filteredOrgs.map((org) => (
+                  <React.Fragment key={org.id}>
+                    <tr
+                      className={cn(
+                        "hover:bg-slate-50 dark:hover:bg-slate-800/30 border-l-4 border-transparent hover:border-teal-600 transition-all cursor-pointer group",
+                        expandedOrgId === org.id && "bg-slate-50/50 dark:bg-slate-800/20 border-teal-600"
+                      )}
+                      onClick={() => setExpandedOrgId(expandedOrgId === org.id ? null : org.id)}
+                    >
+                      <td className="px-4 py-4 text-center">
+                        {expandedOrgId === org.id ? (
+                          <ChevronDown className="w-4 h-4 text-teal-600" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-teal-600" />
                         )}
-                        onClick={() => setExpandedOrgId(expandedOrgId === org.id ? null : org.id)}
-                      >
-                        <td className="px-4 py-4 text-center">
-                          {expandedOrgId === org.id ? (
-                            <ChevronDown className="w-4 h-4 text-teal-600" />
-                          ) : (
-                            <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-teal-600" />
-                          )}
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="size-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-teal-600 group-hover:bg-teal-600 group-hover:text-white transition-colors">
-                              <Building2 className="w-5 h-5" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-bold text-slate-900 dark:text-white">{org.name}</p>
-                              {org.id === currentOrgId && (
-                                <Badge className="text-[9px] font-black uppercase tracking-widest bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 border-teal-100 dark:border-teal-800 mt-0.5">Your Organization</Badge>
-                              )}
-                            </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="size-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-teal-600 group-hover:bg-teal-600 group-hover:text-white transition-colors">
+                            <Building2 className="w-5 h-5" />
                           </div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <code className="text-[11px] font-bold bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-slate-600 dark:text-slate-400">/{org.slug}</code>
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-2">
-                            <Users className="w-3.5 h-3.5 text-slate-400" />
-                            <span className="text-xs font-bold text-slate-900 dark:text-white">{org.memberCount || 0}</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <span className="text-xs text-slate-500 font-medium">{format(new Date(org.createdAt), 'MMM d, yyyy')}</span>
-                        </td>
-                        <td className="px-4 py-4 text-right">
-                          <div className="flex justify-end items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="size-8 rounded-lg text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20"
-                              onClick={() => {
-                                setEditingOrg(org);
-                                setShowEditDialog(true);
-                              }}
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </Button>
-                            {isSuperAdmin && (
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="size-8 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
-                                onClick={() => {
-                                  setOrgToDelete(org);
-                                  setShowDeleteModal(true);
-                                }}
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
+                          <div>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white">{org.name}</p>
+                            {org.id === currentOrgId && (
+                              <Badge className="text-[9px] font-black uppercase tracking-widest bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 border-teal-100 dark:border-teal-800 mt-0.5">Your Organization</Badge>
                             )}
                           </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <code className="text-[11px] font-bold bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-slate-600 dark:text-slate-400">/{org.slug}</code>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex items-center gap-2">
+                          <Users className="w-3.5 h-3.5 text-slate-400" />
+                          <span className="text-xs font-bold text-slate-900 dark:text-white">{org.memberCount || 0}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className="text-xs text-slate-500 font-medium">{format(new Date(org.createdAt), 'MMM d, yyyy')}</span>
+                      </td>
+                      <td className="px-4 py-4 text-right">
+                        <div className="flex justify-end items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 rounded-lg text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20"
+                            onClick={() => {
+                              setEditingOrg(org);
+                              setShowEditDialog(true);
+                            }}
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </Button>
+                          {isSuperAdmin && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                              onClick={() => {
+                                setOrgToDelete(org);
+                                setShowDeleteModal(true);
+                              }}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                    {expandedOrgId === org.id && (
+                      <tr>
+                        <td colSpan={6} className="p-0 border-none">
+                          <OrganizationMembers organizationId={org.id} />
                         </td>
                       </tr>
-                      {expandedOrgId === org.id && (
-                        <tr>
-                          <td colSpan={6} className="p-0 border-none">
-                            <OrganizationMembers organizationId={org.id} />
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+                    )}
+                  </React.Fragment>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
 
       {/* Add Organization Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
@@ -461,8 +463,8 @@ export function OrganizationsPage() {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)} className="h-11 rounded-xl uppercase text-xs font-bold">Cancel</Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="h-11 rounded-xl bg-teal-600 hover:bg-teal-700 text-white uppercase text-xs font-bold shadow-lg shadow-teal-100 dark:shadow-none min-w-[120px]"
                 disabled={createOrgMutation.isPending}
               >
@@ -505,8 +507,8 @@ export function OrganizationsPage() {
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)} className="h-11 rounded-xl uppercase text-xs font-bold">Cancel</Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="h-11 rounded-xl bg-teal-600 hover:bg-teal-700 text-white uppercase text-xs font-bold"
                 disabled={updateOrgMutation.isPending}
               >

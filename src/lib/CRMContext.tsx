@@ -35,6 +35,7 @@ export const TABLE_MAP: Record<string, string> = {
   audit_log: "audit_log",
   notifications: "notifications",
   users: "app_users",
+  discounts: "discounts",
 }
 
 // ── Case converters ──────────────────────────────────────────────────────────

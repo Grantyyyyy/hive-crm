@@ -107,149 +107,149 @@ export function BrandingSettings() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="animate-fade-in space-y-8">
+      {/* Header Region */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-2">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Branding</h2>
-          <p className="text-text-muted">
-            Customize the identity of your application.
-          </p>
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Branding & Identity</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Customize the platform's visual identity and brand presence.</p>
         </div>
-        <div className="flex gap-2">
+        
+        <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
           <Button
             variant="outline"
             onClick={handleReset}
-            className="gap-2"
+            className="h-10 rounded-md font-bold text-xs uppercase tracking-widest w-full sm:w-auto border-slate-200 dark:border-slate-800"
           >
-            <RefreshCcw className="w-4 h-4" />
-            Reset
+            <RefreshCcw className="w-4 h-4 mr-2" /> Reset
           </Button>
           <Button
+            variant="brand"
             onClick={handleSave}
             disabled={isSaving}
-            className="bg-accent hover:bg-accent/90 text-white gap-2 px-8"
+            className="h-10 rounded-md font-bold text-xs uppercase tracking-widest w-full sm:w-auto shadow-md shadow-teal-100 dark:shadow-none px-8"
           >
             {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
             ) : (
-              <Save className="w-4 h-4" />
+              <Save className="w-4 h-4 mr-2" />
             )}
-            Save Changes
+            Save Configuration
           </Button>
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="border-border/50 bg-bg-surface/50 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Layout className="w-5 h-5 text-accent" />
-              App Configuration
-            </CardTitle>
-            <CardDescription>
-              Set the name and tagline that appears in the sidebar.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="appName">Application Name</Label>
-              <Input
-                id="appName"
-                value={appName}
-                onChange={(e) => setAppName(e.target.value)}
-                placeholder="e.g. My Company CRM"
-                className="bg-bg-elevated/50 border-border/50"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="appTagline" className="flex items-center gap-2">
-                <Type className="w-3.5 h-3.5" />
-                Tagline
-              </Label>
-              <Input
-                id="appTagline"
-                value={appTagline}
-                onChange={(e) => setAppTagline(e.target.value)}
-                placeholder="e.g. Enterprise Suite"
-                className="bg-bg-elevated/50 border-border/50"
-              />
-              <p className="text-[11px] text-text-muted italic">
-                A short description that appears below the app name.
-              </p>
+      <div className="grid gap-8 md:grid-cols-2">
+        {/* Configuration Card */}
+        <div className="group relative overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-0 shadow-sm transition-all duration-500">
+          {/* Background Decorative Element */}
+          <div className="absolute top-0 right-0 p-8 -mr-8 -mt-8 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity pointer-events-none">
+            <Layout className="size-32 rotate-12 text-teal-600" />
+          </div>
+
+          <div className="p-8 relative space-y-8">
+            <div className="space-y-1">
+              <h3 className="font-black text-slate-900 dark:text-white text-lg tracking-tight flex items-center gap-2">
+                <Layout className="w-5 h-5 text-teal-600" />
+                App Configuration
+              </h3>
+              <p className="text-xs text-slate-400 font-medium">Set the name and tagline for your organization's instance.</p>
             </div>
 
-            <div className="space-y-2">
-              <Label>Application Logo</Label>
-              <div className="flex flex-col gap-3">
-                <div className="flex gap-2">
-                  <Input
-                    value={appLogoUrl}
-                    onChange={(e) => setAppLogoUrl(e.target.value)}
-                    placeholder="URL to logo image"
-                    className="bg-bg-elevated/50 border-border/50"
-                  />
-                  <input
-                    type="file"
-                    accept="image/*"
-                    ref={fileInputRef}
-                    onChange={handleLogoUpload}
-                    className="hidden"
-                  />
-                  <Button
-                    variant="secondary"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                    className="gap-2 shrink-0"
-                  >
-                    {isUploading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Upload className="w-4 h-4" />
-                    )}
-                    Upload
-                  </Button>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="appName" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Application Name</Label>
+                <Input
+                  id="appName"
+                  value={appName}
+                  onChange={(e) => setAppName(e.target.value)}
+                  placeholder="e.g. Acme CRM"
+                  className="h-11 rounded-md border-slate-200 dark:border-slate-800 focus:ring-4 focus:ring-teal-600/10 focus:border-teal-600 transition-all bg-slate-50/50 dark:bg-slate-900/50"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="appTagline" className="text-[10px] font-black uppercase tracking-widest text-slate-400">Identity Tagline</Label>
+                <Input
+                  id="appTagline"
+                  value={appTagline}
+                  onChange={(e) => setAppTagline(e.target.value)}
+                  placeholder="e.g. Enterprise Suite"
+                  className="h-11 rounded-md border-slate-200 dark:border-slate-800 focus:ring-4 focus:ring-teal-600/10 focus:border-teal-600 transition-all bg-slate-50/50 dark:bg-slate-900/50"
+                />
+                <p className="text-[10px] text-slate-400 italic">Short descriptor appearing in the navigation sidebar.</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Brand Assets (Logo)</Label>
+                <div className="flex flex-col gap-3">
+                  <div className="flex gap-2">
+                    <Input
+                      value={appLogoUrl}
+                      onChange={(e) => setAppLogoUrl(e.target.value)}
+                      placeholder="Paste image URL..."
+                      className="h-11 rounded-md border-slate-200 dark:border-slate-800 flex-1 bg-slate-50/50 dark:bg-slate-900/50"
+                    />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      ref={fileInputRef}
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      className="h-11 px-4 rounded-md font-bold text-xs uppercase tracking-widest bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition-colors border-slate-200 dark:border-slate-700"
+                    >
+                      {isUploading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Upload className="w-4 h-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-[10px] text-slate-400 italic">Support for SVG, PNG, and JPEG. High-resolution transparent background recommended.</p>
                 </div>
-                <p className="text-[11px] text-text-muted italic">
-                  Paste a URL or upload a file. Recommended: SVG or transparent PNG.
-                </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card className="border-border/50 bg-bg-surface/50 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ImageIcon className="w-5 h-5 text-accent" />
-              Preview
-            </CardTitle>
-            <CardDescription>
-              How your branding will look in the sidebar.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex items-center justify-center p-12 bg-bg-elevated/30 rounded-xl border border-dashed border-border/50">
-            <div className="flex items-center gap-3 bg-bg-surface p-5 rounded-2xl shadow-2xl border border-border/50 w-full max-w-xs transition-all duration-300 hover:scale-[1.02]">
-              <div className="w-12 h-12 bg-accent rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-accent/20 overflow-hidden">
+        {/* Preview Card */}
+        <div className="group relative overflow-hidden bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-2xl p-0 transition-all duration-500 flex flex-col">
+          <div className="p-8 border-b border-slate-200 dark:border-slate-800">
+            <h3 className="font-black text-slate-900 dark:text-white text-lg tracking-tight flex items-center gap-2">
+              <ImageIcon className="w-5 h-5 text-teal-600" />
+              Sidebar Preview
+            </h3>
+            <p className="text-xs text-slate-400 font-medium">Visual validation of your current branding configuration.</p>
+          </div>
+
+          <div className="flex-1 flex items-center justify-center p-12 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-100/50 via-transparent to-transparent dark:from-slate-800/20">
+            <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-[0_20px_50px_-20px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_-20px_rgba(0,0,0,0.5)] border border-slate-100 dark:border-slate-800 w-full max-w-sm transition-all duration-500 group-hover:scale-105 group-hover:rotate-1">
+              <div className="w-14 h-14 bg-teal-600 rounded-2xl flex items-center justify-center shrink-0 shadow-xl shadow-teal-500/20 overflow-hidden relative group/logo">
                 {appLogoUrl ? (
-                  <img src={appLogoUrl} alt="Logo" className="w-full h-full object-cover" />
+                  <img src={appLogoUrl} alt="Logo" className="w-full h-full object-cover transition-transform duration-700 group-hover/logo:scale-110" />
                 ) : (
-                  <div className="w-8 h-8 text-white font-bold flex items-center justify-center text-xl">
+                  <div className="w-8 h-8 text-white font-black flex items-center justify-center text-2xl tracking-tighter">
                     {appName.slice(0, 1).toUpperCase() || "?"}
                   </div>
                 )}
+                <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
               </div>
               <div className="flex flex-col min-w-0">
-                <span className="text-[16px] font-bold text-text-primary truncate leading-tight">
+                <span className="text-[18px] font-black text-slate-900 dark:text-white truncate leading-tight tracking-tight">
                   {appName || "CRM Hub"}
                 </span>
-                <span className="text-[11px] text-text-muted font-medium truncate uppercase tracking-wider">
+                <span className="text-[10px] text-teal-600 dark:text-teal-400 font-black truncate uppercase tracking-[0.2em] mt-0.5">
                   {appTagline || "Enterprise Suite"}
                 </span>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

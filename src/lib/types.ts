@@ -234,6 +234,9 @@ export interface OrderItem {
   fulfilledQuantity?: number
   reservedQuantity?: number
   procuredQuantity?: number
+  discountId?: string          // reference to applied discount
+  discountValue?: number       // snapshot of the value at time of order
+  discountType?: DiscountType  // snapshot: 'percentage' | 'fixed'
 }
 
 // Helper to compute pending quantity: quantity - fulfilled - reserved - procured
@@ -257,9 +260,31 @@ export interface SalesOrder {
   status: SalesOrderStatus
   orderDate: string
   items: OrderItem[]
+  orderDiscountId?: string          // whole-order discount reference
+  orderDiscountValue?: number       // snapshot value
+  orderDiscountType?: DiscountType  // snapshot type
   // Legacy fields for backward compatibility
   stockDeducted?: boolean
   stockReserved?: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export type DiscountType = 'percentage' | 'fixed'
+export type DiscountScope = 'line_item' | 'order'
+
+export interface Discount {
+  id: string
+  name: string
+  type: DiscountType
+  value: number
+  scope: DiscountScope
+  isActive: boolean
+  isSystem: boolean
+  description?: string
+  minOrderAmount?: number
+  maxDiscountAmount?: number
+  organizationId?: string
   createdAt: string
   updatedAt: string
 }

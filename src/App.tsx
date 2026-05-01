@@ -33,6 +33,7 @@ import { ProfilePage } from "@/pages/settings/ProfilePage";
 import { AuditLogs } from "@/pages/settings/AuditLogs";
 import { Notifications } from "@/pages/settings/Notifications";
 import { BrandingSettings } from "@/pages/settings/BrandingSettings";
+import { Discounts } from "@/pages/settings/Discounts";
 import { Navbar } from "@/components/Navbar";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -353,6 +354,15 @@ function AppContent() {
                   <AppLayout>
                     <SettingsLayout>
                       <RequirePermission module="organizations" action="read" component={BrandingSettings} />
+                    </SettingsLayout>
+                  </AppLayout>
+                )}
+              </Route>
+              <Route path="/settings/discounts">
+                {() => (
+                  <AppLayout>
+                    <SettingsLayout>
+                      <RequirePermission module="organizations" action="read" component={Discounts} />
                     </SettingsLayout>
                   </AppLayout>
                 )}

@@ -48,7 +48,7 @@ interface TaskViewProps {
 }
 
 function SortableRow({ item, children, onClick, className }: any) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id } as any)
   const style = { transform: CSS.Transform.toString(transform), transition }
   return (
     <tr ref={setNodeRef} style={style} className={cn(className, isDragging && "opacity-50 z-50 shadow-2xl relative bg-teal-50 dark:bg-teal-900/10")} onClick={onClick}>

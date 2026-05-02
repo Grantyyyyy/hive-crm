@@ -4,6 +4,7 @@ import { format } from "date-fns"
 import { History, Search, Filter, ArrowRight, Clock, Activity, CheckCircle2, Plus, Trash2 } from "lucide-react"
 import { Link } from "wouter"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 import { Pagination } from "@/components/ui/Pagination"
 
 export function AuditLogs() {

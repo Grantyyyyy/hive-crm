@@ -316,7 +316,7 @@ export function Reports() {
                   <Tooltip
                     cursor={{ fill: 'transparent' }}
                     contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: "12px", fontWeight: 700 }}
-                    formatter={(v: number) => fmtCurrency(v)}
+                    formatter={(v: any) => fmtCurrency(Number(v))}
                   />
                   <Bar dataKey="value" fill="#0d9488" radius={[0, 10, 10, 0]} name="Value ($)" />
                 </BarChart>
@@ -346,7 +346,7 @@ export function Reports() {
                   <YAxis tick={{ fontSize: 10, fontWeight: 700, fill: "#64748b" }} axisLine={false} tickLine={false} tickFormatter={v => `$${v / 1000}k`} />
                   <Tooltip
                     contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: "12px", fontWeight: 700 }}
-                    formatter={(v: number, name: string) => name === "revenue" ? fmtCurrency(v) : v}
+                    formatter={(v: any, name: any) => name === "revenue" ? fmtCurrency(Number(v)) : v}
                   />
                   <Area type="monotone" dataKey="revenue" fill="#0d9488" fillOpacity={0.05} stroke="#0d9488" strokeWidth={3} />
                   <Line type="monotone" dataKey="quotes" stroke="#06b6d4" strokeWidth={2} dot={{ r: 4, fill: "#06b6d4", strokeWidth: 2, stroke: "#fff" }} />
@@ -384,7 +384,7 @@ export function Reports() {
                   <Tooltip
                     cursor={{ fill: 'rgba(0,0,0,0.02)' }}
                     contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: "12px", fontWeight: 700 }}
-                    formatter={(v: number) => v.toLocaleString()}
+                    formatter={(v: any) => Number(v).toLocaleString()}
                   />
                   <Bar dataKey="quantity" fill="#f59e0b" radius={[0, 10, 10, 0]} name="Units Sold" barSize={32} />
                 </BarChart>
@@ -412,7 +412,7 @@ export function Reports() {
                       <Cell key={`cell-${i}`} fill={COLORS[i % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(v: number) => fmtCurrency(v)} />
+                  <Tooltip formatter={(v: any) => fmtCurrency(Number(v))} />
                 </PieChart>
               </ResponsiveContainer>
             </div>

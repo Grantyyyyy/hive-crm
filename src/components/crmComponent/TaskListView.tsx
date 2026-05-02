@@ -177,7 +177,7 @@ function SortableTaskRow(props: SortableTaskRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
     id: props.task.id,
     disabled: props.isSelectionMode
-  })
+  } as any)
   const style = { transform: CSS.Transform.toString(transform), transition }
   return (
     <div ref={setNodeRef} style={style} className={cn("relative group border-b border-slate-100 dark:border-slate-800 last:border-b-0", isDragging ? "z-50 shadow-md" : "z-0")}>

@@ -213,7 +213,7 @@ function SortableDealCard({ deal, contactName, activities, onClick }: SortableDe
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: deal.id })
+  } = useSortable({ id: deal.id } as any)
 
   const style = {
     transform: CSS.Transform.toString(transform),

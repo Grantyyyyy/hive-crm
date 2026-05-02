@@ -49,7 +49,7 @@ function SortableTaskCard({ task, onEdit, onStatusChange, tags, isDragging }: So
     setNodeRef,
     transform,
     transition,
-  } = useSortable({ id: task.id })
+  } = useSortable({ id: task.id } as any)
 
   const style = {
     transform: CSS.Transform.toString(transform),

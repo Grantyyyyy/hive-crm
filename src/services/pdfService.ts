@@ -1,4 +1,4 @@
-import { jsPDF } from "jspdf";
+import jsPDF from "jspdf";
 import type { Quote, SalesOrder } from "../lib/types";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -42,7 +42,7 @@ function statusColor(status: string): [number, number, number] {
 // ── PDF Builder ──────────────────────────────────────────────────────────────
 
 interface PDFDocumentConfig {
-  doc: jsPDF;
+  doc: any;
   y: number;
   pageWidth: number;
   pageHeight: number;

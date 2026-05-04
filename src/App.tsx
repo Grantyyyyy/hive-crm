@@ -238,7 +238,7 @@ function AppContent() {
       <Router>
         <div className="min-h-screen flex flex-col bg-background font-sans antialiased text-foreground">
           <Toaster position="top-center" richColors />
-          <Navbar />
+          {!["/sign-in", "/sign-up"].includes(window.location.pathname) && <Navbar />}
           <main className="flex-[1_0_auto] flex flex-col">
             <AutomationRunner />
             <InventoryAlertRunner />

@@ -1,4 +1,4 @@
-import { Check, Sprout, Zap, Building2 } from "lucide-react";
+import { Check, Sprout, Zap, Crown } from "lucide-react";
 import { Link } from "wouter";
 import type { LandingTheme } from "./types";
 
@@ -43,7 +43,7 @@ const plans = [
     priceNote: "per month, billed monthly",
   },
   {
-    icon: Building2,
+    icon: Crown,
     name: "Elite",
     tagline: "For scaling enterprises",
     price: "1,250",
@@ -86,104 +86,102 @@ export function PricingSection({ theme }: PricingSectionProps) {
         </div>
 
         {/* Cards */}
-        <div className="grid lg:grid-cols-3 gap-5 items-start">
+        <div className="grid lg:grid-cols-3 gap-8 items-stretch">
           {plans.map((plan) => {
             const Icon = plan.icon;
             return (
               <div
                 key={plan.name}
-                className={`flex flex-col rounded-2xl border ${plan.highlight
+                className={`group relative flex flex-col rounded-3xl border transition-all duration-300 hover:translate-y-[-4px] ${plan.highlight
                     ? isDark
-                      ? "bg-slate-900 border-teal-600/50"
-                      : "bg-white border-teal-600/40 shadow-lg"
+                      ? "bg-slate-900 border-teal-500/30 shadow-2xl shadow-teal-500/10"
+                      : "bg-white border-teal-600/20 shadow-2xl shadow-teal-600/10"
                     : isDark
-                      ? "bg-slate-900/50 border-slate-800"
-                      : "bg-white border-slate-200 shadow-sm"
+                      ? "bg-slate-900/40 border-slate-800 hover:border-slate-700"
+                      : "bg-white border-slate-200 shadow-sm hover:shadow-md"
                   }`}
               >
-                {/* Top accent line on highlighted card only */}
+                {/* Most Popular badge — Absolute for alignment consistency */}
                 {plan.highlight && (
-                  <div className="h-0.5 w-full bg-teal-600 rounded-t-2xl" />
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
+                    <span className="px-4 py-1.5 bg-teal-600 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full shadow-lg shadow-teal-600/20">
+                      Most Popular
+                    </span>
+                  </div>
                 )}
 
-                <div className="p-7 flex flex-col gap-6">
-
-                  {/* Icon + plan name */}
-                  <div>
-                    {/* Most Popular badge — inline, inside the card */}
-                    {plan.highlight && (
-                      <div className="mb-4">
-                        <span className="px-3 py-1 bg-teal-600 text-white text-[10px] font-black uppercase tracking-widest rounded-full">
-                          Most Popular
-                        </span>
-                      </div>
-                    )}
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-4 ${plan.highlight
-                        ? "bg-teal-600 text-white"
-                        : isDark ? "bg-slate-800 text-slate-400" : "bg-slate-100 text-slate-500"
+                <div className="p-8 flex flex-col h-full">
+                  {/* Header Section with Icon */}
+                  <div className="mb-8">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110 duration-300 ${plan.highlight
+                        ? "bg-teal-600 text-white shadow-lg shadow-teal-600/20"
+                        : isDark ? "bg-slate-800 text-slate-300" : "bg-slate-100 text-slate-600"
                       }`}>
-                      <Icon className="w-4 h-4" />
+                      <Icon className="w-6 h-6" />
                     </div>
-                    <p className={`text-[10px] font-black uppercase tracking-[0.25em] mb-1 ${isDark ? "text-slate-500" : "text-slate-400"}`}>
+                    <p className={`text-[10px] font-black uppercase tracking-[0.25em] mb-2 ${isDark ? "text-teal-500/80" : "text-teal-600"}`}>
                       {plan.tagline}
                     </p>
-                    <h3 className={`text-2xl font-bold tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>
+                    <h3 className={`text-3xl font-bold tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>
                       {plan.name}
                     </h3>
                   </div>
 
-                  {/* Price */}
-                  <div className={`pb-6 border-b ${isDark ? "border-slate-800" : "border-slate-100"}`}>
+                  {/* Price Section */}
+                  <div className={`mb-8 pb-8 border-b ${isDark ? "border-slate-800" : "border-slate-100"}`}>
                     {plan.price === null ? (
                       <div>
-                        <span className={`text-5xl font-bold tracking-tight leading-none ${isDark ? "text-white" : "text-slate-900"}`}>
-                          Free
-                        </span>
-                        <p className={`text-xs font-medium mt-1.5 ${isDark ? "text-slate-500" : "text-slate-400"}`}>
+                        <div className="flex items-baseline gap-1">
+                          <span className={`text-5xl font-bold tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>
+                            Free
+                          </span>
+                        </div>
+                        <p className={`text-xs font-medium mt-2 ${isDark ? "text-slate-500" : "text-slate-400"}`}>
                           {plan.priceNote}
                         </p>
                       </div>
                     ) : (
                       <div>
-                        <div className="flex items-end gap-1">
-                          <span className={`text-sm font-bold pb-1 ${isDark ? "text-slate-400" : "text-slate-400"}`}>$</span>
-                          <span className={`text-5xl font-bold tracking-tight leading-none ${isDark ? "text-white" : "text-slate-900"}`}>
+                        <div className="flex items-baseline gap-1">
+                          <span className={`text-2xl font-bold ${isDark ? "text-slate-400" : "text-slate-400"}`}>$</span>
+                          <span className={`text-5xl font-bold tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>
                             {plan.price}
                           </span>
+                          <span className={`text-sm font-medium ${isDark ? "text-slate-500" : "text-slate-400"}`}>/mo</span>
                         </div>
-                        <p className={`text-xs font-medium mt-1.5 ${isDark ? "text-slate-500" : "text-slate-400"}`}>
-                          {plan.priceNote}
+                        <p className={`text-xs font-medium mt-2 ${isDark ? "text-slate-500" : "text-slate-400"}`}>
+                          billed monthly
                         </p>
                       </div>
                     )}
                   </div>
 
-                  {/* Features */}
-                  <ul className="space-y-3 flex-1">
+                  {/* Features List */}
+                  <ul className="space-y-4 mb-8 flex-1">
                     {plan.features.map((f) => (
-                      <li key={f} className="flex items-center gap-3">
-                        <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${plan.highlight
-                            ? isDark ? "bg-teal-900/40" : "bg-teal-50"
-                            : isDark ? "bg-slate-800" : "bg-slate-100"
+                      <li key={f} className="flex items-start gap-3">
+                        <div className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${plan.highlight
+                            ? isDark ? "bg-teal-900/30" : "bg-teal-50"
+                            : isDark ? "bg-slate-800/50" : "bg-slate-100"
                           }`}>
-                          <Check className={`w-3 h-3 ${plan.highlight ? "text-teal-600" : isDark ? "text-slate-400" : "text-slate-500"
+                          <Check className={`w-3 h-3 ${plan.highlight ? "text-teal-500" : isDark ? "text-slate-500" : "text-slate-400"
                             }`} />
                         </div>
-                        <span className={`text-sm font-medium ${isDark ? "text-slate-300" : "text-slate-700"}`}>
+                        <span className={`text-sm leading-tight ${isDark ? "text-slate-300" : "text-slate-600"}`}>
                           {f}
                         </span>
                       </li>
                     ))}
                   </ul>
 
-                  {/* CTA */}
+                  {/* Action Button */}
                   <Link href={plan.ctaHref}>
                     <button
-                      className={`w-full py-3 text-xs font-bold uppercase tracking-wider rounded-xl transition-colors ${plan.highlight
-                          ? "bg-teal-600 hover:bg-teal-700 text-white"
+                      className={`w-full py-4 text-xs font-bold uppercase tracking-widest rounded-2xl transition-all duration-300 active:scale-95 ${plan.highlight
+                          ? "bg-teal-600 hover:bg-teal-500 text-white shadow-lg shadow-teal-600/20"
                           : isDark
-                            ? "border border-slate-700 text-slate-300 hover:bg-slate-800"
-                            : "border border-slate-200 text-slate-700 hover:bg-slate-50"
+                            ? "bg-slate-800 text-slate-100 hover:bg-slate-700"
+                            : "bg-slate-100 text-slate-900 hover:bg-slate-200"
                         }`}
                     >
                       {plan.cta}

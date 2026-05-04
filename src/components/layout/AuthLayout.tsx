@@ -4,6 +4,8 @@ import { useTheme } from "@/lib/ThemeProvider";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "motion/react";
 import { useLocation } from "wouter";
+import { useAuth } from "@/lib/AuthContext";
+import { useEffect } from "react";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -11,7 +13,18 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ children }: AuthLayoutProps) {
   const { theme, toggleTheme } = useTheme();
-  const [location] = useLocation();
+  const { isSignedIn, isLoaded } = useAuth();
+  const [location, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      setLocation("/dashboard");
+    }
+  }, [isLoaded, isSignedIn, setLocation]);
+
+  if (isLoaded && isSignedIn) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex font-sans bg-background overflow-hidden">

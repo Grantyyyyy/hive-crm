@@ -389,7 +389,7 @@ function StatusBadge({ status }: { status: PurchaseOrderStatus }) {
     draft: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400",
     pending: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400",
     sent: "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400",
-    partially_received: "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400",
+    partially_received: "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400",
     fully_received: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400",
     cancelled: "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400",
   }

@@ -54,7 +54,7 @@ export function StatsSection({ theme }: StatsSectionProps) {
   return (
     <section className={`py-10 border-b ${isDark ? "bg-slate-950 border-slate-800" : "bg-white border-slate-200"}`}>
       <div className="max-w-[1600px] mx-auto px-4 lg:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-10 lg:gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-10 lg:gap-6">
           {[
             { value: 12400, label: "Active Users", suffix: "+" },
             { value: 1.2, label: "Revenue Managed", prefix: "$", suffix: "B" },

@@ -196,7 +196,7 @@ export function Workload() {
 
         {/* Compact Cards Grid */}
         {sortedMembers.length === 0 ? (
-          <div className="glass rounded-2xl sm:rounded-[2rem] p-8 sm:p-12 text-center border-dashed border-2 border-slate-200 dark:border-slate-800">
+          <div className="glass rounded-2xl sm:rounded-[2rem] p-8 sm:p-6 text-center border-dashed border-2 border-slate-200 dark:border-slate-800">
             <div className="w-12 h-12 sm:w-16 sm:h-16 bg-slate-100 dark:bg-slate-900 rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-400">
               <Users className="w-6 h-6 sm:w-8 sm:h-8" />
             </div>

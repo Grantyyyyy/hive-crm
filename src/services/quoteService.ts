@@ -1,3 +1,4 @@
+import { logger } from "../lib/logger";
 import type { Quote, SalesOrder, OrderItem, InventoryItem, InventoryTransaction } from "../lib/types";
 import { generateNumber } from "./types";
 import { recalculateStockLevel } from "./inventoryService";
@@ -243,7 +244,7 @@ export async function acceptQuote(quote: Quote, ctx: CRMContextValue): Promise<S
  * Email dispatch is not implemented — use generateQuotePDF() from pdfService for manual download.
  */
 export async function sendQuoteEmail(_quote: Quote): Promise<void> {
-  console.log("[quoteService] sendQuoteEmail — email dispatch not implemented. User can download PDF manually.");
+  logger.log("[quoteService] sendQuoteEmail — email dispatch not implemented. User can download PDF manually.");
 }
 
 /**
@@ -251,5 +252,5 @@ export async function sendQuoteEmail(_quote: Quote): Promise<void> {
  * Email dispatch is not implemented — use generateQuotePDF() from pdfService for manual download.
  */
 export async function sendFollowUpReminder(_quote: Quote): Promise<void> {
-  console.log("[quoteService] sendFollowUpReminder — email dispatch not implemented. User can download PDF manually.");
+  logger.log("[quoteService] sendFollowUpReminder — email dispatch not implemented. User can download PDF manually.");
 }

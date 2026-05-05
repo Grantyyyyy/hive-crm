@@ -1,3 +1,4 @@
+import { logger } from "../lib/logger";
 import type { InventoryTransaction } from "../lib/types";
 import type { JobAdapter } from "./types";
 import { generateId } from "../lib/helpers";
@@ -39,11 +40,11 @@ export async function createInventoryTransaction(
       userName: newTransaction.userName,
     });
   } catch (e) {
-    console.error('[inventoryTransactionService] Failed to persist transaction:', e);
+    logger.error('[inventoryTransactionService] Failed to persist transaction:', e);
     // Don't fail the operation if audit trail fails - just log it
   }
 
-  console.log(`[inventoryTransaction] ${newTransaction.type.toUpperCase()}: ${newTransaction.inventoryItemName} ${newTransaction.quantityChange > 0 ? '+' : ''}${newTransaction.quantityChange} units (${newTransaction.quantityBefore} → ${newTransaction.quantityAfter})`);
+  logger.log(`[inventoryTransaction] ${newTransaction.type.toUpperCase()}: ${newTransaction.inventoryItemName} ${newTransaction.quantityChange > 0 ? '+' : ''}${newTransaction.quantityChange} units (${newTransaction.quantityBefore} → ${newTransaction.quantityAfter})`);
 
   return newTransaction;
 }

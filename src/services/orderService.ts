@@ -1,3 +1,4 @@
+import { logger } from "../lib/logger";
 import type { SalesOrder, InventoryItem, InventoryTransaction, OrderItem } from "../lib/types";
 import { recalculateStockLevel } from "./inventoryService";
 import type { CRMContextValue, AtomicOp } from "../lib/CRMContext";
@@ -154,7 +155,7 @@ export async function fulfillOrderStock(
     // the order's reservation and the inventory master's reservation,
     // we allow the shipment as long as PHYSICAL stock exists.
     if (canFulfill > (invItem.reservedQuantity || 0)) {
-      console.warn(`[orderService] Reservation mismatch detected for ${invItem.name}. Expected ${canFulfill}, but master only has ${invItem.reservedQuantity}. Auto-correcting...`);
+      logger.warn(`[orderService] Reservation mismatch detected for ${invItem.name}. Expected ${canFulfill}, but master only has ${invItem.reservedQuantity}. Auto-correcting...`);
     }
 
     // ACTUAL INVARIANT: Must have enough PHYSICAL stock
@@ -433,7 +434,7 @@ export async function returnShippedOrderStock(
     if (!item.inventoryItemId) continue;
     const invItem = inventory.find(i => i.id === item.inventoryItemId);
     if (!invItem) {
-      console.warn(`[orderService] Inventory item ${item.inventoryItemId} not found for return - skipping`);
+      logger.warn(`[orderService] Inventory item ${item.inventoryItemId} not found for return - skipping`);
       continue;
     }
 
@@ -592,7 +593,7 @@ export async function cancelOrderWithStockReversal(
  * Email dispatch is not implemented — use generateInvoicePDF() from pdfService for manual download.
  */
 export async function sendShippingNotification(_order: SalesOrder): Promise<void> {
-  console.log("[orderService] sendShippingNotification — email dispatch not implemented. User can download PDF manually.");
+  logger.log("[orderService] sendShippingNotification — email dispatch not implemented. User can download PDF manually.");
 }
 
 /**
@@ -600,5 +601,5 @@ export async function sendShippingNotification(_order: SalesOrder): Promise<void
  * PDF/email dispatch is not implemented — use generateInvoicePDF() from pdfService for manual download.
  */
 export async function generateInvoice(_order: SalesOrder): Promise<void> {
-  console.log("[orderService] generateInvoice — email dispatch not implemented. User can download PDF manually.");
+  logger.log("[orderService] generateInvoice — email dispatch not implemented. User can download PDF manually.");
 }

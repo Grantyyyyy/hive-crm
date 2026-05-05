@@ -227,7 +227,7 @@ export function BrandingSettings() {
             <p className="text-xs text-slate-400 font-medium">Visual validation of your current branding configuration.</p>
           </div>
 
-          <div className="flex-1 flex items-center justify-center p-12 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-100/50 via-transparent to-transparent dark:from-slate-800/20">
+          <div className="flex-1 flex items-center justify-center p-6 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-100/50 via-transparent to-transparent dark:from-slate-800/20">
             <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-[0_20px_50px_-20px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_-20px_rgba(0,0,0,0.5)] border border-slate-100 dark:border-slate-800 w-full max-w-sm transition-all duration-500 group-hover:scale-105 group-hover:rotate-1">
               <div className="w-14 h-14 bg-teal-600 rounded-2xl flex items-center justify-center shrink-0 shadow-xl shadow-teal-500/20 overflow-hidden relative group/logo">
                 {appLogoUrl ? (

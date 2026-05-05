@@ -13,7 +13,7 @@ export function FaqSection({ theme, activeFaq, onToggleFaq }: FaqSectionProps) {
   return (
     <section className={`py-6 lg:py-8 border-t ${isDark ? "border-slate-800 bg-slate-950" : "border-slate-200 bg-white"}`}>
       <div className="max-w-[1600px] mx-auto px-4 lg:px-6">
-        <div className="grid lg:grid-cols-[1fr_2fr] gap-12 lg:gap-14">
+        <div className="grid lg:grid-cols-[1fr_2fr] gap-6 lg:gap-14">
           <div className="space-y-5">
             <h2 className={`text-4xl lg:text-5xl font-black tracking-tight uppercase leading-[0.95] ${isDark ? "text-slate-100" : "text-slate-900"}`}>
               Frequently <br /> Asked <br /> Questions.

@@ -1,3 +1,4 @@
+import { logger } from '../lib/logger'
 import type { InventoryItem, OrderItem, SalesOrder, PurchaseOrder, PurchaseOrderItem, PurchaseRequest, Vendor } from '../lib/types'
 import type { JobAdapter, AtomicOp } from './types'
 import { generateNumber } from './types'
@@ -177,7 +178,7 @@ async function createPOForGroup(params: {
 
   const created = await adapter.insertPurchaseOrder(newPO)
 
-  console.log(`[procurementTrigger] Created PO ${poNumber} for ${items.length} items covering shortages`)
+  logger.log(`[procurementTrigger] Created PO ${poNumber} for ${items.length} items covering shortages`)
 
   // Update sales order items with procured quantity (idempotent)
   // This prevents duplicate PO creation
@@ -238,7 +239,7 @@ export async function cancelProcurementForOrder(
     }
   }
 
-  console.log(`[procurementTrigger] Cancelled procurement links for order item ${orderItemId}`)
+  logger.log(`[procurementTrigger] Cancelled procurement links for order item ${orderItemId}`)
 }
 
 /**

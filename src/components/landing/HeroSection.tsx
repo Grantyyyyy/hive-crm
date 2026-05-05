@@ -11,31 +11,16 @@ export function HeroSection({ theme }: HeroSectionProps) {
 
   return (
     <header
-      className={`relative pt-12 pb-8 border-b ${
-        isDark ? "border-slate-800 bg-slate-950" : "border-slate-200 bg-white"
-      }`}
+      className={`relative pt-12 pb-8 border-b ${isDark ? "border-slate-800 bg-slate-950" : "border-slate-200 bg-white"
+        }`}
     >
       <div className="max-w-[1600px] mx-auto px-4 lg:px-6">
-        <div className="grid lg:grid-cols-[1fr_0.45fr] gap-10 lg:gap-12 items-end">
+        <div className="grid lg:grid-cols-[1fr_0.45fr] gap-10 lg:gap-6 items-end">
           <div className="space-y-8 animate-content-in">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full border-2 border-[#0D9488] flex items-center justify-center">
-                <Plus className="w-6 h-6 text-[#0D9488]" />
-              </div>
-              <span
-                className={`text-xs font-black uppercase tracking-[0.35em] ${
-                  isDark ? "text-slate-400" : "text-slate-500"
-                }`}
-              >
-                Enterprise CRM Platform v2.0
-              </span>
-            </div>
-
             <div className="flex flex-col gap-6">
               <h1
-                className={`text-6xl sm:text-7xl lg:text-8xl font-sans font-black leading-[0.85] tracking-tight uppercase max-w-4xl ${
-                  isDark ? "text-slate-100" : "text-slate-900"
-                }`}
+                className={`text-6xl sm:text-7xl lg:text-8xl font-sans font-black leading-[0.85] tracking-tight uppercase max-w-4xl ${isDark ? "text-slate-100" : "text-slate-900"
+                  }`}
               >
                 Orchestrate <br />
                 <span className="text-[#0D9488]">
@@ -43,9 +28,8 @@ export function HeroSection({ theme }: HeroSectionProps) {
                 </span>
               </h1>
               <p
-                className={`text-lg sm:text-xl font-bold max-w-2xl leading-relaxed ${
-                  isDark ? "text-slate-300" : "text-slate-600"
-                }`}
+                className={`text-lg sm:text-xl font-bold max-w-2xl leading-relaxed ${isDark ? "text-slate-300" : "text-slate-600"
+                  }`}
               >
                 A unified workspace designed to eliminate silos between sales, inventory, and fulfillment.
                 Execute faster, scale further, and build with clarity.
@@ -68,47 +52,97 @@ export function HeroSection({ theme }: HeroSectionProps) {
             </div>
           </div>
 
-          <div className="space-y-6 pb-1 animate-content-in" style={{ animationDelay: "0.2s" }}>
-            <div className={`space-y-4 p-5 border rounded-2xl ${isDark ? "border-slate-800 bg-slate-900/60" : "border-slate-200 bg-slate-50/60"}`}>
-              <p className={`text-lg font-bold leading-relaxed ${isDark ? "text-slate-200" : "text-slate-700"}`}>
-                Start with the core modules, launch quickly, then scale into analytics and automation
-                as your operation grows.
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="flex -space-x-3">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200 overflow-hidden">
-                      <img src={`https://i.pravatar.cc/100?u=hub-${i}`} alt="user" className="w-full h-full object-cover" />
-                    </div>
-                  ))}
+          <div className="space-y-8 pb-1 animate-content-in" style={{ animationDelay: "0.2s" }}>
+            <div className={`relative overflow-hidden p-8 border-2 rounded-[2.5rem] transition-all duration-500 hover:border-[#0D9488]/30 group ${isDark
+              ? "border-slate-800 bg-slate-900/40 backdrop-blur-xl"
+              : "border-slate-100 bg-white shadow-[0_32px_64px_-16px_rgba(15,23,42,0.08)]"
+              }`}>
+              <div className="relative z-10 space-y-7">
+                <div className="flex items-center justify-between">
+                  <div className={`px-4 py-1.5 rounded-full border text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-2 ${isDark ? "bg-slate-950 border-slate-800 text-slate-400" : "bg-slate-50 border-slate-200 text-slate-500"
+                    }`}>
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#0D9488] animate-pulse" />
+                    Operational Intelligence
+                  </div>
+                  <div className="flex items-end gap-1 h-4">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <div
+                        key={i}
+                        className="w-1 rounded-full bg-[#0D9488] transition-all duration-300 group-hover:bg-[#14b8a6]"
+                        style={{
+                          height: `${20 + Math.random() * 80}%`,
+                          animation: `grow-shrink ${1 + i * 0.2}s ease-in-out infinite alternate`
+                        }}
+                      />
+                    ))}
+                  </div>
                 </div>
-                <p className={`text-[10px] font-black uppercase tracking-widest leading-none ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-                  <span className={isDark ? "text-slate-100" : "text-slate-900"}>Phase 1:</span> Deployment Ready
+
+                <div className="space-y-3">
+                  <h3 className={`text-3xl sm:text-4xl font-black leading-[1] tracking-tighter uppercase ${isDark ? "text-slate-100" : "text-slate-900"}`}>
+                    Scale <span className="text-[#0D9488]">Without</span> <br />
+                    the Friction.
+                  </h3>
+                  <p className={`text-base font-bold leading-relaxed max-w-[320px] ${isDark ? "text-slate-400" : "text-slate-600"}`}>
+                    Eliminate architectural bottlenecks with a modular engine built for extreme throughput and sub-40ms latency.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-5 pt-2">
+                  <div className="flex -space-x-3">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className={`w-9 h-9 rounded-full border-2 ${isDark ? "border-slate-900" : "border-white"} bg-slate-800 overflow-hidden ring-4 ring-transparent group-hover:ring-[#0D9488]/10 transition-all`}>
+                        <img src={`https://i.pravatar.cc/100?u=tech-${i}`} alt="tech" className="w-full h-full object-cover grayscale brightness-110" />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex flex-col">
+                    <p className={`text-[10px] font-black uppercase tracking-[0.1em] ${isDark ? "text-slate-200" : "text-slate-900"}`}>
+                      Enterprise Grade
+                    </p>
+                    <p className={`text-[9px] font-bold uppercase tracking-widest ${isDark ? "text-slate-500" : "text-slate-400"}`}>
+                      Validated by 500+ orgs
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Decorative Glow */}
+              <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-[#0D9488]/5 blur-[100px] rounded-full group-hover:bg-[#0D9488]/10 transition-colors duration-700" />
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-6 pt-4">
+              <div className="flex items-center gap-10">
+                <a href="#modules" className={`text-xs font-black uppercase tracking-[0.25em] transition-all flex items-center gap-3 group ${isDark ? "text-slate-400 hover:text-[#0D9488]" : "text-slate-500 hover:text-[#0D9488]"}`}>
+                  Technical Specs 
+                  <div className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all ${isDark ? "border-slate-800 group-hover:border-[#0D9488]" : "border-slate-200 group-hover:border-[#0D9488]"} group-hover:bg-[#0D9488] group-hover:text-white`}>
+                    <ArrowUpRight className="w-4 h-4 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                </a>
+                <div className="w-px h-8 bg-slate-200 dark:bg-slate-800" />
+                <a href="#pricing" className={`text-xs font-black uppercase tracking-[0.25em] transition-all flex items-center gap-3 group ${isDark ? "text-slate-400 hover:text-slate-100" : "text-slate-500 hover:text-slate-900"}`}>
+                  View Pricing 
+                  <div className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all ${isDark ? "border-slate-800 group-hover:border-slate-100" : "border-slate-200 group-hover:border-slate-900"} group-hover:bg-slate-900 group-hover:text-white dark:group-hover:bg-slate-100 dark:group-hover:text-slate-900`}>
+                    <ArrowUpRight className="w-4 h-4 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                </a>
+              </div>
+            </div>
+
+            <div className={`flex items-center gap-4 px-6 py-3 border rounded-2xl w-fit transition-all hover:border-[#0D9488]/30 ${isDark ? "bg-slate-950/50 border-slate-800" : "bg-slate-50 border-slate-200"}`}>
+              <div className="relative">
+                <div className="w-2 h-2 rounded-full bg-green-500" />
+                <div className="absolute inset-0 w-2 h-2 rounded-full bg-green-500 animate-ping opacity-75" />
+              </div>
+              <div className="flex gap-4 items-center">
+                <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+                  Core Engine: <span className={isDark ? "text-slate-100" : "text-slate-900"}>Healthy</span>
+                </p>
+                <div className="w-px h-3 bg-slate-300 dark:bg-slate-700" />
+                <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+                  Latency: <span className={isDark ? "text-slate-100" : "text-slate-900"}>14ms</span>
                 </p>
               </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              <Link href="/sign-up">
-                <button className="w-full sm:w-auto px-10 py-5 bg-[#0D9488] text-white text-[11px] font-black uppercase tracking-[0.3em] rounded-full hover:bg-slate-900 transition-all cursor-pointer flex items-center justify-center gap-4 group shadow-xl hover:-translate-y-1">
-                  Get Started Now <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </button>
-              </Link>
-              <div className="flex items-center gap-6">
-                <a href="#modules" className={`text-[10px] font-black uppercase tracking-[0.25em] transition-colors flex items-center gap-2 group ${isDark ? "text-slate-400 hover:text-[#0D9488]" : "text-slate-500 hover:text-[#0D9488]"}`}>
-                  Explore Modules <ArrowUpRight className="w-4 h-4 group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" />
-                </a>
-                <a href="#pricing" className={`text-[10px] font-black uppercase tracking-[0.25em] transition-colors ${isDark ? "text-slate-400 hover:text-slate-100" : "text-slate-500 hover:text-slate-900"}`}>
-                  View Pricing
-                </a>
-              </div>
-            </div>
-
-            <div className={`flex items-center gap-3 px-5 py-2 border rounded-full w-fit ${isDark ? "bg-slate-900 border-slate-800" : "bg-slate-50 border-slate-200"}`}>
-              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-              <p className={`text-[9px] font-black uppercase tracking-widest ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-                System Status: All Systems Operational
-              </p>
             </div>
           </div>
         </div>

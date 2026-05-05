@@ -110,7 +110,7 @@ export function Projects() {
         {/* Projects Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {paginatedProjects.length === 0 ? (
-            <div className="col-span-full p-12 text-center">
+            <div className="col-span-full p-6 text-center">
               <FolderOpen className="w-16 h-16 text-slate-300 dark:text-slate-700 mx-auto mb-4 opacity-50" />
               <p className="text-slate-500 dark:text-slate-400 font-medium mb-4">No projects found</p>
               <Button variant="brand" onClick={() => setShowAddModal(true)}>

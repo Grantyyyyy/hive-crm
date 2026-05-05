@@ -350,7 +350,7 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
 
         {!hideHeader && (
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800">
-            <div className="flex items-center gap-12">
+            <div className="flex items-center gap-6">
               {[
                 { id: 'list', label: 'All Tasks' },
                 { id: 'kanban', label: 'Kanban Board' },
@@ -443,7 +443,7 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
             </div>
           ) : activeTab === 'list' ? (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={(e) => setActiveDragId(String(e.active.id))} onDragEnd={handleDragEnd}>
-              <div className="space-y-12 pb-20 animate-in fade-in duration-500">
+            <div className="space-y-6 pb-20 animate-in fade-in duration-500">
                 {statusOrder.map(status => {
                   const groupTasks = tasksByStatus[status] || []
                   if (groupTasks.length === 0 && statusFilter !== 'all') return null

@@ -1,3 +1,4 @@
+import { logger } from '../lib/logger'
 import type { JobAdapter } from './types'
 import { analyzeShortages, createProcurementForShortages } from './procurementTriggerService'
 import { toast } from 'sonner'
@@ -10,13 +11,13 @@ export async function testProcurementTrigger(adapter: JobAdapter): Promise<void>
   const orders = adapter.getSalesOrders()
   const inventory = adapter.getInventoryItems()
   
-  console.log('[Test] Running shortage analysis...')
-  console.log('Orders:', orders.length)
-  console.log('Inventory items:', inventory.length)
+  logger.log('[Test] Running shortage analysis...')
+  logger.log('Orders:', orders.length)
+  logger.log('Inventory items:', inventory.length)
   
   const shortages = analyzeShortages(orders, inventory)
   
-  console.log('[Test] Shortages found:', shortages)
+  logger.log('[Test] Shortages found:', shortages)
   toast(`Found ${shortages.length} items with shortage`, {
     description: shortages.map(s => `Order item: ${s.orderItemId}, qty: ${s.shortageQty}`).join('\n')
   })
@@ -30,7 +31,7 @@ export async function testProcurementTrigger(adapter: JobAdapter): Promise<void>
       adapter
     })
     
-    console.log('[Test] Procurement result:', result)
+    logger.log('[Test] Procurement result:', result)
     toast(`Created ${result.createdPOs} PO(s) covering ${result.shortageCovered} units`)
   } else {
     toast('No shortages found - nothing to procure')

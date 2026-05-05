@@ -1,3 +1,4 @@
+import { logger } from "../lib/logger";
 import type { JobAdapter } from "./types";
 import { sendFollowUpReminder, releaseQuoteStock } from "./quoteService";
 import { checkAndAlertLowStock } from "./inventoryService";
@@ -30,7 +31,7 @@ export async function processRecurringTasks(ctx: CRMContextValue): Promise<void>
           await ctx.setResourceData('tasks', (prev: Task[]) =>
             prev.map((t: Task) => t.id === task.id ? { ...t, recurrencePattern: undefined, recurrenceInterval: undefined, recurrenceEndDate: undefined, nextOccurrence: undefined } : t)
           );
-          console.log(`[scheduledJobs] Recurring task "${task.title}" reached end date, recurrence cleared.`);
+          logger.log(`[scheduledJobs] Recurring task "${task.title}" reached end date, recurrence cleared.`);
           continue;
         }
 
@@ -60,7 +61,7 @@ export async function processRecurringTasks(ctx: CRMContextValue): Promise<void>
         };
 
         await ctx.setResourceData('tasks', (prev) => [newTask, ...prev]);
-        console.log(`[scheduledJobs] Created next occurrence for recurring task "${task.title}" due ${nextOccurrence.toLocaleDateString()}`);
+        logger.log(`[scheduledJobs] Created next occurrence for recurring task "${task.title}" due ${nextOccurrence.toLocaleDateString()}`);
       }
     }
   }
@@ -91,11 +92,11 @@ export async function autoExpireQuotes(ctx: CRMContextValue): Promise<void> {
       if (now > validUntil) {
         try {
           await releaseQuoteStock(quote, ctx, 'system', 'Scheduled Job');
-          console.log(`[scheduledJobs] Quote ${quote.quoteNumber} expired and stock released.`);
+          logger.log(`[scheduledJobs] Quote ${quote.quoteNumber} expired and stock released.`);
         } catch (e) {
           // Quote may have been modified concurrently (e.g., accepted or manually rejected)
           // Safe to skip - the reservation was handled another way
-          console.warn(`[scheduledJobs] Failed to expire quote ${quote.quoteNumber}:`, e);
+          logger.warn(`[scheduledJobs] Failed to expire quote ${quote.quoteNumber}:`, e);
         }
       }
     }
@@ -120,7 +121,7 @@ export async function sendFollowUpReminders(adapter: JobAdapter): Promise<void> 
       if (now >= midpoint && now < validUntil) {
         await sendFollowUpReminder(quote);
         await adapter.updateQuote(quote.id, { reminderSent: true });
-        console.log(`[scheduledJobs] Follow-up reminder logged for ${quote.quoteNumber}`);
+        logger.log(`[scheduledJobs] Follow-up reminder logged for ${quote.quoteNumber}`);
       }
     }
   }
@@ -166,7 +167,7 @@ export async function checkTaskReminders(adapter: JobAdapter): Promise<void> {
 
     // mark as sent so it never fires again
     await adapter.updateTask(task.id, { reminderSent: true });
-    console.log(`[scheduledJobs] Task reminder fired for "${task.title}"`);
+    logger.log(`[scheduledJobs] Task reminder fired for "${task.title}"`);
   }
 }
 
@@ -174,11 +175,11 @@ export async function checkTaskReminders(adapter: JobAdapter): Promise<void> {
  * Master orchestrator for all scheduled tasks.
  */
 export async function runScheduledJobs(adapter: JobAdapter, ctx: CRMContextValue): Promise<void> {
-  console.log("[scheduledJobs] Starting automation checks...");
+  logger.log("[scheduledJobs] Starting automation checks...");
   await processRecurringTasks(ctx);
   await autoExpireQuotes(ctx);
   await sendFollowUpReminders(adapter);
   await checkAndAlertLowStock(adapter, ctx);
   await checkTaskReminders(adapter);
-  console.log("[scheduledJobs] Automation checks complete.");
+  logger.log("[scheduledJobs] Automation checks complete.");
 }

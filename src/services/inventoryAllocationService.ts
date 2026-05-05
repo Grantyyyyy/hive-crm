@@ -1,3 +1,4 @@
+import { logger } from '../lib/logger'
 import type { InventoryItem, OrderItem, SalesOrder, InventoryTransaction, SalesOrderStatus } from '../lib/types'
 import { recalculateStockLevel } from './inventoryService'
 import { createReceiptTransaction } from './inventoryTransactionService'
@@ -36,7 +37,7 @@ export async function allocateInventoryToPendingOrders(
   const currentReserved = invItem.reservedQuantity || 0
   const availableForAllocation = invItem.stockQuantity - currentReserved
   if (availableForAllocation <= 0) {
-    console.log('[allocation] No available stock to allocate')
+    logger.log('[allocation] No available stock to allocate')
     return { allocatedQuantity: 0, updatedItems: 0 }
   }
 
@@ -88,7 +89,7 @@ export async function allocateInventoryToPendingOrders(
     const newReservedOnInv = currentReservedOnInv + allocateQty
     // Invariant check: never exceed physical stock
     if (newReservedOnInv > invItem.stockQuantity) {
-      console.warn('[allocation] Would exceed stock, capping allocation')
+      logger.warn('[allocation] Would exceed stock, capping allocation')
       continue
     }
 
@@ -140,7 +141,7 @@ export async function allocateInventoryToPendingOrders(
     await adapter.runAtomicUpdate(updates)
   }
 
-  console.log(`[allocation] Allocated ${allocatedQty} units to ${updatedCount} order items`)
+  logger.log(`[allocation] Allocated ${allocatedQty} units to ${updatedCount} order items`)
   return { allocatedQuantity: allocatedQty, updatedItems: updatedCount }
 }
 

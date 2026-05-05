@@ -430,16 +430,16 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
                   <tr className="bg-slate-50/80 dark:bg-slate-800/40">
                     <td colSpan={5} className="px-6 py-10">
                       <div className="flex flex-col items-end gap-4">
-                        <div className="flex items-center gap-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                        <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
                           <span>Line Total</span>
                           <span className="text-slate-900 dark:text-white min-w-[100px] text-right">${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                         </div>
-                        <div className="flex items-center gap-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+                        <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
                           <span>VAT (12%)</span>
                           <span className="text-slate-900 dark:text-white min-w-[100px] text-right">${tax.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                         </div>
                         <div className="w-48 h-px bg-slate-200 dark:border-slate-800 my-1" />
-                        <div className="flex items-center gap-12">
+                        <div className="flex items-center gap-6">
                           <span className="text-[10px] font-black uppercase tracking-[0.3em] text-teal-600">Total Amount</span>
                           <span className="text-4xl font-black text-slate-900 dark:text-white tabular-nums tracking-tighter">
                             ${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}

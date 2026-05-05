@@ -1,3 +1,4 @@
+import { logger } from "../lib/logger";
 import type { StockLevel, PurchaseRequest } from "../lib/types";
 import type { JobAdapter } from "./types";
 import { STOCK_THRESHOLDS, generateNumber } from "./types";
@@ -90,6 +91,6 @@ export async function checkAndAlertLowStock(adapter: JobAdapter, ctx: CRMContext
   };
 
   await insertRows<PurchaseRequest>(ctx, 'purchase_requests', [newPR as any]);
-  console.log(`[inventoryService] Consolidated PurchaseRequest ${prNumber} auto-created for ${lowStockItems.length} item(s).`);
+  logger.log(`[inventoryService] Consolidated PurchaseRequest ${prNumber} auto-created for ${lowStockItems.length} item(s).`);
 }
 

@@ -59,19 +59,11 @@ import React, { useEffect, useRef, useMemo, useState } from "react";
 import { FontProvider } from "@/components/FontProvider";
 
 function Protected({ component: Component }: { component: React.ComponentType }) {
-  return (
-    <AppLayout>
-      <ProtectedRoute component={Component} />
-    </AppLayout>
-  );
+  return <ProtectedRoute component={Component} />;
 }
 
 function PermissionProtected({ module, action = "read", component: Component }: { module: string, action?: string, component: React.ComponentType }) {
-  return (
-    <AppLayout>
-      <RequirePermission module={module} action={action} component={Component} />
-    </AppLayout>
-  );
+  return <RequirePermission module={module} action={action} component={Component} />;
 }
 
 function AutomationRunner() {
@@ -142,16 +134,19 @@ function AutomationRunner() {
 
   useEffect(() => {
     if (dataReady && !runOnce.current) {
-      runOnce.current = true
-      runScheduledJobs(adapter, ctx).catch(console.error)
+      runOnce.current = true;
+      runScheduledJobs(adapter, ctx).catch(console.error);
     }
-    if (dataReady) {
-      const interval = setInterval(() => {
-        runScheduledJobs(adapter, ctx).catch(console.error)
-      }, 60_000)
-      return () => clearInterval(interval)
-    }
-  }, [dataReady, adapter, ctx])
+  }, [dataReady]);
+
+  useEffect(() => {
+    if (!dataReady) return;
+    const interval = setInterval(() => {
+      runScheduledJobs(adapter, ctx).catch(console.error);
+    }, 60_000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataReady]);
 
   return null
 }
@@ -194,18 +189,20 @@ function AppContent() {
     });
   }, []);
 
+  const upsertedRef = useRef(false);
+
   /**
    * Sync the current Supabase user into app_users on first load.
    */
   useEffect(() => {
-    if (!user || !userId) return;
+    if (!user || !userId || upsertedRef.current) return;
+    upsertedRef.current = true;
     import("@/lib/settingsService").then(async ({ upsertCurrentUser }) => {
       try {
         const { supabase } = await import("@/lib/supabaseClient");
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
-        const client = supabase;
-        await upsertCurrentUser(client, {
+        await upsertCurrentUser(supabase, {
           id: user.id,
           email: user.email || "",
           fullName: user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? "User",
@@ -238,192 +235,71 @@ function AppContent() {
       <Router>
         <div className="min-h-screen flex flex-col bg-background font-sans antialiased text-foreground">
           <Toaster position="top-center" richColors />
-          {!["/sign-in", "/sign-up"].includes(window.location.pathname) && <Navbar />}
           <main className="flex-[1_0_auto] flex flex-col">
             <AutomationRunner />
             <InventoryAlertRunner />
             <Switch>
+              {/* Public routes — no AppLayout */}
               <Route path="/" component={LandingPage} />
               <Route path="/sign-in" component={SignInPage} />
               <Route path="/sign-up" component={SignUpPage} />
-              <Route path="/dashboard">
-                {() => <Protected component={Dashboard} />}
-              </Route>
-              <Route path="/tasks">
-                {() => <PermissionProtected module="tasks" component={Tasks} />}
-              </Route>
-              <Route path="/projects">
-                {() => <PermissionProtected module="projects" component={Projects} />}
-              </Route>
-              <Route path="/projects/:id">
-                {() => <PermissionProtected module="projects" component={ProjectDetail} />}
-              </Route>
-              <Route path="/workload">
-                {() => <PermissionProtected module="projects" component={Workload} />}
-              </Route>
-              <Route path="/orders">
-                {() => <PermissionProtected module="orders" component={SalesOrders} />}
-              </Route>
-              <Route path="/orders/:id">
-                {() => <PermissionProtected module="orders" component={SalesOrderDetail} />}
-              </Route>
-              <Route path="/quotes">
-                {() => <PermissionProtected module="quotes" component={Quotes} />}
-              </Route>
-              <Route path="/quotes/:id">
-                {() => <PermissionProtected module="quotes" component={QuoteDetail} />}
-              </Route>
-              <Route path="/purchase-orders">
-                {() => <PermissionProtected module="purchase_orders" component={PurchaseOrders} />}
-              </Route>
-              <Route path="/purchase-orders/:id">
-                {() => <PermissionProtected module="purchase_orders" component={PurchaseOrderDetail} />}
-              </Route>
-              <Route path="/purchase-requests">
-                {() => <PermissionProtected module="purchase_requests" component={PurchaseRequests} />}
-              </Route>
-              <Route path="/purchase-requests/:id">
-                {() => <PermissionProtected module="purchase_requests" component={PurchaseRequestDetail} />}
-              </Route>
-              <Route path="/leads">
-                {() => <PermissionProtected module="leads" component={Leads} />}
-              </Route>
-              <Route path="/leads/:id">
-                {() => <PermissionProtected module="leads" component={LeadDetail} />}
-              </Route>
-              <Route path="/contacts">
-                {() => <PermissionProtected module="contacts" component={Contacts} />}
-              </Route>
-              <Route path="/contacts/:id">
-                {() => <PermissionProtected module="contacts" component={ContactDetail} />}
-              </Route>
-              <Route path="/deals">
-                {() => <PermissionProtected module="deals" component={Deals} />}
-              </Route>
-              <Route path="/deals/:id">
-                {() => <PermissionProtected module="deals" component={DealDetail} />}
-              </Route>
-              <Route path="/activities">
-                {() => <PermissionProtected module="activities" component={Activities} />}
-              </Route>
-              <Route path="/inventory">
-                {() => <PermissionProtected module="inventory" component={Inventory} />}
-              </Route>
-              <Route path="/inventory/:id">
-                {() => <PermissionProtected module="inventory" component={InventoryDetail} />}
-              </Route>
-              <Route path="/reports">
-                {() => <PermissionProtected module="reports" component={Reports} />}
-              </Route>
-              <Route path="/vendors">
-                {() => <PermissionProtected module="vendors" component={Vendors} />}
-              </Route>
-              <Route path="/vendors/:id">
-                {() => <PermissionProtected module="vendors" component={VendorDetail} />}
-              </Route>
-              {/* Settings Routes wrapped in SettingsLayout */}
-              <Route path="/settings/users">
-                {() => (
-                  <AppLayout>
-                    <SettingsLayout>
-                      <RequirePermission module="users" action="read" component={Users} />
-                    </SettingsLayout>
-                  </AppLayout>
-                )}
-              </Route>
-              <Route path="/settings/roles">
-                {() => (
-                  <AppLayout>
-                    <SettingsLayout>
-                      <RequirePermission module="roles" action="read" component={Roles} />
-                    </SettingsLayout>
-                  </AppLayout>
-                )}
-              </Route>
-              <Route path="/settings/organizations">
-                {() => (
-                  <AppLayout>
-                    <SettingsLayout>
-                      <RequirePermission module="organizations" action="read" component={OrganizationsPage} />
-                    </SettingsLayout>
-                  </AppLayout>
-                )}
-              </Route>
-              <Route path="/settings/branding">
-                {() => (
-                  <AppLayout>
-                    <SettingsLayout>
-                      <RequirePermission module="organizations" action="read" component={BrandingSettings} />
-                    </SettingsLayout>
-                  </AppLayout>
-                )}
-              </Route>
-              <Route path="/settings/discounts">
-                {() => (
-                  <AppLayout>
-                    <SettingsLayout>
-                      <RequirePermission module="organizations" action="read" component={Discounts} />
-                    </SettingsLayout>
-                  </AppLayout>
-                )}
-              </Route>
-              <Route path="/settings/profile">
-                {() => (
-                  <AppLayout>
-                    <SettingsLayout>
-                      <ProtectedRoute component={ProfilePage} />
-                    </SettingsLayout>
-                  </AppLayout>
-                )}
-              </Route>
-              <Route path="/settings/audit-logs">
-                {() => (
-                  <AppLayout>
-                    <SettingsLayout>
-                      <RequirePermission module="users" action="read" component={AuditLogs} />
-                    </SettingsLayout>
-                  </AppLayout>
-                )}
-              </Route>
-              <Route path="/settings/notifications">
-                {() => (
-                  <AppLayout>
-                    <SettingsLayout>
-                      <ProtectedRoute component={Notifications} />
-                    </SettingsLayout>
-                  </AppLayout>
-                )}
-              </Route>
-              <Route path="/notifications">
-                {() => <Protected component={Notifications} />}
-              </Route>
-              <Route path="/settings">
-                {() => (
-                  <AppLayout>
-                    <SettingsLayout>
-                      <ProtectedRoute component={ProfilePage} />
-                    </SettingsLayout>
-                  </AppLayout>
-                )}
-              </Route>
-              <Route path="/in-progress">
-                {() => <Protected component={InProgress} />}
-              </Route>
-              <Route path="/design">
-                {() => <Design />}
-              </Route>
-              <Route path="/fonts">
-                {() => <Fonts />}
-              </Route>
-              <Route path="/dialogs">
-                {() => <DialogsPreview />}
-              </Route>
+              <Route path="/design">{() => <Design />}</Route>
+              <Route path="/fonts">{() => <Fonts />}</Route>
+              <Route path="/dialogs">{() => <DialogsPreview />}</Route>
 
-              {/* Fallback route */}
+              {/* All authenticated routes — single persistent AppLayout */}
               <Route>
-                <div className="flex-1 flex items-center justify-center">
-                  <h1 className="text-2xl font-bold">404 - Page Not Found</h1>
-                </div>
+                {() => (
+                  <AppLayout>
+                    <Switch>
+                      <Route path="/dashboard">{() => <Protected component={Dashboard} />}</Route>
+                      <Route path="/tasks">{() => <PermissionProtected module="tasks" component={Tasks} />}</Route>
+                      <Route path="/projects/:id">{() => <PermissionProtected module="projects" component={ProjectDetail} />}</Route>
+                      <Route path="/projects">{() => <PermissionProtected module="projects" component={Projects} />}</Route>
+                      <Route path="/workload">{() => <PermissionProtected module="projects" component={Workload} />}</Route>
+                      <Route path="/orders/:id">{() => <PermissionProtected module="orders" component={SalesOrderDetail} />}</Route>
+                      <Route path="/orders">{() => <PermissionProtected module="orders" component={SalesOrders} />}</Route>
+                      <Route path="/quotes/:id">{() => <PermissionProtected module="quotes" component={QuoteDetail} />}</Route>
+                      <Route path="/quotes">{() => <PermissionProtected module="quotes" component={Quotes} />}</Route>
+                      <Route path="/purchase-orders/:id">{() => <PermissionProtected module="purchase_orders" component={PurchaseOrderDetail} />}</Route>
+                      <Route path="/purchase-orders">{() => <PermissionProtected module="purchase_orders" component={PurchaseOrders} />}</Route>
+                      <Route path="/purchase-requests/:id">{() => <PermissionProtected module="purchase_requests" component={PurchaseRequestDetail} />}</Route>
+                      <Route path="/purchase-requests">{() => <PermissionProtected module="purchase_requests" component={PurchaseRequests} />}</Route>
+                      <Route path="/leads/:id">{() => <PermissionProtected module="leads" component={LeadDetail} />}</Route>
+                      <Route path="/leads">{() => <PermissionProtected module="leads" component={Leads} />}</Route>
+                      <Route path="/contacts/:id">{() => <PermissionProtected module="contacts" component={ContactDetail} />}</Route>
+                      <Route path="/contacts">{() => <PermissionProtected module="contacts" component={Contacts} />}</Route>
+                      <Route path="/deals/:id">{() => <PermissionProtected module="deals" component={DealDetail} />}</Route>
+                      <Route path="/deals">{() => <PermissionProtected module="deals" component={Deals} />}</Route>
+                      <Route path="/activities">{() => <PermissionProtected module="activities" component={Activities} />}</Route>
+                      <Route path="/inventory/:id">{() => <PermissionProtected module="inventory" component={InventoryDetail} />}</Route>
+                      <Route path="/inventory">{() => <PermissionProtected module="inventory" component={Inventory} />}</Route>
+                      <Route path="/reports">{() => <PermissionProtected module="reports" component={Reports} />}</Route>
+                      <Route path="/vendors/:id">{() => <PermissionProtected module="vendors" component={VendorDetail} />}</Route>
+                      <Route path="/vendors">{() => <PermissionProtected module="vendors" component={Vendors} />}</Route>
+                      <Route path="/in-progress">{() => <Protected component={InProgress} />}</Route>
+                      <Route path="/notifications">{() => <Protected component={Notifications} />}</Route>
+
+                      {/* Settings routes with SettingsLayout nested inside AppLayout */}
+                      <Route path="/settings/users">{() => <SettingsLayout><RequirePermission module="users" action="read" component={Users} /></SettingsLayout>}</Route>
+                      <Route path="/settings/roles">{() => <SettingsLayout><RequirePermission module="roles" action="read" component={Roles} /></SettingsLayout>}</Route>
+                      <Route path="/settings/organizations">{() => <SettingsLayout><RequirePermission module="organizations" action="read" component={OrganizationsPage} /></SettingsLayout>}</Route>
+                      <Route path="/settings/branding">{() => <SettingsLayout><RequirePermission module="organizations" action="read" component={BrandingSettings} /></SettingsLayout>}</Route>
+                      <Route path="/settings/discounts">{() => <SettingsLayout><RequirePermission module="organizations" action="read" component={Discounts} /></SettingsLayout>}</Route>
+                      <Route path="/settings/profile">{() => <SettingsLayout><ProtectedRoute component={ProfilePage} /></SettingsLayout>}</Route>
+                      <Route path="/settings/audit-logs">{() => <SettingsLayout><RequirePermission module="users" action="read" component={AuditLogs} /></SettingsLayout>}</Route>
+                      <Route path="/settings/notifications">{() => <SettingsLayout><ProtectedRoute component={Notifications} /></SettingsLayout>}</Route>
+                      <Route path="/settings">{() => <SettingsLayout><ProtectedRoute component={ProfilePage} /></SettingsLayout>}</Route>
+
+                      {/* 404 */}
+                      <Route>
+                        <div className="flex-1 flex items-center justify-center">
+                          <h1 className="text-2xl font-bold">404 - Page Not Found</h1>
+                        </div>
+                      </Route>
+                    </Switch>
+                  </AppLayout>
+                )}
               </Route>
             </Switch>
           </main>

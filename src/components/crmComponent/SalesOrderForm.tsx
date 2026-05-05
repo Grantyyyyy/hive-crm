@@ -546,12 +546,12 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
 
             <div className="mt-8 flex justify-end">
               <div className="flex flex-col items-end min-w-[320px] gap-4">
-                <div className="flex items-center gap-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 w-full justify-between">
+                <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 w-full justify-between">
                   <span>Line Total</span>
                   <span className="text-slate-900 dark:text-white min-w-[100px] text-right">${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                 </div>
-
-                <div className="flex items-center gap-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 w-full justify-between">
+ 
+                <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 w-full justify-between">
                   <span>Order Discount</span>
                   <div className="flex flex-col items-end gap-1">
                     <select
@@ -598,18 +598,18 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
                   </div>
                 </div>
                 {errors.orderDiscount && <p className="text-[9px] font-bold text-red-500 uppercase mt-[-8px] text-right">{errors.orderDiscount}</p>}
-
-                <div className="flex items-center gap-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 w-full justify-between">
+ 
+                <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 w-full justify-between">
                   <span>Discounted Total</span>
                   <span className="text-slate-900 dark:text-white min-w-[100px] text-right">${discountedSubtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                 </div>
-
-                <div className="flex items-center gap-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 w-full justify-between">
+ 
+                <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 w-full justify-between">
                   <span>VAT (12%)</span>
                   <span className="text-slate-900 dark:text-white min-w-[100px] text-right">${tax.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="w-full h-px bg-slate-200 dark:bg-slate-800 my-1" />
-                <div className="flex items-center gap-12 w-full justify-between">
+                <div className="flex items-center gap-6 w-full justify-between">
                   <span className="text-[10px] font-black uppercase tracking-[0.3em] text-teal-600">Total Amount</span>
                   <span className="text-4xl font-black text-slate-900 dark:text-white tabular-nums tracking-tighter">
                     ${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}

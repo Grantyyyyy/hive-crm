@@ -6,6 +6,7 @@ import {
   PlusCircle,
   Trash2,
   Download,
+  Upload,
   Filter,
   Globe,
   Users,
@@ -135,6 +136,75 @@ export function Leads() {
       ],
       'leads'
     )
+  }
+
+  function handleImportCSV(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      if (!text) return;
+
+      const rows = text.split('\n').map(row => row.trim()).filter(Boolean);
+      if (rows.length <= 1) return;
+
+      const headers = rows[0].split(',').map(h => h.trim().replace(/"/g, '').toLowerCase());
+      
+      const newLeads = rows.slice(1).map(row => {
+        const values = [];
+        let inQuotes = false;
+        let currentVal = '';
+        for (let i = 0; i < row.length; i++) {
+          const char = row[i];
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            values.push(currentVal);
+            currentVal = '';
+          } else {
+            currentVal += char;
+          }
+        }
+        values.push(currentVal);
+
+        const lead: Partial<Lead> = {
+          source: 'import',
+          status: 'new',
+          score: 50,
+          name: 'Unknown Lead',
+          email: '',
+          ownerId: userId || '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+
+        headers.forEach((header, idx) => {
+          let val = (values[idx] || '').trim();
+          val = val.replace(/^"|"$/g, '');
+          if (!val) return;
+
+          if (header.includes('name')) lead.name = val;
+          else if (header.includes('email')) lead.email = val;
+          else if (header.includes('phone')) lead.phone = val;
+          else if (header.includes('company')) lead.company = val;
+          else if (header.includes('position')) lead.position = val;
+          else if (header.includes('source')) lead.source = val as LeadSource;
+          else if (header.includes('status')) lead.status = val as LeadStatus;
+          else if (header.includes('score')) lead.score = parseInt(val, 10) || 50;
+        });
+
+        return lead as Omit<Lead, "id">;
+      });
+
+      if (newLeads.length > 0) {
+        addItems(newLeads);
+      }
+      
+      e.target.value = '';
+    };
+    reader.readAsText(file);
   }
 
   const columns: ProcurementColumn<Lead>[] = [
@@ -268,6 +338,21 @@ export function Leads() {
             <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Manage and track your prospective customers through the sales funnel.</p>
           </div>
           <div className="flex items-center gap-3 shrink-0">
+            <input
+              type="file"
+              id="csv-upload"
+              accept=".csv"
+              className="hidden"
+              onChange={handleImportCSV}
+            />
+            <Button 
+              variant="outline" 
+              onClick={() => document.getElementById('csv-upload')?.click()} 
+              className="border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
+            >
+              <Upload className="w-4 h-4" />
+              Import CSV
+            </Button>
             <Button variant="outline" onClick={handleExportCSV} className="border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
               <Download className="w-4 h-4" />
               Export CSV

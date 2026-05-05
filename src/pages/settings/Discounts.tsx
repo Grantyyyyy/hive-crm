@@ -219,7 +219,7 @@ export function Discounts() {
                     <span className={cn(
                       "text-[9px] font-black uppercase tracking-[0.1em] px-2 py-0.5 rounded-full border",
                       discount.scope === 'order' 
-                        ? "bg-indigo-50 text-indigo-600 border-indigo-100 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800/50" 
+                        ? "bg-teal-50 text-teal-600 border-teal-100 dark:bg-teal-900/20 dark:text-teal-400 dark:border-teal-800/50" 
                         : "bg-teal-50 text-teal-600 border-teal-100 dark:bg-teal-900/20 dark:text-teal-400 dark:border-teal-800/50"
                     )}>
                       {discount.scope === 'order' ? 'Whole Order' : 'Line Item'}

@@ -1,3 +1,4 @@
+import { logger } from "../lib/logger";
 import jsPDF from "jspdf";
 import type { Quote, SalesOrder } from "../lib/types";
 
@@ -295,7 +296,7 @@ export async function generateQuotePDF(quote: Quote, companyName: string = "Your
   const blob = await _buildQuotePdf(quote, companyName);
   const safeName = (quote.customerName || "Unknown").replace(/[^a-zA-Z0-9_-]/g, "_");
   const filename = `Quote_${quote.quoteNumber}_${safeName}.pdf`;
-  console.log("[pdfService] Saving PDF:", filename);
+  logger.log("[pdfService] Saving PDF:", filename);
   // Create a download link
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -322,7 +323,7 @@ export async function generateInvoicePDF(order: SalesOrder, companyName: string 
   const blob = await _buildInvoicePdf(order, companyName);
   const safeName = (order.customerName || "Unknown").replace(/[^a-zA-Z0-9_-]/g, "_");
   const filename = `Invoice_${order.orderNumber}_${safeName}.pdf`;
-  console.log("[pdfService] Saving PDF:", filename);
+  logger.log("[pdfService] Saving PDF:", filename);
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;

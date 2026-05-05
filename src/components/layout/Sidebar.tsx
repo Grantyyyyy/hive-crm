@@ -56,7 +56,7 @@ interface SidebarProps {
 export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: SidebarProps) {
   const [location] = useLocation();
   const { user } = useUser();
-  const { userId, signOut } = useAuth();
+  const { userId, signOut, isLoaded } = useAuth();
   const { can, hasFullAccess, isLoaded: permLoaded } = usePermission();
   const ctx = useCRMContext();
   const { data: organizations } = ctx.getResource<Organization>("organizations");
@@ -89,7 +89,7 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
 
   // Fetch role name from app_users + roles tables
   useEffect(() => {
-    if (!userId) {
+    if (!isLoaded || !userId) {
       setRoleName(null);
       return;
     }
@@ -107,7 +107,7 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
         }
       });
     return () => { cancelled = true; };
-  }, [userId]);
+  }, [userId, isLoaded]);
 
   const displayName = user?.user_metadata?.full_name
     ?? user?.email?.split("@")[0]

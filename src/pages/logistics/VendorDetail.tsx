@@ -282,7 +282,7 @@ export function VendorDetail() {
 
               {/* PO Table */}
               {vendorPOs.length === 0 ? (
-                <div className="p-12 text-center">
+                <div className="p-6 text-center">
                   <p className="text-slate-400 dark:text-slate-500 font-medium">No purchase orders yet</p>
                   <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
                     Purchase orders linked to this vendor will appear here.

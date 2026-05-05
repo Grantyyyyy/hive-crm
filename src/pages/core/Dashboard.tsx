@@ -331,7 +331,7 @@ export function Dashboard() {
             </div>
             <div className="p-2">
               {recentActivities.length === 0 ? (
-                <div className="p-12 text-center text-slate-500 dark:text-slate-400">No recent activity.</div>
+                <div className="p-6 text-center text-slate-500 dark:text-slate-400">No recent activity.</div>
               ) : (
                 recentActivities.map((activity) => (
                   <div key={activity.id} className={cn(

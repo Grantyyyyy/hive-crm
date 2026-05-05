@@ -1,3 +1,4 @@
+import { logger } from "../lib/logger";
 import type { PurchaseRequest, PurchaseRequestItem, PurchaseOrder, Vendor, SalesOrder, OrderItem } from "../lib/types";
 import type { JobAdapter } from "./types";
 import { generateNumber } from "./types";
@@ -67,7 +68,7 @@ export async function approvePurchaseRequest(
     const created = await adapter.insertPurchaseOrder(newPO);
     createdPOs.push(created);
 
-    console.log(`[procurementService] PO ${poNumber} created from PR ${request.requestNumber} for vendor "${items[0].vendorName ?? 'TBD'}" with ${poItems.length} item(s).`);
+    logger.log(`[procurementService] PO ${poNumber} created from PR ${request.requestNumber} for vendor "${items[0].vendorName ?? 'TBD'}" with ${poItems.length} item(s).`);
   }
 
   await adapter.updatePurchaseRequest(request.id, { status: 'ordered' });
@@ -133,13 +134,13 @@ export async function createReturnToSupplier(
   if (remainingQty > 0) {
     newMAC = remainingValue / remainingQty;
     if (newMAC < 0) {
-      console.warn(`[procurementService] System Anomaly: Negative Inventory Value detected during RTS for "${item.name}". RemainingValue: ${remainingValue}. Coerced MAC to $0.`);
+      logger.warn(`[procurementService] System Anomaly: Negative Inventory Value detected during RTS for "${item.name}". RemainingValue: ${remainingValue}. Coerced MAC to $0.`);
       newMAC = 0;
     }
   } else {
     // Zero-stock guard: If stock goes to zero, MAC resets to 0
     newMAC = 0;
-    console.log(`[procurementService] Item "${item.name}" stock hit zero after RTS. Resetting Moving Average to $0.`);
+    logger.log(`[procurementService] Item "${item.name}" stock hit zero after RTS. Resetting Moving Average to $0.`);
   }
 
   const newStockLevel = recalculateStockLevel(remainingQty, item.reservedQuantity, item.reorderThreshold);
@@ -214,7 +215,7 @@ export async function createReturnToSupplier(
 
   await adapter.insertInventoryTransaction(auditTx);
 
-  console.log(`[procurementService] RTS ${rtsNumber} created. Stock: ${currentStock} -> ${remainingQty}. MAC: ${currentAvgCost} -> ${newMAC}.`);
+  logger.log(`[procurementService] RTS ${rtsNumber} created. Stock: ${currentStock} -> ${remainingQty}. MAC: ${currentAvgCost} -> ${newMAC}.`);
 
   return createdRTS;
 }
@@ -364,7 +365,7 @@ export async function createPurchaseReceipt(
         if (newQty > 0 && oldQty >= 0) { // Safety: If recovering from negative, just take incoming cost. Or if new is 0...
           newAvgCost = (oldQty * currentAvg + input.quantityAccepted * input.unitCost) / newQty;
         } else {
-          console.warn(`[procurementService] Anomaly detected: Negative stock or zero sum encountered. Resetting Moving Average Cost to incoming Unit Cost for item ${invItem.id}`);
+          logger.warn(`[procurementService] Anomaly detected: Negative stock or zero sum encountered. Resetting Moving Average Cost to incoming Unit Cost for item ${invItem.id}`);
         }
 
         const newLevel = recalculateStockLevel(newQty, invItem.reservedQuantity, invItem.reorderThreshold);
@@ -393,10 +394,10 @@ export async function createPurchaseReceipt(
             userName: params.userName || params.userId // Fallback to userId if userName not provided
           }, adapter);
         } catch (e) {
-          console.error('[procurementService] Failed to log inventory transaction:', e);
+          logger.error('[procurementService] Failed to log inventory transaction:', e);
         }
       } else {
-        console.warn(`[procurementService] Inventory item ${input.inventoryItemId} mapped but not found in DB.`);
+        logger.warn(`[procurementService] Inventory item ${input.inventoryItemId} mapped but not found in DB.`);
       }
     }
   }
@@ -430,7 +431,7 @@ export async function createPurchaseReceipt(
           adapter
         );
       } catch (e) {
-        console.error(`[procurementService] Allocation failed for item ${input.inventoryItemId}:`, e);
+        logger.error(`[procurementService] Allocation failed for item ${input.inventoryItemId}:`, e);
       }
     }
   }
@@ -450,8 +451,8 @@ export async function sendPOToVendor(
   }
 
   // 1. Simulate external communication (Email, API, etc.)
-  console.log(`[procurementService] DISPATCHING PO ${po.poNumber} to ${vendor.name}`);
-  console.log(`[procurementService] RECIPIENT: ${vendor.email || 'system-default-procurement'}`);
+  logger.log(`[procurementService] DISPATCHING PO ${po.poNumber} to ${vendor.name}`);
+  logger.log(`[procurementService] RECIPIENT: ${vendor.email || 'system-default-procurement'}`);
 
   // 2. Update the PO status
   await adapter.updatePurchaseOrder(po.id, {
@@ -464,7 +465,7 @@ export async function sendPOToVendor(
     await adapter.updatePurchaseRequest(po.referenceId, { status: 'ordered' });
   }
 
-  console.log(`[procurementService] PO ${po.poNumber} successfully transmitted.`);
+  logger.log(`[procurementService] PO ${po.poNumber} successfully transmitted.`);
 }
 
 /**
@@ -536,7 +537,7 @@ export async function consolidatePRsToPOs(
       itemCount: poItems.length,
     });
 
-    console.log(`[procurementService] Consolidated PO ${poNumber} for vendor "${items[0].vendorName ?? 'TBD'}" with ${poItems.length} item(s) from ${sourcePRIds.length} PR(s).`);
+    logger.log(`[procurementService] Consolidated PO ${poNumber} for vendor "${items[0].vendorName ?? 'TBD'}\" with ${poItems.length} item(s) from ${sourcePRIds.length} PR(s).`);
   }
 
   return results;
@@ -609,6 +610,6 @@ export async function createPurchaseRequestFromShortages(
     items: updatedOrderItems
   });
 
-  console.log(`[procurementService] PR ${requestNumber} generated for SO ${order.orderNumber} shortages.`);
+  logger.log(`[procurementService] PR ${requestNumber} generated for SO ${order.orderNumber} shortages.`);
   return createdPR;
 }

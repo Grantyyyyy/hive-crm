@@ -42,7 +42,7 @@ export function ModulesSection({ theme }: ModulesSectionProps) {
           {topModules.map((item, i) => (
             <div
               key={i}
-              className={`p-10 lg:p-12 border-b lg:border-b-0 lg:border-r ${borderColor} space-y-6 hover:bg-[#0D9488] hover:text-white transition-all duration-500 group`}
+              className={`p-10 lg:p-6 border-b lg:border-b-0 lg:border-r ${borderColor} space-y-6 hover:bg-[#0D9488] hover:text-white transition-all duration-500 group`}
             >
               <div className="w-16 h-16 bg-[#0D9488] text-white flex items-center justify-center group-hover:bg-white group-hover:text-[#0D9488] transition-colors rounded-2xl">
                 <item.icon className="w-8 h-8" />
@@ -62,7 +62,7 @@ export function ModulesSection({ theme }: ModulesSectionProps) {
           {bottomModules.map((item, i) => (
             <div
               key={i}
-              className={`p-10 lg:p-12 border-b lg:border-b-0 lg:border-r ${borderColor} space-y-6 hover:bg-slate-900 hover:text-white transition-all duration-500 group`}
+              className={`p-10 lg:p-6 border-b lg:border-b-0 lg:border-r ${borderColor} space-y-6 hover:bg-slate-900 hover:text-white transition-all duration-500 group`}
             >
               <div className={`w-16 h-16 ${isDark ? "bg-slate-700" : "bg-slate-900"} text-white flex items-center justify-center group-hover:bg-[#0D9488] transition-colors rounded-2xl`}>
                 <item.icon className="w-8 h-8" />

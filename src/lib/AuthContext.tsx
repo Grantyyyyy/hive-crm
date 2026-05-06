@@ -1,47 +1,32 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react"
-import { supabase } from "./supabaseClient"
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
 import type { AuthSession as Session, AuthUser as User } from "@supabase/supabase-js"
+import { supabase } from "./supabaseClient"
 
-// ── Audit Logging for Auth Events ────────────────────────────────────────────
+function logAuthEvent(action: string, userId: string, session: Session | null) {
+  let organizationId: string | null = null
 
-let lastAuthLogTime = 0;
-let lastAuthAction = "";
+  if (session?.access_token) {
+    try {
+      const payload = JSON.parse(atob(session.access_token.split(".")[1]))
+      organizationId = payload?.org_id ?? null
+    } catch {
+      // Ignore malformed JWTs for audit logging purposes.
+    }
+  }
 
-function logAuthEvent(action: string) {
-  const now = Date.now();
-  // Throttle only if it's the SAME action (prevent double-logging LOGIN on load)
-  if (action === lastAuthAction && now - lastAuthLogTime < 5000) return;
-
-  lastAuthLogTime = now;
-  lastAuthAction = action;
-
-  supabase.auth.getUser().then(({ data: { user } }) => {
-    if (!user) return;
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      let organizationId = null;
-      if (session?.access_token) {
-        try {
-          const payload = JSON.parse(atob(session.access_token.split('.')[1]));
-          organizationId = payload?.org_id ?? null;
-        } catch {}
-      }
-
-      supabase.from('audit_log').insert({
-        entity_type: 'auth',
-        entity_id: user.id,
-        action: action, // Use actual LOGIN/LOGOUT action
-        changed_by: user.id,
-        organization_id: organizationId,
-        diff: { event: action, timestamp: new Date().toISOString() }
-      }).then(({ error }: any) => {
-        if (error) console.error("[AuthContext] Failed to emit auth audit log:", error);
-      });
-    });
-  });
+  supabase.from("audit_log").insert({
+    entity_type: "auth",
+    entity_id: userId,
+    action,
+    changed_by: userId,
+    organization_id: organizationId,
+    diff: { event: action, timestamp: new Date().toISOString() },
+  }).then(({ error }: any) => {
+    if (error) {
+      console.error("[AuthContext] Failed to emit auth audit log:", error)
+    }
+  })
 }
-
-// ── Context value ─────────────────────────────────────────────────────────────
 
 interface AuthContextValue {
   user: User | null
@@ -52,85 +37,174 @@ interface AuthContextValue {
   organizationId: string | null
   signOut: () => Promise<void>
   getToken: () => Promise<string | null>
+  refreshSession: () => Promise<string | null>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-// ── Helper: extract org_id from JWT claims ────────────────────────────────────
-
 function extractOrgId(session: Session | null): string | null {
   if (!session?.access_token) return null
+
   try {
-    const payload = JSON.parse(atob(session.access_token.split('.')[1]))
+    const payload = JSON.parse(atob(session.access_token.split(".")[1]))
     return payload?.org_id ?? null
-  } catch {
+  } catch (error) {
+    console.error("Failed to parse JWT:", error)
     return null
   }
 }
 
-// ── Provider ──────────────────────────────────────────────────────────────────
+async function resolveOrganizationId(session: Session | null): Promise<string | null> {
+  const jwtOrgId = extractOrgId(session)
+  if (jwtOrgId) return jwtOrgId
 
-/**
- * AuthProvider — wraps the app and provides authentication state from Supabase.
- *
- * Uses Supabase's getSession() + onAuthStateChange for real-time auth tracking.
- * The exported hooks mirror Clerk's interface so swapping required zero changes
- * in consuming components.
- *
- * Mapping:
- *   AuthContext.user        → Supabase User
- *   AuthContext.session     → Supabase Session
- *   AuthContext.isLoaded    → Auth init complete
- *   AuthContext.isSignedIn  → !!session && !!user
- *   AuthContext.userId      → user.id
- *   AuthContext.signOut()   → supabase.auth.signOut()
- *   AuthContext.getToken()  → session.access_token
- */
+  const authUserId = session?.user?.id
+  if (!authUserId) return null
+
+  try {
+    const { data, error } = await supabase.rpc("get_my_org_id")
+    if (error) throw error
+    if (data) return data
+  } catch (error: any) {
+    const message = String(error?.message || "")
+    const missingRpc =
+      message.includes("get_my_org_id") &&
+      (message.includes("Could not find the function") || message.includes("does not exist"))
+
+    if (!missingRpc) {
+      console.warn("[AuthContext] get_my_org_id() fallback failed:", error)
+    }
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("app_users")
+      .select("organization_id")
+      .eq("auth_user_id", authUserId)
+      .maybeSingle()
+
+    if (error) throw error
+    return data?.organization_id ?? null
+  } catch (error) {
+    console.warn("[AuthContext] app_users org lookup fallback failed:", error)
+    return null
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [organizationId, setOrganizationId] = useState<string | null>(null)
   const [isLoaded, setIsLoaded] = useState(false)
 
+  const initialized = useRef(false)
+  const syncVersionRef = useRef(0)
+  const hadSessionRef = useRef(false)
+  const prevUserIdRef = useRef<string | null>(null)
+
   useEffect(() => {
-    // Get initial session
-    (supabase.auth as any).getSession().then(({ data: { session: initialSession } }: any) => {
-      setSession(initialSession)
-      setUser(initialSession?.user ?? null)
-      setOrganizationId(extractOrgId(initialSession))
+    let cancelled = false
+
+    const syncSessionState = async (nextSession: Session | null, seedRefs = false) => {
+      const syncVersion = ++syncVersionRef.current
+      const nextUser = nextSession?.user ?? null
+      const nextOrganizationId = await resolveOrganizationId(nextSession)
+
+      if (cancelled || syncVersion !== syncVersionRef.current) return
+
+      setSession(nextSession)
+      setUser(nextUser)
+      setOrganizationId(nextOrganizationId)
       setIsLoaded(true)
-      if (initialSession?.user) logAuthEvent('LOGIN')
-    }).catch((err: any) => {
-      console.error('Failed to get initial session:', err)
+
+      if (seedRefs) {
+        hadSessionRef.current = !!nextSession
+        prevUserIdRef.current = nextUser?.id ?? null
+        initialized.current = true
+        return
+      }
+
+      if (!initialized.current) return
+
+      const hasSessionNow = !!nextUser
+      const hadSessionBefore = hadSessionRef.current
+
+      if (hasSessionNow && !hadSessionBefore && nextSession) {
+        logAuthEvent("LOGIN", nextSession.user.id, nextSession)
+      }
+
+      hadSessionRef.current = hasSessionNow
+      if (nextUser?.id) {
+        prevUserIdRef.current = nextUser.id
+      }
+    }
+
+    ;(supabase.auth as any).getSession().then(async ({ data: { session: initialSession } }: any) => {
+      await syncSessionState(initialSession, true)
+    }).catch((error: any) => {
+      console.error("Failed to get initial session:", error)
       setIsLoaded(true)
+      initialized.current = true
     })
 
-    // Listen for auth state changes (sign-in, sign-out, token refresh, etc.)
     const {
       data: { subscription },
-    } = (supabase.auth as any).onAuthStateChange((_event: string, newSession: any) => {
-      setSession(newSession)
-      setUser(newSession?.user ?? null)
-      setOrganizationId(extractOrgId(newSession))
-      setIsLoaded(true)
-      if (_event === 'SIGNED_IN' && newSession?.user) logAuthEvent('LOGIN')
-      if (_event === 'SIGNED_OUT') logAuthEvent('LOGOUT')
+    } = (supabase.auth as any).onAuthStateChange((_event: string, nextSession: Session | null) => {
+      void syncSessionState(nextSession)
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      cancelled = true
+      subscription.unsubscribe()
+    }
   }, [])
 
   const signOut = useCallback(async () => {
-    try {
-      await (supabase.auth as any).signOut();
-    } catch (err: any) {
-      console.error('Sign out failed:', err);
+    if (prevUserIdRef.current) {
+      try {
+        await supabase.from("audit_log").insert({
+          entity_type: "auth",
+          entity_id: prevUserIdRef.current,
+          action: "LOGOUT",
+          changed_by: prevUserIdRef.current,
+          organization_id: organizationId,
+          diff: { event: "LOGOUT", timestamp: new Date().toISOString() },
+        })
+      } catch (error: any) {
+        console.error("[AuthContext] Failed to emit LOGOUT audit log:", error)
+      }
     }
-    // onAuthStateChange will fire and update state; force-clear local state regardless
-    setSession(null);
-    setUser(null);
-    setIsLoaded(true);
-  }, []);
+
+    try {
+      await (supabase.auth as any).signOut()
+    } catch (error: any) {
+      console.error("Sign out failed:", error)
+    }
+
+    setSession(null)
+    setUser(null)
+    setOrganizationId(null)
+    setIsLoaded(true)
+  }, [organizationId])
+
+  const refreshSession = useCallback(async (): Promise<string | null> => {
+    try {
+      const { data, error } = await (supabase.auth as any).refreshSession()
+      if (error) throw error
+
+      if (data.session) {
+        const nextOrganizationId = await resolveOrganizationId(data.session)
+        setSession(data.session)
+        setUser(data.session.user)
+        setOrganizationId(nextOrganizationId)
+        return nextOrganizationId
+      }
+    } catch (error: any) {
+      console.error("Failed to refresh session:", error)
+    }
+
+    return null
+  }, [])
 
   const getToken = useCallback(async (): Promise<string | null> => {
     if (!session) return null
@@ -150,22 +224,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       organizationId,
       signOut,
       getToken,
+      refreshSession,
     }),
-    [user, session, isLoaded, isSignedIn, userId, organizationId, signOut, getToken]
+    [user, session, isLoaded, isSignedIn, userId, organizationId, signOut, getToken, refreshSession],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-// ── Consumer hooks ────────────────────────────────────────────────────────────
-
-/**
- * useAuth — mirrors Clerk's useAuth() hook.
- * Returns isLoaded, isSignedIn, userId, organizationId, signOut, getToken.
- */
-export function useAuth(): Pick<AuthContextValue, "isLoaded" | "isSignedIn" | "userId" | "organizationId" | "signOut" | "getToken"> {
+export function useAuth(): Pick<AuthContextValue, "isLoaded" | "isSignedIn" | "userId" | "organizationId" | "signOut" | "getToken" | "refreshSession"> {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error("useAuth must be used within an AuthProvider")
+
   return {
     isLoaded: ctx.isLoaded,
     isSignedIn: ctx.isSignedIn,
@@ -173,47 +243,30 @@ export function useAuth(): Pick<AuthContextValue, "isLoaded" | "isSignedIn" | "u
     organizationId: ctx.organizationId,
     signOut: ctx.signOut,
     getToken: ctx.getToken,
+    refreshSession: ctx.refreshSession,
   }
 }
 
-/**
- * useUser — mirrors Clerk's useUser() hook.
- * Returns the Supabase User object and isLoaded state.
- */
 export function useUser(): { user: User | null; isLoaded: boolean } {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error("useUser must be used within an AuthProvider")
   return { user: ctx.user, isLoaded: ctx.isLoaded }
 }
 
-/**
- * useSession — mirrors Clerk's useSession() hook.
- * Returns the Supabase Session object.
- */
 export function useSession(): { session: Session | null } {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error("useSession must be used within an AuthProvider")
   return { session: ctx.session }
 }
 
-/**
- * SignedIn — render-prop component mirroring Clerk's <SignedIn>.
- * Shows children only when the user is signed in.
- */
 export function SignedIn({ children }: { children: React.ReactNode }) {
   const { isSignedIn } = useAuth()
   return isSignedIn ? <>{children}</> : null
 }
 
-/**
- * SignedOut — render-prop component mirroring Clerk's <SignedOut>.
- * Shows children only when the user is NOT signed in.
- */
 export function SignedOut({ children }: { children: React.ReactNode }) {
   const { isSignedIn } = useAuth()
   return !isSignedIn ? <>{children}</> : null
 }
-
-// ── Export the context for direct access ──────────────────────────────────────
 
 export { AuthContext }

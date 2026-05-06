@@ -559,3 +559,60 @@ export async function removeUser(client: SupabaseClient, userId: string): Promis
   const { error } = await client.from('app_users').delete().eq('id', userId)
   if (error) throw error
 }
+
+export interface OrganizationSetupResult {
+  organizationId: string
+  roleId: string | null
+}
+
+/**
+ * Handles the first-time setup for a user who just signed up.
+ * 1. Creates a new organization via secure RPC.
+ * 2. Assigns the user to that organization as Admin.
+ * 3. Refreshes the session to update JWT claims.
+ */
+export async function setupFirstOrganization(
+  client: SupabaseClient,
+  data: { name: string; slug: string; ownerId: string; userEmail: string; userName?: string }
+): Promise<OrganizationSetupResult> {
+  const { data: rpcResult, error } = await client.rpc('initialize_organization', {
+    org_name: data.name,
+    org_slug: data.slug,
+    user_email: data.userEmail,
+    user_full_name: data.userName || data.userEmail.split('@')[0]
+  })
+
+  if (error) throw error
+
+  const result = rpcResult as {
+    success?: boolean
+    organization_id?: string
+    role_id?: string | null
+    users_affected?: number
+  } | null
+
+  if (!result?.success || !result.organization_id) {
+    throw new Error('Organization setup did not return a valid organization assignment.')
+  }
+
+  if (typeof result.users_affected === 'number' && result.users_affected < 1) {
+    throw new Error('Organization was created, but no app_users row was linked to the current user.')
+  }
+
+  const { data: linkedUser, error: linkedUserError } = await client
+    .from('app_users')
+    .select('organization_id, role_id')
+    .eq('auth_user_id', data.ownerId)
+    .maybeSingle()
+
+  if (linkedUserError) throw linkedUserError
+
+  if (!linkedUser?.organization_id) {
+    throw new Error('Organization was created, but the current user was not assigned in app_users.')
+  }
+
+  return {
+    organizationId: linkedUser.organization_id,
+    roleId: linkedUser.role_id ?? result.role_id ?? null,
+  }
+}

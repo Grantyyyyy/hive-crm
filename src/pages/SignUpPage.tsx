@@ -7,6 +7,7 @@ import { AuthLayout } from "@/components/layout/AuthLayout"
 
 export function SignUpPage() {
   const [, navigate] = useLocation()
+  const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -32,9 +33,28 @@ export function SignUpPage() {
     setLoading(true)
 
     try {
-      const { error } = await (supabase.auth as any).signUp({
+      // 1. Validate if email is already in use in app_users
+      const { data: existingUser } = await supabase
+        .from('app_users')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (existingUser) {
+        setError("This email is already registered.");
+        setLoading(false);
+        return;
+      }
+
+      // 2. Perform Supabase Auth Sign Up
+      const { data, error } = await (supabase.auth as any).signUp({
         email,
         password,
+        options: {
+          data: {
+            full_name: name,
+          }
+        }
       })
 
       if (error) {
@@ -43,9 +63,28 @@ export function SignUpPage() {
       }
 
       setSuccess(true)
-      // Navigate after a short delay so the user sees the success message
-      setTimeout(() => navigate("/dashboard"), 2000)
-    } catch {
+      
+      // If a session was returned (auto-login enabled), sync immediately
+      if (data.session) {
+        import("@/lib/settingsService").then(async ({ upsertCurrentUser }) => {
+          try {
+            await upsertCurrentUser(supabase, {
+              id: data.user!.id,
+              email: email,
+              fullName: name,
+            }, data.user!.id)
+          } catch (syncError) {
+            console.warn("Initial app_users sync skipped during sign-up:", syncError)
+          } finally {
+            setTimeout(() => navigate("/onboarding"), 2000)
+          }
+        })
+      } else {
+        // Confirmation email sent
+        setError(null);
+        // We stay on the page to show the success message
+      }
+    } catch (err: any) {
       setError("An unexpected error occurred. Please try again.")
     } finally {
       setLoading(false)
@@ -80,69 +119,87 @@ export function SignUpPage() {
 
         {success && (
           <div className="px-4 py-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold rounded-xl">
-            Account created! Redirecting you...
+            Account created! Please check your email to confirm your account and sign in.
           </div>
         )}
 
-        <div>
-          <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-2">
-            Email address
-          </label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@company.com"
-            required
-            className="w-full px-4 py-3 border border-border rounded-xl text-sm bg-bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 transition-all"
-          />
-        </div>
+        {!success && (
+          <>
+            <div>
+              <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-2">
+                Full Name
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="John Doe"
+                required
+                className="w-full px-4 py-3 border border-border rounded-xl text-sm bg-bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 transition-all"
+              />
+            </div>
 
-        <div>
-          <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-2">
-            Password
-          </label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            required
-            className="w-full px-4 py-3 border border-border rounded-xl text-sm bg-bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 transition-all"
-          />
-        </div>
+            <div>
+              <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-2">
+                Email address
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+                required
+                className="w-full px-4 py-3 border border-border rounded-xl text-sm bg-bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 transition-all"
+              />
+            </div>
 
-        <div>
-          <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-2">
-            Confirm Password
-          </label>
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="••••••••"
-            required
-            className="w-full px-4 py-3 border border-border rounded-xl text-sm bg-bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 transition-all"
-          />
-        </div>
+            <div>
+              <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-2">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                className="w-full px-4 py-3 border border-border rounded-xl text-sm bg-bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 transition-all"
+              />
+            </div>
 
-        <button
-          type="submit"
-          disabled={loading || !email || !password || !confirmPassword}
-          className="w-full mt-2 px-5 py-3 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-teal-600/20 transition-colors flex items-center justify-center gap-2"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Creating account...
-            </>
-          ) : (
-            <>
-              Create Account
-              <ArrowRight className="w-4 h-4" />
-            </>
-          )}
-        </button>
+            <div>
+              <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-2">
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                className="w-full px-4 py-3 border border-border rounded-xl text-sm bg-bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 transition-all"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || !email || !password || !confirmPassword || !name}
+              className="w-full mt-2 px-5 py-3 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-teal-600/20 transition-colors flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Creating account...
+                </>
+              ) : (
+                <>
+                  Create Account
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </>
+        )}
       </form>
 
       {/* Sign in link */}

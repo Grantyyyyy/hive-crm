@@ -8,7 +8,11 @@ import {
   Ticket,
   ChevronDown,
   MoreHorizontal,
-  Database
+  Database,
+  ArrowRight,
+  Sparkles,
+  Boxes,
+  ClipboardList
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -16,7 +20,7 @@ import { formatCurrency } from "@/lib/helpers"
 import { useCRMResource } from "@/lib/hooks"
 import { DashboardSkeleton } from "@/components/ui/skeletons"
 import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
-import type { Deal, Activity as ActivityT, InventoryItem, PurchaseRequest, PurchaseOrder, Quote, SalesOrder, Task, InventoryTransaction, PurchaseReceipt, PurchaseReceiptItem, ReturnToSupplier } from "@/lib/types"
+import type { Deal, Activity as ActivityT, InventoryItem, PurchaseRequest, PurchaseOrder, Quote, SalesOrder, Task, InventoryTransaction, PurchaseReceipt, PurchaseReceiptItem, ReturnToSupplier, Organization } from "@/lib/types"
 import { createReorderDraft } from "@/services/reorderService"
 import { toast } from "sonner"
 import type { JobAdapter } from "@/services/types"
@@ -28,6 +32,7 @@ export function Dashboard() {
   const { data: deals, isLoaded: dealsLoaded } = useCRMResource<Deal>('deals')
   const { data: activities, isLoaded: activitiesLoaded } = useCRMResource<ActivityT>('activities')
   const { data: inventory, isLoaded: inventoryLoaded } = useCRMResource<InventoryItem>('inventory')
+  const { data: organizations } = useCRMResource<Organization>('organizations')
   const ctx = useCRMContext()
   const { user } = useUser()
   const [, setLocation] = useLocation()
@@ -113,25 +118,158 @@ export function Dashboard() {
     [activities]
   )
 
-  const hasData = deals.length > 0 || activities.length > 0
+  const workspaceName = useMemo(() => {
+    const org = organizations[0]
+    return org?.appName || org?.name || "your workspace"
+  }, [organizations])
 
-  if (!dealsLoaded || !activitiesLoaded) {
+  const firstName = useMemo(() => {
+    return (
+      user?.user_metadata?.full_name?.split(" ")[0] ||
+      user?.email?.split("@")[0] ||
+      "there"
+    )
+  }, [user])
+
+  const hasData = deals.length > 0 || activities.length > 0 || inventory.length > 0
+
+  if (!dealsLoaded || !activitiesLoaded || !inventoryLoaded) {
     return <DashboardSkeleton />
   }
 
   if (!hasData) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="text-center max-w-md">
-          <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Database className="w-8 h-8 text-slate-400" />
+      <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen">
+        <div className="mx-auto max-w-6xl px-4 py-8 md:px-8 md:py-10">
+          <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="grid lg:grid-cols-[1.45fr_0.95fr]">
+              <div className="relative px-6 py-8 md:px-10 md:py-12">
+                <div className="absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top_left,_rgba(13,148,136,0.16),_transparent_58%)] dark:bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.14),_transparent_58%)]" />
+                <div className="relative space-y-8">
+                  <div className="space-y-4">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-teal-700 dark:border-teal-900/60 dark:bg-teal-950/40 dark:text-teal-300">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Workspace Ready
+                    </div>
+                    <div className="space-y-3">
+                      <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                        Welcome, {firstName}.
+                      </p>
+                      <h1 className="max-w-2xl text-3xl font-black tracking-tight text-slate-900 dark:text-white md:text-5xl">
+                        Build the first layer of {workspaceName}.
+                      </h1>
+                      <p className="max-w-xl text-sm font-medium leading-7 text-slate-600 dark:text-slate-300 md:text-base">
+                        Your dashboard will start filling in as soon as we log pipeline activity, add inventory, or capture the first team actions. Pick the surface you want to activate first.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <Link href="/leads">
+                      <Button variant="brand" size="lg" className="w-full gap-2 rounded-xl px-5 sm:w-auto">
+                        Add first lead
+                        <ArrowRight className="w-4 h-4" />
+                      </Button>
+                    </Link>
+                    <Link href="/deals">
+                      <Button variant="outlineNeutral" size="lg" className="w-full rounded-xl px-5 sm:w-auto">
+                        Create deal pipeline
+                      </Button>
+                    </Link>
+                    <Link href="/inventory">
+                      <Button variant="outlineNeutral" size="lg" className="w-full rounded-xl px-5 sm:w-auto">
+                        Open inventory
+                      </Button>
+                    </Link>
+                  </div>
+
+                  <div className="grid gap-4 border-t border-slate-200 pt-6 dark:border-slate-800 md:grid-cols-3">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Pipeline</p>
+                      <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white">0</p>
+                      <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">Open deals waiting to be tracked.</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Activity</p>
+                      <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white">0</p>
+                      <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">Touchpoints, notes, and updates logged.</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Stock Alerts</p>
+                      <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white">{lowStockItems.length}</p>
+                      <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">Shortage signals will surface here.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-slate-200 bg-slate-50/80 px-6 py-8 dark:border-slate-800 dark:bg-slate-950/60 lg:border-l lg:border-t-0 md:px-8 md:py-12">
+                <div className="flex h-full flex-col justify-between gap-8">
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">First Run</p>
+                    <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
+                      What to turn on first
+                    </h2>
+                    <p className="text-sm font-medium leading-6 text-slate-500 dark:text-slate-400">
+                      Keep the rollout simple. Once one stream is active, the dashboard starts becoming useful immediately.
+                    </p>
+                  </div>
+
+                  <div className="space-y-5">
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-teal-600/10 text-teal-600 dark:bg-teal-500/10 dark:text-teal-300">
+                        <Briefcase className="w-5 h-5" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-black text-slate-900 dark:text-white">Seed the pipeline</p>
+                        <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">
+                          Add a lead or a deal so revenue and stage tracking have real numbers to work with.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-900/5 text-slate-700 dark:bg-slate-100/5 dark:text-slate-200">
+                        <ClipboardList className="w-5 h-5" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-black text-slate-900 dark:text-white">Log your first activity</p>
+                        <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">
+                          Notes, calls, and follow-ups become the timeline the team will rely on every day.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:bg-amber-500/10 dark:text-amber-300">
+                        <Boxes className="w-5 h-5" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-black text-slate-900 dark:text-white">Bring in stock visibility</p>
+                        <p className="text-sm leading-6 text-slate-500 dark:text-slate-400">
+                          Inventory unlocks shortage alerts, reorder suggestions, and a more useful operations view.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-dashed border-slate-300 px-4 py-4 dark:border-slate-700">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900">
+                        <Database className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-black text-slate-900 dark:text-white">Dashboard signals appear automatically</p>
+                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                          No extra setup needed once records start landing in the workspace.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-            Welcome to your CRM
-          </h2>
-          <p className="text-slate-500 dark:text-slate-400 mb-6">
-            You don't have any deals or activities yet. Start by adding some data.
-          </p>
         </div>
       </div>
     )

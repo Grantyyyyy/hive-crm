@@ -48,17 +48,14 @@ import { Design } from "@/pages/Design";
 import { DialogsPreview } from "@/pages/DialogsPreview";
 import { Fonts } from "@/pages/Fonts";
 import { Toaster } from "sonner";
-import { CRMProvider, useCRMContext, updateRow, insertRows } from "@/lib/CRMContext";
-import { useCRMResource } from "@/lib/hooks";
+import { CRMProvider, useCRMContext } from "@/lib/CRMContext";
 import { useInventoryAlerts } from "@/lib/hooks/useInventoryAlerts";
 import { AuthProvider, useUser } from "@/lib/AuthContext"
 import { RequirePermission } from "@/components/RequirePermission";
-import type { Organization, Quote, SalesOrder, InventoryItem, PurchaseRequest, PurchaseOrder, InventoryTransaction, Task, PurchaseReceipt, PurchaseReceiptItem, ReturnToSupplier } from "@/lib/types";
-import { runScheduledJobs } from "@/services/scheduledJobs";
-import type { JobAdapter } from "@/services/types";
+import type { Organization } from "@/lib/types";
 import { setAuthToken, subscribeAuth } from "@/lib/api";
 import { logger } from "@/lib/logger";
-import React, { useEffect, useRef, useMemo, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { FontProvider } from "@/components/FontProvider";
 
 function Protected({ component: Component }: { component: React.ComponentType }) {
@@ -67,91 +64,6 @@ function Protected({ component: Component }: { component: React.ComponentType })
 
 function PermissionProtected({ module, action = "read", component: Component }: { module: string, action?: string, component: React.ComponentType }) {
   return <RequirePermission module={module} action={action} component={Component} />;
-}
-
-function AutomationRunner() {
-  const ctx = useCRMContext()
-  const { isLoaded: quotesLoaded } = useCRMResource('quotes')
-  const { isLoaded: ordersLoaded } = useCRMResource('orders')
-  const { isLoaded: inventoryLoaded } = useCRMResource('inventory')
-  const { isLoaded: prLoaded } = useCRMResource('purchase_requests')
-  const { isLoaded: poLoaded } = useCRMResource('purchase_orders')
-  const { isLoaded: txLoaded } = useCRMResource('inventory_transactions')
-
-  const { isLoaded: receiptsLoaded } = useCRMResource('purchase_receipts')
-  const { isLoaded: rtsLoaded } = useCRMResource('return_to_suppliers')
-
-  const dataReady = quotesLoaded && ordersLoaded && inventoryLoaded && prLoaded && poLoaded && txLoaded && receiptsLoaded && rtsLoaded
-  const runOnce = useRef(false)
-
-  const adapter = useMemo<JobAdapter>(() => ({
-    getQuotes: () => ctx.getResource<Quote>('quotes').data,
-    updateQuote: (id, patch) => updateRow<Quote>(ctx, 'quotes', id, patch),
-    insertQuote: (q) => insertRows<Quote>(ctx, 'quotes', [q as any]).then(rows => rows[0] as Quote),
-
-    getSalesOrders: () => ctx.getResource<SalesOrder>('orders').data,
-    updateSalesOrder: (id, patch) => updateRow<SalesOrder>(ctx, 'orders', id, patch),
-    updateSalesOrderItem: async (orderId, itemId, patch) => {
-      const order = ctx.getResource<SalesOrder>('orders').data.find(o => o.id === orderId);
-      if (!order) return;
-      const updatedItems = order.items.map(item => item.id === itemId ? { ...item, ...patch } : item);
-      await updateRow<SalesOrder>(ctx, 'orders', orderId, { items: updatedItems });
-    },
-    insertSalesOrder: (o) => insertRows<SalesOrder>(ctx, 'orders', [o as any]).then(rows => rows[0] as SalesOrder),
-
-    getInventoryItems: () => ctx.getResource<InventoryItem>('inventory').data,
-    updateInventoryItem: (id, patch) => updateRow<InventoryItem>(ctx, 'inventory', id, patch),
-    insertInventoryItem: (item: Omit<InventoryItem, 'id'>) => insertRows<InventoryItem>(ctx, 'inventory', [item as any]).then(rows => rows[0] as InventoryItem),
-
-    getPurchaseRequests: () => ctx.getResource<PurchaseRequest>('purchase_requests').data,
-    updatePurchaseRequest: (id, patch) => updateRow<PurchaseRequest>(ctx, 'purchase_requests', id, patch),
-    insertPurchaseRequest: (pr) => insertRows<PurchaseRequest>(ctx, 'purchase_requests', [pr as any]).then(rows => rows[0] as PurchaseRequest),
-
-    getPurchaseOrders: () => ctx.getResource<PurchaseOrder>('purchase_orders').data,
-    updatePurchaseOrder: (id, patch) => updateRow<PurchaseOrder>(ctx, 'purchase_orders', id, patch),
-    updatePurchaseOrderItem: async (poId, itemId, patch) => {
-      const po = ctx.getResource<PurchaseOrder>('purchase_orders').data.find(p => p.id === poId);
-      if (!po) return;
-      const updatedItems = po.items.map(item => item.id === itemId ? { ...item, ...patch } : item);
-      await updateRow<PurchaseOrder>(ctx, 'purchase_orders', poId, { items: updatedItems as any });
-    },
-    insertPurchaseOrder: (po) => insertRows<PurchaseOrder>(ctx, 'purchase_orders', [po as any]).then(rows => rows[0] as PurchaseOrder),
-
-    getInventoryTransactions: () => ctx.getResource<InventoryTransaction>('inventory_transactions').data,
-    insertInventoryTransaction: (tx) => insertRows<InventoryTransaction>(ctx, 'inventory_transactions', [tx as any]).then(rows => rows[0] as InventoryTransaction),
-
-    getTasks: () => ctx.getResource<Task>('tasks').data,
-    updateTask: (id, patch) => updateRow<Task>(ctx, 'tasks', id, patch),
-
-    getPurchaseReceipts: () => ctx.getResource<PurchaseReceipt>('purchase_receipts').data,
-    getPurchaseReceiptItems: () => ctx.getResource<PurchaseReceiptItem>('purchase_receipt_items').data,
-    insertPurchaseReceipt: (r) => insertRows<PurchaseReceipt>(ctx, 'purchase_receipts', [r as any]).then(rows => rows[0] as PurchaseReceipt),
-    insertPurchaseReceiptItem: (i) => insertRows<PurchaseReceiptItem>(ctx, 'purchase_receipt_items', [i as any]).then(rows => rows[0] as PurchaseReceiptItem),
-
-    getReturnToSuppliers: () => ctx.getResource<ReturnToSupplier>('return_to_suppliers').data,
-    insertReturnToSupplier: (rts) => insertRows<ReturnToSupplier>(ctx, 'return_to_suppliers', [rts as any]).then(rows => rows[0] as ReturnToSupplier),
-    updateReturnToSupplier: (id, patch) => updateRow<ReturnToSupplier>(ctx, 'return_to_suppliers', id, patch),
-
-    runAtomicUpdate: (ops) => ctx.runAtomicUpdate(ops),
-  }), [ctx])
-
-  useEffect(() => {
-    if (dataReady && !runOnce.current) {
-      runOnce.current = true;
-      runScheduledJobs(adapter, ctx).catch((error) => logger.error("[AutomationRunner] Scheduled jobs failed:", error));
-    }
-  }, [dataReady]);
-
-  useEffect(() => {
-    if (!dataReady) return;
-    const interval = setInterval(() => {
-      runScheduledJobs(adapter, ctx).catch((error) => logger.error("[AutomationRunner] Scheduled jobs failed:", error));
-    }, 60_000);
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataReady]);
-
-  return null
 }
 
 function InventoryAlertRunner() {
@@ -253,7 +165,6 @@ function AppContent() {
         <div className="min-h-screen flex flex-col bg-background font-sans antialiased text-foreground">
           <Toaster position="top-center" richColors />
           <main className="flex-[1_0_auto] flex flex-col">
-            <AutomationRunner />
             <InventoryAlertRunner />
             <Switch>
               {/* Public routes — no AppLayout */}

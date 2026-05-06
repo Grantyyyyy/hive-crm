@@ -865,6 +865,7 @@ CREATE TABLE vendors (
   payment_terms TEXT,
   status TEXT NOT NULL,  -- active, inactive, on_hold
   notes TEXT,
+  owner_id UUID NOT NULL REFERENCES auth.users(id),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ
 );
@@ -886,6 +887,7 @@ CREATE TABLE purchase_requests (
   urgent BOOLEAN DEFAULT false,
   purpose TEXT,
   priority TEXT NOT NULL,  -- low, medium, high, urgent
+  owner_id UUID NOT NULL REFERENCES auth.users(id),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ
 );

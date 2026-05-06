@@ -350,7 +350,9 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       const successes: Array<AtomicOp & { action: "insert" | "update" }> = []
       const auditLogs: any[] = []
 
-      // 1. Database Phase
+      // 1. Build Payload Phase
+      const rpcPayload: any[] = []
+
       for (const op of ops) {
         const action = op.action ?? "update"
         const tableName = TABLE_MAP[op.resource]
@@ -389,60 +391,84 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
             snakePatch.organization_id = organizationId
           }
 
-          const { data, error } = await client.from(tableName).insert(snakePatch).select()
-          if (error) {
-            logger.error(`[CRMContext] Insert failed for ${op.resource}:`, error)
-            errors.push({ resource: op.resource, error })
-          } else {
-            const resultItem = data?.[0]
-            if (isTask && resultItem) {
-              // Handle secondary relational inserts for tasks
-              await handleTaskRelations(client, resultItem.id, nestedData)
-            }
-            const created = toCamel(resultItem || {})
-            successes.push({ ...op, action, patch: created })
-
-            // Audit log insert
-            auditLogs.push({
-              entity_type: op.resource,
-              entity_id: resultItem?.id,
-              action: "INSERT",
-              changed_by: userId,
-              organization_id: organizationId,
-              diff: { new: created }
-            })
+          // Generate an ID client-side so we can link relational data immediately
+          if (!snakePatch.id) {
+            snakePatch.id = crypto.randomUUID()
           }
+
+          rpcPayload.push({
+            table: tableName,
+            action: 'insert',
+            data: snakePatch
+          })
+
+          const created = toCamel(snakePatch)
+          successes.push({ ...op, action, patch: created })
+
+          // Audit log insert
+          auditLogs.push({
+            entity_type: op.resource,
+            entity_id: snakePatch.id,
+            action: "INSERT",
+            changed_by: userId,
+            organization_id: organizationId,
+            diff: { new: created }
+          })
+          
+          if (isTask) {
+             (op as any)._nestedData = nestedData;
+             (op as any)._resolvedId = snakePatch.id;
+          }
+
         } else if (action === "update") {
-          const { error } = await client.from(tableName).update(snakePatch).eq("id", op.id)
-          if (error) {
-            logger.error(`[CRMContext] Update failed for ${op.resource}:${op.id}:`, error)
-            errors.push({ resource: op.resource, id: op.id, error })
-          } else {
-            if (isTask) {
-              // Sync relational data (tags etc) if provided in the patch
-              await handleTaskRelations(client, op.id as string, nestedData, true)
-            }
-            successes.push({ ...op, action })
+          rpcPayload.push({
+            table: tableName,
+            action: 'update',
+            id: op.id,
+            data: snakePatch
+          })
 
-            // Audit log update
-            const oldItem = getResource<any>(op.resource).data.find(i => i.id === op.id)
-            const diff = calculateDiff(oldItem, op.patch)
+          successes.push({ ...op, action })
 
-            auditLogs.push({
-              entity_type: op.resource,
-              entity_id: op.id,
-              action: "UPDATE",
-              changed_by: userId,
-              organization_id: organizationId,
-              diff: { updates: diff }
-            })
+          // Audit log update
+          const oldItem = getResource<any>(op.resource).data.find(i => i.id === op.id)
+          const diff = calculateDiff(oldItem, op.patch)
+
+          auditLogs.push({
+            entity_type: op.resource,
+            entity_id: op.id,
+            action: "UPDATE",
+            changed_by: userId,
+            organization_id: organizationId,
+            diff: { updates: diff }
+          })
+          
+          if (isTask) {
+             (op as any)._nestedData = nestedData;
+             (op as any)._resolvedId = op.id;
           }
         }
       }
 
       if (errors.length > 0) {
-        logger.error("[CRMContext] Atomic update failed:", errors)
-        throw new Error(`Atomic update failed with ${errors.length} errors. Local state not committed.`)
+        logger.error("[CRMContext] Atomic update payload build failed:", errors)
+        throw new Error(`Atomic update failed with ${errors.length} errors during build phase.`)
+      }
+
+      // 2. Database Transaction Phase
+      if (rpcPayload.length > 0) {
+        const { error: rpcError } = await client.rpc('execute_transaction', { operations: rpcPayload })
+        if (rpcError) {
+          logger.error("[CRMContext] RPC execute_transaction failed:", rpcError)
+          throw new Error(`Database transaction failed: ${rpcError.message}`)
+        }
+      }
+
+      // Process secondary relations now that the transaction is committed
+      for (const op of successes) {
+        if ((op as any)._nestedData) {
+          await handleTaskRelations(client, (op as any)._resolvedId, (op as any)._nestedData, op.action === 'update')
+        }
       }
 
       // Emit audit logs in background

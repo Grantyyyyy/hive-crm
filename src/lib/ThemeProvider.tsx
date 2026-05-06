@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { getBrandColorPreset } from "./brandColors";
+import { useAuth } from "./AuthContext";
 
 type Theme = "light" | "dark";
 
@@ -10,6 +12,7 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const { brandColor } = useAuth();
   const [theme, setTheme] = useState<Theme>(() => {
     const savedTheme = localStorage.getItem("theme") as Theme;
     if (savedTheme) return savedTheme;
@@ -22,6 +25,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     root.classList.add(theme);
     localStorage.setItem("theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    const preset = getBrandColorPreset(brandColor);
+    const palette = theme === "dark" ? preset.dark : preset.light;
+
+    root.style.setProperty("--accent", palette.accent);
+    root.style.setProperty("--accent-dim", palette.accentDim);
+  }, [brandColor, theme]);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === "light" ? "dark" : "light"));

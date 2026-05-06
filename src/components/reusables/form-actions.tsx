@@ -26,7 +26,7 @@ function ActionButton({
       size={variant === "brand" ? "form-wide" : "form"}
       variant={variant}
       className={cn(
-        variant === "brand" && "shadow-lg shadow-teal-600/20 dark:shadow-none",
+        variant === "brand" && "shadow-lg shadow-accent/20 dark:shadow-none",
         className
       )}
       {...props}

@@ -213,7 +213,7 @@ export function Contacts() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-slate-400 hover:text-teal-600 transition-all"
+            className="h-8 w-8 text-slate-400 hover:text-accent transition-all"
             onClick={(e) => {
               e.stopPropagation()
               setEditingContact(c)
@@ -250,7 +250,7 @@ export function Contacts() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">Customer Database</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-1">Customer Database</p>
             <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Contacts</h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Relationship management and contact details.</p>
           </div>
@@ -291,7 +291,7 @@ export function Contacts() {
                 placeholder="Search by name, company, or email..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-semibold focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all duration-300"
+                className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-semibold focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all duration-300"
               />
             </div>
           }

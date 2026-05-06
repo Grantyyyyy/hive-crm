@@ -81,7 +81,7 @@ export function LeadForm({ userId, onSave, onCancel, initialData }: LeadFormProp
           {/* Section 1: Lead Information */}
           <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
+              <div className="w-1 h-3.5 bg-accent rounded-full" />
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Lead Information</h3>
             </div>
 
@@ -94,7 +94,7 @@ export function LeadForm({ userId, onSave, onCancel, initialData }: LeadFormProp
                     onChange={(e) => setFirstName(e.target.value)}
                     placeholder="Sarah"
                     className={cn(
-                      "h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10",
+                      "h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10",
                       errors.firstName && "border-red-500 ring-4 ring-red-500/10"
                     )}
                   />
@@ -106,7 +106,7 @@ export function LeadForm({ userId, onSave, onCancel, initialData }: LeadFormProp
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     placeholder="Connor"
-                    className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10"
+                    className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10"
                   />
                 </div>
               </div>
@@ -115,14 +115,14 @@ export function LeadForm({ userId, onSave, onCancel, initialData }: LeadFormProp
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Email Address</Label>
                   <div className="group relative">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-teal-600 transition-colors" />
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-accent transition-colors" />
                     <Input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="sarah@example.com"
                       className={cn(
-                        "h-11 pl-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10",
+                        "h-11 pl-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10",
                         errors.email && "border-red-500 ring-4 ring-red-500/10"
                       )}
                     />
@@ -133,12 +133,12 @@ export function LeadForm({ userId, onSave, onCancel, initialData }: LeadFormProp
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Phone Number</Label>
                   <div className="group relative">
-                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-teal-600 transition-colors" />
+                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-accent transition-colors" />
                     <Input
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+1 (555) 000-0000"
-                      className="h-11 pl-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10"
+                      className="h-11 pl-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10"
                     />
                   </div>
                 </div>
@@ -158,12 +158,12 @@ export function LeadForm({ userId, onSave, onCancel, initialData }: LeadFormProp
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Company Name</Label>
                   <div className="group relative">
-                    <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-teal-600 transition-colors" />
+                    <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-accent transition-colors" />
                     <Input
                       value={company}
                       onChange={(e) => setCompany(e.target.value)}
                       placeholder="Acme Industries"
-                      className="h-11 pl-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10"
+                      className="h-11 pl-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10"
                     />
                   </div>
                 </div>
@@ -173,7 +173,7 @@ export function LeadForm({ userId, onSave, onCancel, initialData }: LeadFormProp
                     value={position}
                     onChange={(e) => setPosition(e.target.value)}
                     placeholder="CEO / Founder"
-                    className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10"
+                    className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10"
                   />
                 </div>
               </div>
@@ -185,7 +185,7 @@ export function LeadForm({ userId, onSave, onCancel, initialData }: LeadFormProp
                     <select
                       value={source}
                       onChange={(e) => setSource(e.target.value as LeadSource)}
-                      className="w-full h-11 px-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-teal-500/10 transition-all shadow-sm"
+                      className="w-full h-11 px-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
                     >
                       {(Object.entries(LEAD_SOURCE_LABELS) as [LeadSource, string][]).map(([val, label]) => (
                         <option key={val} value={val}>{label}</option>
@@ -200,7 +200,7 @@ export function LeadForm({ userId, onSave, onCancel, initialData }: LeadFormProp
                     <select
                       value={status}
                       onChange={(e) => setStatus(e.target.value as LeadStatus)}
-                      className="w-full h-11 px-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-teal-500/10 transition-all shadow-sm"
+                      className="w-full h-11 px-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
                     >
                       {(Object.entries(LEAD_STATUS_LABELS) as [LeadStatus, string][]).map(([val, label]) => (
                         <option key={val} value={val}>{label}</option>
@@ -226,7 +226,7 @@ export function LeadForm({ userId, onSave, onCancel, initialData }: LeadFormProp
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Details about the lead's interest..."
-                className="min-h-[120px] p-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-medium transition-all focus:ring-4 focus:ring-teal-500/10 resize-none"
+                className="min-h-[120px] p-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-medium transition-all focus:ring-4 focus:ring-accent/10 resize-none"
               />
             </div>
           </section>

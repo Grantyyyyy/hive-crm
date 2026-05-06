@@ -83,6 +83,7 @@ const CAMEL_TO_DB: Record<string, string> = {
   appName: "app_name",
   appLogoUrl: "app_logo_url",
   appTagline: "app_tagline",
+  brandColor: "brand_color",
 }
 
 const DB_TO_CAMEL: Record<string, string> = Object.fromEntries(

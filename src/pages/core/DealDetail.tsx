@@ -257,7 +257,7 @@ export function DealDetail() {
                   {contact && (
                     <Link
                       href={`/contacts/${contact.id}`}
-                      className="flex items-center gap-2 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
+                      className="flex items-center gap-2 hover:text-accent transition-colors"
                     >
                       <User className="h-4 w-4 text-slate-400" /> {contact.name}
                     </Link>
@@ -376,7 +376,7 @@ export function DealDetail() {
                     {contact ? (
                       <Link
                         href={`/contacts/${contact.id}`}
-                        className="text-sm font-bold text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 transition-colors"
+                        className="text-sm font-bold text-accent hover:text-accent/80 transition-colors"
                       >
                         {contact.name} →
                       </Link>
@@ -420,7 +420,7 @@ export function DealDetail() {
                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-3">
                   <div className="flex items-center gap-2">
                     <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500">Tasks</h2>
-                    <span className="bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 text-xs font-bold px-2 py-0.5 rounded-md">
+                    <span className="bg-accent-dim text-accent text-xs font-bold px-2 py-0.5 rounded-md">
                       {tasks.filter((t) => t.status !== "completed").length}
                     </span>
                   </div>
@@ -428,7 +428,7 @@ export function DealDetail() {
                     variant="ghost"
                     size="icon"
                     onClick={() => setShowAddTaskModal(true)}
-                    className="h-8 w-8 text-slate-400 hover:text-teal-600 dark:hover:text-teal-400"
+                    className="h-8 w-8 text-slate-400 hover:text-accent"
                   >
                     <PlusCircle className="h-4 w-4" />
                   </Button>
@@ -454,13 +454,13 @@ export function DealDetail() {
                               !isComp && isOverdueTask
                                 ? "border-rose-200 dark:border-rose-900/50"
                                 : "border-slate-200 dark:border-slate-800/50",
-                              "hover:border-teal-300 dark:hover:border-teal-700/50",
+                              "hover:border-accent/50",
                               isComp && "opacity-60"
                             )}
                           >
                             <button
                               onClick={(e) => handleToggleTask(e, task)}
-                              className="shrink-0 text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
+                              className="shrink-0 text-slate-400 hover:text-accent transition-colors"
                             >
                               {isComp ? (
                                 <CheckCircle2 className="w-5 h-5 text-emerald-500 group-hover/task:text-emerald-600" />
@@ -470,7 +470,7 @@ export function DealDetail() {
                                     "w-5 h-5 rounded-full border-2 transition-colors",
                                     isOverdueTask
                                       ? "border-rose-300 group-hover/task:border-rose-500"
-                                      : "border-slate-300 dark:border-slate-600 group-hover/task:border-teal-500"
+                                      : "border-slate-300 dark:border-slate-600 group-hover/task:border-accent"
                                   )}
                                 />
                               )}

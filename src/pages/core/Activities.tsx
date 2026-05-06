@@ -102,7 +102,7 @@ export function Activities() {
         {/* Header Region */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">Audit Trail</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-1">Audit Trail</p>
             <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Activity Feed</h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Track all interactions with your leads and customers in real-time.</p>
           </div>
@@ -123,7 +123,7 @@ export function Activities() {
             placeholder="Search activity content..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
+            className="w-full pl-12 h-14 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm text-sm font-medium focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all"
           />
         </div>
 
@@ -136,7 +136,7 @@ export function Activities() {
                 onClick={() => setFilter("all")}
                 className={cn(
                   "px-4 py-1.5 rounded-lg text-sm font-semibold transition-all whitespace-nowrap",
-                  filter === "all" ? "bg-teal-600 text-white shadow-sm shadow-teal-200" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
+                  filter === "all" ? "bg-accent text-white shadow-sm shadow-accent/20" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700"
                 )}
               >
                 All
@@ -216,9 +216,9 @@ export function Activities() {
                               "w-full ml-8 md:ml-0 md:w-[calc(50%-2rem)]",
                               !isEven && "md:ml-auto"
                             )}>
-                              <div className="bg-white dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow group-hover:border-teal-200 dark:group-hover:border-teal-800/50">
+                              <div className="bg-white dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow group-hover:border-accent/30">
                                 <div className="flex items-center justify-between mb-2">
-                                  <span className="text-[11px] font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/20 px-1.5 py-0.5 rounded">{timeString}</span>
+                                  <span className="text-[11px] font-bold text-accent bg-accent-dim px-1.5 py-0.5 rounded">{timeString}</span>
                                   <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{TYPE_META[activity.type].label.slice(0, -1)}</span>
                                 </div>
 
@@ -232,18 +232,18 @@ export function Activities() {
 
                                 <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
                                   <div className="flex items-center gap-2">
-                                    <div className="w-5 h-5 rounded-full bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center ring-1 ring-white dark:ring-slate-950 overflow-hidden shrink-0 shadow-sm">
+                                    <div className="w-5 h-5 rounded-full bg-accent-dim flex items-center justify-center ring-1 ring-white dark:ring-slate-950 overflow-hidden shrink-0 shadow-sm">
                                       {user?.user_metadata?.avatar_url ? (
                                         <img src={user.user_metadata?.avatar_url} className="w-full h-full object-cover" alt="User" />
                                       ) : (
-                                        <span className="text-[8px] font-black text-teal-700">ME</span>
+                                        <span className="text-[8px] font-black text-accent">ME</span>
                                       )}
                                     </div>
                                     <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 max-w-[100px] truncate">{user?.user_metadata?.first_name || "Me"}</span>
                                     <span className="text-slate-300 dark:text-slate-700 text-[10px]">•</span>
                                     {activity.contactId ? (
                                       <Link href={`/contacts/${activity.contactId}`}>
-                                        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 truncate max-w-[100px] cursor-pointer">
+                                        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-accent truncate max-w-[100px] cursor-pointer">
                                           {contactMap.get(activity.contactId) || "Contact"}
                                         </span>
                                       </Link>

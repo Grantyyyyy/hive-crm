@@ -291,7 +291,7 @@ export function LeadDetail() {
                   placeholder="Add notes about this lead..."
                   rows={4}
                   disabled={isConverted}
-                  className="w-full bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-2xl focus-visible:ring-teal-500 shadow-sm text-sm"
+                  className="w-full bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-2xl focus-visible:ring-accent shadow-sm text-sm"
                 />
               </div>
 
@@ -357,7 +357,7 @@ export function LeadDetail() {
                         <div className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-1">Contact Created</div>
                         <Link
                           href={`/contacts/${lead.convertedToContactId}`}
-                          className="text-sm font-bold text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 transition-colors"
+                          className="text-sm font-bold text-accent hover:text-accent/80 transition-colors"
                         >
                           View Contact →
                         </Link>
@@ -368,7 +368,7 @@ export function LeadDetail() {
                         <div className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-1">Deal Created</div>
                         <Link
                           href="/deals"
-                          className="text-sm font-bold text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 transition-colors"
+                          className="text-sm font-bold text-accent hover:text-accent/80 transition-colors"
                         >
                           View Deals →
                         </Link>
@@ -428,7 +428,7 @@ export function LeadDetail() {
                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-3">
                   <div className="flex items-center gap-2">
                     <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500">Tasks</h2>
-                    <span className="bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 text-xs font-bold px-2 py-0.5 rounded-md">
+                    <span className="bg-accent-dim text-accent text-xs font-bold px-2 py-0.5 rounded-md">
                       {tasks.filter(t => t.status !== 'completed').length}
                     </span>
                   </div>
@@ -437,7 +437,7 @@ export function LeadDetail() {
                       variant="ghost"
                       size="icon"
                       onClick={() => setShowAddTaskModal(true)}
-                      className="h-8 w-8 text-slate-400 hover:text-teal-600 dark:hover:text-teal-400"
+                      className="h-8 w-8 text-slate-400 hover:text-accent"
                     >
                       <PlusCircle className="h-4 w-4" />
                     </Button>
@@ -464,21 +464,21 @@ export function LeadDetail() {
                             className={cn(
                               "flex items-center p-3 gap-3 bg-slate-50 dark:bg-slate-950/50 rounded-2xl border transition-colors cursor-pointer group/task",
                               !isComp && isOverdueTask ? "border-rose-200 dark:border-rose-900/50" : "border-slate-200 dark:border-slate-800/50",
-                              "hover:border-teal-300 dark:hover:border-teal-700/50",
+                              "hover:border-accent/50",
                               isComp && "opacity-60"
                             )}
                           >
                             <button
                               onClick={(e) => handleToggleTask(e, task)}
                               disabled={isConverted}
-                              className="shrink-0 text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors disabled:opacity-50"
+                              className="shrink-0 text-slate-400 hover:text-accent transition-colors disabled:opacity-50"
                             >
                               {isComp ? (
                                 <CheckCircle2 className="w-5 h-5 text-emerald-500 group-hover/task:text-emerald-600" />
                               ) : (
                                 <div className={cn(
                                   "w-5 h-5 rounded-full border-2 transition-colors",
-                                  isOverdueTask ? "border-rose-300 group-hover/task:border-rose-500" : "border-slate-300 dark:border-slate-600 group-hover/task:border-teal-500"
+                                  isOverdueTask ? "border-rose-300 group-hover/task:border-rose-500" : "border-slate-300 dark:border-slate-600 group-hover/task:border-accent"
                                 )} />
                               )}
                             </button>

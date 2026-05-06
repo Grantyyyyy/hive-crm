@@ -148,7 +148,7 @@ function DealCardContent({ deal, contactName, activities, isDragging = false }: 
     <div
       className={cn(
         "group relative bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing",
-        isDragging && "z-50 shadow-xl ring-2 ring-teal-500 border-transparent rotate-1",
+        isDragging && "z-50 shadow-xl ring-2 ring-accent border-transparent rotate-1",
         deal.stage === 'won' && "border-emerald-100 dark:border-emerald-900/50 hover:border-emerald-500",
         deal.stage === 'lost' && "border-rose-100 dark:border-rose-900/50 hover:border-rose-500"
       )}
@@ -243,8 +243,8 @@ function DroppableColumn({ stage, children }: { stage: string; children: React.R
       className={cn(
         "flex-1 flex flex-col gap-3 min-h-[500px] p-2 rounded-md border-2 border-dashed transition-colors",
         isOver
-          ? "border-teal-400 dark:border-teal-600 bg-teal-50/30 dark:bg-teal-900/10"
-          : "border-slate-200 dark:border-slate-800/50 hover:border-teal-200 dark:hover:border-teal-900/50"
+          ? "border-accent bg-accent-dim/60"
+          : "border-slate-200 dark:border-slate-800/50 hover:border-accent/30"
       )}
     >
       {children}
@@ -430,7 +430,7 @@ export function Deals() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">Sales Operations</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-1">Sales Operations</p>
             <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Pipeline</h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Track and manage active sales opportunities.</p>
           </div>
@@ -472,7 +472,7 @@ export function Deals() {
                 className={cn(
                   "h-8 px-3 rounded text-[11px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-2",
                   viewMode === "board"
-                    ? "bg-teal-600 text-white shadow-md shadow-teal-600/20"
+                    ? "bg-accent text-white shadow-md shadow-accent/20"
                     : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                 )}
               >
@@ -484,7 +484,7 @@ export function Deals() {
                 className={cn(
                   "h-8 px-3 rounded text-[11px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-2",
                   viewMode === "list"
-                    ? "bg-teal-600 text-white shadow-md shadow-teal-600/20"
+                    ? "bg-accent text-white shadow-md shadow-accent/20"
                     : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                 )}
               >
@@ -498,9 +498,9 @@ export function Deals() {
         {/* Unified Search Bar */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6 mb-2">
           <div className="flex items-center gap-8 overflow-x-auto scrollbar-none">
-            <button className="pb-4 font-bold text-sm tracking-wide text-teal-600 relative flex items-center gap-2 cursor-pointer">
+            <button className="pb-4 font-bold text-sm tracking-wide text-accent relative flex items-center gap-2 cursor-pointer">
               Active Deals
-              <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-teal-600 rounded-t-full" />
+              <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-accent rounded-t-full" />
             </button>
             <button className="pb-4 font-bold text-sm tracking-wide text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors cursor-pointer opacity-50">
               Won / Lost
@@ -509,12 +509,12 @@ export function Deals() {
 
           <div className="flex-1 w-full lg:max-w-xl pb-4 lg:pb-3">
             <div className="relative group/search">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within/search:text-teal-600 transition-colors" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within/search:text-accent transition-colors" />
               <input
                 placeholder="Search deals, contacts or companies..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-semibold focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all duration-300"
+                className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-semibold focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all duration-300"
               />
             </div>
           </div>
@@ -542,7 +542,7 @@ export function Deals() {
                 header: "Deal Title",
                 render: (d: Deal) => (
                   <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center text-teal-600 group-hover:bg-teal-600 group-hover:text-white transition-colors">
+                    <div className="w-6 h-6 rounded bg-accent-dim flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-white transition-colors">
                       <DollarSign className="w-3.5 h-3.5" />
                     </div>
                     <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{d.title}</p>

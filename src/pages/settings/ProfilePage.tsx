@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from "react"
-import { useUser } from "@/lib/AuthContext"
+import { useAuth, useUser } from "@/lib/AuthContext"
 import { supabase } from "@/lib/supabaseClient"
-import { Camera, Save, Info, Loader2, Mail, Shield, Calendar, Clock } from "lucide-react"
+import { Camera, Check, Loader2, Palette, Save } from "lucide-react"
 import { toast } from "sonner"
 import { DetailSkeleton } from "@/components/ui/skeletons"
+import { BRAND_COLOR_PRESETS, type BrandColorId } from "@/lib/brandColors"
 
 export function ProfilePage() {
   const { user, isLoaded } = useUser()
+  const { brandColor, setBrandColor } = useAuth()
 
   // Parse name from Supabase user_metadata
   const fullName = user?.user_metadata?.full_name ?? ""
@@ -15,6 +17,8 @@ export function ProfilePage() {
   const [lastName, setLastName] = useState(nameParts.slice(1).join(" ") ?? "")
   const [saving, setSaving] = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [selectedBrandColor, setSelectedBrandColor] = useState<BrandColorId>(brandColor)
+  const [savingBrandColor, setSavingBrandColor] = useState<BrandColorId | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Re-sync form when user data changes
@@ -23,6 +27,10 @@ export function ProfilePage() {
     setFirstName(parts[0] ?? "")
     setLastName(parts.slice(1).join(" ") ?? "")
   }, [user?.user_metadata?.full_name])
+
+  useEffect(() => {
+    setSelectedBrandColor(brandColor)
+  }, [brandColor])
 
   const isDirty = firstName.trim() !== (nameParts[0] ?? "")
     || lastName.trim() !== (nameParts.slice(1).join(" ") ?? "")
@@ -81,6 +89,36 @@ export function ProfilePage() {
     } finally {
       setUploadingAvatar(false)
       e.target.value = ''
+    }
+  }
+
+  const handleBrandColorSelect = async (nextBrandColor: BrandColorId) => {
+    if (!user || nextBrandColor === selectedBrandColor || savingBrandColor) return
+
+    const previousBrandColor = selectedBrandColor
+    setSelectedBrandColor(nextBrandColor)
+    setBrandColor(nextBrandColor)
+    setSavingBrandColor(nextBrandColor)
+
+    try {
+      const { error } = await supabase
+        .from("app_users")
+        .update({ brand_color: nextBrandColor, updated_at: new Date().toISOString() })
+        .eq("auth_user_id", user.id)
+
+      if (error) throw error
+
+      toast.success("Brand color updated", {
+        description: "Your Pipeline accent color has been saved.",
+      })
+    } catch (err: unknown) {
+      setSelectedBrandColor(previousBrandColor)
+      setBrandColor(previousBrandColor)
+      toast.error("Update failed", {
+        description: (err as Error).message,
+      })
+    } finally {
+      setSavingBrandColor(null)
     }
   }
 
@@ -237,7 +275,63 @@ export function ProfilePage() {
               </div>
             </div>
 
-            {/* CARD 2 — Email Address */}
+            {/* CARD 2 - Appearance */}
+            <div className="bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800/50">
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white font-outfit flex items-center gap-2">
+                  <Palette className="w-4 h-4 text-accent" />
+                  Appearance
+                </h2>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    Pipeline Brand Color
+                  </p>
+                  <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
+                    Choose the accent used in Pipeline pages, forms, and detail views.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                  {BRAND_COLOR_PRESETS.map((preset) => {
+                    const isSelected = selectedBrandColor === preset.id
+                    const isSavingPreset = savingBrandColor === preset.id
+
+                    return (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => handleBrandColorSelect(preset.id)}
+                        disabled={!!savingBrandColor}
+                        className={`group flex items-center gap-3 rounded-md border p-3 text-left transition-all disabled:opacity-70 ${
+                          isSelected
+                            ? "border-accent bg-accent-dim ring-2 ring-accent/15"
+                            : "border-slate-200 dark:border-slate-800 hover:border-accent/50 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                        }`}
+                      >
+                        <span
+                          className="flex size-7 shrink-0 items-center justify-center rounded-full text-white shadow-sm"
+                          style={{ backgroundColor: preset.light.accent }}
+                        >
+                          {isSavingPreset ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                          ) : isSelected ? (
+                            <Check className="size-3.5" />
+                          ) : null}
+                        </span>
+                        <span className="min-w-0 text-xs font-bold text-slate-700 dark:text-slate-200 truncate">
+                          {preset.label}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* CARD 3 — Email Address */}
             <div className="bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
               <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800/50">
                 <h2 className="text-sm font-bold text-slate-900 dark:text-white font-outfit">

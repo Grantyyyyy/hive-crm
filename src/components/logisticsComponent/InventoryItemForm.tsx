@@ -1,9 +1,9 @@
 import { useState } from "react"
 import { Zap } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { FormActions } from "@/components/reusables/form-actions"
 import { cn } from "@/lib/utils"
 import type { InventoryItem, InventoryStatus } from "@/lib/types"
 import { generateId } from "@/lib/helpers"
@@ -247,24 +247,14 @@ export function InventoryItemForm({ initialData, onSave, onCancel }: InventoryIt
         </section>
       </div>
 
-      {/* Footer */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4 z-20">
-        <Button
-          variant="outlineNeutral"
-          onClick={onCancel}
-          className="rounded-xl px-8 font-bold text-xs uppercase tracking-widest h-12 hover:bg-slate-50 transition-colors"
-        >
-          Cancel
-        </Button>
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={handleSave}
-            className="rounded-xl px-10 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs uppercase tracking-widest h-12 shadow-lg shadow-teal-100 dark:shadow-none transition-all active:scale-95"
-          >
-            Create Product
-          </Button>
-        </div>
-      </div>
+      <FormActions
+        className="absolute bottom-0 left-0 right-0 z-20 bg-white/80 dark:bg-slate-950/80"
+        cancel={{ label: "Cancel", onClick: onCancel }}
+        primary={{
+          label: initialData?.id ? "Save Product" : "Create Product",
+          onClick: handleSave,
+        }}
+      />
     </div>
   )
 }

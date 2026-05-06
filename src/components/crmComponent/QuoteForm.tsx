@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react"
 import { Trash2, ChevronDown, Info, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { FormActions } from "@/components/reusables/form-actions"
 
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -492,34 +493,20 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
         </div>
       </div>
 
-      {/* Sticky Action Footer */}
-      <div className="px-8 py-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4 shrink-0 shadow-[0_-8px_30px_-10px_rgba(0,0,0,0.05)] z-20">
-        <Button
-          variant="outline"
-          onClick={() => handleSave('draft')}
-          disabled={isSaving}
-          className="h-9 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 border-slate-200 dark:border-slate-800 transition-all hover:bg-slate-50 active:scale-95"
-        >
-          {isSaving ? "Saving..." : "Save for Review"}
-        </Button>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            onClick={onCancel}
-            disabled={isSaving}
-            className="h-9 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 transition-all"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={() => handleSave('sent')}
-            disabled={isSaving}
-            className="h-9 px-8 bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-600/20 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
-          >
-            {isSaving ? "Finalizing..." : "Add Proposal"}
-          </Button>
-        </div>
-      </div>
+      <FormActions
+        className="z-20"
+        secondary={{
+          label: isSaving ? "Saving..." : "Save for Review",
+          onClick: () => handleSave("draft"),
+          disabled: isSaving,
+        }}
+        cancel={{ label: "Cancel", onClick: onCancel, disabled: isSaving }}
+        primary={{
+          label: isSaving ? "Finalizing..." : "Add Proposal",
+          onClick: () => handleSave("sent"),
+          disabled: isSaving,
+        }}
+      />
     </div>
   )
 }

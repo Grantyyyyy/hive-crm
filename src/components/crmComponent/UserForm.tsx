@@ -7,9 +7,9 @@ import {
   CheckCircle2,
   Info 
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { FormActions } from "@/components/reusables/form-actions"
 import { cn } from "@/lib/utils"
 import type { AppUser, Role } from "@/lib/types"
 
@@ -210,32 +210,21 @@ export function UserForm({
         </section>
       </div>
 
-      {/* Footer */}
-      <div className="px-8 py-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3 shrink-0">
-        <Button
-          type="button"
-          variant="outlineNeutral"
-          onClick={onCancel}
-          disabled={isPending}
-          className="h-10 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest border-2"
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          disabled={isPending}
-          className="h-10 px-10 bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-600/20 text-[10px] font-black uppercase tracking-widest min-w-[140px]"
-        >
-          {isPending ? (
-            <div className="flex items-center gap-2">
-              <div className="size-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+      <FormActions
+        cancel={{ label: "Cancel", onClick: onCancel, disabled: isPending }}
+        primary={{
+          label: isPending ? (
+            <>
+              <div className="size-3 rounded-full border-2 border-white/30 border-t-white animate-spin" />
               <span>Processing...</span>
-            </div>
+            </>
           ) : (
-            isEditing ? 'Update Role' : (inviteMode ? 'Send Invitation' : 'Create User')
-          )}
-        </Button>
-      </div>
+            isEditing ? "Update Role" : (inviteMode ? "Send Invitation" : "Create User")
+          ),
+          type: "submit",
+          disabled: isPending,
+        }}
+      />
     </form>
   )
 }

@@ -1,5 +1,4 @@
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -9,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { FormActions } from "@/components/reusables/form-actions"
 import type { Lead, ContactSource, DealStage } from "@/lib/types"
 import { SOURCE_LABELS, STAGE_LABELS } from "@/lib/types"
 import { formatCurrency } from "@/lib/helpers"
@@ -228,24 +228,10 @@ export function ConvertLeadModal({ open, onOpenChange, lead, onConverted }: Conv
           </div>
         </div>
 
-        {/* Sticky Action Footer */}
-        <div className="px-8 py-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
-          <Button
-            type="button"
-            variant="outlineNeutral"
-            onClick={() => onOpenChange(false)}
-            className="h-9 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest border-2"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            onClick={handleConvert}
-            className="h-9 px-10 bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-600/20 text-[10px] font-black uppercase tracking-widest"
-          >
-            Confirm Conversion
-          </Button>
-        </div>
+        <FormActions
+          cancel={{ label: "Cancel", onClick: () => onOpenChange(false) }}
+          primary={{ label: "Confirm Conversion", onClick: handleConvert }}
+        />
       </DialogContent>
     </Dialog>
   )

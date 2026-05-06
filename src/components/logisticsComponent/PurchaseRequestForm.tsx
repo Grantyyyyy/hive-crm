@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react"
 import { Plus, Trash2, Package, AlertTriangle, Layers, Search, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { FormActions } from "@/components/reusables/form-actions"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
@@ -488,33 +489,20 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
         </section>
       </div>
 
-      {/* Footer Actions */}
-      <div className="px-8 py-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
-        <div className="flex flex-col">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Requester</span>
-          <span className="text-sm font-bold text-slate-900 dark:text-white mt-1">{user?.user_metadata?.full_name}</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onCancel}
-            disabled={isSaving}
-            className="h-10 px-6 font-bold text-[11px]"
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => handleSave('pending_review')}
-            disabled={isSaving}
-            className="h-10 px-8 font-black bg-teal-600 hover:bg-teal-700 text-white text-[11px] rounded-lg shadow-sm uppercase tracking-widest disabled:bg-slate-200"
-          >
-            {isSaving ? "Submitting..." : "Submit for Review"}
-          </Button>
-        </div>
-      </div>
+      <FormActions
+        leading={
+          <div className="flex min-w-0 flex-col">
+            <span className="text-[10px] font-bold uppercase tracking-widest leading-none text-slate-400">Requester</span>
+            <span className="mt-1 truncate text-sm font-bold text-slate-900 dark:text-white">{user?.user_metadata?.full_name}</span>
+          </div>
+        }
+        cancel={{ label: "Cancel", onClick: onCancel, disabled: isSaving }}
+        primary={{
+          label: isSaving ? "Submitting..." : "Submit for Review",
+          onClick: () => handleSave("pending_review"),
+          disabled: isSaving,
+        }}
+      />
     </div>
   )
 }

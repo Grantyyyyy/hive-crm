@@ -11,11 +11,11 @@ import {
   Users,
   Clock,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/ui/date-picker"
+import { FormActions } from "@/components/reusables/form-actions"
 import type { Task, Contact, Deal, Lead, Project, AppUser } from "@/lib/types"
 import { TagSelector } from '@/components/crmComponent/TagSelector'
 import { generateId } from "@/lib/helpers"
@@ -615,23 +615,13 @@ export function TaskForm({
         </section>
       </div>
 
-      {/* Sticky Compact Footer */}
-      <div className="px-8 py-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
-        <Button
-          type="button"
-          variant="outlineNeutral"
-          onClick={onCancel}
-          className="h-9 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest border-2"
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          className="h-9 px-10 bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-600/20 text-[10px] font-black uppercase tracking-widest"
-        >
-          {initialData?.id ? 'Update Task' : 'Create Task'}
-        </Button>
-      </div>
+      <FormActions
+        cancel={{ label: "Cancel", onClick: onCancel }}
+        primary={{
+          label: initialData?.id ? "Update Task" : "Create Task",
+          type: "submit",
+        }}
+      />
     </form>
   )
 }

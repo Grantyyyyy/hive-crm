@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react"
 import { Plus, Trash2, Info, Package, Truck, MessageSquare, Building2, Search, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { FormActions } from "@/components/reusables/form-actions"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -484,38 +485,19 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
         </section>
       </div>
       
-      {/* Footer Actions */}
-      <div className="px-8 py-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between shrink-0">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => handleSave('draft')}
-          disabled={isSaving}
-          className="h-10 px-4 font-bold text-[11px] text-slate-500"
-        >
-          {isSaving ? "Saving..." : "Save as Draft"}
-        </Button>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onCancel}
-            disabled={isSaving}
-            className="h-10 px-4 font-bold text-[11px]"
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => handleSave('pending')}
-            disabled={isSaving}
-            className="h-10 px-6 font-black bg-teal-600 hover:bg-teal-700 text-white text-[11px] rounded-lg shadow-sm disabled:bg-slate-200"
-          >
-            {isSaving ? "Creating..." : "Create Purchase Order"}
-          </Button>
-        </div>
-      </div>
+      <FormActions
+        secondary={{
+          label: isSaving ? "Saving..." : "Save as Draft",
+          onClick: () => handleSave("draft"),
+          disabled: isSaving,
+        }}
+        cancel={{ label: "Cancel", onClick: onCancel, disabled: isSaving }}
+        primary={{
+          label: isSaving ? "Creating..." : "Create Purchase Order",
+          onClick: () => handleSave("pending"),
+          disabled: isSaving,
+        }}
+      />
     </div>
   )
 }

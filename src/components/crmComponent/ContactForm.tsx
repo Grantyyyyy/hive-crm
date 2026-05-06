@@ -3,12 +3,11 @@ import {
   Mail, 
   Phone, 
   Building2, 
-  UserPlus, 
   ChevronDown,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { FormActions } from "@/components/reusables/form-actions"
 import type { Contact, ContactSource, CreateContactInput } from "@/lib/types"
 import { SOURCE_LABELS } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -178,30 +177,13 @@ export function ContactForm({ onSave, onCancel, initialData }: ContactFormProps)
         </div>
       </div>
 
-      {/* Sticky Action Footer */}
-      <div className="px-8 py-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
-        <Button
-          type="button"
-          variant="outlineNeutral"
-          onClick={onCancel}
-          className="h-9 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest border-2"
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          className="h-9 px-10 bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-600/20 text-[10px] font-black uppercase tracking-widest"
-        >
-          {initialData?.id ? (
-             <>Save Changes</>
-          ) : (
-            <>
-              <UserPlus className="w-4 h-4 mr-2" />
-              Create Contact
-            </>
-          )}
-        </Button>
-      </div>
+      <FormActions
+        cancel={{ label: "Cancel", onClick: onCancel }}
+        primary={{
+          label: initialData?.id ? "Save Changes" : "Create Contact",
+          type: "submit",
+        }}
+      />
     </form>
   )
 }

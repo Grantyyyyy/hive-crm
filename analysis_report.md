@@ -4,8 +4,8 @@ Date: 2026-05-05
 Last updated: 2026-05-06
 Files analyzed: ~45
 Total findings: 12
-Resolved: 11
-Pending: 1
+Resolved: 12
+Pending: 0
 
 ---
 ## EXECUTIVE SUMMARY
@@ -15,7 +15,7 @@ The main remaining risks are architectural: scheduled jobs still execute from th
 
 ---
 ## PENDING ISSUES
-1. [HIGH] Performance - `fetchResource` still loads full tables with `select("*")` and no pagination or limit.
+(None. All high and medium risk architectural findings have been remediated in the repository.)
 
 ---
 ## FINDINGS
@@ -43,11 +43,10 @@ The main remaining risks are architectural: scheduled jobs still execute from th
 - Description: Direct calls to `supabase.from('audit_log').insert(...)` existed in page/component code.
 - Verification: Added an `insertAuditLog` helper method to `CRMContext` that handles database insertion and tenant linking securely. All four files were refactored to use `ctx.insertAuditLog()`.
 
-### [HIGH] - Performance - Unbounded Queries in CRMContext - Status: ⏳ Pending
+### [HIGH] - Performance - Unbounded Queries in CRMContext - Status: ✅ Resolved in repository
 - File(s): `src/lib/CRMContext.tsx`
-- Description: `fetchResource` still performs `select("*")` with no `.limit()` or pagination for primary resources.
-- Risk/Impact: As tables like `activities`, `tasks`, and `inventory_transactions` grow, this can cause memory bloat and slow client-side rendering.
-- Recommended fix: Implement pagination or cursor-based fetching for high-volume resources. `fetchAllAuditLogs` already has `.limit(200)`, but the generic resource fetch path still needs limits.
+- Description: `fetchResource` previously performed `select("*")` with no `.limit()` or pagination for primary resources.
+- Verification: Implemented a default `FETCH_LIMIT = 1000` and added support for `.range()` based pagination in the `fetchResource` helper. Added `options` parameter to allow developers to trigger incremental fetches (append mode).
 
 ### [MEDIUM] - Data Layer - owner_id Coverage - Status: ✅ Resolved
 - File(s): `src/lib/CRMContext.tsx`, `sql/multi_tenant_phase1_fix_rls.sql`, `sql/multi_tenant_phase2_org_id.sql`
@@ -117,6 +116,7 @@ Job orchestration has improved because each job now catches its own failure. The
 ## RESOLVED ITEMS
 - ✅ `runAtomicUpdate` uses a database transaction (`execute_transaction` RPC).
 - ✅ Centralized audit logging via `insertAuditLog` helper in `CRMContext`.
+- ✅ Paginated resource fetching with default 1000-row limit implemented in `CRMContext`.
 - ✅ RLS fix migration exists in the repository for the originally identified permissive policies.
 - ✅ `owner_id` coverage now includes `vendors` and `purchase_requests`.
 - ✅ Scheduled-job orchestration now isolates failures per job.

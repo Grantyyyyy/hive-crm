@@ -155,6 +155,7 @@ export interface CRMContextValue {
   fetchAuditLogs: (entityType: string, entityId: string) => Promise<any[]>
   fetchAllAuditLogs: () => Promise<any[]>
   insertAuditLog: (log: { entity_type: string, entity_id: string, action: string, diff?: any }) => Promise<void>
+  fetchResource: (name: string, options?: { limit?: number; offset?: number; append?: boolean }) => Promise<void>
 }
 
 const CRMContext = createContext<CRMContextValue | null>(null)
@@ -266,28 +267,43 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     return supabase
   }, [userId])
 
+  const FETCH_LIMIT = 1000
+
   // ── Fetch a single resource ────────────────────────────────────────────────
   const fetchResource = useCallback(
-    async (name: string) => {
-      if (fetchedRef.current.has(name)) return
-      fetchedRef.current.add(name)
+    async (name: string, options: { limit?: number; offset?: number; append?: boolean } = {}) => {
+      const { limit = FETCH_LIMIT, offset = 0, append = false } = options
+
+      // Only skip if we are doing a "full" fresh load and already have it
+      if (!append && fetchedRef.current.has(name) && offset === 0) return
+      if (!append) fetchedRef.current.add(name)
 
       const client = await getClient()
-      if (!client) { fetchedRef.current.delete(name); return }
+      if (!client) { 
+        if (!append) fetchedRef.current.delete(name)
+        return 
+      }
 
       const tableName = TABLE_MAP[name]
       try {
-        const { data: rows, error } = await client
+        let query = client
           .from(tableName)
           .select("*")
           .order("created_at", { ascending: false })
+          .range(offset, offset + limit - 1)
+
+        const { data: rows, error } = await query
 
         if (error) throw error
 
         const mapped = (rows ?? []).map((r: SnakeObject) => toCamel(r))
+        
         setStore((prev) => ({
           ...prev,
-          [name]: { data: mapped, isLoaded: true },
+          [name]: { 
+            data: append ? [...(prev[name]?.data ?? []), ...mapped] : mapped, 
+            isLoaded: true 
+          },
         }))
       } catch (err) {
         logger.error(`[CRMContext] Failed to fetch ${name}:`, err)
@@ -554,7 +570,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   )
 
   return (
-    <CRMContext.Provider value={{ userId, organizationId, getResource, setResourceData, getClient, runAtomicUpdate, fetchAuditLogs, fetchAllAuditLogs, insertAuditLog }}>
+    <CRMContext.Provider value={{ userId, organizationId, getResource, setResourceData, getClient, runAtomicUpdate, fetchAuditLogs, fetchAllAuditLogs, insertAuditLog, fetchResource }}>
       {children}
     </CRMContext.Provider>
   )

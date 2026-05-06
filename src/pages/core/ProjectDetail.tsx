@@ -80,7 +80,7 @@ export function ProjectDetail() {
                   <h1 className="text-3xl font-bold tracking-tight text-text-primary">{project.name}</h1>
                   <button
                     onClick={() => setShowEditModal(true)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-all active:scale-90"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-accent hover:bg-accent-dim transition-all active:scale-90"
                     title="Edit Project"
                   >
                     <Pencil className="w-4 h-4" />
@@ -105,7 +105,7 @@ export function ProjectDetail() {
                 className={cn(
                   "h-8 px-3 rounded text-[11px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-2",
                   viewMode === "kanban"
-                    ? "bg-teal-600 text-white shadow-md shadow-teal-600/20"
+                    ? "bg-accent text-white shadow-md shadow-accent/20"
                     : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                 )}
               >
@@ -117,7 +117,7 @@ export function ProjectDetail() {
                 className={cn(
                   "h-8 px-3 rounded text-[11px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-2",
                   viewMode === "list"
-                    ? "bg-teal-600 text-white shadow-md shadow-teal-600/20"
+                    ? "bg-accent text-white shadow-md shadow-accent/20"
                     : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                 )}
               >
@@ -134,7 +134,7 @@ export function ProjectDetail() {
             label="Total Tasks"
             value={stats.total.toString()}
             icon={<ListTodo className="w-5 h-5" />}
-            accentColor="teal"
+            accentColor="accent"
           />
           <StatCard
             label="Open"

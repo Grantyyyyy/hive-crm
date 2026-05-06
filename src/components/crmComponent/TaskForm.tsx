@@ -188,7 +188,7 @@ export function TaskForm({
           <div className="space-y-6">
             <section className="h-full flex flex-col space-y-4 bg-white dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
               <div className="flex items-center gap-2 mb-1">
-                <div className="w-1 h-3.5 bg-teal-600 rounded-full" />
+                <div className="w-1 h-3.5 bg-accent rounded-full" />
                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Basic Details</h3>
               </div>
 
@@ -196,13 +196,13 @@ export function TaskForm({
               <div className="space-y-1.5">
                 <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Task Title</Label>
                 <div className="group relative">
-                  <Type className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-teal-600 transition-colors" />
+                  <Type className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-accent transition-colors" />
                   <Input
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="What needs to be done?"
                     className={cn(
-                      "h-11 pl-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10",
+                      "h-11 pl-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10",
                       errors.title && "border-red-500 ring-4 ring-red-500/10"
                     )}
                   />
@@ -214,12 +214,12 @@ export function TaskForm({
               <div className="space-y-1.5 flex-1 flex flex-col min-h-[140px]">
                 <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Description</Label>
                 <div className="group relative flex-1 flex flex-col">
-                  <AlignLeft className="absolute left-3.5 top-3.5 w-3.5 h-3.5 text-slate-400 group-focus-within:text-teal-600 transition-colors" />
+                  <AlignLeft className="absolute left-3.5 top-3.5 w-3.5 h-3.5 text-slate-400 group-focus-within:text-accent transition-colors" />
                   <Textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Add more details or context..."
-                    className="flex-1 pl-10 pt-3.5 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-medium transition-all focus:ring-4 focus:ring-teal-500/10 resize-none"
+                    className="flex-1 pl-10 pt-3.5 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-medium transition-all focus:ring-4 focus:ring-accent/10 resize-none"
                   />
                 </div>
               </div>
@@ -250,11 +250,11 @@ export function TaskForm({
                 <div className="space-y-1.5 min-w-0">
                   <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</Label>
                   <div className="relative group">
-                    <CheckCircle2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-teal-600 transition-colors" />
+                    <CheckCircle2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-accent transition-colors" />
                     <select
                       value={status}
                       onChange={(e) => setStatus(e.target.value as any)}
-                      className="w-full h-10 pl-9 pr-8 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-teal-500/10 transition-all shadow-sm truncate"
+                      className="w-full h-10 pl-9 pr-8 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-accent/10 transition-all shadow-sm truncate"
                     >
                       <option value="open">To Do</option>
                       <option value="in-progress">In Progress</option>
@@ -322,12 +322,12 @@ export function TaskForm({
               <div className="relative group">
                 <div
                   className={cn(
-                    "w-full h-11 pl-10 pr-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between cursor-pointer focus-within:ring-4 focus-within:ring-teal-500/10 transition-all shadow-sm",
+                    "w-full h-11 pl-10 pr-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between cursor-pointer focus-within:ring-4 focus-within:ring-accent/10 transition-all shadow-sm",
                     !!fixedProjectId && "opacity-75 cursor-not-allowed bg-slate-50"
                   )}
                   onClick={() => !fixedProjectId && setShowProjectDropdown(!showProjectDropdown)}
                 >
-                  <FolderOpen className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-teal-600 transition-colors" />
+                  <FolderOpen className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-accent transition-colors" />
                   <span className={cn("text-[13px] font-bold truncate", !projectId && "text-slate-400")}>
                     {selectedProject ? selectedProject.name : "None / Individual"}
                   </span>
@@ -343,7 +343,7 @@ export function TaskForm({
                         type="text"
                         autoFocus
                         placeholder="Search projects..."
-                        className="w-full h-9 px-3 bg-slate-50 dark:bg-slate-800/50 border-none rounded-lg text-xs font-bold focus:ring-2 focus:ring-teal-500 outline-none"
+                        className="w-full h-9 px-3 bg-slate-50 dark:bg-slate-800/50 border-none rounded-lg text-xs font-bold focus:ring-2 focus:ring-accent outline-none"
                         value={projectSearch}
                         onChange={(e) => setProjectSearch(e.target.value)}
                         onClick={(e) => e.stopPropagation()}
@@ -369,7 +369,7 @@ export function TaskForm({
                             setShowProjectDropdown(false)
                             setProjectSearch("")
                           }}
-                          className="w-full text-left p-3 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors flex items-center gap-3"
+                          className="w-full text-left p-3 hover:bg-accent-dim transition-colors flex items-center gap-3"
                         >
                           <div
                             className="w-2.5 h-2.5 rounded-full shadow-sm"
@@ -393,12 +393,12 @@ export function TaskForm({
                 <div className="relative group">
                   <div
                     className={cn(
-                      "w-full h-11 pl-10 pr-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between cursor-pointer focus-within:ring-4 focus-within:ring-teal-500/10 transition-all shadow-sm",
+                      "w-full h-11 pl-10 pr-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between cursor-pointer focus-within:ring-4 focus-within:ring-accent/10 transition-all shadow-sm",
                       errors.assignedTo && "border-red-500 ring-4 ring-red-500/10"
                     )}
                     onClick={() => setShowAssigneeDropdown(!showAssigneeDropdown)}
                   >
-                    <Users className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-teal-600 transition-colors" />
+                    <Users className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-accent transition-colors" />
                     <span className={cn("text-[13px] font-bold truncate", !assignedTo[0] && "text-slate-400")}>
                       {selectedAssignee
                         ? (typeof selectedAssignee === 'string' ? selectedAssignee : selectedAssignee.name)
@@ -414,7 +414,7 @@ export function TaskForm({
                           type="text"
                           autoFocus
                           placeholder="Search team members..."
-                          className="w-full h-9 px-3 bg-slate-50 dark:bg-slate-800/50 border-none rounded-lg text-xs font-bold focus:ring-2 focus:ring-teal-500 outline-none"
+                          className="w-full h-9 px-3 bg-slate-50 dark:bg-slate-800/50 border-none rounded-lg text-xs font-bold focus:ring-2 focus:ring-accent outline-none"
                           value={assigneeSearch}
                           onChange={(e) => setAssigneeSearch(e.target.value)}
                           onClick={(e) => e.stopPropagation()}
@@ -440,7 +440,7 @@ export function TaskForm({
                               setShowAssigneeDropdown(false)
                               setAssigneeSearch("")
                             }}
-                            className="w-full text-left p-3 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors flex flex-col gap-0.5"
+                            className="w-full text-left p-3 hover:bg-accent-dim transition-colors flex flex-col gap-0.5"
                           >
                             <div className="flex items-center justify-between">
                               <span className="text-[13px] font-bold text-slate-900 dark:text-white">
@@ -459,7 +459,7 @@ export function TaskForm({
                               setShowAssigneeDropdown(false)
                               setAssigneeSearch("")
                             }}
-                            className="w-full text-left p-3 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors flex flex-col gap-0.5"
+                            className="w-full text-left p-3 hover:bg-accent-dim transition-colors flex flex-col gap-0.5"
                           >
                             <span className="text-[13px] font-bold text-slate-900 dark:text-white">Me (Individual)</span>
                           </button>
@@ -475,13 +475,13 @@ export function TaskForm({
               <div className="space-y-1.5">
                 <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Est. Effort (Hrs)</Label>
                 <div className="group relative">
-                  <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-teal-600 transition-colors" />
+                  <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-accent transition-colors" />
                   <Input
                     type="number"
                     value={estimatedHours}
                     onChange={(e) => setEstimatedHours(e.target.value)}
                     placeholder="0.0"
-                    className="h-11 pl-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-bold transition-all focus:ring-4 focus:ring-teal-500/10 shadow-sm"
+                    className="h-11 pl-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-bold transition-all focus:ring-4 focus:ring-accent/10 shadow-sm"
                   />
                 </div>
               </div>
@@ -508,7 +508,7 @@ export function TaskForm({
                   className={cn(
                     "flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all",
                     entityType === type
-                      ? "bg-white dark:bg-slate-800 text-teal-600 dark:text-teal-400 shadow-sm border border-slate-100 dark:border-slate-700"
+                      ? "bg-white dark:bg-slate-800 text-accent shadow-sm border border-slate-100 dark:border-slate-700"
                       : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-50"
                   )}
                 >
@@ -519,11 +519,11 @@ export function TaskForm({
 
             {!fixedEntity && entityType !== 'none' && (
               <div className="relative group animate-in slide-in-from-top-2 duration-200">
-                <Link2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-teal-600 transition-colors" />
+                <Link2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-accent transition-colors" />
                 <select
                   value={entityId}
                   onChange={(e) => setEntityId(e.target.value)}
-                  className="w-full h-12 pl-12 pr-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-teal-500/10 transition-all shadow-sm"
+                  className="w-full h-12 pl-12 pr-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
                 >
                   <option value="">Select a {entityType}...</option>
                   {entityType === 'contact' && contacts.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -540,7 +540,7 @@ export function TaskForm({
         <section className="space-y-6 pt-6 border-t border-slate-100 dark:border-slate-800">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-1 h-4 bg-teal-500 rounded-full" />
+              <div className="w-1 h-4 bg-accent rounded-full" />
               <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Recurrence</h3>
             </div>
             <button
@@ -557,7 +557,7 @@ export function TaskForm({
               className={cn(
                 "px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border-2 transition-all",
                 recurrencePattern
-                  ? "bg-teal-600 border-teal-600 text-white shadow-lg shadow-teal-600/20"
+                  ? "bg-accent border-accent text-white shadow-lg shadow-accent/20"
                   : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-400 hover:border-slate-300"
               )}
             >
@@ -576,8 +576,8 @@ export function TaskForm({
                     className={cn(
                       "py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest border-2 transition-all",
                       recurrencePattern === pattern
-                        ? "bg-teal-600 border-teal-600 text-white"
-                        : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-400 hover:border-teal-200"
+                        ? "bg-accent border-accent text-white"
+                        : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-400 hover:border-accent/20"
                     )}
                   >
                     {pattern}
@@ -595,7 +595,7 @@ export function TaskForm({
                       min="1"
                       value={recurrenceInterval}
                       onChange={(e) => setRecurrenceInterval(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="w-12 h-8 bg-slate-50 dark:bg-slate-900 border-none text-center font-black text-teal-600 rounded text-sm focus:ring-0"
+                      className="w-12 h-8 bg-slate-50 dark:bg-slate-900 border-none text-center font-black text-accent rounded text-sm focus:ring-0"
                     />
                     <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
                       {recurrencePattern === 'daily' ? 'Days' : recurrencePattern === 'weekly' ? 'Weeks' : recurrencePattern === 'monthly' ? 'Months' : 'Years'}

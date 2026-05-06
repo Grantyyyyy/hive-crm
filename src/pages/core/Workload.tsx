@@ -2,18 +2,17 @@ import { useMemo } from "react"
 import { useCRMResource } from "@/lib/hooks"
 import { useUser, useAuth } from "@/lib/AuthContext"
 import { DashboardSkeleton } from "@/components/ui/skeletons"
+import { StatCard } from "@/components/reusables/StatCard"
 import type { Task, AppUser } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { isOverdue, getTasksDueSoon } from "@/lib/helpers"
 import {
   Clock,
   AlertCircle,
-  CheckCircle2,
   Users,
   BarChart3,
   Calendar,
   ArrowUpRight,
-  UserCog
 } from "lucide-react"
 
 function formatDueLabel(dueDate: string): { label: string; overdue: boolean } {
@@ -78,7 +77,7 @@ export function Workload() {
     }
 
     return map
-  }, [Users, currentUser])
+  }, [allUsers, organizationId, currentUser])
 
   const memberIds = useMemo(() => {
     if (!tasks) return []
@@ -144,53 +143,41 @@ export function Workload() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen">
-      <div className="mx-auto p-3 sm:p-4 md:p-6 max-w-[1400px] animate-fade-in space-y-4 sm:space-y-6">
+      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
 
         {/* Header & Integrated Summary Bar */}
-        <div className="flex flex-col gap-4 sm:gap-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="p-2 sm:p-2.5 bg-teal-100 dark:bg-teal-900/30 rounded-lg sm:rounded-xl text-teal-600 dark:text-teal-400 shadow-sm">
-                <UserCog className="w-5 h-5 sm:w-6 sm:h-6" />
-              </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white leading-tight">Workload</h1>
-                <p className="text-slate-500 dark:text-slate-400 font-medium text-[10px] sm:text-xs">Team resource allocation.</p>
-              </div>
+        <div className="flex flex-col gap-6 pb-2">
+          <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+            <div>
+              <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Workload</h1>
+              <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Team resource allocation.</p>
             </div>
           </div>
 
-          {/* Optimized Summary Bar for Mobile */}
+          {/* Summary Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-            <div className="glass shadow-premium rounded-xl sm:rounded-2xl p-3 sm:p-4 flex items-center gap-3 sm:gap-4 group hover:bg-white dark:hover:bg-slate-900 transition-all">
-              <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hidden xs:block">
-                <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5" />
-              </div>
-              <div>
-                <p className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white leading-none">{totalOpen}</p>
-                <p className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-slate-500 mt-1">Open</p>
-              </div>
-            </div>
-
-            <div className="glass shadow-premium rounded-xl sm:rounded-2xl p-3 sm:p-4 flex items-center gap-3 sm:gap-4 group hover:bg-white dark:hover:bg-slate-900 transition-all border-l-4 border-l-red-500">
-              <div className="p-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hidden xs:block">
-                <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-              </div>
-              <div>
-                <p className="text-lg sm:text-2xl font-bold text-red-600 dark:text-red-400 leading-none">{totalOverdue}</p>
-                <p className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-slate-500 mt-1">Due</p>
-              </div>
-            </div>
-
-            <div className="glass shadow-premium rounded-xl sm:rounded-2xl p-3 sm:p-4 flex items-center gap-3 sm:gap-4 group hover:bg-white dark:hover:bg-slate-900 transition-all col-span-2 sm:col-span-1">
-              <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hidden xs:block">
-                <Users className="w-4 h-4 sm:w-5 sm:h-5" />
-              </div>
-              <div className="flex flex-row sm:flex-col items-baseline sm:items-start gap-2 sm:gap-0">
-                <p className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white leading-none">{memberIds.length}</p>
-                <p className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-slate-500 mt-1">Active Team</p>
-              </div>
-            </div>
+            <StatCard
+              label="Open"
+              value={totalOpen.toString()}
+              icon={<BarChart3 className="w-5 h-5" />}
+              accentColor="accent"
+              size="compact"
+            />
+            <StatCard
+              label="Due"
+              value={totalOverdue.toString()}
+              icon={<AlertCircle className="w-5 h-5" />}
+              accentColor="rose"
+              size="compact"
+            />
+            <StatCard
+              label="Active Team"
+              value={memberIds.length.toString()}
+              icon={<Users className="w-5 h-5" />}
+              accentColor="slate"
+              size="compact"
+              className="col-span-2 sm:col-span-1"
+            />
           </div>
         </div>
 
@@ -220,7 +207,7 @@ export function Workload() {
                 >
                   {/* Header */}
                   <div className="p-3 sm:p-4 flex items-center gap-3 border-b border-slate-100 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-900/50">
-                    <div className="w-8 h-8 rounded-lg bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center text-teal-600 dark:text-teal-400 text-[10px] sm:text-xs font-bold uppercase ring-1 ring-teal-200 dark:ring-teal-800">
+                    <div className="w-8 h-8 rounded-lg bg-accent-dim flex items-center justify-center text-accent text-[10px] sm:text-xs font-bold uppercase ring-1 ring-accent/20">
                       {getInitials(displayName)}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -272,7 +259,7 @@ export function Workload() {
                         <div
                           className={cn(
                             "h-full rounded-full transition-all duration-500",
-                            completionPct > 75 ? "bg-emerald-500" : completionPct > 30 ? "bg-teal-500" : "bg-slate-400"
+                            completionPct > 75 ? "bg-emerald-500" : completionPct > 30 ? "bg-accent" : "bg-slate-400"
                           )}
                           style={{ width: `${completionPct}%` }}
                         />
@@ -331,7 +318,7 @@ export function Workload() {
                   </div>
 
                   {/* Footer Action */}
-                  <button className="w-full p-2.5 sm:p-3 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-t border-slate-100 dark:border-slate-800/50 flex items-center justify-center gap-2">
+                  <button className="w-full p-2.5 sm:p-3 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-accent hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border-t border-slate-100 dark:border-slate-800/50 flex items-center justify-center gap-2">
                     View Profile
                     <ArrowUpRight className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                   </button>

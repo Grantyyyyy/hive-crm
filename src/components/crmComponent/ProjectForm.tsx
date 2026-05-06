@@ -73,7 +73,7 @@ export function ProjectForm({
           {/* Main Info Section */}
           <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-1 h-3.5 bg-teal-600 rounded-full" />
+              <div className="w-1 h-3.5 bg-accent rounded-full" />
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Project Details</h3>
             </div>
 
@@ -82,13 +82,13 @@ export function ProjectForm({
               <div className="space-y-1.5">
                 <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Project Name</Label>
                 <div className="group relative">
-                  <Type className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-teal-600 transition-colors" />
+                  <Type className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-accent transition-colors" />
                   <Input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Website Redesign"
                     className={cn(
-                      "h-11 pl-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10",
+                      "h-11 pl-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10",
                       errors.name && "border-red-500 ring-4 ring-red-500/10"
                     )}
                   />
@@ -100,12 +100,12 @@ export function ProjectForm({
               <div className="space-y-1.5">
                 <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Description</Label>
                 <div className="group relative">
-                  <AlignLeft className="absolute left-3.5 top-3.5 w-3.5 h-3.5 text-slate-400 group-focus-within:text-teal-600 transition-colors" />
+                  <AlignLeft className="absolute left-3.5 top-3.5 w-3.5 h-3.5 text-slate-400 group-focus-within:text-accent transition-colors" />
                   <Textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Brief description of this project..."
-                    className="h-32 pl-10 pt-3.5 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-medium transition-all focus:ring-4 focus:ring-teal-500/10 resize-none"
+                    className="h-32 pl-10 pt-3.5 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-medium transition-all focus:ring-4 focus:ring-accent/10 resize-none"
                   />
                 </div>
               </div>
@@ -132,7 +132,7 @@ export function ProjectForm({
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <Palette className="w-3.5 h-3.5 text-teal-600" />
+                    <Palette className="w-3.5 h-3.5 text-accent" />
                     <span className="text-xs font-black text-slate-700 dark:text-slate-300 tracking-wider">
                       {color.toUpperCase()}
                     </span>
@@ -152,7 +152,7 @@ export function ProjectForm({
                       className={cn(
                         "w-9 h-9 rounded-xl transition-all border-2 relative group",
                         color === c.value
-                          ? "border-teal-600 scale-110 shadow-lg shadow-teal-600/20 z-10"
+                          ? "border-accent scale-110 shadow-lg shadow-accent/20 z-10"
                           : "border-transparent hover:scale-105 hover:border-slate-200 dark:hover:border-slate-700"
                       )}
                     >

@@ -5,14 +5,21 @@ interface StatCardProps {
   label: string;
   value: string | React.ReactNode;
   icon?: React.ReactNode;
-  accentColor?: 'teal' | 'emerald' | 'amber' | 'rose' | 'blue' | 'slate';
+  accentColor?: 'accent' | 'teal' | 'emerald' | 'amber' | 'rose' | 'blue' | 'slate';
   badge?: string;
-  badgeColor?: 'teal' | 'emerald' | 'amber' | 'rose' | 'blue' | 'slate';
+  badgeColor?: 'accent' | 'teal' | 'emerald' | 'amber' | 'rose' | 'blue' | 'slate';
   className?: string;
+  size?: 'default' | 'compact';
   onClick?: () => void;
 }
 
 const colorMap = {
+  accent: {
+    border: 'border-l-accent',
+    hoverShadow: 'hover:shadow-accent/5',
+    iconBg: 'bg-accent-dim',
+    iconColor: 'text-accent',
+  },
   teal: {
     border: 'border-l-teal-600',
     hoverShadow: 'hover:shadow-teal-600/5',
@@ -52,6 +59,7 @@ const colorMap = {
 };
 
 const badgeColorMap = {
+  accent: 'bg-accent-dim text-accent',
   teal: 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400',
   emerald: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400',
   amber: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400',
@@ -64,21 +72,29 @@ export function StatCard({
   label,
   value,
   icon,
-  accentColor = 'teal',
+  accentColor = 'accent',
   badge,
-  badgeColor = 'teal',
+  badgeColor = 'accent',
   className,
+  size = 'default',
   onClick,
 }: StatCardProps) {
   const colors = colorMap[accentColor];
   const badgeColors = badgeColorMap[badgeColor];
 
   const CardContent = () => (
-    <div className="bg-white dark:bg-slate-900 p-6 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm border-l-4 border-l-transparent hover:border-l-transparent transition-all hover:shadow-xl group h-full">
-      <div className="flex items-center justify-between mb-6">
+    <div className={cn(
+      "bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm border-l-4 border-l-transparent hover:border-l-transparent transition-all hover:shadow-xl group h-full",
+      size === 'compact' ? "p-4" : "p-6"
+    )}>
+      <div className={cn(
+        "flex items-center justify-between",
+        size === 'compact' ? "mb-4" : "mb-6"
+      )}>
         {icon && (
           <div className={cn(
-            'w-10 h-10 rounded flex items-center justify-center transition-transform group-hover:scale-110',
+            'rounded flex items-center justify-center transition-transform group-hover:scale-110',
+            size === 'compact' ? 'w-8 h-8' : 'w-10 h-10',
             colors.iconBg,
             colors.iconColor
           )}>
@@ -94,10 +110,13 @@ export function StatCard({
           </div>
         )}
       </div>
-      <div className="space-y-1">
+      <div className={cn(size === 'compact' ? "space-y-0.5" : "space-y-1")}>
         <p className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{label}</p>
         {typeof value === 'string' ? (
-          <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">{value}</h3>
+          <h3 className={cn(
+            "font-extrabold tracking-tight text-slate-900 dark:text-white",
+            size === 'compact' ? "text-2xl" : "text-2xl md:text-3xl"
+          )}>{value}</h3>
         ) : (
           value
         )}

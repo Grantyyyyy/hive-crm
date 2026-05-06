@@ -249,7 +249,7 @@ export function TagSelector({ taskId, selectedTagIds, onChange }: TagSelectorPro
           ref={triggerRef}
           type="button"
           onClick={() => setDropdownOpen(!dropdownOpen)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-accent hover:bg-accent-dim transition-colors"
         >
           <Plus className="w-3.5 h-3.5" />
           Add tag

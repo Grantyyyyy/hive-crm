@@ -17,10 +17,9 @@ export const logger = {
     }
   },
   error: (...args: any[]) => {
-    // We usually want to see errors even in production, 
-    // but maybe through a monitoring service.
-    // For now, let's keep them visible in the console.
-    console.error(...args);
+    if (!isProd) {
+      console.error(...args);
+    }
   },
   info: (...args: any[]) => {
     if (!isProd) {

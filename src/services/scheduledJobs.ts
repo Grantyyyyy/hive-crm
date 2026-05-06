@@ -176,10 +176,22 @@ export async function checkTaskReminders(adapter: JobAdapter): Promise<void> {
  */
 export async function runScheduledJobs(adapter: JobAdapter, ctx: CRMContextValue): Promise<void> {
   logger.log("[scheduledJobs] Starting automation checks...");
-  await processRecurringTasks(ctx);
-  await autoExpireQuotes(ctx);
-  await sendFollowUpReminders(adapter);
-  await checkAndAlertLowStock(adapter, ctx);
-  await checkTaskReminders(adapter);
+
+  const jobs = [
+    { name: "processRecurringTasks", fn: () => processRecurringTasks(ctx) },
+    { name: "autoExpireQuotes", fn: () => autoExpireQuotes(ctx) },
+    { name: "sendFollowUpReminders", fn: () => sendFollowUpReminders(adapter) },
+    { name: "checkAndAlertLowStock", fn: () => checkAndAlertLowStock(adapter, ctx) },
+    { name: "checkTaskReminders", fn: () => checkTaskReminders(adapter) }
+  ];
+
+  for (const job of jobs) {
+    try {
+      await job.fn();
+    } catch (err) {
+      logger.error(`[scheduledJobs] Job "${job.name}" failed:`, err);
+    }
+  }
+
   logger.log("[scheduledJobs] Automation checks complete.");
 }

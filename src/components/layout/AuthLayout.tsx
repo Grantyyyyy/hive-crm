@@ -16,13 +16,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
   const { isSignedIn, isLoaded } = useAuth();
   const [location, setLocation] = useLocation();
 
-  useEffect(() => {
-    if (isLoaded && isSignedIn) {
-      setLocation("/dashboard");
-    }
-  }, [isLoaded, isSignedIn, setLocation]);
-
-  if (isLoaded && isSignedIn) {
+  if (isLoaded && isSignedIn && window.location.pathname !== "/onboarding") {
     return null;
   }
 

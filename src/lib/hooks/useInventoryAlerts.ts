@@ -5,6 +5,7 @@ import type { InventoryItem, Notification } from "@/lib/types"
 import { toast } from "sonner"
 
 import { useAuth, useUser } from "@/lib/AuthContext"
+import { logger } from "@/lib/logger"
 
 export function useInventoryAlerts() {
   const { data: inventory, isLoaded: inventoryLoaded } = useCRMResource<InventoryItem>('inventory')
@@ -42,7 +43,7 @@ export function useInventoryAlerts() {
       const isBelowThreshold = currentStock <= threshold
 
       if (previousStock !== undefined && previousStock !== currentStock) {
-        console.log(`[InventoryAlerts] Stock changed for ${item.sku}: ${previousStock} -> ${currentStock} (threshold: ${threshold})`)
+        logger.debug(`[InventoryAlerts] Stock changed for ${item.sku}: ${previousStock} -> ${currentStock} (threshold: ${threshold})`)
       }
 
       // Update tracked stock level
@@ -125,9 +126,9 @@ export function useInventoryAlerts() {
           }
         })
 
-        console.log(`[InventoryAlerts] Alert created: ${alertTitle}`)
+        logger.debug(`[InventoryAlerts] Alert created: ${alertTitle}`)
       } catch (err) {
-        console.error(`[InventoryAlerts] Failed to create alert for ${item.sku}:`, err)
+        logger.error(`[InventoryAlerts] Failed to create alert for ${item.sku}:`, err)
         // Don't mark as alerted — allow retry on next cycle
       }
     }

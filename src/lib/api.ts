@@ -1,4 +1,5 @@
 import { supabase } from "./supabaseClient";
+import { logger } from "./logger";
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -35,7 +36,7 @@ function logAudit(entityType: string, entityId: string, action: string, diff: an
       organization_id: ctx.organizationId,
       diff
     }).then(({ error }: any) => {
-      if (error) console.error("[api.ts] Failed to emit audit log:", error);
+      if (error) logger.error("[api.ts] Failed to emit audit log:", error);
     });
   });
 }
@@ -162,7 +163,7 @@ async function request<T>(path: string, options: RequestInit = {}, params?: ApiO
     cachedToken = null;
     const currentPath = window.location.pathname;
     if (currentPath !== '/sign-in' && currentPath !== '/sign-up' && currentPath !== '/') {
-      console.warn('Auth failed, clearing token. Will retry on next request.');
+      logger.warn('Auth failed, clearing token. Will retry on next request.');
     }
     throw new Error('Unauthorized');
   }

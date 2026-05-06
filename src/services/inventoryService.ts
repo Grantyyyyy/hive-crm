@@ -88,6 +88,7 @@ export async function checkAndAlertLowStock(adapter: JobAdapter, ctx: CRMContext
     status: 'draft',
     priority: hasUrgent ? 'urgent' : 'medium',
     date: new Date().toISOString(),
+    ownerId: 'SYSTEM',
   };
 
   await insertRows<PurchaseRequest>(ctx, 'purchase_requests', [newPR as any]);

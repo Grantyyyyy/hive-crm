@@ -235,7 +235,7 @@ export function TaskListView({
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={(e) => setActiveId(String(e.active.id))} onDragEnd={handleDragEnd}>
-      <div className="space-y-12 pb-12 animate-in fade-in duration-500">
+      <div className="space-y-6 pb-6 animate-in fade-in duration-500">
         {Object.entries(tasksByStatus).map(([status, statusTasks]) => {
           if (statusTasks.length === 0 && statusFilter !== 'all') return null
           

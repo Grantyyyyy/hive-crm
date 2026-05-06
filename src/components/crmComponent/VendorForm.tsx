@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import type { Vendor, VendorStatus } from "@/lib/types"
 import { generateId } from "@/lib/helpers"
+import { useUser } from "@/lib/AuthContext"
 
 interface VendorFormProps {
   initialData?: Partial<Vendor>
@@ -14,6 +15,7 @@ interface VendorFormProps {
 }
 
 export function VendorForm({ initialData, onSave, onCancel }: VendorFormProps) {
+  const { user } = useUser()
   const [name, setName] = useState(initialData?.name ?? "")
   const [email, setEmail] = useState(initialData?.email ?? "")
   const [phone, setPhone] = useState(initialData?.phone ?? "")
@@ -51,6 +53,7 @@ export function VendorForm({ initialData, onSave, onCancel }: VendorFormProps) {
       status,
       createdAt: initialData?.createdAt ?? new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      ownerId: initialData?.ownerId ?? user?.id ?? "unknown",
     }
 
     onSave(vendor)

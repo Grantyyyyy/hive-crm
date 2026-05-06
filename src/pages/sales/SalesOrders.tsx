@@ -42,6 +42,7 @@ import { StatCard } from "@/components/reusables/StatCard"
 import { StatusTabs } from "@/components/reusables/StatusTabs"
 import type { StatusTab } from "@/components/reusables/StatusTabs"
 import { SalesTable, type SalesColumn } from "@/components/reusables/SalesTable"
+import { logger } from "@/lib/logger"
 
 const fmtCurrency = (v: number) =>
   v.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 })
@@ -283,7 +284,7 @@ export function SalesOrders() {
           organization_id: organizationId,
           diff: { timestamp: new Date().toISOString() }
         }).then(({ error }: any) => {
-          if (error) console.error("Failed to emit audit log:", error)
+          if (error) logger.error("Failed to emit audit log:", error)
         })
       }
     } catch (e: unknown) {

@@ -15,6 +15,7 @@ import { formatCurrency } from "@/lib/helpers"
 import { leadsApi } from "@/lib/api"
 import { Check, UserPlus } from "lucide-react"
 import { DatePicker } from "@/components/ui/date-picker"
+import { logger } from "@/lib/logger"
 
 interface ConvertLeadModalProps {
   open: boolean
@@ -104,7 +105,7 @@ export function ConvertLeadModal({ open, onOpenChange, lead, onConverted }: Conv
         onConverted(response.data.contact.id)
       }
     } catch (error) {
-      console.error('Error converting lead:', error)
+      logger.error('Error converting lead:', error)
     }
   }
 

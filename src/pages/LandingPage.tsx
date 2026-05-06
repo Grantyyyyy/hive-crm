@@ -19,7 +19,7 @@ export const LandingPage: React.FC = () => {
 
   return (
     <div
-      className={`min-h-screen font-sans selection:bg-[#0D9488] selection:text-white overflow-x-hidden transition-colors ${theme === "dark" ? "bg-slate-950 text-slate-100" : "bg-[#F8FAFC] text-slate-900"
+      className={`min-h-screen font-sans overflow-x-hidden transition-colors ${theme === "dark" ? "bg-slate-950 text-slate-100" : "bg-background text-slate-900"
         }`}
     >
       <style>{`

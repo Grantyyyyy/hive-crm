@@ -337,6 +337,7 @@ export interface Vendor {
   paymentTerms?: string
   status: VendorStatus
   notes?: string
+  ownerId: string
   createdAt: string
   updatedAt: string
 }
@@ -472,6 +473,7 @@ export interface PurchaseRequest {
   urgent: boolean
   purpose?: string
   priority: 'low' | 'medium' | 'high' | 'urgent'
+  ownerId: string
   createdAt: string
   updatedAt: string
 }

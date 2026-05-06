@@ -8,6 +8,7 @@ import React, {
 } from "react"
 import { useAuth, useUser } from "./AuthContext"
 import { supabase } from "./supabaseClient"
+import { logger } from "./logger"
 
 // ── Table mapping ────────────────────────────────────────────────────────────
 
@@ -288,7 +289,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           [name]: { data: mapped, isLoaded: true },
         }))
       } catch (err) {
-        console.error(`[CRMContext] Failed to fetch ${name}:`, err)
+        logger.error(`[CRMContext] Failed to fetch ${name}:`, err)
         setStore((prev) => ({
           ...prev,
           [name]: { ...prev[name], isLoaded: true },
@@ -374,7 +375,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
 
         if (action === "insert") {
           const noUserIdTables = ['task_tags', 'task_tag_links', 'task_subtasks', 'task_comments', 'purchase_receipt_items']
-          const ownerIdTables = ['tasks', 'task_tags', 'projects', 'leads', 'contacts', 'deals']
+          const ownerIdTables = ['tasks', 'task_tags', 'projects', 'leads', 'contacts', 'deals', 'vendors', 'purchase_requests']
 
           if (!noUserIdTables.includes(op.resource) && !snakePatch.user_id) {
             snakePatch.user_id = userId
@@ -390,7 +391,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
 
           const { data, error } = await client.from(tableName).insert(snakePatch).select()
           if (error) {
-            console.error(`[CRMContext] Insert failed for ${op.resource}:`, error)
+            logger.error(`[CRMContext] Insert failed for ${op.resource}:`, error)
             errors.push({ resource: op.resource, error })
           } else {
             const resultItem = data?.[0]
@@ -414,7 +415,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         } else if (action === "update") {
           const { error } = await client.from(tableName).update(snakePatch).eq("id", op.id)
           if (error) {
-            console.error(`[CRMContext] Update failed for ${op.resource}:${op.id}:`, error)
+            logger.error(`[CRMContext] Update failed for ${op.resource}:${op.id}:`, error)
             errors.push({ resource: op.resource, id: op.id, error })
           } else {
             if (isTask) {
@@ -440,14 +441,14 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (errors.length > 0) {
-        console.error("[CRMContext] Atomic update failed:", errors)
+        logger.error("[CRMContext] Atomic update failed:", errors)
         throw new Error(`Atomic update failed with ${errors.length} errors. Local state not committed.`)
       }
 
       // Emit audit logs in background
       if (auditLogs.length > 0) {
         client.from('audit_log').insert(auditLogs).then(({ error }: any) => {
-          if (error) console.error("[CRMContext] Failed to emit audit logs:", error)
+          if (error) logger.error("[CRMContext] Failed to emit audit logs:", error)
         })
       }
 
@@ -480,7 +481,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         .order("changed_at", { ascending: false })
 
       if (error) {
-        console.error("[CRMContext] fetchAuditLogs error:", error)
+        logger.error("[CRMContext] fetchAuditLogs error:", error)
         return []
       }
       return resolveAuditActors(client, toCamel(data || []), user)
@@ -499,7 +500,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         .limit(200)
 
       if (error) {
-        console.error("[CRMContext] fetchAllAuditLogs error:", error)
+        logger.error("[CRMContext] fetchAllAuditLogs error:", error)
         return []
       }
       return resolveAuditActors(client, toCamel(data || []), user)
@@ -540,7 +541,7 @@ export async function insertRows<T extends { id?: string }>(
     }
 
     const noUserIdTables = ['task_tags', 'task_tag_links', 'task_subtasks', 'task_comments', 'purchase_receipt_items']
-    const ownerIdTables = ['tasks', 'task_tags', 'projects', 'leads', 'contacts', 'deals']
+    const ownerIdTables = ['tasks', 'task_tags', 'projects', 'leads', 'contacts', 'deals', 'vendors', 'purchase_requests']
 
     if (!noUserIdTables.includes(resourceName) && !row.user_id) {
       row.user_id = ctx.userId
@@ -561,7 +562,7 @@ export async function insertRows<T extends { id?: string }>(
 
   const { data: result, error } = await client.from(tableName).insert(rows).select()
   if (error) {
-    console.error(`[CRMContext] Batch insert failed for ${resourceName}:`, error)
+    logger.error(`[CRMContext] Batch insert failed for ${resourceName}:`, error)
     throw error
   }
 
@@ -578,7 +579,7 @@ export async function insertRows<T extends { id?: string }>(
       diff: { new: item }
     }))
     client.from('audit_log').insert(auditLogs).then(({ error }: any) => {
-      if (error) console.error("[CRMContext] Failed to emit audit logs:", error)
+      if (error) logger.error("[CRMContext] Failed to emit audit logs:", error)
     })
   }
 
@@ -654,7 +655,7 @@ export async function updateRow<T extends { id: string }>(
 
   const { error } = await client.from(tableName).update(snakePatch).eq("id", id)
   if (error) {
-    console.error(`[CRMContext] Update failed for ${resourceName}:${id}:`, error)
+    logger.error(`[CRMContext] Update failed for ${resourceName}:${id}:`, error)
     throw error
   }
 
@@ -670,7 +671,7 @@ export async function updateRow<T extends { id: string }>(
     organization_id: ctx.organizationId,
     diff: { updates: diff }
   }).then(({ error }: any) => {
-    if (error) console.error("[CRMContext] Failed to emit audit log:", error)
+    if (error) logger.error("[CRMContext] Failed to emit audit log:", error)
   })
 
   if (isTask) {
@@ -703,7 +704,7 @@ export async function deleteRow<T extends { id: string }>(
     organization_id: ctx.organizationId,
     diff: { id }
   }).then(({ error }: any) => {
-    if (error) console.error("[CRMContext] Failed to emit audit log:", error)
+    if (error) logger.error("[CRMContext] Failed to emit audit log:", error)
   })
 
   ctx.setResourceData(resourceName, (prev: T[]) => prev.filter((item) => item.id !== id))

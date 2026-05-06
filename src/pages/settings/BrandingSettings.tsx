@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Layout, Image as ImageIcon, Save, RefreshCcw, Upload, Loader2, Type } from "lucide-react";
+import { logger } from "@/lib/logger";
 
 export function BrandingSettings() {
   const ctx = useCRMContext();
@@ -40,7 +41,7 @@ export function BrandingSettings() {
       });
       toast.success("Branding settings updated successfully");
     } catch (error) {
-      console.error("Failed to update branding settings:", error);
+      logger.error("Failed to update branding settings:", error);
       toast.error("Failed to update branding settings");
     } finally {
       setIsSaving(false);
@@ -82,7 +83,7 @@ export function BrandingSettings() {
       setAppLogoUrl(publicUrl);
       toast.success("Logo uploaded successfully. Don't forget to save changes!");
     } catch (error: any) {
-      console.error("Failed to upload logo:", error);
+      logger.error("Failed to upload logo:", error);
       toast.error(error.message || "Failed to upload logo");
     } finally {
       setIsUploading(false);

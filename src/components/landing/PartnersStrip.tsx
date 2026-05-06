@@ -22,8 +22,8 @@ export function PartnersStrip({ theme }: PartnersStripProps) {
             ))}
           </div>
           <div className={`hidden lg:block w-px h-8 ${isDark ? "bg-slate-800" : "bg-slate-200"}`} />
-          <div className="flex items-center gap-4 text-[#0D9488]">
-            <div className="w-2 h-2 rounded-full bg-[#0D9488] animate-pulse" />
+          <div className="flex items-center gap-4 text-accent">
+            <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
             <span className="text-[10px] font-black uppercase tracking-widest">Platform Status: Online</span>
           </div>
         </div>

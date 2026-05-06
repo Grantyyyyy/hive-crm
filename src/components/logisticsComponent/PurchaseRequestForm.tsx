@@ -142,6 +142,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
       requestNumber,
       requesterId: user?.id ?? "unknown",
       requesterName: user?.user_metadata?.full_name ?? "Unknown User",
+      ownerId: user?.id ?? "unknown",
       amount: totalEstimate,
       status,
       date: new Date(date).toISOString(),

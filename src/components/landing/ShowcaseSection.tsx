@@ -14,7 +14,7 @@ export function ShowcaseSection({ theme }: ShowcaseSectionProps) {
           <div className="space-y-4 max-w-2xl">
             <h2 className="text-3xl sm:text-4xl lg:text-6xl font-sans font-black tracking-tighter leading-[0.85] uppercase">
               The Interface <br />
-              of <span className="text-[#0D9488]">Efficiency.</span>
+              of <span className="text-accent">Efficiency.</span>
             </h2>
             <p className={`text-base lg:text-lg font-bold leading-relaxed ${isDark ? "text-slate-400" : "text-slate-500"}`}>
               High-density information architecture designed to eliminate friction and accelerate execution.

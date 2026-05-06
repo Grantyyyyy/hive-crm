@@ -76,7 +76,7 @@ export function AuditTimeline({ entityType, entityId }: { entityType: string, en
             </div>
 
             {/* Content Card */}
-            <div className="bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-slate-800/60 rounded-xl p-3.5 shadow-sm transition-colors duration-200 group-hover:border-slate-300 dark:group-hover:border-slate-700">
+            <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800/60 rounded-xl p-3.5 shadow-sm transition-colors duration-200 group-hover:border-slate-300 dark:group-hover:border-slate-700">
                <div className="flex flex-col gap-2.5">
                   <div className="flex items-center justify-between gap-3">
                      <div className="flex items-center gap-2.5">
@@ -209,4 +209,3 @@ function Badge({ text, variant }: { text: string, variant: 'muted' | 'accent' | 
     </span>
   )
 }
-

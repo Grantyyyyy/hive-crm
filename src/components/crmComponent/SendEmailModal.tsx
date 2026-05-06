@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import type { Quote, SalesOrder } from "@/lib/types"
+import { logger } from "@/lib/logger"
 
 interface SendEmailModalProps {
   open: boolean
@@ -91,7 +92,7 @@ export function SendEmailModal({ open, onOpenChange, document, customerEmail: co
           organization_id: organizationId,
           diff: { email: customerEmail, timestamp: new Date().toISOString() }
         }).then(({ error }: any) => {
-          if (error) console.error("Failed to emit audit log:", error)
+          if (error) logger.error("Failed to emit audit log:", error)
         })
       }
 

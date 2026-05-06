@@ -16,16 +16,16 @@ interface ProjectFormProps {
 }
 
 const PRESET_COLORS = [
-  { value: "#0d9488", bg: "bg-[#0d9488]" },
-  { value: "#8b5cf6", bg: "bg-[#8b5cf6]" },
-  { value: "#ec4899", bg: "bg-[#ec4899]" },
-  { value: "#ef4444", bg: "bg-[#ef4444]" },
-  { value: "#f97316", bg: "bg-[#f97316]" },
-  { value: "#eab308", bg: "bg-[#eab308]" },
-  { value: "#22c55e", bg: "bg-[#22c55e]" },
-  { value: "#14b8a6", bg: "bg-[#14b8a6]" },
-  { value: "#06b6d4", bg: "bg-[#06b6d4]" },
-  { value: "#3b82f6", bg: "bg-[#3b82f6]" },
+  { value: "#0d9488", bg: "bg-teal-600" },
+  { value: "#8b5cf6", bg: "bg-violet-500" },
+  { value: "#ec4899", bg: "bg-pink-500" },
+  { value: "#ef4444", bg: "bg-red-500" },
+  { value: "#f97316", bg: "bg-orange-500" },
+  { value: "#eab308", bg: "bg-yellow-500" },
+  { value: "#22c55e", bg: "bg-green-500" },
+  { value: "#14b8a6", bg: "bg-teal-500" },
+  { value: "#06b6d4", bg: "bg-cyan-500" },
+  { value: "#3b82f6", bg: "bg-blue-500" },
 ]
 
 export function ProjectForm({

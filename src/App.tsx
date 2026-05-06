@@ -1,9 +1,11 @@
 import { useAuth } from "@/lib/AuthContext";
-import { Router, Route, Switch } from "wouter";
+import { Router, Route, Switch, useLocation, Redirect } from "wouter";
 import { ThemeProvider } from "@/lib/ThemeProvider";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LandingPage } from "@/pages/LandingPage";
 import { SignInPage } from "@/pages/SignInPage";
 import { SignUpPage } from "@/pages/SignUpPage";
+import { OnboardingPage } from "@/pages/OnboardingPage";
 import { Dashboard } from "@/pages/core/Dashboard";
 import { Contacts } from "@/pages/core/Contacts";
 import { ContactDetail } from "@/pages/core/ContactDetail";
@@ -55,6 +57,7 @@ import type { Organization, Quote, SalesOrder, InventoryItem, PurchaseRequest, P
 import { runScheduledJobs } from "@/services/scheduledJobs";
 import type { JobAdapter } from "@/services/types";
 import { setAuthToken, subscribeAuth } from "@/lib/api";
+import { logger } from "@/lib/logger";
 import React, { useEffect, useRef, useMemo, useState } from "react";
 import { FontProvider } from "@/components/FontProvider";
 
@@ -135,14 +138,14 @@ function AutomationRunner() {
   useEffect(() => {
     if (dataReady && !runOnce.current) {
       runOnce.current = true;
-      runScheduledJobs(adapter, ctx).catch(console.error);
+      runScheduledJobs(adapter, ctx).catch((error) => logger.error("[AutomationRunner] Scheduled jobs failed:", error));
     }
   }, [dataReady]);
 
   useEffect(() => {
     if (!dataReady) return;
     const interval = setInterval(() => {
-      runScheduledJobs(adapter, ctx).catch(console.error);
+      runScheduledJobs(adapter, ctx).catch((error) => logger.error("[AutomationRunner] Scheduled jobs failed:", error));
     }, 60_000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -157,14 +160,15 @@ function InventoryAlertRunner() {
 }
 
 function AppContent() {
-  const { isSignedIn, isLoaded: authLoaded, getToken, userId } = useAuth();
+  const { isSignedIn, isLoaded: authLoaded, getToken, userId, organizationId } = useAuth();
   const { user } = useUser();
   const [authReady, setAuthReady] = useState(false);
+  const [location, navigate] = useLocation();
 
   /**
    * Synchronizes Supabase auth state with the app's API layer.
    * - Stores the Supabase access token for API requests
-   * - Supabase auto-refreshes sessions, so no manual refresh interval needed
+   * - Handles onboarding and dashboard redirection guards
    */
   useEffect(() => {
     if (authLoaded) {
@@ -173,12 +177,25 @@ function AppContent() {
         getToken().then(token => {
           if (token) setAuthToken(token);
         });
+
+        // Redirect to onboarding if no organization is set
+        logger.debug("Auth Guard Check:", { organizationId, location });
+        if ((!organizationId || organizationId === "null") && location !== "/onboarding" && location !== "/sign-in" && location !== "/sign-up") {
+          logger.debug("Redirecting to /onboarding");
+          navigate("/onboarding");
+        }
+
+        // Redirect to dashboard if they are already onboarded but trying to access onboarding
+        if (organizationId && organizationId !== "null" && location === "/onboarding") {
+          logger.debug("Redirecting to /dashboard");
+          navigate("/dashboard");
+        }
       } else {
         setAuthToken(null);
       }
       setAuthReady(true);
     }
-  }, [isSignedIn, authLoaded, getToken]);
+  }, [isSignedIn, authLoaded, getToken, organizationId, navigate, location]);
 
   /**
    * Subscribe to Supabase session changes and propagate token to the API layer.
@@ -209,7 +226,7 @@ function AppContent() {
           username: user.user_metadata?.user_name ?? undefined,
         }, userId);
       } catch (e) {
-        console.error("Failed to sync current user:", e);
+        logger.error("Failed to sync current user:", e);
       }
     });
   }, [user, userId]);
@@ -241,8 +258,9 @@ function AppContent() {
             <Switch>
               {/* Public routes — no AppLayout */}
               <Route path="/" component={LandingPage} />
-              <Route path="/sign-in" component={SignInPage} />
-              <Route path="/sign-up" component={SignUpPage} />
+              <Route path="/sign-in">{() => (isSignedIn ? <Redirect to={organizationId && organizationId !== "null" ? "/dashboard" : "/onboarding"} /> : <SignInPage />)}</Route>
+              <Route path="/sign-up">{() => (isSignedIn ? <Redirect to={organizationId && organizationId !== "null" ? "/dashboard" : "/onboarding"} /> : <SignUpPage />)}</Route>
+              <Route path="/onboarding" component={OnboardingPage} />
               <Route path="/design">{() => <Design />}</Route>
               <Route path="/fonts">{() => <Fonts />}</Route>
               <Route path="/dialogs">{() => <DialogsPreview />}</Route>
@@ -311,13 +329,15 @@ function AppContent() {
 
 export function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <CRMProvider>
-          <AppContent />
-        </CRMProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <AuthProvider>
+          <CRMProvider>
+            <AppContent />
+          </CRMProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

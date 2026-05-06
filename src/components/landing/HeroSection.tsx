@@ -1,5 +1,4 @@
-import { ArrowRight, ArrowUpRight, Plus } from "lucide-react";
-import { Link } from "wouter";
+import { ArrowUpRight } from "lucide-react";
 import type { LandingTheme } from "./types";
 
 interface HeroSectionProps {
@@ -23,7 +22,7 @@ export function HeroSection({ theme }: HeroSectionProps) {
                   }`}
               >
                 Orchestrate <br />
-                <span className="text-[#0D9488]">
+                <span className="text-accent">
                   Sales & Growth.
                 </span>
               </h1>
@@ -46,14 +45,14 @@ export function HeroSection({ theme }: HeroSectionProps) {
                 </div>
                 <div className="space-y-1">
                   <p className={`text-[10px] font-black uppercase tracking-widest ${isDark ? "text-slate-500" : "text-slate-400"}`}>Platform Status</p>
-                  <p className="text-xl sm:text-2xl font-black text-[#0D9488] tracking-tight uppercase">Online</p>
+                  <p className="text-xl sm:text-2xl font-black text-accent tracking-tight uppercase">Online</p>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="space-y-8 pb-1 animate-content-in" style={{ animationDelay: "0.2s" }}>
-            <div className={`relative overflow-hidden p-8 border-2 rounded-[2.5rem] transition-all duration-500 hover:border-[#0D9488]/30 group ${isDark
+            <div className={`relative overflow-hidden p-6 border-2 rounded-[2rem] transition-all duration-500 hover:border-accent/30 group ${isDark
               ? "border-slate-800 bg-slate-900/40 backdrop-blur-xl"
               : "border-slate-100 bg-white shadow-[0_32px_64px_-16px_rgba(15,23,42,0.08)]"
               }`}>
@@ -61,14 +60,14 @@ export function HeroSection({ theme }: HeroSectionProps) {
                 <div className="flex items-center justify-between">
                   <div className={`px-4 py-1.5 rounded-full border text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-2 ${isDark ? "bg-slate-950 border-slate-800 text-slate-400" : "bg-slate-50 border-slate-200 text-slate-500"
                     }`}>
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#0D9488] animate-pulse" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
                     Operational Intelligence
                   </div>
                   <div className="flex items-end gap-1 h-4">
                     {[1, 2, 3, 4, 5].map((i) => (
                       <div
                         key={i}
-                        className="w-1 rounded-full bg-[#0D9488] transition-all duration-300 group-hover:bg-[#14b8a6]"
+                        className="w-1 rounded-full bg-accent transition-all duration-300 group-hover:bg-teal-500"
                         style={{
                           height: `${20 + Math.random() * 80}%`,
                           animation: `grow-shrink ${1 + i * 0.2}s ease-in-out infinite alternate`
@@ -80,7 +79,7 @@ export function HeroSection({ theme }: HeroSectionProps) {
 
                 <div className="space-y-3">
                   <h3 className={`text-3xl sm:text-4xl font-black leading-[1] tracking-tighter uppercase ${isDark ? "text-slate-100" : "text-slate-900"}`}>
-                    Scale <span className="text-[#0D9488]">Without</span> <br />
+                    Scale <span className="text-accent">Without</span> <br />
                     the Friction.
                   </h3>
                   <p className={`text-base font-bold leading-relaxed max-w-[320px] ${isDark ? "text-slate-400" : "text-slate-600"}`}>
@@ -91,7 +90,7 @@ export function HeroSection({ theme }: HeroSectionProps) {
                 <div className="flex items-center gap-5 pt-2">
                   <div className="flex -space-x-3">
                     {[1, 2, 3].map((i) => (
-                      <div key={i} className={`w-9 h-9 rounded-full border-2 ${isDark ? "border-slate-900" : "border-white"} bg-slate-800 overflow-hidden ring-4 ring-transparent group-hover:ring-[#0D9488]/10 transition-all`}>
+                      <div key={i} className={`w-9 h-9 rounded-full border-2 ${isDark ? "border-slate-900" : "border-white"} bg-slate-800 overflow-hidden ring-4 ring-transparent group-hover:ring-accent/10 transition-all`}>
                         <img src={`https://i.pravatar.cc/100?u=tech-${i}`} alt="tech" className="w-full h-full object-cover grayscale brightness-110" />
                       </div>
                     ))}
@@ -108,14 +107,14 @@ export function HeroSection({ theme }: HeroSectionProps) {
               </div>
 
               {/* Decorative Glow */}
-              <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-[#0D9488]/5 blur-[100px] rounded-full group-hover:bg-[#0D9488]/10 transition-colors duration-700" />
+              <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-accent/5 blur-[100px] rounded-full group-hover:bg-accent/10 transition-colors duration-700" />
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-6 pt-4">
               <div className="flex items-center gap-10">
-                <a href="#modules" className={`text-xs font-black uppercase tracking-[0.25em] transition-all flex items-center gap-3 group ${isDark ? "text-slate-400 hover:text-[#0D9488]" : "text-slate-500 hover:text-[#0D9488]"}`}>
+                <a href="#modules" className={`text-xs font-black uppercase tracking-[0.25em] transition-all flex items-center gap-3 group ${isDark ? "text-slate-400 hover:text-accent" : "text-slate-500 hover:text-accent"}`}>
                   Technical Specs 
-                  <div className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all ${isDark ? "border-slate-800 group-hover:border-[#0D9488]" : "border-slate-200 group-hover:border-[#0D9488]"} group-hover:bg-[#0D9488] group-hover:text-white`}>
+                  <div className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all ${isDark ? "border-slate-800 group-hover:border-accent" : "border-slate-200 group-hover:border-accent"} group-hover:bg-accent group-hover:text-white`}>
                     <ArrowUpRight className="w-4 h-4 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </a>
@@ -129,7 +128,7 @@ export function HeroSection({ theme }: HeroSectionProps) {
               </div>
             </div>
 
-            <div className={`flex items-center gap-4 px-6 py-3 border rounded-2xl w-fit transition-all hover:border-[#0D9488]/30 ${isDark ? "bg-slate-950/50 border-slate-800" : "bg-slate-50 border-slate-200"}`}>
+            <div className={`flex items-center gap-4 px-5 py-3 border rounded-2xl w-fit transition-all hover:border-accent/30 ${isDark ? "bg-slate-950/50 border-slate-800" : "bg-slate-50 border-slate-200"}`}>
               <div className="relative">
                 <div className="w-2 h-2 rounded-full bg-green-500" />
                 <div className="absolute inset-0 w-2 h-2 rounded-full bg-green-500 animate-ping opacity-75" />

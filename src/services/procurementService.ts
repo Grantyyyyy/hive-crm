@@ -590,7 +590,8 @@ export async function createPurchaseRequestFromShortages(
     items: prItems,
     justification: `Automated shortage procurement for Sales Order ${order.orderNumber}`,
     urgent: true,
-    priority: 'high'
+    priority: 'high',
+    ownerId: userId
   };
 
   const createdPR = await adapter.insertPurchaseRequest(newPR);

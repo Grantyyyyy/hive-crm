@@ -28,6 +28,7 @@ import { createAdjustmentTransaction } from "@/services/inventoryTransactionServ
 import { toast } from "sonner"
 import { useUser } from "@/lib/AuthContext"
 import { EditInventorySheet } from "@/components/logisticsComponent/EditInventorySheet"
+import { logger } from "@/lib/logger"
 
 export function InventoryDetail() {
   const [, params] = useRoute("/inventory/:id")
@@ -112,7 +113,7 @@ export function InventoryDetail() {
         description: `${item.name}: ${item.stockQuantity} → ${newQuantity}` 
       })
     } catch (err) {
-      console.error('[InventoryDetail] Adjustment transaction failed:', err)
+      logger.error('[InventoryDetail] Adjustment transaction failed:', err)
       toast.error("Adjustment recorded but transaction history failed")
     }
   }

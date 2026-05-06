@@ -38,6 +38,7 @@ import { DeleteModal } from "@/components/ui/delete-modal";
 import { StatusTabs, type StatusTab } from '@/components/reusables/StatusTabs';
 import { UserSheet } from '@/components/crmComponent/UserSheet';
 import type { UserFormData } from '@/components/crmComponent/UserForm';
+import { logger } from '@/lib/logger';
 
 // ── Actions dropdown ──────────────────────────────────────────────────────────
 
@@ -245,7 +246,7 @@ export function Users() {
           username: user.user_metadata?.user_name || undefined,
         }, userId);
       } catch (e) {
-        console.error('Failed to sync current user:', e);
+        logger.error('Failed to sync current user:', e);
       }
     })();
   }, [user, userId, getClient]);

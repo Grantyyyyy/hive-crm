@@ -153,7 +153,7 @@ export function Leads() {
       const headers = rows[0].split(',').map(h => h.trim().replace(/"/g, '').toLowerCase());
       
       const newLeads = rows.slice(1).map(row => {
-        const values = [];
+        const values: string[] = [];
         let inQuotes = false;
         let currentVal = '';
         for (let i = 0; i < row.length; i++) {

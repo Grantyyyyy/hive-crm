@@ -9,8 +9,8 @@ export function FooterSection({ theme }: FooterSectionProps) {
   const isDark = theme === "dark";
 
   return (
-    <footer className={`py-8 border-t border-[#0D9488] ${isDark ? "bg-slate-950 text-white" : "bg-slate-900 text-white"}`}>
-      <div className="max-w-[1600px] mx-auto px-4 lg:px-6 grid lg:grid-cols-[1.5fr_1fr] gap-14 lg:gap-20">
+    <footer className={`py-8 border-t border-accent ${isDark ? "bg-slate-950 text-white" : "bg-slate-900 text-white"}`}>
+      <div className="max-w-[1600px] mx-auto px-4 lg:px-6 grid lg:grid-cols-[1.5fr_1fr] gap-10">
         <div className="space-y-10">
           <span className="font-sans font-black text-4xl lg:text-5xl leading-none tracking-tight uppercase">HUB.</span>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
@@ -29,10 +29,10 @@ export function FooterSection({ theme }: FooterSectionProps) {
             <div className="space-y-4">
               <h4 className="text-[10px] font-black uppercase tracking-widest opacity-40">Legal</h4>
               <div className="flex flex-col gap-2">
-                <a href="#" className="text-sm font-bold uppercase tracking-widest text-[#0D9488] hover:text-white transition-colors">
+                <a href="#" className="text-sm font-bold uppercase tracking-widest text-accent hover:text-white transition-colors">
                   Privacy Policy
                 </a>
-                <a href="#" className="text-sm font-bold uppercase tracking-widest text-[#0D9488] hover:text-white transition-colors">
+                <a href="#" className="text-sm font-bold uppercase tracking-widest text-accent hover:text-white transition-colors">
                   Terms of Service
                 </a>
               </div>

@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS vendors (
   payment_terms TEXT, -- e.g. Net 30, Due on Receipt
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'on_hold')),
   notes TEXT,
-  user_id TEXT NOT NULL, 
+  owner_id UUID NOT NULL REFERENCES auth.users(id) DEFAULT auth.uid(), 
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -25,7 +25,7 @@ CREATE POLICY "Users can only access their own vendors"
   ON vendors
   FOR ALL
   TO authenticated
-  USING (true); -- Simplifying for manual local testing if needed, though RLS should match actual auth
+  USING (auth.uid() = owner_id);
 
 -- Trigger for updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()

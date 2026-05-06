@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabaseClient"
 import { Link } from "wouter"
 import { BarChart3, Loader2, ArrowRight } from "lucide-react"
 import { AuthLayout } from "@/components/layout/AuthLayout"
+import { logger } from "@/lib/logger"
 
 export function SignUpPage() {
   const [, navigate] = useLocation()
@@ -74,7 +75,7 @@ export function SignUpPage() {
               fullName: name,
             }, data.user!.id)
           } catch (syncError) {
-            console.warn("Initial app_users sync skipped during sign-up:", syncError)
+            logger.warn("Initial app_users sync skipped during sign-up:", syncError)
           } finally {
             setTimeout(() => navigate("/onboarding"), 2000)
           }

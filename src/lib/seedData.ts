@@ -1,4 +1,5 @@
 import * as api from './api'
+import { logger } from './logger'
 
 function dateDaysAgo(daysAgo: number): string {
   return new Date(Date.now() - daysAgo * 86400000).toISOString()
@@ -62,7 +63,7 @@ export async function seedDemoData(_userId: string) {
         contacts.push(response.data)
       }
     }
-    console.log(`Seeded ${contacts.length} contacts`)
+    logger.log(`Seeded ${contacts.length} contacts`)
 
     const contactMap = new Map(contacts.map(c => [c.name, c]))
 
@@ -81,7 +82,7 @@ export async function seedDemoData(_userId: string) {
         leads.push(response.data)
       }
     }
-    console.log(`Seeded ${leads.length} leads`)
+    logger.log(`Seeded ${leads.length} leads`)
 
     const deals = [
       { title: "Enterprise plan - Vercel", contactName: "Sarah Chen", value: 48000, stage: "NEGOTIATION", daysAgo: 2 },
@@ -113,7 +114,7 @@ export async function seedDemoData(_userId: string) {
         }
       }
     }
-    console.log(`Seeded ${createdDeals.length} deals`)
+    logger.log(`Seeded ${createdDeals.length} deals`)
 
     const dealMap = new Map(createdDeals.map((d, i) => [deals[i].contactName, d]))
 
@@ -147,7 +148,7 @@ export async function seedDemoData(_userId: string) {
         })
       }
     }
-    console.log(`Seeded ${activities.length} activities`)
+    logger.log(`Seeded ${activities.length} activities`)
 
     for (const t of SED_TASKS) {
       await api.tasksApi.create({
@@ -158,11 +159,11 @@ export async function seedDemoData(_userId: string) {
         completedAt: t.completedAt,
       })
     }
-    console.log(`Seeded ${SED_TASKS.length} tasks`)
+    logger.log(`Seeded ${SED_TASKS.length} tasks`)
 
     window.location.reload()
   } catch (error) {
-    console.error('Error seeding data:', error)
+    logger.error('Error seeding data:', error)
     alert('Failed to seed data. Please check the console for details.')
   }
 }

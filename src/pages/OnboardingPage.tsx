@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient"
 import { setupFirstOrganization } from "@/lib/settingsService"
 import { toast } from "sonner"
 import { useAuth, useUser } from "@/lib/AuthContext"
+import { logger } from "@/lib/logger"
 
 export function OnboardingPage() {
   const [, navigate] = useLocation()
@@ -43,7 +44,7 @@ export function OnboardingPage() {
 
       navigate("/dashboard")
     } catch (error: any) {
-      console.error("Failed to setup organization:", error)
+      logger.error("Failed to setup organization:", error)
       toast.error(error.message || "Failed to create organization")
     } finally {
       setLoading(false)

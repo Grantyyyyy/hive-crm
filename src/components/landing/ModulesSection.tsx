@@ -29,7 +29,7 @@ export function ModulesSection({ theme }: ModulesSectionProps) {
   return (
     <section id="modules" className={`py-12 lg:py-16 relative overflow-hidden ${sectionBg}`}>
       <div className="max-w-[1600px] mx-auto px-4 lg:px-6">
-        <div className="mb-12 space-y-4">
+        <div className="mb-8 space-y-4">
           <h2 className={`text-4xl lg:text-6xl font-sans font-black tracking-tight uppercase leading-none ${textColor}`}>
             Modular <br /> Architecture.
           </h2>
@@ -42,9 +42,9 @@ export function ModulesSection({ theme }: ModulesSectionProps) {
           {topModules.map((item, i) => (
             <div
               key={i}
-              className={`p-10 lg:p-6 border-b lg:border-b-0 lg:border-r ${borderColor} space-y-6 hover:bg-[#0D9488] hover:text-white transition-all duration-500 group`}
+              className={`p-6 border-b lg:border-b-0 lg:border-r ${borderColor} space-y-5 hover:bg-accent hover:text-white transition-all duration-500 group`}
             >
-              <div className="w-16 h-16 bg-[#0D9488] text-white flex items-center justify-center group-hover:bg-white group-hover:text-[#0D9488] transition-colors rounded-2xl">
+              <div className="w-16 h-16 bg-accent text-white flex items-center justify-center group-hover:bg-white group-hover:text-accent transition-colors rounded-2xl">
                 <item.icon className="w-8 h-8" />
               </div>
               <div>
@@ -62,9 +62,9 @@ export function ModulesSection({ theme }: ModulesSectionProps) {
           {bottomModules.map((item, i) => (
             <div
               key={i}
-              className={`p-10 lg:p-6 border-b lg:border-b-0 lg:border-r ${borderColor} space-y-6 hover:bg-slate-900 hover:text-white transition-all duration-500 group`}
+              className={`p-6 border-b lg:border-b-0 lg:border-r ${borderColor} space-y-5 hover:bg-slate-900 hover:text-white transition-all duration-500 group`}
             >
-              <div className={`w-16 h-16 ${isDark ? "bg-slate-700" : "bg-slate-900"} text-white flex items-center justify-center group-hover:bg-[#0D9488] transition-colors rounded-2xl`}>
+              <div className={`w-16 h-16 ${isDark ? "bg-slate-700" : "bg-slate-900"} text-white flex items-center justify-center group-hover:bg-accent transition-colors rounded-2xl`}>
                 <item.icon className="w-8 h-8" />
               </div>
               <div>

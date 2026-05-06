@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
 import type { AuthSession as Session, AuthUser as User } from "@supabase/supabase-js"
 import { supabase } from "./supabaseClient"
+import { logger } from "./logger"
 
 function logAuthEvent(action: string, userId: string, session: Session | null) {
   let organizationId: string | null = null
@@ -23,7 +24,7 @@ function logAuthEvent(action: string, userId: string, session: Session | null) {
     diff: { event: action, timestamp: new Date().toISOString() },
   }).then(({ error }: any) => {
     if (error) {
-      console.error("[AuthContext] Failed to emit auth audit log:", error)
+      logger.error("[AuthContext] Failed to emit auth audit log:", error)
     }
   })
 }
@@ -49,7 +50,7 @@ function extractOrgId(session: Session | null): string | null {
     const payload = JSON.parse(atob(session.access_token.split(".")[1]))
     return payload?.org_id ?? null
   } catch (error) {
-    console.error("Failed to parse JWT:", error)
+    logger.error("Failed to parse JWT:", error)
     return null
   }
 }
@@ -72,7 +73,7 @@ async function resolveOrganizationId(session: Session | null): Promise<string | 
       (message.includes("Could not find the function") || message.includes("does not exist"))
 
     if (!missingRpc) {
-      console.warn("[AuthContext] get_my_org_id() fallback failed:", error)
+      logger.warn("[AuthContext] get_my_org_id() fallback failed:", error)
     }
   }
 
@@ -86,7 +87,7 @@ async function resolveOrganizationId(session: Session | null): Promise<string | 
     if (error) throw error
     return data?.organization_id ?? null
   } catch (error) {
-    console.warn("[AuthContext] app_users org lookup fallback failed:", error)
+    logger.warn("[AuthContext] app_users org lookup fallback failed:", error)
     return null
   }
 }
@@ -142,7 +143,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     ;(supabase.auth as any).getSession().then(async ({ data: { session: initialSession } }: any) => {
       await syncSessionState(initialSession, true)
     }).catch((error: any) => {
-      console.error("Failed to get initial session:", error)
+      logger.error("Failed to get initial session:", error)
       setIsLoaded(true)
       initialized.current = true
     })
@@ -171,14 +172,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           diff: { event: "LOGOUT", timestamp: new Date().toISOString() },
         })
       } catch (error: any) {
-        console.error("[AuthContext] Failed to emit LOGOUT audit log:", error)
+        logger.error("[AuthContext] Failed to emit LOGOUT audit log:", error)
       }
     }
 
     try {
       await (supabase.auth as any).signOut()
     } catch (error: any) {
-      console.error("Sign out failed:", error)
+      logger.error("Sign out failed:", error)
     }
 
     setSession(null)
@@ -200,7 +201,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return nextOrganizationId
       }
     } catch (error: any) {
-      console.error("Failed to refresh session:", error)
+      logger.error("Failed to refresh session:", error)
     }
 
     return null

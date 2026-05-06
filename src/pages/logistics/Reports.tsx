@@ -16,6 +16,9 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useCRMResource } from "@/lib/hooks"
+import { useAuth } from "@/lib/AuthContext"
+import { useTheme } from "@/lib/ThemeProvider"
+import { getBrandColorPreset } from "@/lib/brandColors"
 import { ListSkeleton } from "@/components/ui/skeletons"
 import type { SalesOrder, Quote, Deal, InventoryItem, Contact, Lead, InventoryTransaction } from "@/lib/types"
 import { StatCard } from "@/components/reusables/StatCard"
@@ -65,7 +68,7 @@ const fmtCurrency = (v: number) => formatCurrency(v)
 
 const fmtPct = (v: number) => `${v.toFixed(1)}%`
 
-const COLORS = ["#0d9488", "#0ea5e9", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"]
+const REPORT_BASE_COLORS = ["#0ea5e9", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"]
 
 function getMonthKey(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-US", { month: "short", year: "2-digit" })
@@ -74,6 +77,8 @@ function getMonthKey(dateStr: string): string {
 // ── Component ────────────────────────────────────────────────────────────────
 
 export function Reports() {
+  const { brandColor } = useAuth()
+  const { theme } = useTheme()
   const { data: orders, isLoaded: ordersLoaded } = useCRMResource<SalesOrder>("orders")
   const { data: quotes, isLoaded: quotesLoaded } = useCRMResource<Quote>("quotes")
   const { data: deals, isLoaded: dealsLoaded } = useCRMResource<Deal>("deals")
@@ -85,6 +90,11 @@ export function Reports() {
   const [period, setPeriod] = useState<Period>("6m")
   const [periodOpen, setPeriodOpen] = useState(false)
   const range = useMemo(() => getDateRange(period), [period])
+  const accentColor = useMemo(() => {
+    const preset = getBrandColorPreset(brandColor)
+    return theme === "dark" ? preset.dark.accent : preset.light.accent
+  }, [brandColor, theme])
+  const categoryColors = useMemo(() => [accentColor, ...REPORT_BASE_COLORS], [accentColor])
 
   const allLoaded = ordersLoaded && quotesLoaded && dealsLoaded && invLoaded && contactsLoaded && leadsLoaded && txLoaded
   if (!allLoaded) return <ListSkeleton />
@@ -256,7 +266,7 @@ export function Reports() {
             label="Total Revenue"
             value={fmtCurrency(deliveredRevenue)}
             icon={<Banknote className="w-5 h-5" />}
-            accentColor="teal"
+            accentColor="accent"
             badge={revenueChange >= 0 ? `+${revenueChange.toFixed(1)}%` : `${revenueChange.toFixed(1)}%`}
             badgeColor={revenueChange >= 0 ? "emerald" : "rose"}
           />
@@ -295,8 +305,8 @@ export function Reports() {
           <div className="p-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-lg group">
             <div className="flex justify-between items-center mb-8">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                  <Layers className="w-4 h-4 text-blue-600" />
+                <div className="w-8 h-8 bg-accent-dim rounded-lg flex items-center justify-center">
+                  <Layers className="w-4 h-4 text-accent" />
                 </div>
                 <h4 className="font-black text-lg text-slate-900 dark:text-white uppercase tracking-tight">Sales Pipeline</h4>
               </div>
@@ -318,7 +328,7 @@ export function Reports() {
                     contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: "12px", fontWeight: 700 }}
                     formatter={(v: any) => fmtCurrency(Number(v))}
                   />
-                  <Bar dataKey="value" fill="#0d9488" radius={[0, 10, 10, 0]} name="Value ($)" />
+                  <Bar dataKey="value" fill={accentColor} radius={[0, 10, 10, 0]} name="Value ($)" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -348,7 +358,7 @@ export function Reports() {
                     contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: "12px", fontWeight: 700 }}
                     formatter={(v: any, name: any) => name === "revenue" ? fmtCurrency(Number(v)) : v}
                   />
-                  <Area type="monotone" dataKey="revenue" fill="#0d9488" fillOpacity={0.05} stroke="#0d9488" strokeWidth={3} />
+                  <Area type="monotone" dataKey="revenue" fill={accentColor} fillOpacity={0.08} stroke={accentColor} strokeWidth={3} />
                   <Line type="monotone" dataKey="quotes" stroke="#06b6d4" strokeWidth={2} dot={{ r: 4, fill: "#06b6d4", strokeWidth: 2, stroke: "#fff" }} />
                 </ComposedChart>
               </ResponsiveContainer>
@@ -409,7 +419,7 @@ export function Reports() {
                     paddingAngle={5}
                   >
                     {revenueByCategory.map((_, i) => (
-                      <Cell key={`cell-${i}`} fill={COLORS[i % COLORS.length]} />
+                      <Cell key={`cell-${i}`} fill={categoryColors[i % categoryColors.length]} />
                     ))}
                   </Pie>
                   <Tooltip formatter={(v: any) => fmtCurrency(Number(v))} />
@@ -420,7 +430,7 @@ export function Reports() {
               {revenueByCategory.slice(0, 4).map((item, i) => (
                 <div key={item.name} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: categoryColors[i % categoryColors.length] }} />
                     <span className="text-xs font-bold text-slate-600 dark:text-slate-400">{item.name}</span>
                   </div>
                   <span className="text-xs font-black text-slate-900 dark:text-white">{fmtCurrency(item.value)}</span>

@@ -26,6 +26,7 @@ import { DeleteModal } from "@/components/ui/delete-modal"
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
 import { BackButton } from "@/components/reusables/BackButton"
+import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 import { useCRMContext, updateRow, insertRows } from "@/lib/CRMContext"
 import type {
   PurchaseRequest,
@@ -78,7 +79,7 @@ const STATUS_CONFIG: Record<
   approved: {
     label: "Approved",
     badge:
-      "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 ring-1 ring-teal-200 dark:ring-teal-800",
+      "bg-accent-dim text-accent ring-1 ring-accent/20",
   },
   rejected: {
     label: "Rejected",
@@ -389,13 +390,6 @@ export function PurchaseRequestDetail() {
   const cfg = STATUS_CONFIG[request.status]
   const progressIdx = PROGRESS_ORDER.indexOf(request.status)
   const isRejected = request.status === "rejected"
-  const initials = request.requesterName
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase()
-
   // ---------- JSX ----------
 
   return (
@@ -411,9 +405,11 @@ export function PurchaseRequestDetail() {
 
             {/* Identity */}
             <div className="flex items-start gap-5">
-              <div className="size-16 rounded-2xl bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center text-teal-600 dark:text-teal-400 text-xl font-black shrink-0 shadow-sm">
-                {initials}
-              </div>
+              <InitialsAvatar
+                name={request.requesterName}
+                className="size-16 rounded-2xl shrink-0 shadow-sm"
+                textClassName="text-xl font-black"
+              />
               <div>
                 <div className="flex flex-wrap items-center gap-3 mb-1">
                   <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
@@ -558,7 +554,7 @@ export function PurchaseRequestDetail() {
                           className={cn(
                             "size-10 rounded-full flex items-center justify-center transition-all shrink-0",
                             done
-                              ? "bg-teal-600 text-white shadow-lg shadow-teal-200 dark:shadow-none"
+                              ? "bg-accent text-white shadow-lg shadow-accent/20 dark:shadow-none"
                               : "bg-slate-100 dark:bg-slate-800 text-slate-400"
                           )}
                         >
@@ -568,14 +564,14 @@ export function PurchaseRequestDetail() {
                           className={cn(
                             "text-[10px] font-bold uppercase tracking-widest whitespace-nowrap",
                             done
-                              ? "text-teal-600 dark:text-teal-400"
+                              ? "text-accent"
                               : "text-slate-400"
                           )}
                         >
                           {active && request.status !== "ordered" ? (
                             <span className="relative">
                               {step.label}
-                              <span className="absolute -top-1 -right-2 w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
+                              <span className="absolute -top-1 -right-2 w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
                             </span>
                           ) : (
                             step.label
@@ -587,7 +583,7 @@ export function PurchaseRequestDetail() {
                           className={cn(
                             "flex-1 h-0.5 mx-2 rounded-full mb-5 transition-colors",
                             progressIdx > i
-                              ? "bg-teal-600"
+                              ? "bg-accent"
                               : "bg-slate-200 dark:bg-slate-800"
                           )}
                         />
@@ -660,7 +656,7 @@ export function PurchaseRequestDetail() {
                           <td className="px-6 py-4 text-slate-600 dark:text-slate-400 text-xs font-medium">
                             {item.vendorName || <span className="text-slate-300 italic">Unassigned</span>}
                           </td>
-                          <td className="px-6 py-4 text-right font-black text-teal-600 dark:text-teal-400">
+                          <td className="px-6 py-4 text-right font-black text-accent">
                             {item.quantity}
                           </td>
                           <td className="px-6 py-4 text-right text-slate-600 dark:text-slate-400">
@@ -712,7 +708,7 @@ export function PurchaseRequestDetail() {
                     icon: Hash,
                     label: "Reference ID",
                     value: (
-                      <span className="text-teal-600 dark:text-teal-400 font-bold">
+                      <span className="text-accent font-bold">
                         {request.requestNumber}
                       </span>
                     ),
@@ -788,7 +784,7 @@ export function PurchaseRequestDetail() {
                   <span className="font-black text-slate-900 dark:text-white">
                     Budget Impact
                   </span>
-                  <span className="font-black text-xl text-teal-600 dark:text-teal-400">
+                  <span className="font-black text-xl text-accent">
                     {fmt(request.amount)}
                   </span>
                 </div>

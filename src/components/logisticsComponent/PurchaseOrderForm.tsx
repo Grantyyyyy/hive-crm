@@ -154,7 +154,7 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
         {/* Section 1: Order Identity */}
         <section className="bg-white dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
+            <div className="w-1 h-3.5 bg-accent rounded-full" />
             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Order Details</h3>
           </div>
 
@@ -167,14 +167,14 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
                   onClick={() => setShowVendorSelector(!showVendorSelector)}
                   className={cn(
                     "w-full h-12 flex items-center justify-between px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm transition-all",
-                    errors.vendorName ? "border-red-500 ring-1 ring-red-100" : "hover:border-teal-300 shadow-none",
+                    errors.vendorName ? "border-red-500 ring-1 ring-red-100" : "hover:border-accent/40 shadow-none",
                     !vendorName && "text-slate-400",
                     isSaving && "opacity-50 cursor-not-allowed"
                   )}
                   disabled={isSaving}
                 >
                   <div className="flex items-center gap-3">
-                    <Building2 className={cn("size-4", vendorName ? "text-teal-600" : "text-slate-400")} />
+                    <Building2 className={cn("size-4", vendorName ? "text-accent" : "text-slate-400")} />
                     <span className="font-bold">{vendorName || "Choose a vendor catalog..."}</span>
                   </div>
                   <ChevronDown className={cn("size-4 text-slate-400 transition-transform", showVendorSelector && "rotate-180")} />
@@ -202,12 +202,12 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
                             type="button"
                             onClick={() => selectVendor(vendor)}
                             className={cn(
-                              "w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all hover:bg-teal-50 dark:hover:bg-teal-900/10 group",
-                              vendorId === vendor.id && "bg-teal-50/50 dark:bg-teal-900/5 ring-1 ring-inset ring-teal-100 dark:ring-teal-900/20"
+                              "w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all hover:bg-accent-dim group",
+                              vendorId === vendor.id && "bg-accent-dim ring-1 ring-inset ring-accent/15"
                             )}
                           >
                             <div className="flex-1 min-w-0">
-                              <p className={cn("text-xs font-black truncate", vendorId === vendor.id ? "text-teal-600" : "text-slate-900 dark:text-white group-hover:text-teal-600")}>
+                              <p className={cn("text-xs font-black truncate", vendorId === vendor.id ? "text-accent" : "text-slate-900 dark:text-white group-hover:text-accent")}>
                                 {vendor.name}
                               </p>
                               <p className="text-[10px] text-slate-500 font-bold truncate uppercase tracking-tight mt-0.5">
@@ -232,7 +232,7 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
               <Label className="text-[11px] font-black text-slate-500 uppercase tracking-widest">
                 Reference ID
                 {initialData?.referenceId && (
-                  <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400">
+                  <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-accent-dim text-accent">
                     Auto-Linked
                   </span>
                 )}
@@ -264,14 +264,14 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
         {/* Section 2: Logistics & Destination */}
         <section className="bg-white dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
+            <div className="w-1 h-3.5 bg-accent rounded-full" />
             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Shipping & Logistics</h3>
           </div>
           <Textarea
             placeholder="Enter precise destination address and shipping method instructions..."
             value={shippingInfo}
             onChange={(e) => setShippingInfo(e.target.value)}
-            className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[80px] p-5 focus:ring-teal-500 shadow-none border-dashed"
+            className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[80px] p-5 focus:ring-accent shadow-none border-dashed"
           />
         </section>
 
@@ -279,7 +279,7 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
         <section className="bg-white dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
+              <div className="w-1 h-3.5 bg-accent rounded-full" />
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Products & Catalog</h3>
             </div>
             <div className="flex items-center gap-3">
@@ -292,7 +292,7 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
                   className={cn(
                     "h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
                     !canAddNewItem ? "opacity-40 grayscale cursor-not-allowed" :
-                      showInventory ? "bg-teal-50 text-teal-700 underline underline-offset-4" : "text-teal-600 hover:bg-teal-50/50"
+                      showInventory ? "bg-accent-dim text-accent underline underline-offset-4" : "text-accent hover:bg-accent-dim"
                   )}
                 >
                   Quick Add
@@ -304,7 +304,7 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
                         type="text"
                         autoFocus
                         placeholder="Search catalog..."
-                        className="w-full h-9 px-3 bg-slate-50 dark:bg-slate-800/50 border-none rounded-lg text-xs font-bold focus:ring-2 focus:ring-teal-500 outline-none"
+                        className="w-full h-9 px-3 bg-slate-50 dark:bg-slate-800/50 border-none rounded-lg text-xs font-bold focus:ring-2 focus:ring-accent outline-none"
                         value={inventorySearch}
                         onChange={(e) => setInventorySearch(e.target.value)}
                       />
@@ -320,7 +320,7 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
                             className="w-full text-left p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group flex items-start justify-between gap-4"
                           >
                             <div className="min-w-0 flex-1">
-                              <div className="text-[13px] font-black text-slate-900 dark:text-white group-hover:text-teal-600 truncate">{item.name}</div>
+                              <div className="text-[13px] font-black text-slate-900 dark:text-white group-hover:text-accent truncate">{item.name}</div>
                               <div className="text-[10px] font-bold text-slate-400 mt-0.5 tracking-tight line-clamp-1">{item.sku} • {item.category}</div>
                             </div>
                             <div className="text-right shrink-0 flex flex-col items-end gap-1">
@@ -330,7 +330,7 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
                               <span className={cn(
                                 "text-[9px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded-md",
                                 atp > 0
-                                  ? "bg-teal-50 text-teal-600 dark:bg-teal-900/30"
+                                  ? "bg-accent-dim text-accent"
                                   : "bg-amber-50 text-amber-600 dark:bg-amber-900/30"
                               )}>
                                 {atp} Available
@@ -387,7 +387,7 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
                     <td className="px-6 py-4 align-top">
                       <input
                         className={cn(
-                          "w-full bg-transparent border-none focus:ring-0 p-0 text-[13px] font-black placeholder:text-slate-300 transition-colors focus:placeholder:text-teal-400",
+                          "w-full bg-transparent border-none focus:ring-0 p-0 text-[13px] font-black placeholder:text-slate-300 transition-colors focus:placeholder:text-accent",
                           errors[`item_${index}_name`] ? "text-red-500 placeholder:text-red-300" : "text-slate-900 dark:text-slate-100"
                         )}
                         placeholder="Line item name or SKU..."
@@ -399,7 +399,7 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
                     <td className="px-4 py-4 align-top">
                       <input
                         type="number"
-                        className="w-full h-9 bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl focus:ring-4 focus:ring-teal-500/10 p-0 text-[13px] font-black text-slate-900 dark:text-slate-100 text-center transition-all outline-none"
+                        className="w-full h-9 bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl focus:ring-4 focus:ring-accent/10 p-0 text-[13px] font-black text-slate-900 dark:text-slate-100 text-center transition-all outline-none"
                         value={item.quantity}
                         onChange={(e) => updateItem(item.id, { quantity: parseInt(e.target.value) || 0 })}
                       />
@@ -407,7 +407,7 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
                     <td className="px-4 py-4 align-top">
                       <input
                         type="number"
-                        className="w-full h-9 bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl focus:ring-4 focus:ring-teal-500/10 pl-2 pr-2 text-[13px] font-black text-slate-900 dark:text-slate-100 text-right transition-all outline-none"
+                        className="w-full h-9 bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl focus:ring-4 focus:ring-accent/10 pl-2 pr-2 text-[13px] font-black text-slate-900 dark:text-slate-100 text-right transition-all outline-none"
                         value={item.price}
                         onChange={(e) => updateItem(item.id, { price: parseFloat(e.target.value) || 0 })}
                       />
@@ -441,7 +441,7 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
                         </div>
                         <div className="w-48 h-px bg-slate-200 dark:border-slate-800 my-1" />
                         <div className="flex items-center gap-6">
-                          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-teal-600">Total Amount</span>
+                          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-accent">Total Amount</span>
                           <span className="text-4xl font-black text-slate-900 dark:text-white tabular-nums tracking-tighter">
                             ${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                           </span>
@@ -460,26 +460,26 @@ export function PurchaseOrderForm({ onSave, onCancel, initialData, inventoryItem
         <section className="bg-white dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
+              <div className="w-1 h-3.5 bg-accent rounded-full" />
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Internal Notes</h3>
             </div>
             <Textarea
               placeholder="Private notes for internal procurement team only..."
               value={internalNotes}
               onChange={(e) => setInternalNotes(e.target.value)}
-              className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[100px] p-4 text-sm font-medium focus:ring-teal-500 border-dashed"
+              className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[100px] p-4 text-sm font-medium focus:ring-accent border-dashed"
             />
           </div>
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
+              <div className="w-1 h-3.5 bg-accent rounded-full" />
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Vendor Instructions</h3>
             </div>
             <Textarea
               placeholder="Specific delivery or billing instructions for the vendor..."
               value={vendorInstructions}
               onChange={(e) => setVendorInstructions(e.target.value)}
-              className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[100px] p-4 text-sm font-medium focus:ring-teal-500 border-dashed"
+              className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[100px] p-4 text-sm font-medium focus:ring-accent border-dashed"
             />
           </div>
         </section>

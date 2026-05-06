@@ -146,7 +146,7 @@ export function InventoryDetail() {
             <Button 
               variant="default" 
               size="sm" 
-              className="h-8 px-5 text-xs bg-teal-600 hover:bg-teal-700"
+              className="h-8 px-5 text-xs bg-accent hover:bg-accent/90"
               onClick={() => setEditOpen(true)}
             >
               <Pencil className="size-3.5 mr-1.5" /> Edit Product
@@ -159,7 +159,7 @@ export function InventoryDetail() {
           <div className="lg:w-1/2 p-6 lg:p-8 space-y-5">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 text-[10px] font-black uppercase tracking-widest rounded-full border border-teal-100 dark:border-teal-800/30">
+                <span className="px-2.5 py-0.5 bg-accent-dim text-accent text-[10px] font-black uppercase tracking-widest rounded-full border border-accent/20">
                   {item.category}
                 </span>
                 <span className={cn(
@@ -183,7 +183,7 @@ export function InventoryDetail() {
               <div className="space-y-0.5">
                 <p className="text-[10px] font-black tracking-widest uppercase text-slate-400">Inventory ID</p>
                 <div className="flex items-center gap-2">
-                  <Hash className="size-3.5 text-teal-500" />
+                  <Hash className="size-3.5 text-accent" />
                   <span className="text-sm font-bold text-slate-900 dark:text-white">{item.id.slice(0, 8)}</span>
                 </div>
               </div>
@@ -215,11 +215,11 @@ export function InventoryDetail() {
           {/* Stock Metrics Visualizer */}
           <div className="lg:w-1/2 bg-slate-50/50 dark:bg-slate-950 border-l border-slate-200 dark:border-slate-800 p-6 lg:p-8 flex flex-col justify-center">
             <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-5 relative overflow-hidden">
-              <div className="absolute -top-8 -right-8 size-24 bg-teal-500/5 rounded-full blur-2xl pointer-events-none" />
+              <div className="absolute -top-8 -right-8 size-24 bg-accent/5 rounded-full blur-2xl pointer-events-none" />
 
               <div className="flex items-center justify-between relative">
                 <div className="space-y-0.5">
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400">Available to Promise</h3>
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-accent">Available to Promise</h3>
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white">{atp}</span>
                     <span className="text-slate-400 font-bold uppercase text-[10px]">Units</span>
@@ -242,7 +242,7 @@ export function InventoryDetail() {
                 </div>
                 <div className="space-y-0.5">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Reserved Hold</p>
-                  <p className="text-lg font-black text-teal-600 dark:text-teal-400">{item.reservedQuantity || 0}</p>
+                  <p className="text-lg font-black text-accent">{item.reservedQuantity || 0}</p>
                 </div>
               </div>
 
@@ -257,10 +257,10 @@ export function InventoryDetail() {
                 </div>
               </div>
 
-              <div className="p-3 bg-teal-50/30 dark:bg-teal-900/10 rounded-xl flex items-center gap-2 border border-teal-100/50 dark:border-teal-800/20 relative">
-                <Layers className="size-4 text-teal-600 dark:text-teal-400 shrink-0" />
+              <div className="p-3 bg-accent-dim rounded-xl flex items-center gap-2 border border-accent/10 relative">
+                <Layers className="size-4 text-accent shrink-0" />
                 <p className="text-[10px] font-medium text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Reserved units are locked in active <span className="font-bold text-teal-700 dark:text-teal-300">Quotations</span> and pending <span className="font-bold text-teal-700 dark:text-teal-300">Sales Orders</span>.
+                  Reserved units are locked in active <span className="font-bold text-accent">Quotations</span> and pending <span className="font-bold text-accent">Sales Orders</span>.
                 </p>
               </div>
             </div>
@@ -273,26 +273,26 @@ export function InventoryDetail() {
             label="Total Sales"
             value={`${stats?.totalSold || 0} Units`}
             icon={<ShoppingCart className="size-5" />}
-            accentColor="teal"
+            accentColor="accent"
           />
           <StatCard
             label="Current Enquiries"
             value={`${stats?.totalEnquiries || 0} Active Quotes`}
             icon={<ClipboardList className="size-5" />}
-            accentColor="teal"
+            accentColor="accent"
           />
           <StatCard
             label="Last Shipped"
             value={stats?.lastSold ? new Date(stats.lastSold).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Never'}
             icon={<Clock className="size-5" />}
-            accentColor="teal"
+            accentColor="accent"
           />
         </div>
 
         {/* Audit / Recent Activity Section */}
         <div>
           <h2 className="text-sm font-black uppercase tracking-[0.1em] text-slate-900 dark:text-white flex items-center gap-2 mb-4">
-            <Clock className="size-4 text-teal-600" />
+            <Clock className="size-4 text-accent" />
             Inventory Transaction History
           </h2>
           <ProcurementDataTable
@@ -306,7 +306,7 @@ export function InventoryDetail() {
                       receipt: { label: 'Receipt', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
                       shipment: { label: 'Shipment', color: 'text-rose-600', bg: 'bg-rose-50 dark:bg-rose-900/20' },
                       adjustment: { label: 'Adjustment', color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20' },
-                      reservation: { label: 'Reservation', color: 'text-teal-600', bg: 'bg-teal-50 dark:bg-teal-900/20' },
+                      reservation: { label: 'Reservation', color: 'text-accent', bg: 'bg-accent-dim' },
                       release: { label: 'Release', color: 'text-slate-600', bg: 'bg-slate-50 dark:bg-slate-800/50' },
                       return: { label: 'Return', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
                     }

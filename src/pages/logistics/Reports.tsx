@@ -218,7 +218,7 @@ export function Reports() {
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
           <div className="flex items-center gap-4">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">Intelligence</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-1">Intelligence</p>
               <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Reports</h1>
               <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Actionable insights for your business operations.</p>
             </div>
@@ -328,13 +328,13 @@ export function Reports() {
           <div className="p-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-lg group">
             <div className="flex justify-between items-center mb-8">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-teal-100 dark:bg-teal-900/30 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="w-4 h-4 text-teal-600" />
+                <div className="w-8 h-8 bg-accent-dim rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-4 h-4 text-accent" />
                 </div>
                 <h4 className="font-black text-lg text-slate-900 dark:text-white uppercase tracking-tight">Revenue Trends</h4>
               </div>
               <div className="flex gap-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-teal-600" /> Revenue</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-accent" /> Revenue</span>
                 <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-cyan-500" /> Quotes</span>
               </div>
             </div>
@@ -440,20 +440,20 @@ export function Reports() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
             {topCustomers.map((customer, i) => (
-              <div key={customer.name} className="p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-teal-600/30 transition-all hover:shadow-lg bg-slate-50/30 dark:bg-slate-800/30">
+              <div key={customer.name} className="p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-accent/30 transition-all hover:shadow-lg bg-slate-50/30 dark:bg-slate-800/30">
                 <div className="flex justify-between items-start mb-4">
                   <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs shadow-sm",
-                    i === 0 ? "bg-teal-600 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400"
+                    i === 0 ? "bg-accent text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400"
                   )}>
                     #{i + 1}
                   </div>
                   {i === 0 && <ArrowUpRight className="w-4 h-4 text-emerald-500" />}
                 </div>
                 <p className="text-sm font-black text-slate-900 dark:text-white mb-1 truncate">{customer.name}</p>
-                <p className="text-lg font-black text-teal-600 dark:text-teal-400">{fmtCurrency(customer.revenue)}</p>
+                <p className="text-lg font-black text-accent">{fmtCurrency(customer.revenue)}</p>
                 <div className="w-full bg-slate-200 dark:bg-slate-700 h-1 rounded-full mt-4 overflow-hidden">
                   <div
-                    className="bg-teal-600 h-full rounded-full"
+                    className="bg-accent h-full rounded-full"
                     style={{ width: `${(customer.revenue / topCustomers[0].revenue) * 100}%` }}
                   />
                 </div>

@@ -168,7 +168,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
         {/* Section 1: Identity & Priority */}
         <section className="bg-white dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
+            <div className="w-1 h-3.5 bg-accent rounded-full" />
             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Request Context</h3>
           </div>
 
@@ -179,7 +179,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
                 className={cn(
-                  "w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-teal-500 outline-none",
+                  "w-full h-12 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-accent outline-none",
                   errors.department && "border-red-500"
                 )}
               >
@@ -204,7 +204,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                     className={cn(
                       "flex-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
                       priority === p
-                        ? "bg-white dark:bg-slate-800 text-teal-600 shadow-sm border border-slate-200 dark:border-slate-700"
+                        ? "bg-white dark:bg-slate-800 text-accent shadow-sm border border-slate-200 dark:border-slate-700"
                         : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                     )}
                   >
@@ -220,7 +220,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                 placeholder="Explain why this purchase is needed..."
                 value={purpose}
                 onChange={(e) => setPurpose(e.target.value)}
-                className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[80px] p-5 focus:ring-teal-500 shadow-none border-dashed"
+                className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 min-h-[80px] p-5 focus:ring-accent shadow-none border-dashed"
               />
             </div>
           </div>
@@ -230,7 +230,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
         <section className="bg-white dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <div id="items" className="w-1 h-3.5 bg-teal-500 rounded-full" />
+              <div id="items" className="w-1 h-3.5 bg-accent rounded-full" />
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Products & Procurement</h3>
             </div>
             <div className="flex items-center gap-3">
@@ -243,7 +243,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                   className={cn(
                     "h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
                     !canAddNewItem ? "opacity-40 grayscale cursor-not-allowed" :
-                      showInventory ? "bg-teal-50 text-teal-700 underline underline-offset-4" : "text-teal-600 hover:bg-teal-50/50"
+                      showInventory ? "bg-accent-dim text-accent underline underline-offset-4" : "text-accent hover:bg-accent-dim"
                   )}
                 >
                   Quick Add
@@ -255,7 +255,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                         type="text"
                         autoFocus
                         placeholder="Search catalog..."
-                        className="w-full h-9 px-3 bg-slate-50 dark:bg-slate-800/50 border-none rounded-lg text-xs font-bold focus:ring-2 focus:ring-teal-500 outline-none"
+                        className="w-full h-9 px-3 bg-slate-50 dark:bg-slate-800/50 border-none rounded-lg text-xs font-bold focus:ring-2 focus:ring-accent outline-none"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                       />
@@ -281,7 +281,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                               className="w-full text-left p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group flex items-start justify-between gap-4"
                             >
                               <div className="min-w-0 flex-1">
-                                <div className="text-[13px] font-black text-slate-900 dark:text-white group-hover:text-teal-600 truncate">{item.name}</div>
+                                <div className="text-[13px] font-black text-slate-900 dark:text-white group-hover:text-accent truncate">{item.name}</div>
                                 <div className="text-[10px] font-bold text-slate-400 mt-0.5 tracking-tight line-clamp-1">{item.sku} • {item.category}</div>
                               </div>
                               <div className="text-right shrink-0 flex flex-col items-end gap-1">
@@ -291,7 +291,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                                 <span className={cn(
                                   "text-[9px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded-md",
                                   atp > 0
-                                    ? "bg-teal-50 text-teal-600 dark:bg-teal-900/30"
+                                    ? "bg-accent-dim text-accent"
                                     : "bg-amber-50 text-amber-600 dark:bg-amber-900/30"
                                 )}>
                                   {atp} Available
@@ -353,7 +353,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                       <td className="px-6 py-4 align-top">
                         <input
                           className={cn(
-                            "w-full bg-transparent border-none focus:ring-0 p-0 text-[13px] font-black placeholder:text-slate-300 transition-colors focus:placeholder:text-teal-400",
+                            "w-full bg-transparent border-none focus:ring-0 p-0 text-[13px] font-black placeholder:text-slate-300 transition-colors focus:placeholder:text-accent",
                             errors[`item_${index}_name`] ? "text-red-500 placeholder:text-red-300" : "text-slate-900 dark:text-slate-100"
                           )}
                           placeholder="Line item name or SKU..."
@@ -367,14 +367,14 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                           <div
                             onClick={() => !isSaving && setActiveVendorItemId(activeVendorItemId === item.id ? null : item.id)}
                             className={cn(
-                              "flex items-center justify-between cursor-pointer group-hover/vendor:text-teal-600 transition-colors",
-                              activeVendorItemId === item.id && "text-teal-600"
+                              "flex items-center justify-between cursor-pointer group-hover/vendor:text-accent transition-colors",
+                              activeVendorItemId === item.id && "text-accent"
                             )}
                           >
                             <span className={cn("text-[11px] font-black uppercase tracking-tighter truncate", !item.vendorId && "text-slate-300")}>
                               {item.vendorName || "Select Vendor..."}
                             </span>
-                            <ChevronDown className={cn("w-3 h-3 text-slate-300 transition-transform", activeVendorItemId === item.id && "rotate-180 text-teal-500")} />
+                            <ChevronDown className={cn("w-3 h-3 text-slate-300 transition-transform", activeVendorItemId === item.id && "rotate-180 text-accent")} />
                           </div>
 
                           {activeVendorItemId === item.id && (
@@ -382,7 +382,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                               <div className="px-2 pb-2 pt-1">
                                 <input
                                   autoFocus
-                                  className="w-full h-9 px-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-xs font-bold focus:ring-2 focus:ring-teal-500 outline-none placeholder:text-slate-400"
+                                  className="w-full h-9 px-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-xs font-bold focus:ring-2 focus:ring-accent outline-none placeholder:text-slate-400"
                                   placeholder="Search vendors..."
                                   value={vendorSearch}
                                   onChange={(e) => setVendorSearch(e.target.value)}
@@ -400,7 +400,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                                         setActiveVendorItemId(null)
                                         setVendorSearch("")
                                       }}
-                                      className="w-full text-left p-3 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors flex flex-col gap-0.5 first:rounded-t-lg last:rounded-b-lg"
+                                      className="w-full text-left p-3 hover:bg-accent-dim transition-colors flex flex-col gap-0.5 first:rounded-t-lg last:rounded-b-lg"
                                     >
                                       <span className="text-[13px] font-bold text-slate-900 dark:text-white">{v.name}</span>
                                       <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{v.category || "General"}</span>
@@ -419,7 +419,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                       <td className="px-4 py-4 align-top">
                         <input
                           type="number"
-                          className="w-full h-9 bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl focus:ring-4 focus:ring-teal-500/10 p-0 text-[13px] font-black text-slate-900 dark:text-slate-100 text-center transition-all outline-none"
+                          className="w-full h-9 bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl focus:ring-4 focus:ring-accent/10 p-0 text-[13px] font-black text-slate-900 dark:text-slate-100 text-center transition-all outline-none"
                           value={item.quantity}
                           onChange={(e) => updateItem(item.id, { quantity: parseInt(e.target.value) || 0 })}
                         />
@@ -427,7 +427,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                       <td className="px-4 py-4 align-top">
                         <input
                           type="number"
-                          className="w-full h-9 bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl focus:ring-4 focus:ring-teal-500/10 pl-2 pr-2 text-[13px] font-black text-slate-900 dark:text-slate-100 text-right transition-all outline-none"
+                          className="w-full h-9 bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl focus:ring-4 focus:ring-accent/10 pl-2 pr-2 text-[13px] font-black text-slate-900 dark:text-slate-100 text-right transition-all outline-none"
                           value={item.estimatedPrice}
                           onChange={(e) => updateItem(item.id, { estimatedPrice: parseFloat(e.target.value) || 0 })}
                         />
@@ -461,7 +461,7 @@ export function PurchaseRequestForm({ onSave, onCancel, initialData, inventoryIt
                         </div>
                         <div className="w-48 h-px bg-slate-200 dark:bg-slate-800 my-1" />
                         <div className="flex items-center gap-6">
-                          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-teal-600">Total Amount</span>
+                          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-accent">Total Amount</span>
                           <span className="text-4xl font-black text-slate-900 dark:text-white tabular-nums tracking-tighter">
                             ${totalEstimate.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                           </span>

@@ -27,6 +27,7 @@ import { useUser } from "@/lib/AuthContext"
 import { ListSkeleton } from "@/components/ui/skeletons"
 import { ProcurementDataTable, type ProcurementColumn } from "@/components/reusables/ProcurementDataTable"
 import { StatCard } from "@/components/reusables/StatCard"
+import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 import { StatusTabs } from "@/components/reusables/StatusTabs"
 import type { StatusTab } from "@/components/reusables/StatusTabs"
 export function PurchaseOrders() {
@@ -184,16 +185,18 @@ export function PurchaseOrders() {
     {
       header: "PO Number",
       render: (order) => (
-        <span className="text-[13px] font-bold text-teal-600 dark:text-teal-400">{order.poNumber}</span>
+        <span className="text-[13px] font-bold text-accent">{order.poNumber}</span>
       ),
     },
     {
       header: "Vendor",
       render: (order) => (
         <div className="flex items-center gap-3">
-          <div className="size-6 rounded bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 text-[10px] font-black uppercase ring-1 ring-white dark:ring-slate-900 shadow-sm">
-            {order.vendorName.split(' ').map(n => n[0]).join('').slice(0, 2)}
-          </div>
+          <InitialsAvatar
+            name={order.vendorName}
+            className="size-6 rounded ring-1 ring-white dark:ring-slate-900 shadow-sm"
+            textClassName="text-[10px] font-black uppercase"
+          />
           <span className="text-[13px] font-medium text-slate-900 dark:text-white truncate max-w-[140px]">{order.vendorName}</span>
         </div>
       ),
@@ -248,7 +251,7 @@ export function PurchaseOrders() {
         {/* Header Region */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">Procurement & Inventory</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-1">Procurement & Inventory</p>
             <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Purchase Orders</h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Manage procurement from your global vendors and supply chain.</p>
           </div>
@@ -276,7 +279,7 @@ export function PurchaseOrders() {
             onToggleAll: handleToggleAll,
           }}
           bulkActionBar={
-            <div className="flex items-center justify-between gap-4 px-5 py-3 bg-gradient-to-r from-teal-600 to-teal-700 dark:from-teal-700 dark:to-teal-800 rounded-xl shadow-lg shadow-teal-600/20 text-white">
+            <div className="flex items-center justify-between gap-4 px-5 py-3 bg-accent rounded-xl shadow-lg shadow-accent/20 dark:shadow-none text-white">
               <div className="flex items-center gap-3">
                 <div className="size-8 rounded-lg bg-white/15 flex items-center justify-center text-sm font-black">
                   {selectedIds.size}
@@ -352,7 +355,7 @@ export function PurchaseOrders() {
                 placeholder="Search PO number, vendor name..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
+                className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all"
               />
             </div>
           }
@@ -389,7 +392,7 @@ function StatusBadge({ status }: { status: PurchaseOrderStatus }) {
     draft: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400",
     pending: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400",
     sent: "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400",
-    partially_received: "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400",
+    partially_received: "bg-accent-dim text-accent",
     fully_received: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400",
     cancelled: "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400",
   }

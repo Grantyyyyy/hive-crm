@@ -30,6 +30,7 @@ import { DeleteModal } from "@/components/ui/delete-modal"
 import { VendorInvoiceModal } from "@/components/logisticsComponent/VendorInvoiceModal"
 import { ReceiveItemsModal } from "@/components/logisticsComponent/ReceiveItemsModal"
 import { ProcurementDataTable } from "@/components/reusables/ProcurementDataTable"
+import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
 import { BackButton } from "@/components/reusables/BackButton"
@@ -59,9 +60,9 @@ function relativeTime(iso: string): string {
 const STATUS_CONFIG: Record<PurchaseOrderStatus, { label: string; badge: string; dot: string }> = {
   draft: { label: "Draft", badge: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400", dot: "bg-slate-400" },
   pending: { label: "Pending", badge: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400", dot: "bg-amber-500" },
-  sent: { label: "Sent to Vendor", badge: "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400", dot: "bg-teal-500" },
+  sent: { label: "Sent to Vendor", badge: "bg-accent-dim text-accent", dot: "bg-accent" },
   // was indigo — now teal (partial) to stay on-brand
-  partially_received: { label: "Partially Received", badge: "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400", dot: "bg-teal-400" },
+  partially_received: { label: "Partially Received", badge: "bg-accent-dim text-accent", dot: "bg-accent" },
   fully_received: { label: "Fulfilled", badge: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400", dot: "bg-emerald-500" },
   cancelled: { label: "Cancelled", badge: "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400", dot: "bg-rose-400" },
 }
@@ -285,7 +286,6 @@ export function PurchaseOrderDetail() {
 
   // ─── Derived values ──────────────────────────────────────────────────────────
   const cfg = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.fully_received
-  const initials = (order.vendorName || "?").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
   const fmt = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(n)
   const subtotal = order.items.reduce((s, i) => s + i.quantity * i.price, 0)
   const tax = subtotal * DEFAULT_TAX_RATE
@@ -342,9 +342,11 @@ export function PurchaseOrderDetail() {
 
             {/* Identity */}
             <div className="flex items-start gap-4">
-              <div className="size-14 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 text-lg font-black shrink-0">
-                {initials}
-              </div>
+              <InitialsAvatar
+                name={order.vendorName || "?"}
+                className="size-14 rounded-md shrink-0"
+                textClassName="text-lg font-black"
+              />
               <div>
                 <div className="flex flex-wrap items-center gap-2 mb-1">
                   <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
@@ -373,7 +375,7 @@ export function PurchaseOrderDetail() {
                   onClick={handleSend}
                   disabled={order.vendorId === NIL_UUID}
                   className={cn(
-                    "bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-200 dark:shadow-none rounded-xl text-xs font-bold uppercase tracking-wider transition-all active:scale-95",
+                    "bg-accent hover:bg-accent/90 text-white shadow-lg shadow-accent/20 dark:shadow-none rounded-xl text-xs font-bold uppercase tracking-wider transition-all active:scale-95",
                     order.vendorId === NIL_UUID && "opacity-50 cursor-not-allowed shadow-none"
                   )}
                 >
@@ -388,7 +390,7 @@ export function PurchaseOrderDetail() {
               )}
               {canReceive && (
                 <Button variant="default" onClick={() => setReceiveItemsOpen(true)}
-                  className="bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-200 dark:shadow-none rounded-xl text-xs font-bold uppercase tracking-wider">
+                  className="bg-accent hover:bg-accent/90 text-white shadow-lg shadow-accent/20 dark:shadow-none rounded-xl text-xs font-bold uppercase tracking-wider">
                   <PackageCheck className="w-4 h-4 mr-2" /> Receive Items
                 </Button>
               )}
@@ -433,24 +435,24 @@ export function PurchaseOrderDetail() {
                         <div className={cn(
                           "size-10 rounded-full flex items-center justify-center transition-all shrink-0",
                           done
-                            ? "bg-teal-600 text-white shadow-lg shadow-teal-200 dark:shadow-none"
+                            ? "bg-accent text-white shadow-lg shadow-accent/20 dark:shadow-none"
                             : "bg-slate-100 dark:bg-slate-800 text-slate-400"
                         )}>
                           <Icon className="w-5 h-5" />
                         </div>
                         <span className={cn(
                           "text-[10px] font-bold uppercase tracking-widest whitespace-nowrap",
-                          done ? "text-teal-600 dark:text-teal-400" : "text-slate-400"
+                          done ? "text-accent" : "text-slate-400"
                         )}>
                           {active
-                            ? <span className="relative">{step.label}<span className="absolute -top-1 -right-2 w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" /></span>
+                            ? <span className="relative">{step.label}<span className="absolute -top-1 -right-2 w-1.5 h-1.5 rounded-full bg-accent animate-pulse" /></span>
                             : step.label}
                         </span>
                       </div>
                       {i < TIMELINE.length - 1 && (
                         <div className={cn(
                           "flex-1 h-0.5 mx-2 rounded-full mb-5 transition-colors",
-                          currentStepIdx > i ? "bg-teal-600" : "bg-slate-200 dark:bg-slate-800"
+                          currentStepIdx > i ? "bg-accent" : "bg-slate-200 dark:bg-slate-800"
                         )} />
                       )}
                     </div>
@@ -474,7 +476,7 @@ export function PurchaseOrderDetail() {
                   )}
                   <span className={cn(
                     "text-xs font-black",
-                    pctAccepted === 100 ? "text-emerald-600 dark:text-emerald-400" : "text-teal-600 dark:text-teal-400"
+                    pctAccepted === 100 ? "text-emerald-600 dark:text-emerald-400" : "text-accent"
                   )}>
                     {pctAccepted}% accepted
                   </span>
@@ -483,7 +485,7 @@ export function PurchaseOrderDetail() {
               {/* Stacked bar: accepted (teal) + rejected (rose) */}
               <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
                 <div
-                  className="h-full bg-teal-500 transition-all"
+                  className="h-full bg-accent transition-all"
                   style={{ width: `${pctAccepted}%` }}
                 />
                 {totalRejected > 0 && (
@@ -495,7 +497,7 @@ export function PurchaseOrderDetail() {
               </div>
               <div className="flex items-center gap-4 mt-2">
                 <span className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium">
-                  <span className="w-2 h-2 rounded-full bg-teal-500 inline-block" /> {totalAccepted} accepted
+                  <span className="w-2 h-2 rounded-full bg-accent inline-block" /> {totalAccepted} accepted
                 </span>
                 {totalRejected > 0 && (
                   <span className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium">
@@ -527,7 +529,7 @@ export function PurchaseOrderDetail() {
                       className={cn(
                         "px-5 py-4 text-sm font-bold tracking-wide transition-colors relative",
                         activeTab === tab
-                          ? "text-teal-600 dark:text-teal-400"
+                          ? "text-accent"
                           : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
                       )}
                     >
@@ -537,7 +539,7 @@ export function PurchaseOrderDetail() {
                           <span className={cn(
                             "ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold",
                             activeTab === "history"
-                              ? "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400"
+                              ? "bg-accent-dim text-accent"
                               : "bg-slate-100 dark:bg-slate-800 text-slate-500"
                           )}>
                             {poReceipts.length}
@@ -545,7 +547,7 @@ export function PurchaseOrderDetail() {
                         )}
                       </>}
                       {activeTab === tab && (
-                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-teal-600 rounded-t-full" />
+                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-t-full" />
                       )}
                     </button>
                   ))}
@@ -578,7 +580,7 @@ export function PurchaseOrderDetail() {
                       const isFull = remaining <= 0
 
                       return (
-                        <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors border-l-4 border-transparent hover:border-teal-600">
+                        <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors border-l-4 border-transparent hover:border-accent">
                           <td className="px-6 py-4 text-xs font-bold text-slate-400">{String(i + 1).padStart(2, "0")}</td>
                           <td className="px-6 py-4">
                             <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.name}</p>
@@ -595,13 +597,13 @@ export function PurchaseOrderDetail() {
                             <div className="flex flex-col items-center gap-1.5 w-full max-w-[140px] mx-auto">
                               {/* accepted / rejected / remaining labels */}
                               <div className="flex justify-between w-full text-[10px] font-bold">
-                                <span className="text-teal-600 dark:text-teal-400">{accepted} acc.</span>
+                                <span className="text-accent">{accepted} acc.</span>
                                 {rejected > 0 && <span className="text-rose-500">{rejected} rej.</span>}
                                 <span className="text-slate-400">{remaining} left</span>
                               </div>
                               {/* stacked progress bar */}
                               <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
-                                <div className="h-full bg-teal-500 transition-all rounded-l-full" style={{ width: `${pct}%` }} />
+                                <div className="h-full bg-accent transition-all rounded-l-full" style={{ width: `${pct}%` }} />
                                 {rejected > 0 && (
                                   <div className="h-full bg-rose-400 transition-all" style={{ width: `${rjPct}%` }} />
                                 )}
@@ -632,7 +634,7 @@ export function PurchaseOrderDetail() {
                     </tr>
                     <tr className="bg-slate-50/50 dark:bg-slate-800/30">
                       <td colSpan={5} className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300">Total Approved</td>
-                      <td className="px-6 py-4 text-right text-lg font-black text-teal-600 dark:text-teal-400">{fmt(total)}</td>
+                      <td className="px-6 py-4 text-right text-lg font-black text-accent">{fmt(total)}</td>
                     </tr>
                   </tfoot>
                 </table>
@@ -648,7 +650,7 @@ export function PurchaseOrderDetail() {
                       {canReceive && (
                         <button
                           onClick={() => setReceiveItemsOpen(true)}
-                          className="mt-3 text-xs font-bold text-teal-600 hover:text-teal-700 dark:text-teal-400 underline underline-offset-2"
+                          className="mt-3 text-xs font-bold text-accent hover:text-accent/80 underline underline-offset-2"
                         >
                           Record first receipt →
                         </button>
@@ -703,7 +705,7 @@ export function PurchaseOrderDetail() {
                           header: "Accepted",
                           align: "center",
                           render: (row) => (
-                            <span className="text-sm font-black text-teal-600 dark:text-teal-400">{row.quantityAccepted}</span>
+                            <span className="text-sm font-black text-accent">{row.quantityAccepted}</span>
                           ),
                         },
                         {
@@ -745,7 +747,7 @@ export function PurchaseOrderDetail() {
                                 className={cn(
                                   "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tighter transition-all w-[100px] justify-center",
                                   row.isReturnable 
-                                    ? "bg-teal-50 text-teal-600 dark:bg-teal-900/20 dark:text-teal-400 border border-teal-100 dark:border-teal-800 shadow-sm"
+                                    ? "bg-accent-dim text-accent border border-accent/20 shadow-sm"
                                     : "bg-slate-50 text-slate-400 dark:bg-slate-800/40 dark:text-slate-600 border border-slate-100 dark:border-slate-800"
                                 )}
                               >
@@ -776,7 +778,7 @@ export function PurchaseOrderDetail() {
                                 {row.isReturnable && available > 0 && (
                                   <button
                                     onClick={(e) => { e.stopPropagation(); setRtsItem(row) }}
-                                    className="text-[10px] font-black uppercase tracking-widest text-teal-600 hover:text-teal-700 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/40 px-2 py-0.5 rounded border border-teal-100 dark:border-teal-800 hover:shadow-sm"
+                                    className="text-[10px] font-black uppercase tracking-widest text-accent hover:text-accent/80 bg-accent-dim px-2 py-0.5 rounded border border-accent/20 hover:shadow-sm"
                                   >
                                     <RotateCcw className="w-2.5 h-2.5 inline mr-1" /> Return Item
                                   </button>
@@ -795,7 +797,7 @@ export function PurchaseOrderDetail() {
                     {canReceive && (
                       <button
                         onClick={() => setReceiveItemsOpen(true)}
-                        className="text-[10px] font-black uppercase tracking-wider text-teal-600 hover:text-teal-700 dark:text-teal-400 flex items-center gap-1"
+                        className="text-[10px] font-black uppercase tracking-wider text-accent hover:text-accent/80 flex items-center gap-1"
                       >
                         + New Receipt <ChevronRight className="w-3 h-3" />
                       </button>
@@ -817,7 +819,7 @@ export function PurchaseOrderDetail() {
                   <Hash className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">PO Number</p>
-                    <p className="text-sm font-bold text-teal-600 dark:text-teal-400">{order.poNumber}</p>
+                    <p className="text-sm font-bold text-accent">{order.poNumber}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3 group">
@@ -828,7 +830,7 @@ export function PurchaseOrderDetail() {
                       {order.status === "pending" && (
                         <button
                           onClick={() => setVendorSelectorOpen(true)}
-                          className="opacity-0 group-hover:opacity-100 text-[9px] font-black uppercase text-teal-600 hover:text-teal-700 transition-all underline underline-offset-2"
+                          className="opacity-0 group-hover:opacity-100 text-[9px] font-black uppercase text-accent hover:text-accent/80 transition-all underline underline-offset-2"
                         >
                           Change
                         </button>
@@ -870,7 +872,7 @@ export function PurchaseOrderDetail() {
                 </div>
                 <div className="flex justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
                   <span className="font-black text-slate-900 dark:text-white">Total Value</span>
-                  <span className="font-black text-xl text-teal-600 dark:text-teal-400">{fmt(total)}</span>
+                  <span className="font-black text-xl text-accent">{fmt(total)}</span>
                 </div>
               </div>
             </div>
@@ -919,7 +921,7 @@ export function PurchaseOrderDetail() {
                 placeholder="Search vendors…"
                 value={vendorSearch}
                 onChange={e => setVendorSearch(e.target.value)}
-                className="pl-9 h-11 rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600"
+                className="pl-9 h-11 rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:ring-4 focus:ring-accent/20 focus:border-accent"
               />
             </div>
             <div className="max-h-[400px] overflow-y-auto space-y-1 pr-1">
@@ -929,10 +931,10 @@ export function PurchaseOrderDetail() {
                   onClick={() => handleSelectVendor(vendor)}
                   className={cn(
                     "w-full flex items-center gap-3 p-3 rounded-md text-left transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 group",
-                    order.vendorId === vendor.id && "bg-teal-50 dark:bg-teal-900/20 ring-1 ring-teal-200 dark:ring-teal-800"
+                    order.vendorId === vendor.id && "bg-accent-dim ring-1 ring-accent/20"
                   )}
                 >
-                  <div className="size-10 rounded-md bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center shrink-0 text-slate-400 group-hover:text-teal-600 transition-colors">
+                  <div className="size-10 rounded-md bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center shrink-0 text-slate-400 group-hover:text-accent transition-colors">
                     <Building2 className="size-5" />
                   </div>
                   <div className="flex-1 min-w-0">

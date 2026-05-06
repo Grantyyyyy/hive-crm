@@ -61,15 +61,15 @@ export function AddPurchaseRequestModal({ open, onOpenChange, onSuccess, initial
 
         <DialogHeader className="px-8 py-5 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 shrink-0 mb-0">
           <div className="flex items-center gap-4">
-            <div className="size-11 rounded-xl bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center shrink-0 shadow-sm">
-              <Layers className="size-5 text-teal-600 dark:text-teal-400" />
+            <div className="size-11 rounded-xl bg-accent-dim flex items-center justify-center shrink-0 shadow-sm">
+              <Layers className="size-5 text-accent" />
             </div>
             <div>
               <DialogTitle className="text-lg font-bold text-slate-900 dark:text-white leading-tight uppercase tracking-normal">
                 Submit Purchase Request
               </DialogTitle>
               <p className="text-slate-500 dark:text-slate-400 text-[10px] mt-0.5 font-medium uppercase tracking-widest flex items-center gap-2">
-                <span className="w-1 h-1 rounded-full bg-teal-500 animate-pulse" />
+                <span className="w-1 h-1 rounded-full bg-accent animate-pulse" />
                 Procurement Workflow System
               </p>
             </div>

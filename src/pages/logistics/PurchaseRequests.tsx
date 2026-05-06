@@ -26,6 +26,7 @@ import type { Quote, SalesOrder, InventoryItem, PurchaseOrder, Task } from "@/li
 import { ListSkeleton } from "@/components/ui/skeletons"
 import { ProcurementDataTable, type ProcurementColumn } from "@/components/reusables/ProcurementDataTable"
 import { StatCard } from "@/components/reusables/StatCard"
+import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 import { StatusTabs } from "@/components/reusables/StatusTabs"
 import type { StatusTab } from "@/components/reusables/StatusTabs"
 export function PurchaseRequests() {
@@ -174,7 +175,7 @@ export function PurchaseRequests() {
       header: "Request ID",
       render: (request) => (
         <>
-          <span className="text-[13px] font-bold text-teal-600 dark:text-teal-400">{request.requestNumber}</span>
+          <span className="text-[13px] font-bold text-accent">{request.requestNumber}</span>
           <p className="text-[10px] text-slate-500 mt-0.5">{new Date(request.date).toLocaleDateString()}</p>
         </>
       ),
@@ -183,9 +184,11 @@ export function PurchaseRequests() {
       header: "Requester",
       render: (request) => (
         <div className="flex items-center gap-2">
-          <div className="size-6 rounded bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 text-[10px] font-black uppercase ring-1 ring-white dark:ring-slate-900 shadow-sm">
-            {request.requesterName.split(' ').map(n => n[0]).join('').slice(0, 2)}
-          </div>
+          <InitialsAvatar
+            name={request.requesterName}
+            className="size-6 rounded-full ring-1 ring-white dark:ring-slate-900 shadow-sm"
+            textClassName="text-[10px] font-black uppercase"
+          />
           <span className="text-[13px] font-medium text-slate-900 dark:text-white truncate max-w-[140px]">{request.requesterName}</span>
         </div>
       ),
@@ -256,7 +259,7 @@ export function PurchaseRequests() {
         {/* Header Region */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">Corporate Finance</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-1">Corporate Finance</p>
             <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Purchase Requests</h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Internal procurement workflow and budget approvals.</p>
           </div>
@@ -323,7 +326,7 @@ export function PurchaseRequests() {
                 placeholder="Search by ID, requester, department..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
+                className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all"
               />
             </div>
           }
@@ -382,7 +385,7 @@ function StatusBadge({ status }: { status: PurchaseRequestStatus }) {
   const styles: Record<PurchaseRequestStatus, string> = {
     pending_review: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400",
     draft: "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400",
-    approved: "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400",
+    approved: "bg-accent-dim text-accent",
     rejected: "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400",
     ordered: "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400",
   }

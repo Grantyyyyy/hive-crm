@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sheet"
 import { LeadSheet } from "@/components/crmComponent/EditLeadSheet"
 import { LeadForm } from "@/components/crmComponent/LeadForm"
+import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 import { useCRMResource } from "@/lib/hooks"
 import { ListSkeleton } from "@/components/ui/skeletons"
 import { DeleteModal } from "@/components/ui/delete-modal"
@@ -211,17 +212,13 @@ export function Leads() {
     {
       header: "Lead Contact",
       render: (lead) => {
-        const initials = lead.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
         return (
           <div className="flex items-center gap-3">
-            <div className={cn(
-              "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black uppercase shrink-0 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800",
-              lead.status === 'qualified' ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400" :
-                lead.status === 'new' ? "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400" :
-                  "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
-            )}>
-              {initials}
-            </div>
+            <InitialsAvatar
+              name={lead.name}
+              className="w-8 h-8 rounded-full shrink-0 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800"
+              textClassName="text-[10px] font-black uppercase"
+            />
             <div className="min-w-0">
               <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{lead.name}</p>
               <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 truncate mt-0.5">{lead.email}</p>

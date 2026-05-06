@@ -12,6 +12,7 @@ import {
   ChevronDown
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 import { cn } from "@/lib/utils"
 import type { Activity, ActivityType, Contact } from "@/lib/types"
 import { useCRMResource } from "@/lib/hooks"
@@ -236,7 +237,11 @@ export function Activities() {
                                       {user?.user_metadata?.avatar_url ? (
                                         <img src={user.user_metadata?.avatar_url} className="w-full h-full object-cover" alt="User" />
                                       ) : (
-                                        <span className="text-[8px] font-black text-accent">ME</span>
+                                        <InitialsAvatar
+                                          name={user?.user_metadata?.first_name || "Me"}
+                                          className="w-full h-full rounded-full"
+                                          textClassName="text-[8px] font-black"
+                                        />
                                       )}
                                     </div>
                                     <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 max-w-[100px] truncate">{user?.user_metadata?.first_name || "Me"}</span>

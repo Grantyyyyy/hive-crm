@@ -2,6 +2,7 @@ import { useMemo } from "react"
 import { useCRMResource } from "@/lib/hooks"
 import { useUser, useAuth } from "@/lib/AuthContext"
 import { DashboardSkeleton } from "@/components/ui/skeletons"
+import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 import { StatCard } from "@/components/reusables/StatCard"
 import type { Task, AppUser } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -31,17 +32,6 @@ function formatDueLabel(dueDate: string): { label: string; overdue: boolean } {
 
 function shortId(id: string): string {
   return id.length > 12 ? id.slice(0, 6) + '...' + id.slice(-4) : id
-}
-
-function getInitials(name: string): string {
-  if (!name || name.includes('...')) return "??"
-  const parts = name.trim().split(/\s+/)
-  if (parts.length >= 2) {
-    const first = parts[0][0] || ""
-    const last = parts[parts.length - 1][0] || ""
-    return `${first}${last}`.toUpperCase()
-  }
-  return name.slice(0, 2).toUpperCase()
 }
 
 export function Workload() {
@@ -207,9 +197,11 @@ export function Workload() {
                 >
                   {/* Header */}
                   <div className="p-3 sm:p-4 flex items-center gap-3 border-b border-slate-100 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-900/50">
-                    <div className="w-8 h-8 rounded-lg bg-accent-dim flex items-center justify-center text-accent text-[10px] sm:text-xs font-bold uppercase ring-1 ring-accent/20">
-                      {getInitials(displayName)}
-                    </div>
+                    <InitialsAvatar
+                      name={displayName}
+                      className="w-8 h-8 rounded-lg ring-1 ring-slate-200 dark:ring-slate-700"
+                      textClassName="text-[10px] sm:text-xs font-bold uppercase"
+                    />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                         {displayName}

@@ -16,6 +16,7 @@ import type { Task, Project, TaskTag, TaskTagLink } from "@/lib/types"
 import { AddTaskModal } from "@/components/crmComponent/AddTaskModal"
 import { EditTaskModal } from "@/components/crmComponent/EditTaskModal"
 import { KanbanBoard } from "@/components/crmComponent/KanbanBoard"
+import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 import { useCRMResource } from "@/lib/hooks"
 import { useUser } from "@/lib/AuthContext"
 import { ListSkeleton } from "@/components/ui/skeletons"
@@ -282,12 +283,13 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
     {
       header: "Assignee",
       render: (task) => {
-        const initials = 'TM' // Team Member placeholder
         return (
           <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[9px] font-black text-slate-500 border border-slate-200 dark:border-slate-800">
-              {initials}
-            </div>
+            <InitialsAvatar
+              name="Team Member"
+              className="w-7 h-7 rounded-full border border-slate-200 dark:border-slate-800"
+              textClassName="text-[9px] font-black"
+            />
             <div className="min-w-0">
               <p className="text-xs font-bold text-slate-900 dark:text-white truncate">Assignee</p>
               <p className="text-[9px] text-slate-500 truncate mt-0.5">Team Role</p>

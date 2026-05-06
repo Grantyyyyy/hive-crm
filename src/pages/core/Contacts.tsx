@@ -19,6 +19,7 @@ import { ListSkeleton } from "@/components/ui/skeletons"
 import { exportToCSV, debounce, calculateRelationshipScore, getRelationshipLabel } from "@/lib/helpers"
 import { cn } from "@/lib/utils"
 import { ProcurementDataTable, type ProcurementColumn } from "@/components/reusables/ProcurementDataTable"
+import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 import { StatusTabs, type StatusTab } from "@/components/reusables/StatusTabs"
 
 interface EnrichedContact extends Contact {
@@ -155,12 +156,13 @@ export function Contacts() {
     {
       header: "Contact",
       render: (c) => {
-        const initials = c.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
         return (
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 flex items-center justify-center text-[10px] font-black uppercase text-slate-600 dark:text-slate-400 ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm">
-              {initials}
-            </div>
+            <InitialsAvatar
+              name={c.name}
+              className="w-8 h-8 rounded-full overflow-hidden shrink-0 ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm"
+              textClassName="text-[10px] font-black uppercase"
+            />
             <div className="min-w-0">
               <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{c.name}</p>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{c.email || "No email"}</p>

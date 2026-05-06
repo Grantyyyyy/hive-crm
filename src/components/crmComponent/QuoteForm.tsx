@@ -176,7 +176,7 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
           {/* Section 1: Quote Identity & Timeline */}
           <section className="bg-white dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
+              <div className="w-1 h-3.5 bg-accent rounded-full" />
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Proposal Context</h3>
             </div>
 
@@ -186,7 +186,7 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
                 <div className="relative group">
                   <div 
                     className={cn(
-                      "w-full h-11 px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between cursor-pointer focus-within:ring-4 focus-within:ring-teal-500/10 transition-all shadow-sm",
+                      "w-full h-11 px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between cursor-pointer focus-within:ring-4 focus-within:ring-accent/10 transition-all shadow-sm",
                       errors.customerId && "border-red-500 ring-4 ring-red-500/10"
                     )}
                     onClick={() => !isSaving && setShowCustomerDropdown(!showCustomerDropdown)}
@@ -206,7 +206,7 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
                           type="text"
                           autoFocus
                           placeholder="Search customers..."
-                          className="w-full h-9 px-3 bg-slate-50 dark:bg-slate-800/50 border-none rounded-lg text-xs font-bold focus:ring-2 focus:ring-teal-500 outline-none"
+                          className="w-full h-9 px-3 bg-slate-50 dark:bg-slate-800/50 border-none rounded-lg text-xs font-bold focus:ring-2 focus:ring-accent outline-none"
                           value={customerSearch}
                           onChange={(e) => setCustomerSearch(e.target.value)}
                           onClick={(e) => e.stopPropagation()}
@@ -226,7 +226,7 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
                                 return n
                               })
                             }}
-                            className="w-full text-left p-3 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors flex flex-col gap-0.5"
+                            className="w-full text-left p-3 hover:bg-accent-dim transition-colors flex flex-col gap-0.5"
                           >
                             <span className="text-[13px] font-bold text-slate-900 dark:text-white">{c.name}</span>
                             <span className="text-[10px] text-slate-500 font-medium">
@@ -249,7 +249,7 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
                 <DatePicker
                   value={validUntil}
                   onChange={setValidUntil}
-                  className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-[13px] font-bold focus:ring-4 focus:ring-teal-500/10 transition-all shadow-sm"
+                  className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-[13px] font-bold focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
                 />
               </div>
 
@@ -259,13 +259,13 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
                   <select
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value)}
-                    className="w-full h-11 px-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-[13px] font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-teal-500/10 transition-all shadow-sm"
+                    className="w-full h-11 px-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-[13px] font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
                   >
                     <option value="USD">USD ($)</option>
                     <option value="EUR">EUR (€)</option>
                     <option value="GBP">GBP (£)</option>
                   </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none group-hover:text-teal-500 transition-colors" />
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none group-hover:text-accent transition-colors" />
                 </div>
               </div>
             </div>
@@ -275,7 +275,7 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
           <section className="bg-white dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <div id="items" className="w-1 h-3.5 bg-teal-500 rounded-full" />
+                <div id="items" className="w-1 h-3.5 bg-accent rounded-full" />
                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Line Items & Catalog</h3>
               </div>
               {errors.items && <p className="text-[9px] font-bold text-red-500 uppercase tracking-wide mr-auto px-4">{errors.items}</p>}
@@ -290,7 +290,7 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
                       className={cn(
                         "h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
                         !canAddNewItem ? "opacity-40 grayscale cursor-not-allowed" :
-                          showInventory ? "bg-teal-50 text-teal-700 underline underline-offset-4" : "text-teal-600 hover:bg-teal-50/50"
+                          showInventory ? "bg-accent-dim text-accent underline underline-offset-4" : "text-accent hover:bg-accent-dim/70"
                       )}
                     >
                       Quick Add
@@ -302,7 +302,7 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
                             type="text"
                             autoFocus
                             placeholder="Search catalog..."
-                            className="w-full h-9 px-3 bg-slate-50 dark:bg-slate-800/50 border-none rounded-lg text-xs font-bold focus:ring-2 focus:ring-teal-500 outline-none"
+                            className="w-full h-9 px-3 bg-slate-50 dark:bg-slate-800/50 border-none rounded-lg text-xs font-bold focus:ring-2 focus:ring-accent outline-none"
                             value={inventorySearch}
                             onChange={(e) => setInventorySearch(e.target.value)}
                           />
@@ -315,7 +315,7 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
                               className="w-full text-left p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group flex items-start justify-between gap-4"
                             >
                               <div className="min-w-0 flex-1">
-                                <div className="text-[13px] font-black text-slate-900 dark:text-white group-hover:text-teal-600 truncate">{item.name}</div>
+                                <div className="text-[13px] font-black text-slate-900 dark:text-white group-hover:text-accent truncate">{item.name}</div>
                                 <div className="text-[10px] font-bold text-slate-400 mt-0.5 tracking-tight line-clamp-1">{item.sku} • {item.description}</div>
                               </div>
                               <div className="text-right shrink-0 flex flex-col items-end gap-1">
@@ -383,7 +383,7 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
                             id={`item_${index}_name`}
                             ref={index === items.length - 1 ? lastItemRef : null}
                             className={cn(
-                              "w-full bg-transparent border-none focus:ring-0 p-0 text-[13px] font-black placeholder:text-slate-300 transition-colors focus:placeholder:text-teal-400",
+                              "w-full bg-transparent border-none focus:ring-0 p-0 text-[13px] font-black placeholder:text-slate-300 transition-colors focus:placeholder:text-accent/60",
                               errors[`item_${index}_name`] ? "text-red-500 placeholder:text-red-300" : "text-slate-900 dark:text-slate-100"
                             )}
                             placeholder="Primary item name..."
@@ -398,7 +398,7 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
                             }}
                           />
                           <input
-                            className="w-full bg-transparent border-none focus:ring-0 p-0 text-[11px] font-bold text-slate-500 dark:text-slate-400 placeholder:text-slate-300 transition-colors focus:placeholder:text-teal-400"
+                            className="w-full bg-transparent border-none focus:ring-0 p-0 text-[11px] font-bold text-slate-500 dark:text-slate-400 placeholder:text-slate-300 transition-colors focus:placeholder:text-accent/60"
                             placeholder="Optional technical description..."
                             value={item.description || ""}
                             onChange={(e) => updateItem(item.id, { description: e.target.value })}
@@ -408,7 +408,7 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
                       <td className="px-4 py-4 align-top">
                         <input
                           type="number"
-                          className="w-full h-9 bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl focus:ring-4 focus:ring-teal-500/10 p-0 text-[13px] font-black text-slate-900 dark:text-slate-100 text-center transition-all outline-none"
+                          className="w-full h-9 bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl focus:ring-4 focus:ring-accent/10 p-0 text-[13px] font-black text-slate-900 dark:text-slate-100 text-center transition-all outline-none"
                           value={item.quantity}
                           onChange={(e) => updateItem(item.id, { quantity: parseInt(e.target.value) || 0 })}
                         />
@@ -417,7 +417,7 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
                         <div className="relative">
                           <input
                             type="number"
-                            className="w-full h-9 bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl focus:ring-4 focus:ring-teal-500/10 pl-2 pr-2 text-[13px] font-black text-slate-900 dark:text-slate-100 text-right transition-all outline-none"
+                            className="w-full h-9 bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl focus:ring-4 focus:ring-accent/10 pl-2 pr-2 text-[13px] font-black text-slate-900 dark:text-slate-100 text-right transition-all outline-none"
                             value={item.price}
                             onChange={(e) => updateItem(item.id, { price: parseFloat(e.target.value) || 0 })}
                           />
@@ -464,7 +464,7 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
                 </div>
                 <div className="w-48 h-px bg-slate-200 dark:bg-slate-800 my-1" />
                 <div className="flex items-center gap-6">
-                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-teal-600">Total Amount</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-accent">Total Amount</span>
                   <span className="text-4xl font-black text-slate-900 dark:text-white tabular-nums tracking-tighter">
                     {formatCurrency(totalValue)}
                   </span>
@@ -486,7 +486,7 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
                 value={terms}
                 onChange={(e) => setTerms(e.target.value)}
                 placeholder="Detail payment schedules, delivery timelines, and project scope..."
-                className="w-full h-32 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-2xl text-[13px] font-medium p-4 focus:ring-4 focus:ring-teal-500/10 transition-all shadow-sm resize-none"
+                className="w-full h-32 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-2xl text-[13px] font-medium p-4 focus:ring-4 focus:ring-accent/10 transition-all shadow-sm resize-none"
               />
             </div>
           </section>

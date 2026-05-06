@@ -46,6 +46,7 @@ import { formatCurrency, getDealHealth } from "@/lib/helpers"
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
 import { ListSkeleton } from "@/components/ui/skeletons"
+import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 import type { Deal, DealStage, Contact } from "@/lib/types"
 import { STAGE_LABELS, DEAL_STAGES } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -184,9 +185,11 @@ function DealCardContent({ deal, contactName, activities, isDragging = false }: 
 
       <div className="flex items-center justify-between pt-2 border-t border-slate-50 dark:border-slate-800/50 mt-1">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-500 overflow-hidden">
-            {contactName.slice(0, 2).toUpperCase()}
-          </div>
+          <InitialsAvatar
+            name={contactName}
+            className="w-7 h-7 rounded-full overflow-hidden"
+            textClassName="text-[10px] font-bold"
+          />
           <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">{contactName.split(' ')[0]}</span>
         </div>
         <div className="flex items-center gap-1">

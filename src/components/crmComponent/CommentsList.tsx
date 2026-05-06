@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Send, Trash2, Edit2 } from "lucide-react"
+import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
@@ -47,9 +48,11 @@ export function CommentsList({ comments, userId, onAdd, onDelete, onUpdate }: Om
 
       {/* Add Comment */}
       <div className="flex gap-3">
-        <div className="w-8 h-8 rounded bg-accent/10 flex items-center justify-center shrink-0">
-          <span className="text-xs font-bold text-accent">ME</span>
-        </div>
+        <InitialsAvatar
+          name="Me"
+          className="w-8 h-8 rounded shrink-0"
+          textClassName="text-xs font-bold"
+        />
         <div className="flex-1 space-y-2">
           <Textarea
             value={newComment}
@@ -84,14 +87,16 @@ export function CommentsList({ comments, userId, onAdd, onDelete, onUpdate }: Om
                 "w-8 h-8 rounded flex items-center justify-center shrink-0 overflow-hidden",
                 comment.authorAvatar
                   ? "bg-bg-surface"
-                  : "bg-accent/10"
+                  : ""
               )}>
                 {comment.authorAvatar ? (
                   <img src={comment.authorAvatar} alt={comment.authorName} className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-xs font-bold text-accent">
-                    {comment.authorName.charAt(0).toUpperCase()}
-                  </span>
+                  <InitialsAvatar
+                    name={comment.authorName}
+                    className="w-full h-full rounded"
+                    textClassName="text-xs font-bold"
+                  />
                 )}
               </div>
               <div className="flex-1 min-w-0">

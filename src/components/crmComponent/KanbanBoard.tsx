@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react"
 import { cn } from "@/lib/utils"
 import { Repeat2, CheckCircle2, PlusCircle } from "lucide-react"
+import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 import type { Task, TaskTag } from "@/lib/types"
 import {
   DndContext,
@@ -159,9 +160,11 @@ function SortableTaskCard({ task, onEdit, onStatusChange, tags, isDragging }: So
       {/* Footer */}
       <div className="flex items-center justify-between pt-3 border-t border-slate-50 dark:border-slate-800/50 mt-3">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[9px] font-bold text-slate-500 overflow-hidden">
-            {task.ownerId ? task.ownerId.slice(0, 2).toUpperCase() : '??'}
-          </div>
+          <InitialsAvatar
+            name={task.ownerId || "??"}
+            className="w-6 h-6 rounded-full overflow-hidden"
+            textClassName="text-[9px] font-bold"
+          />
           <span className={cn(
             "text-[11px] font-medium",
             isCompleted ? "text-slate-500 dark:text-slate-400 italic" : isOverdue ? "text-red-600 font-bold" : "text-slate-600 dark:text-slate-400"

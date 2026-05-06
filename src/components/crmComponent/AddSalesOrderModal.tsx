@@ -63,8 +63,8 @@ export function AddSalesOrderModal({ open, onOpenChange, onSuccess }: AddSalesOr
 
         <DialogHeader className="px-10 py-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 shrink-0 m-0">
           <div className="flex items-center gap-5">
-            <div className="size-16 rounded-3xl bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center shrink-0 border border-teal-100/50 dark:border-teal-800/50 shadow-inner">
-              <ShoppingBag className="size-8 text-teal-600 dark:text-teal-400" />
+            <div className="size-16 rounded-3xl bg-accent-dim flex items-center justify-center shrink-0 border border-accent/10 shadow-inner">
+              <ShoppingBag className="size-8 text-accent" />
             </div>
             <div>
               <DialogTitle className="text-2xl font-black text-slate-900 dark:text-white leading-tight uppercase tracking-tight italic">

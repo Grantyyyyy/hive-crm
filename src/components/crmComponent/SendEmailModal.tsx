@@ -109,8 +109,8 @@ export function SendEmailModal({ open, onOpenChange, document, customerEmail: co
         <div className="px-8 py-6 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 shrink-0">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
-              <div className="size-12 rounded-2xl bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center border border-teal-100/50 dark:border-teal-800/50 shadow-inner">
-                <Mail className="size-6 text-teal-600 dark:text-teal-400" />
+              <div className="size-12 rounded-2xl bg-accent-dim flex items-center justify-center border border-accent/10 shadow-inner">
+                <Mail className="size-6 text-accent" />
               </div>
               <div>
                 <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight italic">
@@ -142,7 +142,7 @@ export function SendEmailModal({ open, onOpenChange, document, customerEmail: co
               value={customerEmail}
               onChange={(e) => setCustomerEmail(e.target.value)}
               placeholder="customer@example.com"
-              className="w-full h-11 px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all dark:text-slate-200"
+              className="w-full h-11 px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium focus:ring-4 focus:ring-accent/10 focus:border-accent outline-none transition-all dark:text-slate-200"
               autoFocus
             />
           </div>
@@ -156,7 +156,7 @@ export function SendEmailModal({ open, onOpenChange, document, customerEmail: co
               type="text"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="w-full h-11 px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all dark:text-slate-200"
+              className="w-full h-11 px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium focus:ring-4 focus:ring-accent/10 focus:border-accent outline-none transition-all dark:text-slate-200"
             />
           </div>
 
@@ -170,14 +170,14 @@ export function SendEmailModal({ open, onOpenChange, document, customerEmail: co
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Add a personal note to include in the email..."
               rows={3}
-              className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all resize-none dark:text-slate-200 placeholder:text-slate-300"
+              className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium focus:ring-4 focus:ring-accent/10 focus:border-accent outline-none transition-all resize-none dark:text-slate-200 placeholder:text-slate-300"
             />
           </div>
 
           {/* Summary */}
           <div className="bg-white dark:bg-slate-900/50 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 p-4 space-y-3">
             <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-teal-600" />
+              <FileText className="w-4 h-4 text-accent" />
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
                 Attachment & Summary
               </span>
@@ -201,13 +201,13 @@ export function SendEmailModal({ open, onOpenChange, document, customerEmail: co
 
             <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total</span>
-              <span className="text-lg font-black text-teal-600 dark:text-teal-400 tabular-nums">
+              <span className="text-lg font-black text-accent tabular-nums">
                 {fmt(total)}
               </span>
             </div>
 
             <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-              <Check className="w-3.5 h-3.5 text-teal-500" />
+              <Check className="w-3.5 h-3.5 text-accent" />
               PDF will be attached: {isQuote ? "Quote" : "Invoice"}_{isQuote ? (document.data as Quote).quoteNumber : (document.data as SalesOrder).orderNumber}.pdf
             </div>
           </div>
@@ -223,7 +223,7 @@ export function SendEmailModal({ open, onOpenChange, document, customerEmail: co
             onClick={handleSend}
             disabled={isSending || !customerEmail.trim()}
             className={cn(
-              "h-9 px-8 bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-600/20 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95",
+              "h-9 px-8 bg-accent hover:bg-accent/90 text-white shadow-lg shadow-accent/20 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95",
               (!customerEmail.trim() || isSending) && "opacity-50 cursor-not-allowed"
             )}
           >

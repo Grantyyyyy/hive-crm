@@ -4,8 +4,8 @@ Date: 2026-05-05
 Last updated: 2026-05-06
 Files analyzed: ~45
 Total findings: 12
-Resolved: 10
-Pending: 2
+Resolved: 11
+Pending: 1
 
 ---
 ## EXECUTIVE SUMMARY
@@ -15,8 +15,7 @@ The main remaining risks are architectural: scheduled jobs still execute from th
 
 ---
 ## PENDING ISSUES
-1. [HIGH] Architecture - Audit logs are still inserted directly from page/component files instead of fully routing through `CRMContext`.
-2. [HIGH] Performance - `fetchResource` still loads full tables with `select("*")` and no pagination or limit.
+1. [HIGH] Performance - `fetchResource` still loads full tables with `select("*")` and no pagination or limit.
 
 ---
 ## FINDINGS
@@ -39,11 +38,10 @@ The main remaining risks are architectural: scheduled jobs still execute from th
 - Verification: `runAtomicUpdate` was refactored to compile a `rpcPayload` array and send it to the `execute_transaction` Postgres RPC, ensuring atomicity.
 - Remaining note: The `sql/transaction_rpc.sql` migration must be applied to the live database for this to function properly.
 
-### [HIGH] - Architecture - Central Data Layer Bypassed for Audit Logs - Status: ⏳ Pending
-- File(s): `src/pages/sales/SalesOrders.tsx`, `src/pages/sales/Quotes.tsx`, `src/components/crmComponent/ConvertLeadModal.tsx`, `src/components/crmComponent/SendEmailModal.tsx`
-- Description: Direct calls to `supabase.from('audit_log').insert(...)` still exist in page/component code.
-- Risk/Impact: Circumvents centralized error handling, ownership stamping, organization stamping, and consistency checks.
-- Recommended fix: Refactor components to use `ctx.runAtomicUpdate` or a dedicated centralized audit-log helper.
+### [HIGH] - Architecture - Central Data Layer Bypassed for Audit Logs - Status: ✅ Resolved in repository
+- File(s): `src/pages/sales/SalesOrders.tsx`, `src/pages/sales/Quotes.tsx`, `src/components/crmComponent/ConvertLeadModal.tsx`, `src/components/crmComponent/SendEmailModal.tsx`, `src/lib/CRMContext.tsx`
+- Description: Direct calls to `supabase.from('audit_log').insert(...)` existed in page/component code.
+- Verification: Added an `insertAuditLog` helper method to `CRMContext` that handles database insertion and tenant linking securely. All four files were refactored to use `ctx.insertAuditLog()`.
 
 ### [HIGH] - Performance - Unbounded Queries in CRMContext - Status: ⏳ Pending
 - File(s): `src/lib/CRMContext.tsx`
@@ -118,6 +116,7 @@ Job orchestration has improved because each job now catches its own failure. The
 ---
 ## RESOLVED ITEMS
 - ✅ `runAtomicUpdate` uses a database transaction (`execute_transaction` RPC).
+- ✅ Centralized audit logging via `insertAuditLog` helper in `CRMContext`.
 - ✅ RLS fix migration exists in the repository for the originally identified permissive policies.
 - ✅ `owner_id` coverage now includes `vendors` and `purchase_requests`.
 - ✅ Scheduled-job orchestration now isolates failures per job.

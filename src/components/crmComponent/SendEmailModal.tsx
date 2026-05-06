@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import type { Quote, SalesOrder } from "@/lib/types"
 import { logger } from "@/lib/logger"
-
+import { useCRMContext } from "@/lib/CRMContext"
+import { useCRMContext } from "@/lib/CRMContext"
 interface SendEmailModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -19,6 +20,7 @@ interface SendEmailModalProps {
 }
 
 export function SendEmailModal({ open, onOpenChange, document, customerEmail: contactEmail, onSuccess }: SendEmailModalProps) {
+  const ctx = useCRMContext()
   const [customerEmail, setCustomerEmail] = useState("")
   const [subject, setSubject] = useState("")
   const [message, setMessage] = useState("")
@@ -73,28 +75,12 @@ export function SendEmailModal({ open, onOpenChange, document, customerEmail: co
       })
 
       // Audit log
-      const { supabase } = await import("@/lib/supabaseClient")
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: { session } } = await supabase.auth.getSession()
-        let organizationId = null
-        if (session?.access_token) {
-          try {
-            const payload = JSON.parse(atob(session.access_token.split('.')[1]))
-            organizationId = payload?.org_id ?? null
-          } catch {}
-        }
-        supabase.from('audit_log').insert({
-          entity_type: isQuote ? 'quotes' : 'orders',
-          entity_id: document.data.id,
-          action: isQuote ? 'EMAIL_SENT' : 'INVOICE_EMAILED',
-          changed_by: user.id,
-          organization_id: organizationId,
-          diff: { email: customerEmail, timestamp: new Date().toISOString() }
-        }).then(({ error }: any) => {
-          if (error) logger.error("Failed to emit audit log:", error)
-        })
-      }
+      await ctx.insertAuditLog({
+        entity_type: isQuote ? 'quotes' : 'orders',
+        entity_id: document.data.id,
+        action: isQuote ? 'EMAIL_SENT' : 'INVOICE_EMAILED',
+        diff: { email: customerEmail, timestamp: new Date().toISOString() }
+      })
 
       onOpenChange(false)
       onSuccess?.()

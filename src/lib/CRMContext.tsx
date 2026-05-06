@@ -154,6 +154,7 @@ export interface CRMContextValue {
   runAtomicUpdate: (ops: AtomicOp[]) => Promise<AtomicOp[]>
   fetchAuditLogs: (entityType: string, entityId: string) => Promise<any[]>
   fetchAllAuditLogs: () => Promise<any[]>
+  insertAuditLog: (log: { entity_type: string, entity_id: string, action: string, diff?: any }) => Promise<void>
 }
 
 const CRMContext = createContext<CRMContextValue | null>(null)
@@ -534,8 +535,26 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     [getClient, user]
   )
 
+  const insertAuditLog = useCallback(
+    async (log: { entity_type: string, entity_id: string, action: string, diff?: any }) => {
+      const client = await getClient()
+      if (!client || !userId || !organizationId) return
+
+      const { error } = await client.from('audit_log').insert({
+        ...log,
+        changed_by: userId,
+        organization_id: organizationId,
+      })
+
+      if (error) {
+        logger.error("[CRMContext] insertAuditLog error:", error)
+      }
+    },
+    [getClient, userId, organizationId]
+  )
+
   return (
-    <CRMContext.Provider value={{ userId, organizationId, getResource, setResourceData, getClient, runAtomicUpdate, fetchAuditLogs, fetchAllAuditLogs }}>
+    <CRMContext.Provider value={{ userId, organizationId, getResource, setResourceData, getClient, runAtomicUpdate, fetchAuditLogs, fetchAllAuditLogs, insertAuditLog }}>
       {children}
     </CRMContext.Provider>
   )

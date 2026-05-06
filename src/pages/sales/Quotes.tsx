@@ -116,28 +116,12 @@ export function Quotes() {
       toast.success("Quote PDF Downloaded", { description: `${quote.quoteNumber} — ready to email.` })
 
       // Audit log
-      const { supabase } = await import("@/lib/supabaseClient")
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: { session } } = await supabase.auth.getSession()
-        let organizationId = null
-        if (session?.access_token) {
-          try {
-            const payload = JSON.parse(atob(session.access_token.split('.')[1]))
-            organizationId = payload?.org_id ?? null
-          } catch {}
-        }
-        supabase.from('audit_log').insert({
-          entity_type: 'quotes',
-          entity_id: quote.id,
-          action: 'DOWNLOAD_PDF',
-          changed_by: user.id,
-          organization_id: organizationId,
-          diff: { timestamp: new Date().toISOString() }
-        }).then(({ error }: any) => {
-          if (error) logger.error("Failed to emit audit log:", error)
-        })
-      }
+      ctx.insertAuditLog({
+        entity_type: 'quotes',
+        entity_id: quote.id,
+        action: 'DOWNLOAD_PDF',
+        diff: { timestamp: new Date().toISOString() }
+      })
     } catch (e: unknown) {
       toast.error("Failed to generate PDF", { description: (e as Error).message })
     }

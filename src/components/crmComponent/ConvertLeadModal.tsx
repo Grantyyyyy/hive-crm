@@ -16,6 +16,10 @@ import { leadsApi } from "@/lib/api"
 import { Check, UserPlus } from "lucide-react"
 import { DatePicker } from "@/components/ui/date-picker"
 import { logger } from "@/lib/logger"
+import { useCRMContext } from "@/lib/CRMContext"
+
+interface ConvertLeadModalProps {
+  open: boolean
 
 interface ConvertLeadModalProps {
   open: boolean
@@ -25,6 +29,7 @@ interface ConvertLeadModalProps {
 }
 
 export function ConvertLeadModal({ open, onOpenChange, lead, onConverted }: ConvertLeadModalProps) {
+  const ctx = useCRMContext()
   const [name, setName] = useState(lead.name)
   const [email, setEmail] = useState(lead.email)
   const [phone, setPhone] = useState(lead.phone ?? "")
@@ -59,46 +64,29 @@ export function ConvertLeadModal({ open, onOpenChange, lead, onConverted }: Conv
 
       if (response.success && response.data?.contact?.id) {
         // Log lead conversion audit
-        const { supabase } = await import("@/lib/supabaseClient")
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-          const { data: { session } } = await supabase.auth.getSession()
-          let organizationId = null
-          if (session?.access_token) {
-            try {
-              const payload = JSON.parse(atob(session.access_token.split('.')[1]))
-              organizationId = payload?.org_id ?? null
-            } catch {}
-          }
-          // Log lead conversion
-          await supabase.from('audit_log').insert({
-            entity_type: 'leads',
-            entity_id: lead.id,
-            action: 'CONVERT',
-            changed_by: user.id,
-            organization_id: organizationId,
-            diff: { updates: { status: 'converted', contactId: response.data.contact.id, dealId: response.data.deal?.id } }
-          })
-          // Log contact creation
-          await supabase.from('audit_log').insert({
-            entity_type: 'contacts',
-            entity_id: response.data.contact.id,
+        await ctx.insertAuditLog({
+          entity_type: 'leads',
+          entity_id: lead.id,
+          action: 'CONVERT',
+          diff: { updates: { status: 'converted', contactId: response.data.contact.id, dealId: response.data.deal?.id } }
+        })
+        
+        // Log contact creation
+        await ctx.insertAuditLog({
+          entity_type: 'contacts',
+          entity_id: response.data.contact.id,
+          action: 'INSERT',
+          diff: { new: response.data.contact }
+        })
+        
+        // Log deal creation if created
+        if (response.data.deal?.id) {
+          await ctx.insertAuditLog({
+            entity_type: 'deals',
+            entity_id: response.data.deal.id,
             action: 'INSERT',
-            changed_by: user.id,
-            organization_id: organizationId,
-            diff: { new: response.data.contact }
+            diff: { new: response.data.deal }
           })
-          // Log deal creation if created
-          if (response.data.deal?.id) {
-            await supabase.from('audit_log').insert({
-              entity_type: 'deals',
-              entity_id: response.data.deal.id,
-              action: 'INSERT',
-              changed_by: user.id,
-              organization_id: organizationId,
-              diff: { new: response.data.deal }
-            })
-          }
         }
 
         onOpenChange(false)

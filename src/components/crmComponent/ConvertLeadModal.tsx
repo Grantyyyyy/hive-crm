@@ -18,8 +18,6 @@ import { DatePicker } from "@/components/ui/date-picker"
 import { logger } from "@/lib/logger"
 import { useCRMContext } from "@/lib/CRMContext"
 
-interface ConvertLeadModalProps {
-  open: boolean
 
 interface ConvertLeadModalProps {
   open: boolean
@@ -70,7 +68,7 @@ export function ConvertLeadModal({ open, onOpenChange, lead, onConverted }: Conv
           action: 'CONVERT',
           diff: { updates: { status: 'converted', contactId: response.data.contact.id, dealId: response.data.deal?.id } }
         })
-        
+
         // Log contact creation
         await ctx.insertAuditLog({
           entity_type: 'contacts',
@@ -78,7 +76,7 @@ export function ConvertLeadModal({ open, onOpenChange, lead, onConverted }: Conv
           action: 'INSERT',
           diff: { new: response.data.contact }
         })
-        
+
         // Log deal creation if created
         if (response.data.deal?.id) {
           await ctx.insertAuditLog({
@@ -118,7 +116,7 @@ export function ConvertLeadModal({ open, onOpenChange, lead, onConverted }: Conv
 
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto px-8 py-8 space-y-8">
-          
+
           <div className="grid grid-cols-1 gap-y-6">
             {/* Section 1: Contact Creation */}
             <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md">

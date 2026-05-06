@@ -7,7 +7,7 @@ import { toast } from "sonner"
 import type { Quote, SalesOrder } from "@/lib/types"
 import { logger } from "@/lib/logger"
 import { useCRMContext } from "@/lib/CRMContext"
-import { useCRMContext } from "@/lib/CRMContext"
+
 interface SendEmailModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void

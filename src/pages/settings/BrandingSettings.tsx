@@ -24,8 +24,8 @@ export function BrandingSettings() {
 
   useEffect(() => {
     if (org) {
-      setAppName(org.appName || "CRM Hub");
-      setAppLogoUrl(org.appLogoUrl || "");
+      setAppName(org.appName || "Hive CRM");
+      setAppLogoUrl(org.appLogoUrl || "/hub.svg");
       setAppTagline(org.appTagline || "Enterprise Suite");
     }
   }, [org]);
@@ -93,7 +93,7 @@ export function BrandingSettings() {
 
   const handleReset = () => {
     if (org) {
-      setAppName(org.appName || "CRM Hub");
+      setAppName(org.appName || "Hive CRM");
       setAppLogoUrl(org.appLogoUrl || "");
       setAppTagline(org.appTagline || "Enterprise Suite");
     }
@@ -230,19 +230,17 @@ export function BrandingSettings() {
 
           <div className="flex-1 flex items-center justify-center p-6 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-100/50 via-transparent to-transparent dark:from-slate-800/20">
             <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-[0_20px_50px_-20px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_-20px_rgba(0,0,0,0.5)] border border-slate-100 dark:border-slate-800 w-full max-w-sm transition-all duration-500 group-hover:scale-105 group-hover:rotate-1">
-              <div className="w-14 h-14 bg-accent rounded-2xl flex items-center justify-center shrink-0 shadow-xl shadow-accent/20 overflow-hidden relative group/logo">
-                {appLogoUrl ? (
-                  <img src={appLogoUrl} alt="Logo" className="w-full h-full object-cover transition-transform duration-700 group-hover/logo:scale-110" />
-                ) : (
-                  <div className="w-8 h-8 text-white font-black flex items-center justify-center text-2xl tracking-tighter">
-                    {appName.slice(0, 1).toUpperCase() || "?"}
-                  </div>
-                )}
+              <div className="w-14 h-14 bg-accent rounded-2xl flex items-center justify-center shrink-0 overflow-hidden relative group/logo">
+                <img 
+                  src={appLogoUrl || "/hub.svg"} 
+                  alt="Logo" 
+                  className="w-full h-full object-contain p-2 transition-transform duration-700 group-hover/logo:scale-110 invert" 
+                />
                 <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
               </div>
               <div className="flex flex-col min-w-0">
                 <span className="text-[18px] font-black text-slate-900 dark:text-white truncate leading-tight tracking-tight">
-                  {appName || "CRM Hub"}
+                  {appName || "Hive CRM"}
                 </span>
                 <span className="text-[10px] text-accent font-black truncate uppercase tracking-[0.2em] mt-0.5">
                   {appTagline || "Enterprise Suite"}

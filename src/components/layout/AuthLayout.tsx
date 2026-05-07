@@ -46,7 +46,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
           <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-teal-500/10 border border-teal-500/20 rounded-xs">
             <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
             <span className="text-[10px] font-black uppercase tracking-[0.25em] text-teal-400">
-              CRM Hub
+              Hive CRM
             </span>
           </span>
         </div>

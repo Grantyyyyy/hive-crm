@@ -28,7 +28,7 @@ const plans = [
     icon: Zap,
     name: "Standard",
     tagline: "For fast-moving teams",
-    price: "490",
+    price: "29",
     features: [
       "Up to 10 users",
       "Unlimited leads & contacts",
@@ -46,7 +46,7 @@ const plans = [
     icon: Crown,
     name: "Elite",
     tagline: "For scaling enterprises",
-    price: "1,250",
+    price: "129",
     features: [
       "Unlimited users",
       "Full procurement workflow",
@@ -93,12 +93,12 @@ export function PricingSection({ theme }: PricingSectionProps) {
               <div
                 key={plan.name}
                 className={`group relative flex flex-col rounded-3xl border transition-all duration-300 hover:translate-y-[-4px] ${plan.highlight
-                    ? isDark
-                      ? "bg-slate-900 border-accent/30 shadow-2xl shadow-accent/10"
-                      : "bg-white border-accent/20 shadow-2xl shadow-accent/10"
-                    : isDark
-                      ? "bg-slate-900/40 border-slate-800 hover:border-slate-700"
-                      : "bg-white border-slate-200 shadow-sm hover:shadow-md"
+                  ? isDark
+                    ? "bg-slate-900 border-accent/30 shadow-2xl shadow-accent/10"
+                    : "bg-white border-accent/20 shadow-2xl shadow-accent/10"
+                  : isDark
+                    ? "bg-slate-900/40 border-slate-800 hover:border-slate-700"
+                    : "bg-white border-slate-200 shadow-sm hover:shadow-md"
                   }`}
               >
                 {/* Most Popular badge — Absolute for alignment consistency */}
@@ -114,8 +114,8 @@ export function PricingSection({ theme }: PricingSectionProps) {
                   {/* Header Section with Icon */}
                   <div className="mb-8">
                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110 duration-300 ${plan.highlight
-                        ? "bg-accent text-white shadow-lg shadow-accent/20"
-                        : isDark ? "bg-slate-800 text-slate-300" : "bg-slate-100 text-slate-600"
+                      ? "bg-accent text-white shadow-lg shadow-accent/20"
+                      : isDark ? "bg-slate-800 text-slate-300" : "bg-slate-100 text-slate-600"
                       }`}>
                       <Icon className="w-6 h-6" />
                     </div>
@@ -161,8 +161,8 @@ export function PricingSection({ theme }: PricingSectionProps) {
                     {plan.features.map((f) => (
                       <li key={f} className="flex items-start gap-3">
                         <div className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${plan.highlight
-                            ? "bg-accent-dim"
-                            : isDark ? "bg-slate-800/50" : "bg-slate-100"
+                          ? "bg-accent-dim"
+                          : isDark ? "bg-slate-800/50" : "bg-slate-100"
                           }`}>
                           <Check className={`w-3 h-3 ${plan.highlight ? "text-accent" : isDark ? "text-slate-500" : "text-slate-400"
                             }`} />
@@ -178,10 +178,10 @@ export function PricingSection({ theme }: PricingSectionProps) {
                   <Link href={plan.ctaHref}>
                     <button
                       className={`w-full py-4 text-xs font-bold uppercase tracking-widest rounded-2xl transition-all duration-300 active:scale-95 ${plan.highlight
-                          ? "bg-accent hover:opacity-90 text-white shadow-lg shadow-accent/20"
-                          : isDark
-                            ? "bg-slate-800 text-slate-100 hover:bg-slate-700"
-                            : "bg-slate-100 text-slate-900 hover:bg-slate-200"
+                        ? "bg-accent hover:opacity-90 text-white shadow-lg shadow-accent/20"
+                        : isDark
+                          ? "bg-slate-800 text-slate-100 hover:bg-slate-700"
+                          : "bg-slate-100 text-slate-900 hover:bg-slate-200"
                         }`}
                     >
                       {plan.cta}

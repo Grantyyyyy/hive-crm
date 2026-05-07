@@ -12,7 +12,10 @@ export function FooterSection({ theme }: FooterSectionProps) {
     <footer className={`py-8 border-t border-accent ${isDark ? "bg-slate-950 text-white" : "bg-slate-900 text-white"}`}>
       <div className="max-w-[1600px] mx-auto px-4 lg:px-6 grid lg:grid-cols-[1.5fr_1fr] gap-10">
         <div className="space-y-10">
-          <span className="font-sans font-black text-4xl lg:text-5xl leading-none tracking-tight uppercase">HUB.</span>
+          <div className="flex items-center gap-4">
+            <img src="/hub.svg" alt="Hub Logo" className="w-12 h-12 invert" />
+            <span className="font-sans font-black text-4xl lg:text-5xl leading-none tracking-tight uppercase">HIVE.</span>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="space-y-4">
               <h4 className="text-[10px] font-black uppercase tracking-widest opacity-40">Location</h4>
@@ -23,7 +26,7 @@ export function FooterSection({ theme }: FooterSectionProps) {
             <div className="space-y-4">
               <h4 className="text-[10px] font-black uppercase tracking-widest opacity-40">Contact</h4>
               <p className="text-sm font-bold uppercase tracking-widest leading-relaxed text-slate-300">
-                hello@crmhub.io <br /> +1 (555) 000-0000
+                hello@hivecrm.io <br /> +1 (555) 000-0000
               </p>
             </div>
             <div className="space-y-4">
@@ -61,7 +64,7 @@ export function FooterSection({ theme }: FooterSectionProps) {
             </div>
           </div>
           <p className="text-[10px] font-black uppercase tracking-[0.8em] opacity-20">
-            Copyright 2026 CRM HUB INFRASTRUCTURE // ALL RIGHTS RESERVED_
+            Copyright 2026 HIVE CRM INFRASTRUCTURE // ALL RIGHTS RESERVED_
           </p>
         </div>
       </div>

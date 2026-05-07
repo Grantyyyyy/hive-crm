@@ -253,19 +253,15 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
 
       <aside className={sidebarClass}>
         {/* Top Section / Logo */}
-        <div className="flex h-20 shrink-0 items-center px-6">
-          <div className="flex items-center gap-3 w-full overflow-hidden">
-            <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-accent/20 overflow-hidden">
-              {org?.appLogoUrl ? (
-                <img src={org.appLogoUrl} alt="Logo" className="w-full h-full object-cover" />
-              ) : (
-                <BarChart3 className="w-6 h-6 text-white" />
-              )}
+        <div className={cn("flex h-20 shrink-0 items-center transition-all duration-300", collapsed ? "px-0 justify-center" : "px-6")}>
+          <div className={cn("flex items-center gap-3 overflow-hidden", collapsed ? "w-auto" : "w-full")}>
+            <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
+              <img src={org?.appLogoUrl || "/hub.svg"} alt="Logo" className="w-full h-full object-contain p-1.5 invert" />
             </div>
             {!collapsed && (
               <div className="flex flex-col min-w-0">
                 <span className="text-[15px] font-bold text-text-primary truncate leading-tight">
-                  {org?.appName || "CRM Hub"}
+                  {org?.appName || "Hive CRM"}
                 </span>
                 <span className="text-[11px] text-text-muted font-medium truncate uppercase tracking-wider">
                   {org?.appTagline || "Enterprise Suite"}

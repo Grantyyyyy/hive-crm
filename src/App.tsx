@@ -145,7 +145,7 @@ function AppContent() {
   
   const ctx = useCRMContext();
   const { data: organizations } = ctx.getResource<Organization>("organizations");
-  const appName = organizations[0]?.appName || "CRM Hub";
+  const appName = organizations[0]?.appName || "Hive CRM";
 
   useEffect(() => {
     document.title = appName;

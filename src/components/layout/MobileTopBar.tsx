@@ -20,7 +20,7 @@ export function MobileTopBar({ setMobileOpen }: MobileTopBarProps) {
         >
           <Menu className="h-5 w-5" />
         </Button>
-        <span className="font-bold text-lg">CRM App</span>
+        <span className="font-bold text-lg">Hive CRM</span>
       </div>
       <Button
         variant="ghost"

@@ -65,9 +65,7 @@ function isInRange(dateStr: string | undefined, range: { start: Date; end: Date 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 const fmtCurrency = (v: number) => formatCurrency(v)
-
 const fmtPct = (v: number) => `${v.toFixed(1)}%`
-
 const REPORT_BASE_COLORS = ["#0ea5e9", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"]
 
 function getMonthKey(dateStr: string): string {
@@ -96,53 +94,47 @@ export function Reports() {
   }, [brandColor, theme])
   const categoryColors = useMemo(() => [accentColor, ...REPORT_BASE_COLORS], [accentColor])
 
-  const allLoaded = ordersLoaded && quotesLoaded && dealsLoaded && invLoaded && contactsLoaded && leadsLoaded && txLoaded
-  if (!allLoaded) return <ListSkeleton />
+  // ── Hook Safety: Ensure all hooks are called before any early returns ──────
 
-  // ── Filtered Data ──────────────────────────────────────────────────────────
+  const filteredOrders = useMemo(() => orders.filter(o => isInRange(o.orderDate, range)), [orders, range])
+  const filteredQuotes = useMemo(() => quotes.filter(q => isInRange(q.date, range)), [quotes, range])
+  const filteredDeals = useMemo(() => deals.filter(d => isInRange(d.createdAt, range)), [deals, range])
+  const filteredTransactions = useMemo(() => transactions.filter(t => isInRange(t.createdAt, range)), [transactions, range])
 
-  const filteredOrders = orders.filter(o => isInRange(o.orderDate, range))
-  const filteredQuotes = quotes.filter(q => isInRange(q.date, range))
-  const filteredDeals = deals.filter(d => isInRange(d.createdAt, range))
-  const filteredTransactions = transactions.filter(t => isInRange(t.createdAt, range))
-
-  // ── KPI Calculations ───────────────────────────────────────────────────────
-
-  const deliveredRevenue = filteredOrders
+  // KPI Calculations (Wrapped in useMemo for consistency)
+  const deliveredRevenue = useMemo(() => filteredOrders
     .filter(o => o.status === "delivered")
-    .reduce((sum, o) => sum + o.totalValue, 0)
+    .reduce((sum, o) => sum + o.totalValue, 0), [filteredOrders])
 
-  const prevRange = (() => {
+  const prevRange = useMemo(() => {
     const diff = range.end.getTime() - range.start.getTime()
     return { start: new Date(range.start.getTime() - diff), end: new Date(range.start.getTime() - 1) }
-  })()
-  const prevRevenue = orders
+  }, [range])
+
+  const prevRevenue = useMemo(() => orders
     .filter(o => o.status === "delivered" && isInRange(o.orderDate, prevRange))
-    .reduce((sum, o) => sum + o.totalValue, 0)
-  const revenueChange = prevRevenue > 0 ? ((deliveredRevenue - prevRevenue) / prevRevenue) * 100 : 0
+    .reduce((sum, o) => sum + o.totalValue, 0), [orders, prevRange])
 
-  const pipelineValue = deals
+  const revenueChange = useMemo(() => prevRevenue > 0 ? ((deliveredRevenue - prevRevenue) / prevRevenue) * 100 : 0, [deliveredRevenue, prevRevenue])
+
+  const pipelineValue = useMemo(() => deals
     .filter(d => !["won", "lost"].includes(d.stage))
-    .reduce((sum, d) => sum + d.value, 0)
+    .reduce((sum, d) => sum + d.value, 0), [deals])
 
-  const wonDeals = deals.filter(d => d.stage === "won")
-  const lostDeals = deals.filter(d => d.stage === "lost")
-  const winRate = (wonDeals.length + lostDeals.length) > 0
+  const wonDeals = useMemo(() => deals.filter(d => d.stage === "won"), [deals])
+  const lostDeals = useMemo(() => deals.filter(d => d.stage === "lost"), [deals])
+  const winRate = useMemo(() => (wonDeals.length + lostDeals.length) > 0
     ? (wonDeals.length / (wonDeals.length + lostDeals.length)) * 100
-    : 0
+    : 0, [wonDeals, lostDeals])
 
-  // Inventory Turnover Calculation
-  // Turnover = COGS / Average Inventory
-  const cogs = filteredTransactions
+  const cogs = useMemo(() => filteredTransactions
     .filter(t => t.type === 'shipment')
-    .reduce((sum, t) => sum + (t.totalCost || 0), 0)
+    .reduce((sum, t) => sum + (t.totalCost || 0), 0), [filteredTransactions])
 
-  const totalStockValue = inventory.reduce((sum, i) => sum + (i.stockQuantity * (i.movingAverageCost || i.price)), 0)
-  const inventoryTurnover = totalStockValue > 0 ? (cogs / totalStockValue) : 0
+  const totalStockValue = useMemo(() => inventory.reduce((sum, i) => sum + (i.stockQuantity * (i.movingAverageCost || i.price)), 0), [inventory])
+  const inventoryTurnover = useMemo(() => totalStockValue > 0 ? (cogs / totalStockValue) : 0, [cogs, totalStockValue])
 
-  // ── Chart Data ─────────────────────────────────────────────────────────────
-
-  // Revenue by month
+  // Chart Data useMemo hooks
   const revenueByMonth = useMemo(() => {
     const map = new Map<string, { revenue: number; quotes: number; month: string }>()
     filteredOrders
@@ -166,7 +158,6 @@ export function Reports() {
     })
   }, [filteredOrders, filteredQuotes])
 
-  // Top 5 Products by Sales Volume
   const topProducts = useMemo(() => {
     const productMap = new Map<string, { name: string; quantity: number; revenue: number }>()
     filteredOrders.forEach(order => {
@@ -182,12 +173,10 @@ export function Reports() {
       .slice(0, 5)
   }, [filteredOrders])
 
-  // Revenue by Category
   const revenueByCategory = useMemo(() => {
     const catMap = new Map<string, number>()
     filteredOrders.forEach(order => {
       order.items.forEach(item => {
-        // Find category from inventory
         const invItem = inventory.find(i => i.name === item.name || i.id === item.inventoryItemId)
         const category = invItem?.category || "Uncategorized"
         catMap.set(category, (catMap.get(category) || 0) + (item.quantity * item.price))
@@ -196,7 +185,6 @@ export function Reports() {
     return Array.from(catMap.entries()).map(([name, value]) => ({ name, value }))
   }, [filteredOrders, inventory])
 
-  // Top Customers by Revenue
   const topCustomers = useMemo(() => {
     const custMap = new Map<string, number>()
     filteredOrders.forEach(order => {
@@ -208,7 +196,6 @@ export function Reports() {
       .slice(0, 5)
   }, [filteredOrders])
 
-  // Deals by stage (Funnel)
   const dealsByStage = useMemo(() => {
     const stages = ["discovery", "proposal", "negotiation", "won", "lost"]
     return stages.map(stage => ({
@@ -217,6 +204,11 @@ export function Reports() {
       value: deals.filter(d => d.stage === stage).reduce((sum, d) => sum + d.value, 0),
     }))
   }, [deals])
+
+  // ── Early Return (AFTER all hooks) ──────────────────────────────────────────
+
+  const allLoaded = ordersLoaded && quotesLoaded && dealsLoaded && invLoaded && contactsLoaded && leadsLoaded && txLoaded
+  if (!allLoaded) return <ListSkeleton />
 
   const selectedPeriodLabel = PERIOD_OPTIONS.find(p => p.value === period)?.label || "Last 6 Months"
 
@@ -464,7 +456,7 @@ export function Reports() {
                 <div className="w-full bg-slate-200 dark:bg-slate-700 h-1 rounded-full mt-4 overflow-hidden">
                   <div
                     className="bg-accent h-full rounded-full"
-                    style={{ width: `${(customer.revenue / topCustomers[0].revenue) * 100}%` }}
+                    style={{ width: `${(customer.revenue / (topCustomers[0]?.revenue || 1)) * 100}%` }}
                   />
                 </div>
               </div>
@@ -476,4 +468,3 @@ export function Reports() {
     </div>
   )
 }
-

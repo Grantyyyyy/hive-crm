@@ -119,7 +119,7 @@ export function Pagination({
                 className={cn(
                   "h-8 w-8 rounded-md text-[11px] font-black transition-all",
                   currentPage === page 
-                    ? "bg-teal-600 text-white shadow-lg shadow-teal-500/20" 
+                    ? "bg-accent text-white shadow-lg shadow-accent/20" 
                     : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
                 )}
                 onClick={() => onPageChange(page as number)}

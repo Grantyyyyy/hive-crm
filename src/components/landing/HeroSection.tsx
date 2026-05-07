@@ -67,7 +67,7 @@ export function HeroSection({ theme }: HeroSectionProps) {
                     {[1, 2, 3, 4, 5].map((i) => (
                       <div
                         key={i}
-                        className="w-1 rounded-full bg-accent transition-all duration-300 group-hover:bg-teal-500"
+                        className="w-1 rounded-full bg-accent transition-all duration-300 group-hover:bg-accent"
                         style={{
                           height: `${20 + Math.random() * 80}%`,
                           animation: `grow-shrink ${1 + i * 0.2}s ease-in-out infinite alternate`

@@ -16,7 +16,7 @@ interface ProjectFormProps {
 }
 
 const PRESET_COLORS = [
-  { value: "#0d9488", bg: "bg-teal-600" },
+  { value: "var(--accent-hex, #0d9488)", bg: "bg-accent" },
   { value: "#8b5cf6", bg: "bg-violet-500" },
   { value: "#ec4899", bg: "bg-pink-500" },
   { value: "#ef4444", bg: "bg-red-500" },

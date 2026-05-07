@@ -102,7 +102,7 @@ export function StockAdjustmentModal({
               </div>
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Reserved</p>
-                <p className="text-lg font-bold text-teal-600 dark:text-teal-400">{reserved}</p>
+                <p className="text-lg font-bold text-accent">{reserved}</p>
               </div>
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Available</p>
@@ -123,7 +123,7 @@ export function StockAdjustmentModal({
                 value={newQuantity}
                 onChange={(e) => setNewQuantity(e.target.value)}
                 disabled={isAdjusting}
-                className="h-11 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600"
+                className="h-11 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-sm font-medium focus:ring-4 focus:ring-accent/20 focus:border-accent"
               />
               {parseInt(newQuantity, 10) < reserved && (
                 <p className="text-[10px] font-bold text-rose-600 uppercase tracking-wider">
@@ -142,7 +142,7 @@ export function StockAdjustmentModal({
                 onChange={(e) => setReason(e.target.value)}
                 placeholder="e.g. Cycle count adjustment, damaged goods, found extra stock..."
                 disabled={isAdjusting}
-                className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 min-h-[80px] text-sm p-3 focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600"
+                className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 min-h-[80px] text-sm p-3 focus:ring-4 focus:ring-accent/20 focus:border-accent"
               />
             </div>
           </div>
@@ -158,7 +158,7 @@ export function StockAdjustmentModal({
               Cancel
             </Button>
             <Button
-              className="h-10 px-5 rounded-full text-sm font-semibold bg-teal-700 hover:bg-teal-800 text-white shadow-md transition-all"
+              className="h-10 px-5 rounded-full text-sm font-semibold bg-accent hover:opacity-90 text-white shadow-md transition-all"
               onClick={handleConfirm}
               disabled={isAdjusting || !reason.trim() || parseInt(newQuantity, 10) < reserved}
             >

@@ -329,8 +329,8 @@ export function Design() {
       {/* Info */}
       <div className="bg-slate-100 dark:bg-slate-800 rounded-md p-6 text-center">
         <p className="text-slate-600 dark:text-slate-400 text-sm">
-          <strong className="text-slate-900 dark:text-white">Recommendation:</strong> Teal provides a fresh, modern look for CRM systems.
-          It conveys growth, balance, and professionalism while standing out from typical blue business software.
+          <strong className="text-slate-900 dark:text-white">Standardization:</strong> The Enterprise Suite now utilizes a dynamic branding system. 
+          The <span className="text-accent font-bold">Accent Color</span> defined in your theme provides a consistent, professional look across all primary UI elements while preserving semantic status colors.
         </p>
       </div>
 

@@ -42,7 +42,7 @@ export function TagSelector({ taskId, selectedTagIds, onChange }: TagSelectorPro
 
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [newTagName, setNewTagName] = useState("")
-  const [selectedColor, setSelectedColor] = useState("#6366f1")
+  const [selectedColor, setSelectedColor] = useState("var(--accent-hex, #6366f1)")
   const [isCreating, setIsCreating] = useState(false)
   const [linkMap, setLinkMap] = useState<Record<string, string>>({})
 

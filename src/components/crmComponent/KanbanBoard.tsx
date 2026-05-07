@@ -99,29 +99,12 @@ function SortableTaskCard({ task, onEdit, onStatusChange, tags, isDragging }: So
       {...listeners}
       onClick={handleClick}
       className={cn(
-        "group relative bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all cursor-pointer hover:border-teal-600/30",
-        isDragging && "z-50 shadow-xl ring-2 ring-teal-500 border-transparent rotate-1",
-        isCompleted && "opacity-75 border-emerald-100 dark:border-emerald-900/50 hover:border-emerald-500",
+        "group relative bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all",
+        "hover:shadow-xl hover:shadow-accent/5 hover:border-accent/30 cursor-grab active:cursor-grabbing",
+        isDragging && "opacity-0",
+        isCompleted && "bg-emerald-50/10 dark:bg-emerald-900/5"
       )}
     >
-      {/* Priority Badge */}
-      <div className="flex items-center justify-between mb-3">
-        <span className={cn(
-          "inline-flex items-center gap-1.5 px-2 py-1 rounded text-[10px] uppercase font-black tracking-widest",
-          getPriorityColor(task.priority)
-        )}>
-          <span className={cn("w-1.5 h-1.5 rounded-full", getPriorityDotColor(task.priority))} />
-          {task.priority}
-        </span>
-
-        <button
-          onClick={(e) => onStatusChange(e, task, nextStatus as Task['status'])}
-          className="opacity-0 group-hover:opacity-100 text-xs font-bold text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 transition-all flex items-center gap-1"
-        >
-          {nextStatusLabel}
-          {nextStatus === 'completed' && <CheckCircle2 className="w-3.5 h-3.5" />}
-        </button>
-      </div>
 
       {/* Task Title */}
       <h4 className={cn(
@@ -151,7 +134,7 @@ function SortableTaskCard({ task, onEdit, onStatusChange, tags, isDragging }: So
 
       {/* Recurrence Indicator */}
       {task.recurrencePattern && (
-        <div className="flex items-center gap-1 text-[10px] text-teal-600 dark:text-teal-400 mb-3">
+        <div className="flex items-center gap-1 text-[10px] text-accent mb-3">
           <Repeat2 className="w-3 h-3" />
           <span>Repeats {task.recurrencePattern}</span>
         </div>
@@ -198,7 +181,7 @@ function DroppableColumn({
         ref={setNodeRef}
         className={cn(
           "flex-1 flex flex-col gap-3 min-h-[500px] p-2 rounded-md border-2 border-dashed transition-colors",
-          "border-slate-200 dark:border-slate-800/50 hover:border-teal-200 dark:hover:border-teal-900/50"
+          "border-slate-200 dark:border-slate-800/50 hover:border-accent/30"
         )}
       >
         {children}

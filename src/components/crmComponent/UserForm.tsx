@@ -72,7 +72,7 @@ export function UserForm({
         {!isEditing && (
           <div className="flex items-center justify-between p-4 bg-slate-100 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
             <div className="flex items-center gap-3">
-              <div className="w-1 h-8 bg-teal-500 rounded-full" />
+              <div className="w-1 h-8 bg-accent rounded-full" />
               <div>
                 <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Creation Mode</h3>
                 <p className="text-[10px] font-medium text-slate-400">Choose how to add this member</p>
@@ -85,7 +85,7 @@ export function UserForm({
                 className={cn(
                   "px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
                   inviteMode 
-                    ? "bg-teal-600 text-white shadow-md shadow-teal-600/20" 
+                    ? "bg-accent text-white shadow-md shadow-accent/20" 
                     : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                 )}
               >
@@ -97,7 +97,7 @@ export function UserForm({
                 className={cn(
                   "px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
                   !inviteMode 
-                    ? "bg-teal-600 text-white shadow-md shadow-teal-600/20" 
+                    ? "bg-accent text-white shadow-md shadow-accent/20" 
                     : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                 )}
               >
@@ -127,7 +127,7 @@ export function UserForm({
         {/* Identity Section */}
         <section className="space-y-6 bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md">
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-1 h-3.5 bg-teal-600 rounded-full" />
+            <div className="w-1 h-3.5 bg-accent rounded-full" />
             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Identity & Contact</h3>
           </div>
 
@@ -142,7 +142,7 @@ export function UserForm({
                   disabled={isEditing}
                   placeholder="e.g. Alexander Pierce"
                   className={cn(
-                    "h-12 pl-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10",
+                    "h-12 pl-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10",
                     errors.name && "border-red-500 ring-4 ring-red-500/10",
                     isEditing && "opacity-75 bg-slate-50 cursor-not-allowed"
                   )}
@@ -162,7 +162,7 @@ export function UserForm({
                   disabled={isEditing}
                   placeholder="alexander@company.com"
                   className={cn(
-                    "h-12 pl-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10",
+                    "h-12 pl-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10",
                     errors.email && "border-red-500 ring-4 ring-red-500/10",
                     isEditing && "opacity-75 bg-slate-50 cursor-not-allowed"
                   )}
@@ -183,12 +183,12 @@ export function UserForm({
           <div className="space-y-1.5">
             <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Assigned Role</Label>
             <div className="relative group">
-              <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-teal-600 transition-colors" />
+              <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-accent transition-colors" />
               <select
                 value={roleId}
                 onChange={(e) => setRoleId(e.target.value)}
                 required
-                className="w-full h-12 pl-11 pr-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-teal-500/10 transition-all shadow-sm"
+                className="w-full h-12 pl-11 pr-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
               >
                 <option value="">Select a role...</option>
                 {availableRoles.map((role) => (

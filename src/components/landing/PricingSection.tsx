@@ -74,7 +74,7 @@ export function PricingSection({ theme }: PricingSectionProps) {
 
         {/* Header */}
         <div className="text-center mb-14 space-y-3">
-          <p className={`text-[10px] font-black uppercase tracking-[0.3em] ${isDark ? "text-teal-500" : "text-teal-600"}`}>
+          <p className={`text-[10px] font-black uppercase tracking-[0.3em] ${isDark ? "text-accent" : "text-accent"}`}>
             Pricing
           </p>
           <h2 className={`text-4xl lg:text-5xl font-bold tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>
@@ -94,8 +94,8 @@ export function PricingSection({ theme }: PricingSectionProps) {
                 key={plan.name}
                 className={`group relative flex flex-col rounded-3xl border transition-all duration-300 hover:translate-y-[-4px] ${plan.highlight
                     ? isDark
-                      ? "bg-slate-900 border-teal-500/30 shadow-2xl shadow-teal-500/10"
-                      : "bg-white border-teal-600/20 shadow-2xl shadow-teal-600/10"
+                      ? "bg-slate-900 border-accent/30 shadow-2xl shadow-accent/10"
+                      : "bg-white border-accent/20 shadow-2xl shadow-accent/10"
                     : isDark
                       ? "bg-slate-900/40 border-slate-800 hover:border-slate-700"
                       : "bg-white border-slate-200 shadow-sm hover:shadow-md"
@@ -104,7 +104,7 @@ export function PricingSection({ theme }: PricingSectionProps) {
                 {/* Most Popular badge — Absolute for alignment consistency */}
                 {plan.highlight && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
-                    <span className="px-4 py-1.5 bg-teal-600 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full shadow-lg shadow-teal-600/20">
+                    <span className="px-4 py-1.5 bg-accent text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full shadow-lg shadow-accent/20">
                       Most Popular
                     </span>
                   </div>
@@ -114,12 +114,12 @@ export function PricingSection({ theme }: PricingSectionProps) {
                   {/* Header Section with Icon */}
                   <div className="mb-8">
                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110 duration-300 ${plan.highlight
-                        ? "bg-teal-600 text-white shadow-lg shadow-teal-600/20"
+                        ? "bg-accent text-white shadow-lg shadow-accent/20"
                         : isDark ? "bg-slate-800 text-slate-300" : "bg-slate-100 text-slate-600"
                       }`}>
                       <Icon className="w-6 h-6" />
                     </div>
-                    <p className={`text-[10px] font-black uppercase tracking-[0.25em] mb-2 ${isDark ? "text-teal-500/80" : "text-teal-600"}`}>
+                    <p className={`text-[10px] font-black uppercase tracking-[0.25em] mb-2 ${isDark ? "text-accent/80" : "text-accent"}`}>
                       {plan.tagline}
                     </p>
                     <h3 className={`text-3xl font-bold tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>
@@ -161,10 +161,10 @@ export function PricingSection({ theme }: PricingSectionProps) {
                     {plan.features.map((f) => (
                       <li key={f} className="flex items-start gap-3">
                         <div className={`mt-0.5 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${plan.highlight
-                            ? isDark ? "bg-teal-900/30" : "bg-teal-50"
+                            ? "bg-accent-dim"
                             : isDark ? "bg-slate-800/50" : "bg-slate-100"
                           }`}>
-                          <Check className={`w-3 h-3 ${plan.highlight ? "text-teal-500" : isDark ? "text-slate-500" : "text-slate-400"
+                          <Check className={`w-3 h-3 ${plan.highlight ? "text-accent" : isDark ? "text-slate-500" : "text-slate-400"
                             }`} />
                         </div>
                         <span className={`text-sm leading-tight ${isDark ? "text-slate-300" : "text-slate-600"}`}>
@@ -178,7 +178,7 @@ export function PricingSection({ theme }: PricingSectionProps) {
                   <Link href={plan.ctaHref}>
                     <button
                       className={`w-full py-4 text-xs font-bold uppercase tracking-widest rounded-2xl transition-all duration-300 active:scale-95 ${plan.highlight
-                          ? "bg-teal-600 hover:bg-teal-500 text-white shadow-lg shadow-teal-600/20"
+                          ? "bg-accent hover:opacity-90 text-white shadow-lg shadow-accent/20"
                           : isDark
                             ? "bg-slate-800 text-slate-100 hover:bg-slate-700"
                             : "bg-slate-100 text-slate-900 hover:bg-slate-200"

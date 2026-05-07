@@ -559,7 +559,7 @@ export function SalesOrderDetail() {
                           <div className={cn(
                             "size-10 rounded-full flex items-center justify-center transition-all shrink-0",
                             done
-                              ? "bg-accent text-white shadow-lg shadow-accent/20 dark:shadow-none"
+                              ? "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 shadow-lg shadow-teal-500/20 dark:shadow-none"
                               : "bg-slate-100 dark:bg-slate-800 text-slate-400"
                           )}>
                             <Icon className="w-5 h-5" />
@@ -632,7 +632,7 @@ export function SalesOrderDetail() {
                               </span>
                             )}
                             {reserved > 0 && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tight bg-accent-dim text-accent border border-accent/10">
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tight bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 border border-teal-100 dark:border-teal-800">
                                 {reserved} Reserved
                               </span>
                             )}

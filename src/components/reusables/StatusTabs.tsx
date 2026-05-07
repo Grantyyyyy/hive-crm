@@ -31,7 +31,7 @@ export function StatusTabs<T extends string>({
         className={cn(
           'h-8 px-5 rounded-md text-xs font-bold transition-all whitespace-nowrap',
           value === 'all'
-            ? 'bg-teal-600 text-white shadow-md hover:bg-teal-700'
+            ? 'bg-accent text-white shadow-md hover:opacity-90'
             : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
         )}
       >
@@ -44,7 +44,7 @@ export function StatusTabs<T extends string>({
           className={cn(
             'h-8 px-5 rounded-md text-xs font-bold transition-all whitespace-nowrap',
             value === tab.value
-              ? 'bg-teal-600 text-white shadow-md hover:bg-teal-700'
+              ? 'bg-accent text-white shadow-md hover:opacity-90'
               : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
           )}
         >

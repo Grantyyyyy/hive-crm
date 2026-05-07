@@ -17,14 +17,14 @@ const colorMap = {
   accent: {
     border: 'border-l-accent',
     hoverShadow: 'hover:shadow-accent/5',
-    iconBg: 'bg-accent-dim',
+    iconBg: 'bg-accent/10',
     iconColor: 'text-accent',
   },
   teal: {
-    border: 'border-l-teal-600',
-    hoverShadow: 'hover:shadow-teal-600/5',
-    iconBg: 'bg-teal-600/10',
-    iconColor: 'text-teal-600',
+    border: 'border-l-accent',
+    hoverShadow: 'hover:shadow-accent/5',
+    iconBg: 'bg-accent/10',
+    iconColor: 'text-accent',
   },
   emerald: {
     border: 'border-l-emerald-500',
@@ -60,7 +60,7 @@ const colorMap = {
 
 const badgeColorMap = {
   accent: 'bg-accent-dim text-accent',
-  teal: 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400',
+  teal: 'bg-accent-dim text-accent',
   emerald: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400',
   amber: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400',
   rose: 'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400',

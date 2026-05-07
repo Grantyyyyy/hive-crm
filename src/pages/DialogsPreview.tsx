@@ -13,7 +13,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 
-type ModalVariant = 'teal' | 'amber' | 'warning' | 'info' | 'success' | 'primary';
+type ModalVariant = 'accent' | 'teal' | 'amber' | 'warning' | 'info' | 'success' | 'primary';
 
 interface DialogCard {
   id: string;
@@ -35,16 +35,16 @@ const DIALOG_CARDS: DialogCard[] = [
   {
     id: 'publish',
     icon: <Cloud className="w-5 h-5" />,
-    iconBg: 'bg-teal-50 dark:bg-teal-900/20',
-    iconColor: 'text-teal-600 dark:text-teal-400',
-    accentDot: 'bg-teal-500',
+    iconBg: 'bg-accent-dim',
+    iconColor: 'text-accent',
+    accentDot: 'bg-accent',
     label: 'Deployment',
     title: 'Confirm Publication',
     description: 'Push content to the live environment. This will update all public endpoints instantly.',
     confirmLabel: 'Confirm',
     cancelLabel: 'Cancel',
-    variant: 'teal',
-    buttonClass: 'bg-teal-600 hover:bg-teal-700 shadow-teal-200 dark:shadow-none',
+    variant: 'accent',
+    buttonClass: 'bg-accent hover:opacity-90 shadow-accent/20 dark:shadow-none',
     type: 'confirm',
   },
   {
@@ -125,16 +125,16 @@ const DIALOG_CARDS: DialogCard[] = [
   {
     id: 'upgrade',
     icon: <Sparkles className="w-5 h-5" />,
-    iconBg: 'bg-teal-50 dark:bg-teal-900/20',
-    iconColor: 'text-teal-600 dark:text-teal-400',
-    accentDot: 'bg-teal-500',
+    iconBg: 'bg-accent-dim',
+    iconColor: 'text-accent',
+    accentDot: 'bg-accent',
     label: 'Upgrade',
     title: 'Upgrade Your Plan',
     description: 'Unlock advanced features, unlimited API calls, and priority support by upgrading your plan.',
     confirmLabel: 'Upgrade Now',
     cancelLabel: 'Maybe Later',
-    variant: 'primary',
-    buttonClass: 'bg-teal-600 hover:bg-teal-700 shadow-teal-200 dark:shadow-none',
+    variant: 'accent',
+    buttonClass: 'bg-accent hover:opacity-90 shadow-accent/20 dark:shadow-none',
     type: 'confirm',
   },
   {
@@ -191,7 +191,7 @@ export function DialogsPreview() {
             {DIALOG_CARDS.map((card) => (
               <div
                 key={card.id}
-                className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors cursor-default border-l-4 border-transparent hover:border-teal-600"
+                className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors cursor-default border-l-4 border-transparent hover:border-accent"
               >
                 {/* Icon */}
                 <div className={`shrink-0 w-7 h-7 rounded-lg flex items-center justify-center ${card.iconBg} ${card.iconColor}`}>
@@ -203,13 +203,13 @@ export function DialogsPreview() {
                   <span
                     className={`
                       shrink-0 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest
-                      ${card.id === 'publish' ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400' : ''}
+                      ${card.id === 'publish' ? 'bg-accent-dim text-accent' : ''}
                       ${card.id === 'discard' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400' : ''}
                       ${card.id === 'delete' ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400' : ''}
                       ${card.id === 'warning' ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400' : ''}
                       ${card.id === 'info' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400' : ''}
                       ${card.id === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' : ''}
-                      ${card.id === 'upgrade' ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400' : ''}
+                      ${card.id === 'upgrade' ? 'bg-accent-dim text-accent' : ''}
                       ${card.id === 'feature' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400' : ''}
                     `}
                   >
@@ -249,7 +249,7 @@ export function DialogsPreview() {
         title="Confirm Publication"
         description="Push content to the live environment. This will update all public endpoints instantly."
         confirmLabel="Confirm"
-        variant="teal"
+        variant="accent"
         onConfirm={close}
       />
 
@@ -314,7 +314,7 @@ export function DialogsPreview() {
         description="Unlock advanced features, unlimited API calls, and priority support by upgrading your plan."
         confirmLabel="Upgrade Now"
         cancelLabel="Maybe Later"
-        variant="primary"
+        variant="accent"
         onConfirm={close}
       />
 

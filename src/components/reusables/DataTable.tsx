@@ -79,7 +79,7 @@ export function DataTable<T extends { id: string | number }>({
               <tr>
                 <td colSpan={columns.length} className="px-6 py-20 text-center">
                   <div className="flex flex-col items-center gap-3">
-                    <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
+                    <Loader2 className="w-8 h-8 animate-spin text-accent" />
                     <p className="text-slate-500 font-medium">Loading data...</p>
                   </div>
                 </td>
@@ -112,7 +112,7 @@ export function DataTable<T extends { id: string | number }>({
                     item={item}
                     onClick={() => onRowClick?.(item)}
                     className={cn(
-                      "hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-all group border-l-2 border-l-transparent hover:border-l-teal-500 relative z-0 hover:z-10",
+                      "hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-all group border-l-2 border-l-transparent hover:border-l-accent relative z-0 hover:z-10",
                       onRowClick && "cursor-pointer",
                       rowClassName
                     )}

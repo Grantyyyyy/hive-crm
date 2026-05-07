@@ -16,7 +16,7 @@ export interface SuccessModalProps {
   secondaryLabel?: string
   onPrimary: () => void
   onSecondary?: () => void
-  accentColor?: 'emerald' | 'green' | 'teal'
+  accentColor?: 'emerald' | 'green' | 'teal' | 'accent'
 }
 
 export function SuccessModal({
@@ -29,7 +29,7 @@ export function SuccessModal({
   secondaryLabel,
   onPrimary,
   onSecondary,
-  accentColor = 'emerald',
+  accentColor = 'accent',
 }: SuccessModalProps) {
   const [animate, setAnimate] = useState(false)
 
@@ -57,11 +57,18 @@ export function SuccessModal({
       button: 'bg-green-600 hover:bg-green-700 shadow-green-500/25',
     },
     teal: {
-      ring: 'ring-teal-500/20',
-      bg: 'bg-teal-500',
-      shadow: 'shadow-teal-500/30',
-      text: 'text-teal-600 dark:text-teal-400',
-      button: 'bg-teal-600 hover:bg-teal-700 shadow-teal-500/25',
+      ring: 'ring-accent/20',
+      bg: 'bg-accent',
+      shadow: 'shadow-accent/30',
+      text: 'text-accent',
+      button: 'bg-accent hover:opacity-90 shadow-accent/25',
+    },
+    accent: {
+      ring: 'ring-accent/20',
+      bg: 'bg-accent',
+      shadow: 'shadow-accent/30',
+      text: 'text-accent',
+      button: 'bg-accent hover:opacity-90 shadow-accent/25',
     },
   }
 

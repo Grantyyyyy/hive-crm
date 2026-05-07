@@ -16,7 +16,7 @@ export interface ConfirmModalProps {
   confirmClassName?: string
   onConfirm: () => void
   loading?: boolean
-  variant?: 'teal' | 'amber' | 'warning' | 'info' | 'success' | 'primary'
+  variant?: 'accent' | 'teal' | 'amber' | 'warning' | 'info' | 'success' | 'primary'
 }
 
 export function ConfirmModal({
@@ -29,7 +29,7 @@ export function ConfirmModal({
   confirmClassName,
   onConfirm,
   loading = false,
-  variant = 'teal'
+  variant = 'accent'
 }: ConfirmModalProps) {
   const handleConfirm = () => {
     if (loading) return
@@ -72,19 +72,27 @@ export function ConfirmModal({
         }
       case 'primary':
         return {
-          iconBg: 'bg-teal-50 dark:bg-teal-950/30',
-          iconColor: 'text-teal-600 dark:text-teal-500',
-          dotColor: 'bg-teal-600',
+          iconBg: 'bg-accent-dim',
+          iconColor: 'text-accent',
+          dotColor: 'bg-accent',
           icon: Sparkles,
-          buttonClass: 'bg-teal-600 hover:bg-teal-700 shadow-teal-500/20 text-white',
+          buttonClass: 'bg-accent hover:opacity-90 shadow-accent/20 text-white',
         }
-      default: // teal
+      case 'accent':
         return {
-          iconBg: 'bg-teal-50 dark:bg-teal-950/30',
-          iconColor: 'text-teal-600 dark:text-teal-400',
-          dotColor: 'bg-teal-600',
+          iconBg: 'bg-accent-dim',
+          iconColor: 'text-accent',
+          dotColor: 'bg-accent',
           icon: Cloud,
-          buttonClass: 'bg-teal-800 hover:bg-teal-900 shadow-teal-500/20 text-white',
+          buttonClass: 'bg-accent hover:opacity-90 shadow-accent/20 text-white',
+        }
+      default: // accent
+        return {
+          iconBg: 'bg-accent-dim',
+          iconColor: 'text-accent',
+          dotColor: 'bg-accent',
+          icon: Cloud,
+          buttonClass: 'bg-accent hover:opacity-90 shadow-accent/20 text-white',
         }
     }
   }

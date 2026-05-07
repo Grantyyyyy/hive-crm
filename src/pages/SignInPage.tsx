@@ -60,7 +60,7 @@ export function SignInPage() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@company.com"
             required
-            className="w-full px-4 py-3 border border-border rounded-xl text-sm bg-bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 transition-all"
+            className="w-full px-4 py-3 border border-border rounded-xl text-sm bg-bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-4 focus:ring-accent/20 focus:border-accent transition-all"
           />
         </div>
 
@@ -71,7 +71,7 @@ export function SignInPage() {
             </label>
             <button
               type="button"
-              className="text-xs font-semibold text-teal-600 hover:text-teal-700 transition-colors"
+              className="text-xs font-semibold text-accent hover:opacity-80 transition-colors"
             >
               Forgot password?
             </button>
@@ -82,14 +82,14 @@ export function SignInPage() {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
             required
-            className="w-full px-4 py-3 border border-border rounded-xl text-sm bg-bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 transition-all"
+            className="w-full px-4 py-3 border border-border rounded-xl text-sm bg-bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-4 focus:ring-accent/20 focus:border-accent transition-all"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full mt-2 px-5 py-3 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-teal-600/20 transition-colors flex items-center justify-center gap-2"
+          className="w-full mt-2 px-5 py-3 bg-accent hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-accent/20 transition-all flex items-center justify-center gap-2"
         >
           {loading ? (
             <>
@@ -115,7 +115,7 @@ export function SignInPage() {
       {/* Sign up link */}
       <p className="text-center text-sm text-text-secondary font-medium">
         Don't have an account?{" "}
-        <Link href="/sign-up" className="text-teal-600 hover:text-teal-700 font-semibold transition-colors">
+        <Link href="/sign-up" className="text-accent hover:opacity-80 font-semibold transition-colors">
           Request access
         </Link>
       </p>

@@ -319,17 +319,8 @@ export function QuoteForm({ onSave, onCancel, contacts, inventory, initialData, 
                                 <div className="text-[10px] font-bold text-slate-400 mt-0.5 tracking-tight line-clamp-1">{item.sku} • {item.description}</div>
                               </div>
                               <div className="text-right shrink-0 flex flex-col items-end gap-1">
-                                <div className="text-[13px] font-black text-slate-900 dark:text-white">
-                                  {formatCurrency(item.price)}
-                                </div>
-                                <div className={cn(
-                                  "text-[9px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded-md",
-                                  (item.stockQuantity - item.reservedQuantity) > 0 
-                                    ? "bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400" 
-                                    : "bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
-                                )}>
-                                  {item.stockQuantity - item.reservedQuantity} Avail
-                                </div>
+                                <div className="text-[13px] font-black text-slate-900 dark:text-white">{formatCurrency(item.price)}</div>
+                                <div className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded">In Stock</div>
                               </div>
                             </button>
                           ))}

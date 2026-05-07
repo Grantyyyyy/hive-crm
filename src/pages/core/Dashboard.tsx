@@ -144,10 +144,10 @@ export function Dashboard() {
           <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="grid lg:grid-cols-[1.45fr_0.95fr]">
               <div className="relative px-6 py-8 md:px-10 md:py-12">
-                <div className="absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top_left,_rgba(13,148,136,0.16),_transparent_58%)] dark:bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.14),_transparent_58%)]" />
+                <div className="absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top_left,_var(--accent-dim),_transparent_58%)]" />
                 <div className="relative space-y-8">
                   <div className="space-y-4">
-                    <div className="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-teal-700 dark:border-teal-900/60 dark:bg-teal-950/40 dark:text-teal-300">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent-dim px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-accent">
                       <Sparkles className="w-3.5 h-3.5" />
                       Workspace Ready
                     </div>
@@ -217,7 +217,7 @@ export function Dashboard() {
 
                   <div className="space-y-5">
                     <div className="flex items-start gap-4">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-teal-600/10 text-teal-600 dark:bg-teal-500/10 dark:text-teal-300">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent/10 text-accent">
                         <Briefcase className="w-5 h-5" />
                       </div>
                       <div className="space-y-1">
@@ -282,7 +282,7 @@ export function Dashboard() {
         {/* Title Section */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">System Overview</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-1">System Overview</p>
             <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Dashboard</h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Welcome back. Here's what's happening today.</p>
           </div>
@@ -291,10 +291,10 @@ export function Dashboard() {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Revenue Card */}
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm border-l-4 border-l-teal-600 transition-all hover:shadow-xl hover:shadow-teal-600/5 group">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm border-l-4 border-l-accent transition-all hover:shadow-xl hover:shadow-accent/5 group">
             <div className="flex items-center justify-between mb-6">
-              <div className="w-10 h-10 bg-teal-600/10 rounded flex items-center justify-center transition-transform group-hover:scale-110">
-                <CreditCard className="w-5 h-5 text-teal-600" />
+              <div className="w-10 h-10 bg-accent/10 rounded flex items-center justify-center transition-transform group-hover:scale-110">
+                <CreditCard className="w-5 h-5 text-accent" />
               </div>
               <div className="px-2 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-[10px] font-black rounded uppercase tracking-wider shadow-sm">
                 +12.5%
@@ -342,10 +342,10 @@ export function Dashboard() {
 
           {/* Tickets Card */}
           <Link href="/in-progress" className="block transform transition-all active:scale-95 group">
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm border-l-4 border-l-teal-600 transition-all hover:shadow-xl hover:shadow-teal-600/10 h-full">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm border-l-4 border-l-accent transition-all hover:shadow-xl hover:shadow-accent/10 h-full">
               <div className="flex items-center justify-between mb-6">
-                <div className="w-10 h-10 bg-teal-600/10 rounded flex items-center justify-center transition-transform group-hover:scale-110">
-                  <Ticket className="w-5 h-5 text-teal-600" />
+                <div className="w-10 h-10 bg-accent/10 rounded flex items-center justify-center transition-transform group-hover:scale-110">
+                  <Ticket className="w-5 h-5 text-accent" />
                 </div>
                 <div className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-black rounded uppercase tracking-wider shadow-sm">
                   Active Support
@@ -376,8 +376,8 @@ export function Dashboard() {
               <svg className="w-full h-full overflow-visible" viewBox="0 0 800 240">
                 <defs>
                   <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#0D9488" stopOpacity="0.15" />
-                    <stop offset="100%" stopColor="#0D9488" stopOpacity="0" />
+                    <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.15" />
+                    <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
                   </linearGradient>
                 </defs>
                 {/* Horizontal Grid Lines */}
@@ -393,15 +393,15 @@ export function Dashboard() {
                 <path
                   d="M0,200 C100,190 150,150 200,160 S300,200 400,180 S500,80 600,60 S750,150 800,100"
                   fill="none"
-                  stroke="#0D9488"
+                  stroke="var(--accent)"
                   strokeWidth="3"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
                 {/* Activity Dots */}
-                <circle cx="200" cy="160" r="4" fill="var(--bg-surface)" stroke="#0D9488" strokeWidth="2" />
-                <circle cx="400" cy="180" r="4" fill="var(--bg-surface)" stroke="#0D9488" strokeWidth="2" />
-                <circle cx="600" cy="60" r="4" fill="var(--bg-surface)" stroke="#0D9488" strokeWidth="2" />
+                <circle cx="200" cy="160" r="4" fill="var(--bg-surface)" stroke="var(--accent)" strokeWidth="2" />
+                <circle cx="400" cy="180" r="4" fill="var(--bg-surface)" stroke="var(--accent)" strokeWidth="2" />
+                <circle cx="600" cy="60" r="4" fill="var(--bg-surface)" stroke="var(--accent)" strokeWidth="2" />
               </svg>
               <div className="flex justify-between mt-4 px-2 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                 <span>Jan</span>
@@ -435,11 +435,11 @@ export function Dashboard() {
                 ].map((stage, i) => (
                   <div key={stage.label} className="flex flex-col items-center gap-4 w-12 group">
                     <div
-                      className="w-full bg-slate-100 dark:bg-slate-800 rounded-md transition-all group-hover:bg-teal-600/10"
+                      className="w-full bg-slate-100 dark:bg-slate-800 rounded-md transition-all group-hover:bg-accent/10"
                       style={{ height: stage.height }}
                     >
                       <div
-                        className="w-full bg-teal-600 rounded-md transition-all duration-500 opacity-20 group-hover:opacity-100 shadow-lg shadow-teal-600/20"
+                        className="w-full bg-accent rounded-md transition-all duration-500 opacity-20 group-hover:opacity-100 shadow-lg shadow-accent/20"
                         style={{ height: '0%', animation: `grow ${1 + i * 0.1}s forwards ease-out`, animationDelay: `${i * 0.1}s` }}
                       />
                     </div>
@@ -464,7 +464,7 @@ export function Dashboard() {
             <div className="px-8 py-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">Recent Activity</h2>
               <Link href="/in-progress">
-                <Button variant="link" className="p-0 h-auto text-teal-600 text-xs font-bold hover:text-teal-700">View All</Button>
+                <Button variant="link" className="p-0 h-auto text-accent text-xs font-bold hover:opacity-80">View All</Button>
               </Link>
             </div>
             <div className="p-2">
@@ -473,10 +473,10 @@ export function Dashboard() {
               ) : (
                 recentActivities.map((activity) => (
                   <div key={activity.id} className={cn(
-                    "flex items-center gap-4 px-6 py-4 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all border-l-4 border-transparent hover:border-teal-600 hover:shadow-xl hover:shadow-teal-600/5 group/row relative z-0 hover:z-10",
+                    "flex items-center gap-4 px-6 py-4 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all border-l-4 border-transparent hover:border-accent hover:shadow-xl hover:shadow-accent/5 group/row relative z-0 hover:z-10",
                   )}>
-                    <div className="w-10 h-10 bg-teal-600/10 rounded flex items-center justify-center shrink-0 transition-transform group-hover/row:scale-110">
-                      <Activity className="w-5 h-5 text-teal-600" />
+                    <div className="w-10 h-10 bg-accent/10 rounded flex items-center justify-center shrink-0 transition-transform group-hover/row:scale-110">
+                      <Activity className="w-5 h-5 text-accent" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
@@ -486,7 +486,7 @@ export function Dashboard() {
                         {new Date(activity.createdAt).toLocaleDateString()} at {new Date(activity.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
-                    <div className="text-[10px] font-black text-teal-600 uppercase tracking-widest bg-teal-50 dark:bg-teal-900/20 px-2 py-1 rounded shadow-sm">
+                    <div className="text-[10px] font-black text-accent uppercase tracking-widest bg-accent-dim px-2 py-1 rounded shadow-sm">
                       {activity.type}
                     </div>
                   </div>
@@ -520,9 +520,9 @@ export function Dashboard() {
                 </div>
               ) : (
                 lowStockItems.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-4 rounded-md border border-slate-200 dark:border-slate-800 hover:border-teal-600/20 transition-all group">
+                  <div key={item.id} className="flex items-center justify-between p-4 rounded-md border border-slate-200 dark:border-slate-800 hover:border-accent/20 transition-all group">
                     <div className="min-w-0">
-                      <p className="text-sm font-bold text-slate-900 dark:text-white truncate group-hover:text-teal-600 transition-colors">{item.name}</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white truncate group-hover:text-accent transition-colors">{item.name}</p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-tight font-mono">{item.sku}</span>
                         <span className="text-[10px] text-slate-400">•</span>
@@ -536,7 +536,7 @@ export function Dashboard() {
                       )}>
                         {item.stockQuantity} {item.stockQuantity === 1 ? 'unit' : 'units'}
                       </p>
-                      <Link href={`/inventory/${item.id}`} className="text-[9px] font-bold text-teal-600 uppercase hover:underline">Details</Link>
+                      <Link href={`/inventory/${item.id}`} className="text-[9px] font-bold text-accent uppercase hover:underline">Details</Link>
                     </div>
                   </div>
                 ))
@@ -557,4 +557,3 @@ export function Dashboard() {
     </div>
   )
 }
-

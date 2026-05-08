@@ -36,6 +36,7 @@ import { cn } from '@/lib/utils';
 import { ListSkeleton } from "@/components/ui/skeletons";
 import { toast } from 'sonner';
 import { DeleteModal } from "@/components/ui/delete-modal";
+import { PageHeader } from "@/components/reusables/PageHeader";
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
@@ -269,36 +270,37 @@ export function Roles() {
   }
 
   return (
-    <div className="animate-fade-in space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Role Management</h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">Define granular access permissions for your team.</p>
-        </div>
+    <div className="animate-fade-in space-y-6">
+      <PageHeader 
+        category="System Configuration"
+        title="Role Management"
+        description="Define granular access permissions for your team."
+        className="px-0 bg-transparent border-none pb-0"
+        actions={
+          <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
+            {/* Minimized Search */}
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                placeholder="Search roles..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all"
+              />
+            </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
-          {/* Minimized Search */}
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              placeholder="Search roles..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all"
-            />
+            {canCreate && (
+              <Button
+                variant="brand"
+                onClick={() => setShowCreateDialog(true)}
+                className="shadow-md shadow-accent/10 dark:shadow-none h-10 w-full sm:w-auto"
+              >
+                <PlusCircle className="w-4 h-4 mr-2" /> Create Role
+              </Button>
+            )}
           </div>
-
-          {canCreate && (
-            <Button
-              variant="brand"
-              onClick={() => setShowCreateDialog(true)}
-              className="shadow-md shadow-accent/10 dark:shadow-none h-10 w-full sm:w-auto"
-            >
-              <PlusCircle className="w-4 h-4 mr-2" /> Create Role
-            </Button>
-          )}
-        </div>
-      </div>
+        }
+      />
 
       {/* Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

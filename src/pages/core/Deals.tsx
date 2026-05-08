@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from "react"
 import { DataTable } from "@/components/reusables/DataTable"
+import { PageHeader } from "@/components/reusables/PageHeader"
 import { useLocation } from "wouter"
 import {
   BarChart3,
@@ -428,75 +429,72 @@ export function Deals() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen font-sans">
-      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
+      <div className="mx-auto px-4 pt-2 pb-4 md:px-8 md:pt-4 md:pb-8 max-w-full animate-fade-in space-y-6">
 
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-1">Sales Operations</p>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Pipeline</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Track and manage active sales opportunities.</p>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0">
-
-
-            <Button variant="outline" onClick={handleExportCSV} className="border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
-              <DollarSign className="w-4 h-4" />
-              Export CSV
-            </Button>
-
-            {viewMode === "list" && (
-              <Button
-                variant="brand"
-                onClick={() => handleOpenCreateModal()}
-              >
-                <PlusCircle className="w-4 h-4" /> Create Deal
+        <PageHeader 
+          category="Sales Operations"
+          title="Pipeline"
+          description="Track and manage active sales opportunities."
+          className="px-0 bg-transparent border-none pb-2"
+          actions={
+            <div className="flex items-center gap-3 shrink-0">
+              <Button variant="outline" onClick={handleExportCSV} className="border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
+                <DollarSign className="w-4 h-4" />
+                Export CSV
               </Button>
-            )}
-            <div className="bg-white dark:bg-slate-900 p-1 rounded-md border border-slate-200 dark:border-slate-800 flex items-center mr-2 shadow-sm gap-1">
-              <button
-                onClick={() => setAutoPrioritize(!autoPrioritize)}
-                className={cn(
-                  "h-8 px-3 rounded text-[11px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-2",
-                  autoPrioritize
-                    ? "bg-amber-500 text-white shadow-md shadow-amber-500/20"
-                    : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                )}
-              >
-                <Zap className={cn("w-3.5 h-3.5", autoPrioritize ? "fill-current" : "")} />
-                Prioritize
-              </button>
-            </div>
 
-            <div className="bg-white dark:bg-slate-900 p-1 rounded-md border border-slate-200 dark:border-slate-800 flex items-center mr-2 shadow-sm gap-1">
-              <button
-                onClick={() => setViewMode("board")}
-                className={cn(
-                  "h-8 px-3 rounded text-[11px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-2",
-                  viewMode === "board"
-                    ? "bg-accent text-white shadow-md shadow-accent/20"
-                    : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                )}
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                Kanban
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={cn(
-                  "h-8 px-3 rounded text-[11px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-2",
-                  viewMode === "list"
-                    ? "bg-accent text-white shadow-md shadow-accent/20"
-                    : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                )}
-              >
-                <List className="w-3.5 h-3.5" />
-                List
-              </button>
+              {viewMode === "list" && (
+                <Button
+                  variant="brand"
+                  onClick={() => handleOpenCreateModal()}
+                >
+                  <PlusCircle className="w-4 h-4" /> Create Deal
+                </Button>
+              )}
+              <div className="bg-white dark:bg-slate-900 p-1 rounded-md border border-slate-200 dark:border-slate-800 flex items-center mr-2 shadow-sm gap-1">
+                <button
+                  onClick={() => setAutoPrioritize(!autoPrioritize)}
+                  className={cn(
+                    "h-8 px-3 rounded text-[11px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-2",
+                    autoPrioritize
+                      ? "bg-amber-500 text-white shadow-md shadow-amber-500/20"
+                      : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                  )}
+                >
+                  <Zap className={cn("w-3.5 h-3.5", autoPrioritize ? "fill-current" : "")} />
+                  Prioritize
+                </button>
+              </div>
+
+              <div className="bg-white dark:bg-slate-900 p-1 rounded-md border border-slate-200 dark:border-slate-800 flex items-center mr-2 shadow-sm gap-1">
+                <button
+                  onClick={() => setViewMode("board")}
+                  className={cn(
+                    "h-8 px-3 rounded text-[11px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-2",
+                    viewMode === "board"
+                      ? "bg-accent text-white shadow-md shadow-accent/20"
+                      : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                  )}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  Kanban
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={cn(
+                    "h-8 px-3 rounded text-[11px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-2",
+                    viewMode === "list"
+                      ? "bg-accent text-white shadow-md shadow-accent/20"
+                      : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                  )}
+                >
+                  <List className="w-3.5 h-3.5" />
+                  List
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
+          }
+        />
 
         {/* Unified Search Bar */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6 mb-2">

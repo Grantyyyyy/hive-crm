@@ -28,8 +28,8 @@ import { ListSkeleton } from "@/components/ui/skeletons"
 import { ProcurementDataTable, type ProcurementColumn } from "@/components/reusables/ProcurementDataTable"
 import { StatCard } from "@/components/reusables/StatCard"
 import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
-import { StatusTabs } from "@/components/reusables/StatusTabs"
-import type { StatusTab } from "@/components/reusables/StatusTabs"
+import { StatusTabs, type StatusTab } from "@/components/reusables/StatusTabs"
+import { PageHeader } from "@/components/reusables/PageHeader"
 export function PurchaseOrders() {
   const [, navigate] = useLocation()
   const { user, isLoaded: userLoaded } = useUser()
@@ -246,27 +246,27 @@ export function PurchaseOrders() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen font-sans">
-      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
+      <div className="mx-auto px-4 pt-2 pb-4 md:px-8 md:pt-4 md:pb-8 max-w-full animate-fade-in space-y-6">
 
-        {/* Header Region */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-1">Procurement & Inventory</p>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Purchase Orders</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Manage procurement from your global vendors and supply chain.</p>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <Button variant="outlineNeutral">
-              <Download className="w-4 h-4" /> Export
-            </Button>
-            <Button
-              variant="brand"
-              onClick={() => setIsAddModalOpen(true)}
-            >
-              <PlusCircle className="w-4 h-4" /> Create PO
-            </Button>
-          </div>
-        </div>
+        <PageHeader 
+          category="Procurement & Inventory"
+          title="Purchase Orders"
+          description="Manage procurement from your global vendors and supply chain."
+          className="px-0 bg-transparent border-none pb-2"
+          actions={
+            <div className="flex items-center gap-3 shrink-0">
+              <Button variant="outlineNeutral">
+                <Download className="w-4 h-4 mr-2" /> Export
+              </Button>
+              <Button
+                variant="brand"
+                onClick={() => setIsAddModalOpen(true)}
+              >
+                <PlusCircle className="w-4 h-4 mr-2" /> Create PO
+              </Button>
+            </div>
+          }
+        />
 
         <ProcurementDataTable<PurchaseOrder>
           data={paginatedOrders}

@@ -11,6 +11,7 @@ import {
   Palette
 } from "lucide-react";
 import { usePermission } from "@/lib/usePermission";
+import { PageHeader } from "@/components/reusables/PageHeader";
 
 interface SettingsLayoutProps {
   children: React.ReactNode;
@@ -39,18 +40,11 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
 
   return (
     <div className="flex flex-col h-full bg-bg-base/50">
-      {/* Settings Header */}
-      <div className="px-8 py-10 border-b border-border/50 bg-bg-surface/30 backdrop-blur-sm">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
-            <SettingsIcon className="w-5 h-5" />
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight text-text-primary">Settings</h1>
-        </div>
-        <p className="text-text-muted text-sm ml-12">
-          Manage your account preferences and system configurations.
-        </p>
-      </div>
+      <PageHeader 
+        category="System Configuration"
+        title="Settings"
+        description="Manage your account preferences and system configurations."
+      />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Settings Sub-Sidebar */}
@@ -81,7 +75,7 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
         </aside>
 
         {/* Settings Content Area */}
-        <main className="flex-1 overflow-y-auto bg-bg-base/30 p-8">
+        <main className="flex-1 overflow-y-auto bg-bg-base/30 px-8 pt-4 pb-8">
           <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
             {children}
           </div>

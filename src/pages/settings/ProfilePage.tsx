@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabaseClient"
 import { Camera, Loader2, Save } from "lucide-react"
 import { toast } from "sonner"
 import { DetailSkeleton } from "@/components/ui/skeletons"
+import { PageHeader } from "@/components/reusables/PageHeader"
 
 export function ProfilePage() {
   const { user, isLoaded } = useUser()
@@ -88,7 +89,13 @@ export function ProfilePage() {
   if (!isLoaded) return <DetailSkeleton />
 
   return (
-    <div className="animate-content-in space-y-8">
+    <div className="animate-fade-in space-y-6">
+      <PageHeader
+        category="Account Settings"
+        title="Personal Profile"
+        description="Manage your account identity and contact information."
+        className="px-0 bg-transparent border-none pb-2"
+      />
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-4 space-y-6">
           <div className="bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">

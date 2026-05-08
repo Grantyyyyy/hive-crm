@@ -42,6 +42,7 @@ import { useCRMResource } from "@/lib/hooks"
 import { DetailSkeleton } from "@/components/ui/skeletons"
 import { DeleteModal } from "@/components/ui/delete-modal"
 import { toast } from "sonner"
+import { PageHeader } from "@/components/reusables/PageHeader"
 
 export function ContactDetail() {
   const [, params] = useRoute("/contacts/:id")
@@ -219,71 +220,60 @@ export function ContactDetail() {
           <BackButton href="/contacts" className="mb-2" />
 
           {/* Contact Header */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-4 md:p-6">
-            <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-4 flex-wrap">
-                  <h1 className="text-3xl font-bold tracking-tight">{contact.name}</h1>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-wider rounded-lg">
-                    {SOURCE_LABELS[contact.source]}
+          <PageHeader 
+            category={SOURCE_LABELS[contact.source]}
+            title={contact.name}
+            description={
+              <div className="flex flex-wrap gap-4 mt-1">
+                <span className="flex items-center gap-1.5 text-sm font-medium text-slate-500 dark:text-slate-400">
+                  <Mail className="h-3.5 w-3.5" /> {contact.email}
+                </span>
+                {contact.phone && (
+                  <span className="flex items-center gap-1.5 text-sm font-medium text-slate-500 dark:text-slate-400">
+                    <Phone className="h-3.5 w-3.5" /> {contact.phone}
                   </span>
-                </div>
-
-                <div className="flex flex-wrap gap-6 text-sm font-medium text-slate-600 dark:text-slate-400">
-                  <span className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-slate-400" /> {contact.email}
+                )}
+                {contact.company && (
+                  <span className="flex items-center gap-1.5 text-sm font-medium text-slate-500 dark:text-slate-400">
+                    <Building className="h-3.5 w-3.5" /> {contact.company}
                   </span>
-                  {contact.phone && (
-                    <span className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-slate-400" /> {contact.phone}
-                    </span>
-                  )}
-                  {contact.company && (
-                    <span className="flex items-center gap-2">
-                      <Building className="h-4 w-4 text-slate-400" /> {contact.company}
-                    </span>
-                  )}
-                </div>
-
-                {/* Relationship Score */}
-                <div className="flex items-center gap-5 mt-3">
-                  <div className={cn("text-4xl font-bold tracking-tight", relScoreColor(relLabel))}>
-                    {relScore}
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
-                      Relationship · {relLabel}
-                    </div>
-                    <div className="w-32 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                      <div
-                        className={cn("h-full rounded-full transition-all duration-500", relScoreBg(relLabel))}
-                        style={{ width: `${relScorePct(relLabel)}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
+            }
+            className="px-0 bg-transparent border-none pb-2"
+            actions={
+              <div className="flex items-center gap-3">
+                <Button variant="outlineNeutral" onClick={() => setShowEditModal(true)} className="h-9 px-3">
+                  <Pencil className="h-4 w-4 mr-2" /> Edit
+                </Button>
+                <Button variant="outlineNeutral" onClick={() => setShowDeleteModal(true)} className="h-9 px-3 text-red-600 hover:text-red-700">
+                  <Trash2 className="h-4 w-4 mr-2" /> Delete
+                </Button>
+                <Button variant="brand" onClick={() => setShowActivityModal(true)} className="h-9 px-4">
+                  <PlusCircle className="h-4 w-4 mr-2" /> Log Touchpoint
+                </Button>
+              </div>
+            }
+          />
 
-              {/* Actions */}
-              <div className="flex gap-3 shrink-0 flex-wrap">
-                <Button
-                  variant="outlineNeutral"
-                  onClick={() => setShowEditModal(true)}
-                >
-                  <Pencil className="h-4 w-4" /> Edit
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => setShowDeleteModal(true)}
-                >
-                  <Trash2 className="h-4 w-4" /> Delete
-                </Button>
-                <Button
-                  variant="default"
-                  onClick={() => setShowActivityModal(true)}
-                >
-                  <PlusCircle className="h-4 w-4" /> Log Activity
-                </Button>
+          {/* Relationship Score */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none p-4 md:p-6 mt-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex items-center gap-5">
+                <div className={cn("text-4xl font-bold tracking-tight", relScoreColor(relLabel))}>
+                  {relScore}
+                </div>
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
+                    Relationship · {relLabel}
+                  </div>
+                  <div className="w-32 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className={cn("h-full rounded-full transition-all duration-500", relScoreBg(relLabel))}
+                      style={{ width: `${relScorePct(relLabel)}%` }}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -35,6 +35,7 @@ import { DeleteModal } from "@/components/ui/delete-modal";
 import { BackButton } from "@/components/reusables/BackButton";
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { PageHeader } from "@/components/reusables/PageHeader";
 import type { Organization, CreateOrganizationInput } from '@/lib/types';
 import { format } from 'date-fns';
 
@@ -284,37 +285,37 @@ export function OrganizationsPage() {
   }
 
   return (
-    <div className="animate-fade-in space-y-8">
-      {/* Header Region */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Tenants & Organizations</h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">Manage multi-tenant isolation and platform entities.</p>
-        </div>
+    <div className="animate-fade-in space-y-6">
+      <PageHeader
+        category="System Configuration"
+        title="Tenants & Organizations"
+        description="Manage multi-tenant isolation and platform entities."
+        className="px-0 bg-transparent border-none pb-2"
+        actions={
+          <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
+            {/* Minimized Search Bar */}
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                placeholder="Search organizations..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all"
+              />
+            </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
-          {/* Minimized Search Bar */}
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              placeholder="Search organizations..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all"
-            />
+            {isSuperAdmin && (
+              <Button
+                variant="brand"
+                onClick={() => setShowAddDialog(true)}
+                className="shadow-md shadow-accent/10 dark:shadow-none w-full sm:w-auto h-10"
+              >
+                <PlusCircle className="w-4 h-4 mr-2" /> New Organization
+              </Button>
+            )}
           </div>
-
-          {isSuperAdmin && (
-            <Button
-              variant="brand"
-              onClick={() => setShowAddDialog(true)}
-              className="shadow-md shadow-accent/10 dark:shadow-none w-full sm:w-auto h-10"
-            >
-              <PlusCircle className="w-4 h-4 mr-2" /> New Organization
-            </Button>
-          )}
-        </div>
-      </div>
+        }
+      />
 
       {/* Main Content Card */}
       <Card className="bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">

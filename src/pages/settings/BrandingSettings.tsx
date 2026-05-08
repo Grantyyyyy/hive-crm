@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ListSkeleton } from "@/components/ui/skeletons";
 import { toast } from "sonner";
 import { Layout, Image as ImageIcon, Save, RefreshCcw, Upload, Loader2, Type } from "lucide-react";
 import { logger } from "@/lib/logger";
+import { PageHeader } from "@/components/reusables/PageHeader";
 
 export function BrandingSettings() {
   const ctx = useCRMContext();
@@ -100,45 +102,41 @@ export function BrandingSettings() {
   };
 
   if (!isLoaded) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-r-transparent"></div>
-      </div>
-    );
+    return <ListSkeleton />;
   }
 
   return (
-    <div className="animate-fade-in space-y-8">
-      {/* Header Region */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-2">
-        <div>
-          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Branding & Identity</h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Customize the platform's visual identity and brand presence.</p>
-        </div>
-        
-        <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
-          <Button
-            variant="outline"
-            onClick={handleReset}
-            className="h-10 rounded-md font-bold text-xs uppercase tracking-widest w-full sm:w-auto border-slate-200 dark:border-slate-800"
-          >
-            <RefreshCcw className="w-4 h-4 mr-2" /> Reset
-          </Button>
-          <Button
-            variant="brand"
-            onClick={handleSave}
-            disabled={isSaving}
-            className="h-10 rounded-md font-bold text-xs uppercase tracking-widest w-full sm:w-auto shadow-md shadow-accent/10 dark:shadow-none px-8"
-          >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin mr-2" />
-            ) : (
-              <Save className="w-4 h-4 mr-2" />
-            )}
-            Save Configuration
-          </Button>
-        </div>
-      </div>
+    <div className="animate-fade-in space-y-6">
+      <PageHeader 
+        category="System Configuration"
+        title="Branding & Identity"
+        description="Customize the platform's visual identity and brand presence."
+        className="px-0 bg-transparent border-none pb-0"
+        actions={
+          <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
+            <Button
+              variant="outline"
+              onClick={handleReset}
+              className="h-10 rounded-md font-bold text-xs uppercase tracking-widest w-full sm:w-auto border-slate-200 dark:border-slate-800"
+            >
+              <RefreshCcw className="w-4 h-4 mr-2" /> Reset
+            </Button>
+            <Button
+              variant="brand"
+              onClick={handleSave}
+              disabled={isSaving}
+              className="h-10 rounded-md font-bold text-xs uppercase tracking-widest w-full sm:w-auto shadow-md shadow-accent/10 dark:shadow-none px-8"
+            >
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              Save Configuration
+            </Button>
+          </div>
+        }
+      />
 
       <div className="grid gap-8 md:grid-cols-2">
         {/* Configuration Card */}

@@ -13,8 +13,10 @@ import {
   Target,
   Mail,
   FileSearch,
-  ArrowRight
+  ArrowRight,
+  UserSearch as UserSearchIcon,
 } from "lucide-react"
+import { PageHeader } from "@/components/reusables/PageHeader"
 import { Button } from "@/components/ui/button"
 import {
   SheetDescription,
@@ -325,44 +327,44 @@ export function Leads() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen font-sans">
-      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
+      <div className="mx-auto px-4 pt-2 pb-4 md:px-8 md:pt-4 md:pb-8 max-w-full animate-fade-in space-y-6">
 
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-1">Sales Pipeline</p>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Leads</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Manage and track your prospective customers through the sales funnel.</p>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <input
-              type="file"
-              id="csv-upload"
-              accept=".csv"
-              className="hidden"
-              onChange={handleImportCSV}
-            />
-            <Button 
-              variant="outline" 
-              onClick={() => document.getElementById('csv-upload')?.click()} 
-              className="border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
-            >
-              <Upload className="w-4 h-4" />
-              Import CSV
-            </Button>
-            <Button variant="outline" onClick={handleExportCSV} className="border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
-              <Download className="w-4 h-4" />
-              Export CSV
-            </Button>
-            <Button
-              variant="brand"
-              onClick={() => { setEditingLead(null); setShowModal(true) }}
-            >
-              <PlusCircle className="w-4 h-4" />
-              Create Lead
-            </Button>
-          </div>
-        </div>
+        <PageHeader 
+          category="Sales Pipeline"
+          title="Leads"
+          description="Manage and track your prospective customers through the sales funnel."
+          className="px-0 bg-transparent border-none pb-2"
+          actions={
+            <>
+              <input
+                type="file"
+                id="csv-upload"
+                accept=".csv"
+                className="hidden"
+                onChange={handleImportCSV}
+              />
+              <Button 
+                variant="outline" 
+                onClick={() => document.getElementById('csv-upload')?.click()} 
+                className="border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
+              >
+                <Upload className="w-4 h-4" />
+                Import CSV
+              </Button>
+              <Button variant="outline" onClick={handleExportCSV} className="border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
+                <Download className="w-4 h-4" />
+                Export CSV
+              </Button>
+              <Button
+                variant="brand"
+                onClick={() => { setEditingLead(null); setShowModal(true) }}
+              >
+                <PlusCircle className="w-4 h-4" />
+                Create Lead
+              </Button>
+            </>
+          }
+        />
 
         <ProcurementDataTable<Lead>
           data={paginatedLeads}

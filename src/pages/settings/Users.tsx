@@ -29,7 +29,9 @@ import {
   User as UserIcon,
   Filter,
   PlusCircle,
+  Users as UsersIcon,
 } from 'lucide-react';
+import { PageHeader } from "@/components/reusables/PageHeader";
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ListSkeleton } from "@/components/ui/skeletons";
@@ -459,27 +461,32 @@ export function Users() {
   }
 
   return (
-    <div className="animate-fade-in space-y-8">
-      {/* Header Region */}
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
-        <div>
-          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Organization Members</h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">Manage and track your team members.</p>
-          {orgData && usersData && !orgData.is_system && (
-            <div className="mt-3 flex items-center gap-2">
-              <div className="inline-block px-3 py-1.5 rounded-lg bg-teal-50 dark:bg-teal-900/20">
-                <p className="text-xs font-bold text-teal-700 dark:text-teal-400">
-                  {usersData.length} / {orgData.seats_limit} seats used
-                </p>
+    <div className="animate-fade-in space-y-6">
+      <PageHeader 
+        category="Organization Members"
+        title="Users"
+        description={
+          <div className="space-y-3">
+            <p className="text-text-muted text-sm md:text-base font-medium max-w-2xl leading-relaxed">
+              Manage your team members and their access permissions.
+            </p>
+            {orgData && usersData && !orgData.is_system && (
+              <div className="flex items-center gap-2">
+                <div className="inline-block px-3 py-1.5 rounded-lg bg-teal-50 dark:bg-teal-900/20">
+                  <p className="text-xs font-bold text-teal-700 dark:text-teal-400">
+                    {usersData.length} / {orgData.seats_limit} seats used
+                  </p>
+                </div>
+                {orgData.plan !== 'elite' && usersData.length >= orgData.seats_limit && (
+                  <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">Limit reached</span>
+                )}
               </div>
-              {orgData.plan !== 'elite' && usersData.length >= orgData.seats_limit && (
-                <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">Limit reached</span>
-              )}
-            </div>
-          )}
-        </div>
-        <div className="flex items-center gap-3 shrink-0">
-          {canCreate && (
+            )}
+          </div>
+        }
+        className="px-0 bg-transparent border-none pb-2"
+        actions={
+          canCreate && (
             <Button
               variant="brand"
               onClick={() => {
@@ -489,9 +496,9 @@ export function Users() {
             >
               <PlusCircle className="w-4 h-4" /> Create User
             </Button>
-          )}
-        </div>
-      </div>
+          )
+        }
+      />
       {/* Search and Filters Bar (Match Leads.tsx Style exactly) */}
       <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
         <div className="relative flex-1 w-full lg:max-w-md">

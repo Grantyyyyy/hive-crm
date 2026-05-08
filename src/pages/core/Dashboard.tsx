@@ -27,6 +27,7 @@ import type { JobAdapter } from "@/services/types"
 import { useUser } from "@/lib/AuthContext"
 import { AddPurchaseRequestModal } from "@/components/logisticsComponent/AddPurchaseRequestModal"
 import { prepareReorderDraftData } from "@/services/reorderService"
+import { PageHeader } from "@/components/reusables/PageHeader"
 
 export function Dashboard() {
   const { data: deals, isLoaded: dealsLoaded } = useCRMResource<Deal>('deals')
@@ -277,16 +278,14 @@ export function Dashboard() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen font-sans">
-      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
+      <div className="mx-auto px-4 pt-2 pb-4 md:px-8 md:pt-4 md:pb-8 max-w-full animate-fade-in space-y-6">
 
-        {/* Title Section */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-1">System Overview</p>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Dashboard</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Welcome back. Here's what's happening today.</p>
-          </div>
-        </div>
+        <PageHeader 
+          category="System Overview"
+          title="Dashboard"
+          description={`Welcome back, ${firstName}. Here's what's happening in your workspace today.`}
+          className="px-0 bg-transparent border-none pb-2"
+        />
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

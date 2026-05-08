@@ -194,52 +194,7 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
     mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
   );
 
-  // ── User avatar + sign-out popover (non-collapsed) ──────────────────────
-  const UserMenu = () => (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button className="flex items-center gap-3 w-full p-1 rounded-xl hover:bg-bg-elevated/50 transition-colors cursor-pointer">
-          <div className="w-9 h-9 shrink-0 rounded-lg bg-accent-dim border border-accent/20 flex items-center justify-center text-accent font-bold text-xs">
-            {initials}
-          </div>
-          {!collapsed && (
-            <div className="flex flex-col min-w-0 flex-1 text-left">
-              <span className="text-sm font-semibold text-text-primary truncate">
-                {displayName}
-              </span>
-              <span className="text-[11px] text-text-muted font-medium truncate uppercase tracking-tight">
-                {displayRole}
-              </span>
-            </div>
-          )}
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-56 p-2" align="start" side="top">
-        <div className="px-3 py-2 border-b border-border mb-2">
-          <p className="text-sm font-bold text-text-primary truncate">{displayName}</p>
-          <p className="text-xs text-text-muted truncate">{user?.email}</p>
-        </div>
-        <button
-          onClick={() => { signOut(); }}
-          className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-red/80 hover:bg-red/10 hover:text-red transition-all text-left"
-        >
-          <LogOut className="w-4 h-4" />
-          Sign Out
-        </button>
-      </PopoverContent>
-    </Popover>
-  );
 
-  // ── Compact avatar for collapsed sidebar ────────────────────────────────
-  const CompactUserAvatar = () => (
-    <button
-      onClick={() => signOut()}
-      className="w-9 h-9 shrink-0 rounded-lg bg-accent-dim border border-accent/20 flex items-center justify-center text-accent font-bold text-xs hover:ring-2 hover:ring-accent/30 transition-all cursor-pointer"
-      title={`Sign out (${displayName})`}
-    >
-      {initials}
-    </button>
-  );
 
   return (
     <>
@@ -328,40 +283,89 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
           ))}
         </nav>
 
-        {/* Organization Name */}
-        {!collapsed && (
-          <div className="px-3 py-2">
-            <div className="px-3 py-2 rounded-md bg-slate-100 dark:bg-slate-800">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Organization</p>
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 truncate">{orgName ?? '—'}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Bottom Section - User Profile */}
+        {/* Organization Section at Bottom */}
         <div className="p-4 border-t border-border shrink-0">
           {!collapsed ? (
             <div className="flex items-center gap-2">
               <div className="flex-1 min-w-0">
-                <UserMenu />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="flex items-center gap-2 w-full p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 hover:bg-bg-elevated transition-colors cursor-pointer border border-border/50 group/org">
+                      <div className="size-9 shrink-0 rounded-lg bg-accent-dim border border-accent/20 flex items-center justify-center text-accent">
+                        {org?.appLogoUrl ? (
+                          <img src={org.appLogoUrl} alt="" className="w-6 h-6 object-contain" />
+                        ) : (
+                          <Building2 className="w-5 h-5" />
+                        )}
+                      </div>
+                      <div className="flex flex-col min-w-0 flex-1 text-left">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-text-muted leading-tight group-hover/org:text-accent transition-colors">
+                          Organization
+                        </span>
+                        <span className="text-sm font-bold text-text-primary truncate">
+                          {orgName ?? '—'}
+                        </span>
+                      </div>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-56 p-2" align="start" side="top">
+                    <div className="px-3 py-2 border-b border-border mb-2">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-text-muted mb-1">Organization</p>
+                      <p className="text-sm font-bold text-text-primary truncate">{orgName ?? '—'}</p>
+                    </div>
+                    <button
+                      onClick={() => signOut()}
+                      className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-rose-500 hover:bg-rose-500/10 transition-all text-left"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </button>
+                  </PopoverContent>
+                </Popover>
               </div>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setCollapsed(true)}
-                className="p-1.5 h-8 w-8 text-text-muted shrink-0"
+                className="h-9 w-9 text-text-muted hover:bg-bg-elevated rounded-xl shrink-0"
               >
                 <PanelLeftClose className="w-4 h-4" />
               </Button>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-4 py-2">
-              <CompactUserAvatar />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button 
+                    className="w-10 h-10 shrink-0 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-border/50 flex items-center justify-center transition-all cursor-pointer hover:bg-bg-elevated text-accent"
+                    title={orgName ?? 'Organization'}
+                  >
+                    {org?.appLogoUrl ? (
+                      <img src={org.appLogoUrl} alt="" className="w-6 h-6 object-contain" />
+                    ) : (
+                      <Building2 className="w-5 h-5" />
+                    )}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 p-2" align="start" side="right">
+                  <div className="px-3 py-2 border-b border-border mb-2">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-text-muted mb-1">Organization</p>
+                    <p className="text-sm font-bold text-text-primary truncate">{orgName ?? '—'}</p>
+                  </div>
+                  <button
+                    onClick={() => signOut()}
+                    className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-rose-500 hover:bg-rose-500/10 transition-all text-left"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign Out
+                  </button>
+                </PopoverContent>
+              </Popover>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setCollapsed(false)}
-                className="p-1.5 h-8 w-8 text-text-muted"
+                className="h-10 w-10 text-text-muted hover:bg-bg-elevated rounded-xl"
               >
                 <PanelLeftOpen className="w-4 h-4" />
               </Button>

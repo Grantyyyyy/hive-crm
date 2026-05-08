@@ -65,7 +65,7 @@ export function NotificationPanel() {
       case 'info':
         return <Info className={cn(iconClass, !isRead && "text-blue-500")} />
       default:
-        return <Bell className={cn(iconClass, !isRead && "text-teal-500")} />
+        return <Bell className={cn(iconClass, !isRead && "text-accent")} />
     }
   }
 
@@ -75,7 +75,7 @@ export function NotificationPanel() {
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">Notifications</h3>
           {unreadCount > 0 && (
-            <span className="bg-teal-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full">
+            <span className="bg-accent text-white text-[10px] font-black px-1.5 py-0.5 rounded-full">
               {unreadCount}
             </span>
           )}
@@ -85,7 +85,7 @@ export function NotificationPanel() {
             variant="ghost" 
             size="sm" 
             onClick={handleMarkAllAsRead}
-            className="text-[10px] font-bold text-teal-600 hover:text-teal-700 h-7 px-2"
+            className="text-[10px] font-bold text-accent hover:text-accent/80 h-7 px-2"
           >
             Mark all read
           </Button>
@@ -107,7 +107,7 @@ export function NotificationPanel() {
                 key={notification.id}
                 className={cn(
                   "p-4 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-all cursor-pointer group relative",
-                  !notification.isRead && "bg-teal-50/30 dark:bg-teal-900/10 border-l-2 border-l-teal-600"
+                  !notification.isRead && "bg-accent-dim/70 dark:bg-accent-dim/25 border-l-2 border-l-accent"
                 )}
                 onClick={() => {
                   if (!notification.isRead) handleMarkAsRead(notification.id)
@@ -130,7 +130,7 @@ export function NotificationPanel() {
                       </div>
                       <div className="flex items-center gap-2">
                         {!notification.isRead && (
-                          <div className="w-2 h-2 bg-teal-600 rounded-full shrink-0" />
+                          <div className="w-2 h-2 bg-accent rounded-full shrink-0" />
                         )}
                         <button 
                           onClick={(e) => handleDismiss(e, notification.id)}
@@ -149,7 +149,7 @@ export function NotificationPanel() {
                         {new Date(notification.createdAt).toLocaleDateString()}
                       </div>
                       {notification.link && (
-                        <ExternalLink className="w-3 h-3 text-slate-300 group-hover:text-teal-600 transition-colors" />
+                        <ExternalLink className="w-3 h-3 text-slate-300 group-hover:text-accent transition-colors" />
                       )}
                     </div>
                   </div>

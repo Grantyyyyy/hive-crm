@@ -38,6 +38,7 @@ import { DeleteModal } from "@/components/ui/delete-modal";
 import { StatusTabs, type StatusTab } from '@/components/reusables/StatusTabs';
 import { UserSheet } from '@/components/crmComponent/UserSheet';
 import type { UserFormData } from '@/components/crmComponent/UserForm';
+import { InitialsAvatar } from '@/components/reusables/InitialsAvatar';
 import { logger } from '@/lib/logger';
 
 // ── Actions dropdown ──────────────────────────────────────────────────────────
@@ -103,7 +104,7 @@ function UserActionsMenu({ u, currentUserId, onChangeRole, onRemove, removePendi
           {canUpdate && (
             <button
               onClick={(e) => { e.stopPropagation(); setOpen(false); onChangeRole(); }}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-accent hover:bg-accent-dim transition-colors"
             >
               <Shield className="w-4 h-4 shrink-0" />
               Change Role
@@ -131,7 +132,7 @@ function UserRoleBadge({ roleName }: { roleName?: string }) {
   const getRoleStyle = (name?: string) => {
     switch (name?.toLowerCase()) {
       case 'super admin':
-        return 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400';
+        return 'bg-accent-dim text-accent';
       case 'admin':
         return 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400';
       case 'manager':
@@ -427,7 +428,7 @@ export function Users() {
             placeholder="Search by name or email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
+            className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all"
           />
         </div>
 
@@ -471,13 +472,14 @@ export function Users() {
                 paginatedUsers.map((u) => (
                   <tr
                     key={u.id}
-                    className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors cursor-pointer group border-l-2 border-l-transparent hover:border-l-teal-500"
+                    className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors cursor-pointer group border-l-2 border-l-transparent hover:border-l-accent"
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="size-9 rounded-full bg-teal-100 dark:bg-teal-900/40 flex items-center justify-center text-teal-600 dark:text-teal-400 text-sm font-bold uppercase shadow-sm">
-                          {u.name?.charAt(0) || 'U'}
-                        </div>
+                        <InitialsAvatar
+                          name={u.name || u.email || 'User'}
+                          className="size-9 rounded-full shadow-sm text-sm font-bold"
+                        />
                         <div>
                           <p className="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
                             {u.name}
@@ -485,7 +487,7 @@ export function Users() {
                               <span title="Admin User"><Shield className="w-3.5 h-3.5 text-amber-500" /></span>
                             )}
                             {u.authUserId === userId && (
-                              <Badge variant="secondary" className="text-[9px] uppercase tracking-tighter h-4 px-1 bg-teal-50 text-teal-600 dark:bg-teal-900/20 dark:text-teal-400 border-teal-100 dark:border-teal-800">You</Badge>
+                              <Badge variant="secondary" className="text-[9px] uppercase tracking-tighter h-4 px-1 bg-accent-dim text-accent border-accent/10">You</Badge>
                             )}
                           </p>
                           <p className="text-[11px] text-slate-400 font-medium md:hidden">{u.email}</p>
@@ -512,7 +514,7 @@ export function Users() {
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => openRoleDialog(u)}
-                                  className="text-[11px] h-7 px-3 font-bold text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                  className="text-[11px] h-7 px-3 font-bold text-accent hover:text-accent/80 hover:bg-accent-dim rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
                                 >
                                   <Shield className="w-3.5 h-3.5 mr-1" /> Role
                                 </Button>

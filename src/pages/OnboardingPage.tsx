@@ -54,7 +54,7 @@ export function OnboardingPage() {
   return (
     <AuthLayout>
       <div className="mb-8">
-        <div className="w-12 h-12 bg-teal-600 rounded-2xl flex items-center justify-center mb-6 shadow-xl shadow-teal-600/20">
+        <div className="w-12 h-12 bg-accent rounded-2xl flex items-center justify-center mb-6 shadow-xl shadow-accent/20">
           <Building2 className="w-7 h-7 text-white" />
         </div>
         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted mb-2">
@@ -80,16 +80,16 @@ export function OnboardingPage() {
             placeholder="e.g. Acme Corporation"
             required
             autoFocus
-            className="w-full px-4 py-4 border border-border rounded-xl text-sm bg-bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 transition-all shadow-sm"
+            className="w-full px-4 py-4 border border-border rounded-xl text-sm bg-bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-4 focus:ring-accent/20 focus:border-accent transition-all shadow-sm"
           />
         </div>
 
-        <div className="p-4 bg-teal-50 dark:bg-teal-900/10 border border-teal-100 dark:border-teal-900/30 rounded-xl space-y-3">
+        <div className="p-4 bg-accent-dim border border-accent/10 rounded-xl space-y-3">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-teal-600" />
-            <span className="text-xs font-bold text-teal-700 dark:text-teal-400 uppercase tracking-tight">Admin Privileges</span>
+            <ShieldCheck className="w-4 h-4 text-accent" />
+            <span className="text-xs font-bold text-accent uppercase tracking-tight">Admin Privileges</span>
           </div>
-          <p className="text-xs text-teal-600/80 dark:text-teal-400/60 leading-relaxed">
+          <p className="text-xs text-accent/80 leading-relaxed">
             As the creator, you will be automatically assigned the <strong>Admin</strong> role with full access to all features.
           </p>
         </div>
@@ -97,7 +97,7 @@ export function OnboardingPage() {
         <button
           type="submit"
           disabled={loading || !orgName.trim()}
-          className="w-full px-5 py-4 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-teal-600/20 transition-all flex items-center justify-center gap-2 group"
+          className="w-full px-5 py-4 bg-accent hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-accent/20 transition-all flex items-center justify-center gap-2 group"
         >
           {loading ? (
             <>

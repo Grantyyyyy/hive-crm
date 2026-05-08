@@ -233,7 +233,7 @@ export function ReceiveItemsModal({ order, onClose, onSuccess }: ReceiveItemsMod
       <DialogContent className="max-w-4xl p-0 overflow-hidden rounded-3xl bg-slate-50 dark:bg-slate-950 border-none shadow-2xl">
         <DialogHeader className="px-8 py-6 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-4">
-            <div className="size-12 rounded-2xl bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center text-teal-600 dark:text-teal-400 shrink-0">
+            <div className="size-12 rounded-2xl bg-accent-dim flex items-center justify-center text-accent shrink-0">
               <Package className="size-6" />
             </div>
             <div>
@@ -254,7 +254,7 @@ export function ReceiveItemsModal({ order, onClose, onSuccess }: ReceiveItemsMod
                   value={vendorReference}
                   onChange={(e) => setVendorReference(e.target.value)}
                   placeholder="e.g. INV-2024-8891"
-                  className="pl-9 h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:border-teal-500 focus:ring-teal-500/20 shadow-sm"
+                  className="pl-9 h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:border-accent focus:ring-accent/20 shadow-sm"
                 />
               </div>
             </div>
@@ -266,7 +266,7 @@ export function ReceiveItemsModal({ order, onClose, onSuccess }: ReceiveItemsMod
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Optional delivery condition notes"
-                  className="pl-9 h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:border-teal-500 focus:ring-teal-500/20 shadow-sm"
+                  className="pl-9 h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:border-accent focus:ring-accent/20 shadow-sm"
                 />
               </div>
             </div>
@@ -285,7 +285,7 @@ export function ReceiveItemsModal({ order, onClose, onSuccess }: ReceiveItemsMod
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">Line Items</h3>
               <div className="flex items-center gap-4 text-xs font-semibold">
                 <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="size-3 text-teal-500" />
+                  <CheckCircle2 className="size-3 text-accent" />
                   <span className="text-slate-600 dark:text-slate-400">Accepted → Inventory</span>
                 </span>
                 <span className="flex items-center gap-1.5">
@@ -301,7 +301,7 @@ export function ReceiveItemsModal({ order, onClose, onSuccess }: ReceiveItemsMod
                     <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">Item</th>
                     <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center">Remaining</th>
                     <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">Received</th>
-                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-teal-600 dark:text-teal-400">Accepted ✓</th>
+                    <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-accent">Accepted ✓</th>
                     <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 text-red-600 dark:text-red-400">Rejected ✗</th>
                     <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">Reason</th>
                   </tr>
@@ -353,8 +353,8 @@ export function ReceiveItemsModal({ order, onClose, onSuccess }: ReceiveItemsMod
                             className={cn(
                               "h-11 text-center font-bold border-2 transition-all",
                               hasRejection
-                                ? "bg-teal-50 dark:bg-teal-900/20 border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-400"
-                                : "bg-teal-50 dark:bg-teal-900/20 border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-400"
+                                ? "bg-accent-dim border-accent/40 text-accent"
+                                : "bg-accent-dim border-accent/20 text-accent"
                             )}
                             placeholder="0"
                           />

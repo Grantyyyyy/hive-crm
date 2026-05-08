@@ -1,5 +1,4 @@
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -9,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { FormActions } from "@/components/reusables/form-actions"
 import type { Lead, ContactSource, DealStage } from "@/lib/types"
 import { SOURCE_LABELS, STAGE_LABELS } from "@/lib/types"
 import { formatCurrency } from "@/lib/helpers"
@@ -100,8 +100,8 @@ export function ConvertLeadModal({ open, onOpenChange, lead, onConverted }: Conv
       <DialogContent className="p-0 bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 shadow-xl rounded-3xl sm:max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
         <DialogHeader className="px-8 pt-8 pb-4 bg-white/50 dark:bg-slate-900/50 border-b border-slate-200/60 dark:border-slate-800/60 backdrop-blur-sm shrink-0">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center shrink-0">
-              <UserPlus className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+            <div className="w-10 h-10 rounded-full bg-accent-dim flex items-center justify-center shrink-0">
+              <UserPlus className="w-5 h-5 text-accent" />
             </div>
             <div className="space-y-1">
               <DialogTitle className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
@@ -121,33 +121,33 @@ export function ConvertLeadModal({ open, onOpenChange, lead, onConverted }: Conv
             {/* Section 1: Contact Creation */}
             <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md">
               <div className="flex items-center gap-2 mb-6">
-                <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
+                <div className="w-1 h-3.5 bg-accent rounded-full" />
                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Relationship Profile</h3>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Contact Name</Label>
-                  <Input value={name} onChange={(e) => setName(e.target.value)} className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10" />
+                  <Input value={name} onChange={(e) => setName(e.target.value)} className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10" />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Email Address</Label>
-                  <Input value={email} onChange={(e) => setEmail(e.target.value)} className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10" />
+                  <Input value={email} onChange={(e) => setEmail(e.target.value)} className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10" />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Phone</Label>
-                  <Input value={phone} onChange={(e) => setPhone(e.target.value)} className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10" />
+                  <Input value={phone} onChange={(e) => setPhone(e.target.value)} className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10" />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Company</Label>
-                  <Input value={company} onChange={(e) => setCompany(e.target.value)} className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10" />
+                  <Input value={company} onChange={(e) => setCompany(e.target.value)} className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10" />
                 </div>
                 <div className="col-span-2 space-y-1.5">
                   <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Lead Source</Label>
                   <select
                     value={source}
                     onChange={(e) => setSource(e.target.value as any)}
-                    className="w-full h-11 px-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-teal-500/10 transition-all shadow-sm"
+                    className="w-full h-11 px-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
                   >
                     {(Object.entries(SOURCE_LABELS) as [string, string][]).map(([val, label]) => (
                       <option key={val} value={val}>{label}</option>
@@ -167,7 +167,7 @@ export function ConvertLeadModal({ open, onOpenChange, lead, onConverted }: Conv
                 <button
                   type="button"
                   onClick={() => setCreateDeal(!createDeal)}
-                  className={`w-11 h-6 rounded-full relative transition-colors ${createDeal ? "bg-teal-600 shadow-lg shadow-teal-600/20" : "bg-slate-200 dark:bg-slate-700"}`}
+                  className={`w-11 h-6 rounded-full relative transition-colors ${createDeal ? "bg-accent shadow-lg shadow-accent/20" : "bg-slate-200 dark:bg-slate-700"}`}
                 >
                   <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${createDeal ? "left-[26px]" : "left-1"}`} />
                 </button>
@@ -177,19 +177,19 @@ export function ConvertLeadModal({ open, onOpenChange, lead, onConverted }: Conv
                 <div className="space-y-6">
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Deal Title</Label>
-                    <Input value={dealTitle} onChange={(e) => setDealTitle(e.target.value)} className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10" />
+                    <Input value={dealTitle} onChange={(e) => setDealTitle(e.target.value)} className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Value ($)</Label>
-                      <Input type="number" value={dealValue} onChange={(e) => setDealValue(e.target.value)} className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10" />
+                      <Input type="number" value={dealValue} onChange={(e) => setDealValue(e.target.value)} className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10" />
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Pipeline Stage</Label>
                       <select
                         value={dealStage}
                         onChange={(e) => setDealStage(e.target.value as DealStage)}
-                        className="w-full h-11 px-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-teal-500/10 transition-all shadow-sm"
+                        className="w-full h-11 px-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
                       >
                         {(Object.entries(STAGE_LABELS) as [DealStage, string][]).map(([val, label]) => (
                           <option key={val} value={val}>{label}</option>
@@ -208,16 +208,16 @@ export function ConvertLeadModal({ open, onOpenChange, lead, onConverted }: Conv
             {/* Section 3: Summary */}
             <div className="border border-slate-200/60 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-900 ring-1 ring-slate-100 dark:ring-slate-800 p-6 rounded-2xl space-y-3">
               <div className="flex items-center gap-2 mb-2">
-                <Check className="w-3.5 h-3.5 text-teal-600" />
+                <Check className="w-3.5 h-3.5 text-accent" />
                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Conversion Workflow</h3>
               </div>
               <div className="space-y-1.5 pl-5">
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300">
-                  <div className="w-1 h-1 rounded-full bg-teal-500" /> Create primary contact record
+                  <div className="w-1 h-1 rounded-full bg-accent" /> Create primary contact record
                 </div>
                 {createDeal && dealValue && (
                   <div className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300">
-                    <div className="w-1 h-1 rounded-full bg-teal-500" /> Initialize pipeline deal for {formatCurrency(Number(dealValue))}
+                    <div className="w-1 h-1 rounded-full bg-accent" /> Initialize pipeline deal for {formatCurrency(Number(dealValue))}
                   </div>
                 )}
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-400 italic">
@@ -228,24 +228,10 @@ export function ConvertLeadModal({ open, onOpenChange, lead, onConverted }: Conv
           </div>
         </div>
 
-        {/* Sticky Action Footer */}
-        <div className="px-8 py-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
-          <Button
-            type="button"
-            variant="outlineNeutral"
-            onClick={() => onOpenChange(false)}
-            className="h-9 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest border-2"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            onClick={handleConvert}
-            className="h-9 px-10 bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-600/20 text-[10px] font-black uppercase tracking-widest"
-          >
-            Confirm Conversion
-          </Button>
-        </div>
+        <FormActions
+          cancel={{ label: "Cancel", onClick: () => onOpenChange(false) }}
+          primary={{ label: "Confirm Conversion", onClick: handleConvert }}
+        />
       </DialogContent>
     </Dialog>
   )

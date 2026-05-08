@@ -16,6 +16,7 @@ import type { Task, Project, TaskTag, TaskTagLink } from "@/lib/types"
 import { AddTaskModal } from "@/components/crmComponent/AddTaskModal"
 import { EditTaskModal } from "@/components/crmComponent/EditTaskModal"
 import { KanbanBoard } from "@/components/crmComponent/KanbanBoard"
+import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 import { useCRMResource } from "@/lib/hooks"
 import { useUser } from "@/lib/AuthContext"
 import { ListSkeleton } from "@/components/ui/skeletons"
@@ -51,12 +52,12 @@ function SortableRow({ item, children, onClick, className }: any) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id } as any)
   const style = { transform: CSS.Transform.toString(transform), transition }
   return (
-    <tr ref={setNodeRef} style={style} className={cn(className, isDragging && "opacity-50 z-50 shadow-2xl relative bg-teal-50 dark:bg-teal-900/10")} onClick={onClick}>
+    <tr ref={setNodeRef} style={style} className={cn(className, isDragging && "opacity-50 z-50 shadow-2xl relative bg-accent-dim")} onClick={onClick}>
       {React.Children.map(children, (child: any) => {
         if (child && child.props && child.props.className?.includes('drag-handle-cell')) {
           return React.cloneElement(child, {
             children: (
-              <div {...attributes} {...listeners} className="flex justify-center text-slate-300 hover:text-teal-600 cursor-grab p-1" onClick={(e) => e.stopPropagation()}>
+              <div {...attributes} {...listeners} className="flex justify-center text-slate-300 hover:text-accent cursor-grab p-1" onClick={(e) => e.stopPropagation()}>
                 <GripVertical className="w-4 h-4" />
               </div>
             )
@@ -221,10 +222,10 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
               }}
               className={cn(
                 "w-4 h-4 rounded border transition-all flex items-center justify-center",
-                isAllSelected ? "bg-teal-600 border-teal-600 text-white" : isPartial ? "border-teal-600 text-teal-600" : "border-slate-300 dark:border-slate-700 hover:border-teal-600"
+                isAllSelected ? "bg-accent border-accent text-white" : isPartial ? "border-accent text-accent" : "border-slate-300 dark:border-slate-700 hover:border-accent"
               )}
             >
-              {isAllSelected ? <Check className="w-2.5 h-2.5 stroke-[4]" /> : isPartial ? <div className="w-1.5 h-[2px] bg-teal-600 rounded-full" /> : null}
+              {isAllSelected ? <Check className="w-2.5 h-2.5 stroke-[4]" /> : isPartial ? <div className="w-1.5 h-[2px] bg-accent rounded-full" /> : null}
             </button>
           </div>
         )
@@ -243,7 +244,7 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
               setSelectedTaskIds(next)
             }}
             className={cn(
-              "rounded border-slate-300 dark:border-slate-700 text-teal-600 focus:ring-teal-500 cursor-pointer transition-opacity",
+              "rounded border-slate-300 dark:border-slate-700 text-accent focus:ring-accent cursor-pointer transition-opacity",
               selectedTaskIds.has(task.id) ? "opacity-100" : "opacity-0 group-hover:opacity-100"
             )}
           />
@@ -282,12 +283,13 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
     {
       header: "Assignee",
       render: (task) => {
-        const initials = 'TM' // Team Member placeholder
         return (
           <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[9px] font-black text-slate-500 border border-slate-200 dark:border-slate-800">
-              {initials}
-            </div>
+            <InitialsAvatar
+              name="Team Member"
+              className="w-7 h-7 rounded-full border border-slate-200 dark:border-slate-800"
+              textClassName="text-[9px] font-black"
+            />
             <div className="min-w-0">
               <p className="text-xs font-bold text-slate-900 dark:text-white truncate">Assignee</p>
               <p className="text-[9px] text-slate-500 truncate mt-0.5">Team Role</p>
@@ -313,7 +315,7 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
       align: 'right',
       render: (task) => (
         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-teal-600" onClick={(e) => { e.stopPropagation(); setEditingTask(task); }}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-accent" onClick={(e) => { e.stopPropagation(); setEditingTask(task); }}>
             <Edit2 className="w-3.5 h-3.5" />
           </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-600" onClick={(e) => { e.stopPropagation(); setPendingDelete(task); }}>
@@ -342,7 +344,7 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
               <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Workspace</h1>
               <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium leading-relaxed italic">Coordination simplified for teams.</p>
             </div>
-            <button className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white text-xs font-black uppercase tracking-widest rounded-md transition-all flex items-center gap-2" onClick={() => setShowAddModal(true)}>
+            <button className="px-6 py-3 bg-accent hover:bg-accent/90 text-white text-xs font-black uppercase tracking-widest rounded-md transition-all flex items-center gap-2" onClick={() => setShowAddModal(true)}>
               <PlusCircle className="w-4 h-4" /> Create Record
             </button>
           </div>
@@ -357,9 +359,9 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
               ].map((t) => {
                 const isActive = activeTab === t.id
                 return (
-                  <button key={t.id} onClick={() => handleViewModeChange(t.id as any)} className={cn("pb-4 font-bold text-sm tracking-wide transition-all relative px-1 hover:text-slate-900", isActive ? "text-teal-600" : "text-slate-500")}>
+                  <button key={t.id} onClick={() => handleViewModeChange(t.id as any)} className={cn("pb-4 font-bold text-sm tracking-wide transition-all relative px-1 hover:text-slate-900", isActive ? "text-accent" : "text-slate-500")}>
                     <span className="uppercase text-[11px] tracking-[0.1em] font-black">{t.label}</span>
-                    {isActive && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-teal-600 rounded-t-full shadow-[0_0_12px_rgba(20,184,166,0.6)]" />}
+                    {isActive && <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-accent rounded-t-full shadow-sm shadow-accent/40" />}
                   </button>
                 )
               })}
@@ -367,8 +369,8 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
 
             <div className="flex-1 w-full lg:max-w-md pb-3">
               <div className="relative group/search">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within/search:text-teal-600 transition-colors" />
-                <input placeholder="Search records..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-semibold focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 outline-none transition-all shadow-xs" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within/search:text-accent transition-colors" />
+                <input placeholder="Search records..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-semibold focus:ring-4 focus:ring-accent/20 focus:border-accent outline-none transition-all shadow-xs" />
               </div>
             </div>
           </div>
@@ -387,7 +389,7 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
                   onClick={() => setActiveFilter(f.id as any)}
                   className={cn(
                     "px-4 h-7 text-[10px] font-black uppercase tracking-widest rounded transition-all",
-                    activeFilter === f.id ? "bg-white text-teal-600 shadow-xs border border-slate-200 dark:bg-slate-900 dark:border-slate-800" : "text-slate-500 hover:text-slate-800"
+                    activeFilter === f.id ? "bg-white text-accent shadow-xs border border-slate-200 dark:bg-slate-900 dark:border-slate-800" : "text-slate-500 hover:text-slate-800"
                   )}
                 >
                   {f.label}
@@ -407,7 +409,7 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
                   onClick={() => setStatusFilter(s.id as any)}
                   className={cn(
                     "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border",
-                    statusFilter === s.id ? "bg-teal-600 border-teal-600 text-white shadow-sm" : "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-500 hover:border-teal-500 hover:text-teal-600"
+                    statusFilter === s.id ? "bg-accent border-accent text-white shadow-sm shadow-accent/20" : "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-500 hover:border-accent hover:text-accent"
                   )}
                 >
                   {s.label}
@@ -421,8 +423,8 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
         </div>
 
         {selectedTaskIds.size > 0 && (
-          <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 rounded-md p-3 animate-fade-in shadow-sm flex items-center justify-between">
-            <span className="text-sm font-bold text-teal-700 dark:text-teal-400 uppercase tracking-widest">{selectedTaskIds.size} SELECTED</span>
+          <div className="bg-accent-dim border border-accent/20 rounded-md p-3 animate-fade-in shadow-sm flex items-center justify-between">
+            <span className="text-sm font-bold text-accent uppercase tracking-widest">{selectedTaskIds.size} SELECTED</span>
             <div className="flex items-center gap-2">
               <button onClick={() => { Array.from(selectedTaskIds).forEach(id => updateItem(id, { status: 'completed' })); setSelectedTaskIds(new Set()); }} className="h-8 px-4 text-[10px] font-black uppercase tracking-widest bg-white border border-slate-200 rounded-md hover:bg-slate-50">Complete</button>
               <button onClick={() => { Array.from(selectedTaskIds).forEach(id => deleteItem(id)); setSelectedTaskIds(new Set()); }} className="h-8 px-4 text-[10px] font-black uppercase tracking-widest bg-red-600 text-white rounded-md hover:bg-red-700">Delete Items</button>
@@ -438,7 +440,7 @@ export function TaskView({ fixedProjectId, fixedEntityType, fixedEntityId, hideH
               <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-10 font-medium leading-relaxed">Try adjusting filters to expand your search context.</p>
               <div className="flex items-center gap-4">
                 <Button variant="ghost" onClick={() => { setSearch(""); setStatusFilter("all"); setActiveFilter("my"); }} className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-slate-900">Reset Workspace</Button>
-                <Button onClick={() => setShowAddModal(true)} className="rounded-md h-11 px-8 bg-teal-600 hover:bg-teal-700 text-xs font-black uppercase tracking-widest">Create Task</Button>
+                <Button onClick={() => setShowAddModal(true)} className="rounded-md h-11 px-8 bg-accent hover:bg-accent/90 text-xs font-black uppercase tracking-widest">Create Task</Button>
               </div>
             </div>
           ) : activeTab === 'list' ? (

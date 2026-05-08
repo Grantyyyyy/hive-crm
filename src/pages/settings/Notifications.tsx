@@ -73,7 +73,7 @@ export function Notifications() {
       case 'info':
         return <Info className={cn(className, "text-blue-500")} />
       default:
-        return <Bell className={cn(className, isRead ? "text-slate-400" : "text-teal-600")} />
+        return <Bell className={cn(className, isRead ? "text-slate-400" : "text-accent")} />
     }
   }
 
@@ -140,19 +140,19 @@ export function Notifications() {
                 className={cn(
                   "bg-white dark:bg-slate-900 rounded-2xl border transition-all cursor-pointer group relative overflow-hidden",
                   !n.isRead 
-                    ? "border-teal-200 dark:border-teal-800/50 shadow-sm shadow-teal-500/5" 
+                    ? "border-accent/20 shadow-sm shadow-accent/5" 
                     : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
                 )}
               >
                 {!n.isRead && (
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-teal-600" />
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent" />
                 )}
                 
                 <div className="p-5 flex items-center gap-4">
                   <div className={cn(
                     "w-10 h-10 rounded-full flex items-center justify-center shrink-0 border shadow-sm",
                     !n.isRead 
-                      ? "bg-teal-50 dark:bg-teal-900/20 border-teal-100 dark:border-teal-800" 
+                      ? "bg-accent-dim border-accent/10" 
                       : "bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800"
                   )}>
                     {getIcon(n.type, n.isRead)}
@@ -176,7 +176,7 @@ export function Notifications() {
                           {n.type.replace('_', ' ')}
                         </span>
                         {!n.isRead && (
-                          <span className="flex h-2 w-2 rounded-full bg-teal-600 shadow-[0_0_8px_rgba(13,148,136,0.5)]" />
+                          <span className="flex h-2 w-2 rounded-full bg-accent shadow-sm" />
                         )}
                       </div>
                       <div className="flex items-center gap-4 shrink-0">
@@ -190,7 +190,7 @@ export function Notifications() {
                               variant="ghost" 
                               size="icon-sm" 
                               onClick={(e) => { e.stopPropagation(); handleMarkAsRead(n.id) }} 
-                              className="text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20"
+                              className="text-accent hover:bg-accent-dim"
                             >
                               <Check className="w-4 h-4" />
                             </Button>
@@ -230,5 +230,3 @@ export function Notifications() {
     </div>
   )
 }
-
-

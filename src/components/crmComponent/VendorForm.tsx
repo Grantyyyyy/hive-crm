@@ -1,8 +1,8 @@
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { FormActions } from "@/components/reusables/form-actions"
 import { cn } from "@/lib/utils"
 import type { Vendor, VendorStatus } from "@/lib/types"
 import { generateId } from "@/lib/helpers"
@@ -68,7 +68,7 @@ export function VendorForm({ initialData, onSave, onCancel }: VendorFormProps) {
           {/* Section: Company Information */}
           <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
+              <div className="w-1 h-3.5 bg-accent rounded-full" />
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Company Identity</h3>
             </div>
 
@@ -79,7 +79,7 @@ export function VendorForm({ initialData, onSave, onCancel }: VendorFormProps) {
                   placeholder="Acme Logistics Corp"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className={cn("h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10", errors.name && "border-red-500")}
+                  className={cn("h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10", errors.name && "border-red-500")}
                 />
                 {errors.name && <p className="text-[9px] font-bold text-red-500 uppercase tracking-wide">{errors.name}</p>}
               </div>
@@ -90,7 +90,7 @@ export function VendorForm({ initialData, onSave, onCancel }: VendorFormProps) {
                   placeholder="Electronics Supplier"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10"
+                  className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10"
                 />
               </div>
 
@@ -100,7 +100,7 @@ export function VendorForm({ initialData, onSave, onCancel }: VendorFormProps) {
                   placeholder="XX-XXXXXXX"
                   value={taxId}
                   onChange={(e) => setTaxId(e.target.value)}
-                  className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10"
+                  className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10"
                 />
               </div>
             </div>
@@ -121,7 +121,7 @@ export function VendorForm({ initialData, onSave, onCancel }: VendorFormProps) {
                   placeholder="vendor@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10"
+                  className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10"
                 />
               </div>
 
@@ -131,7 +131,7 @@ export function VendorForm({ initialData, onSave, onCancel }: VendorFormProps) {
                   placeholder="+1 (555) 000-0000"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10"
+                  className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10"
                 />
               </div>
 
@@ -141,7 +141,7 @@ export function VendorForm({ initialData, onSave, onCancel }: VendorFormProps) {
                   placeholder="https://vendor-site.com"
                   value={website}
                   onChange={(e) => setWebsite(e.target.value)}
-                  className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10"
+                  className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10"
                 />
               </div>
 
@@ -151,7 +151,7 @@ export function VendorForm({ initialData, onSave, onCancel }: VendorFormProps) {
                   placeholder="Street, City, State, ZIP..."
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  className="rounded-xl border-slate-200 dark:border-slate-100 bg-white dark:bg-slate-900 min-h-[80px] p-4 text-xs font-medium focus:ring-4 focus:ring-teal-500/10 shadow-sm transition-all"
+                  className="rounded-xl border-slate-200 dark:border-slate-100 bg-white dark:bg-slate-900 min-h-[80px] p-4 text-xs font-medium focus:ring-4 focus:ring-accent/10 shadow-sm transition-all"
                 />
               </div>
             </div>
@@ -171,7 +171,7 @@ export function VendorForm({ initialData, onSave, onCancel }: VendorFormProps) {
                   placeholder="e.g. Net 30"
                   value={paymentTerms}
                   onChange={(e) => setPaymentTerms(e.target.value)}
-                  className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10"
+                  className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10"
                 />
               </div>
 
@@ -186,7 +186,7 @@ export function VendorForm({ initialData, onSave, onCancel }: VendorFormProps) {
                       className={cn(
                         "py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
                         status === s
-                          ? "bg-white dark:bg-slate-700 text-teal-600 dark:text-teal-400 shadow-sm ring-1 ring-slate-200/50"
+                          ? "bg-white dark:bg-slate-700 text-accent shadow-sm ring-1 ring-slate-200/50"
                           : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                       )}
                     >
@@ -202,7 +202,7 @@ export function VendorForm({ initialData, onSave, onCancel }: VendorFormProps) {
                   placeholder="Private remarks regarding performance, reliability..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="rounded-xl border-slate-200 dark:border-slate-100 bg-white dark:bg-slate-900 min-h-[120px] p-4 text-xs font-medium focus:ring-4 focus:ring-teal-500/10 shadow-sm transition-all"
+                  className="rounded-xl border-slate-200 dark:border-slate-100 bg-white dark:bg-slate-900 min-h-[120px] p-4 text-xs font-medium focus:ring-4 focus:ring-accent/10 shadow-sm transition-all"
                 />
               </div>
             </div>
@@ -210,23 +210,14 @@ export function VendorForm({ initialData, onSave, onCancel }: VendorFormProps) {
         </div>
       </div>
 
-      {/* Sticky Action Footer */}
-      <div className="px-8 py-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3 z-30">
-        <Button
-          type="button"
-          variant="outlineNeutral"
-          onClick={onCancel}
-          className="h-9 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 transition-all hover:bg-slate-50"
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          className="h-9 px-10 bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-600/20 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
-        >
-          {initialData?.id ? "Update Partner" : "Register Partner"}
-        </Button>
-      </div>
+      <FormActions
+        className="z-30"
+        cancel={{ label: "Cancel", onClick: onCancel }}
+        primary={{
+          label: initialData?.id ? "Update Partner" : "Register Partner",
+          type: "submit",
+        }}
+      />
     </form>
   )
 }

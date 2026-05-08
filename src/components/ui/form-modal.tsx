@@ -16,7 +16,7 @@ export interface FormModalProps {
 
   onSubmit: (value: string) => void
   icon?: React.ReactNode
-  accentColor?: 'teal' | 'blue' | 'slate'
+  accentColor?: 'accent' | 'teal' | 'blue' | 'slate'
 }
 
 export function FormModal({
@@ -28,7 +28,7 @@ export function FormModal({
 
   onSubmit,
   icon,
-  accentColor = 'teal',
+  accentColor = 'accent',
 }: FormModalProps) {
   const [value, setValue] = useState("")
   const [submitted, setSubmitted] = useState(false)
@@ -57,12 +57,19 @@ export function FormModal({
   }
 
   const colorMap = {
+    accent: {
+      iconBg: 'bg-accent-dim',
+      iconColor: 'text-accent',
+      inputFocus: 'focus:ring-accent/20 focus:border-accent',
+      button: 'bg-accent hover:opacity-90 shadow-accent/25',
+      success: 'text-accent',
+    },
     teal: {
-      iconBg: 'bg-teal-50 dark:bg-teal-950/40',
-      iconColor: 'text-teal-600 dark:text-teal-400',
-      inputFocus: 'focus:ring-teal-500/20 focus:border-teal-500',
-      button: 'bg-teal-600 hover:bg-teal-700 shadow-teal-500/25',
-      success: 'text-teal-600 dark:text-teal-400',
+      iconBg: 'bg-accent-dim',
+      iconColor: 'text-accent',
+      inputFocus: 'focus:ring-accent/20 focus:border-accent',
+      button: 'bg-accent hover:opacity-90 shadow-accent/25',
+      success: 'text-accent',
     },
     blue: {
       iconBg: 'bg-blue-50 dark:bg-blue-950/40',

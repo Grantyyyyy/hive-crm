@@ -16,10 +16,10 @@ export function Navbar() {
     <header className="fixed top-0 left-0 right-0 z-50 w-full border-b glass border-border/50">
       <div className="container mx-auto flex h-16 items-center justify-between px-6">
         <Link href="/" className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
-            <BarChart3 className="w-5 h-5 text-white" />
+          <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center overflow-hidden">
+            <img src="/hub.svg" alt="Logo" className="w-full h-full object-contain p-1 invert" />
           </div>
-          <span className="font-bold text-xl tracking-tight text-text-primary">Enterprise CRM</span>
+          <span className="font-bold text-xl tracking-tight text-text-primary">Hive CRM</span>
         </Link>
         <div className="flex items-center space-x-4">
           <Button variant="ghost" size="icon" onClick={toggleTheme}>

@@ -25,6 +25,7 @@ import { toast } from "sonner"
 import { sendQuoteEmail, acceptQuote, reserveStockForQuote } from "@/services/quoteService"
 import { useUser } from "@/lib/AuthContext"
 import { StatCard } from "@/components/reusables/StatCard"
+import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 import { StatusTabs } from "@/components/reusables/StatusTabs"
 import type { StatusTab } from "@/components/reusables/StatusTabs"
 import { SalesTable, type SalesColumn } from "@/components/reusables/SalesTable"
@@ -153,16 +154,18 @@ export function Quotes() {
     {
       header: "Quote ID",
       render: (quote) => (
-        <span className="text-[13px] font-bold text-teal-600 dark:text-teal-400">#{quote.quoteNumber}</span>
+        <span className="text-[13px] font-bold text-accent">#{quote.quoteNumber}</span>
       ),
     },
     {
       header: "Target Client",
       render: (quote) => (
         <div className="flex items-center gap-3">
-          <div className="size-8 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 text-[11px] font-black uppercase ring-1 ring-white dark:ring-slate-900 shadow-sm">
-            {quote.customerName.split(' ').map(n => n[0]).join('').slice(0, 2)}
-          </div>
+          <InitialsAvatar
+            name={quote.customerName}
+            className="size-8 rounded-xl ring-1 ring-white dark:ring-slate-900 shadow-sm"
+            textClassName="text-[11px] font-black uppercase"
+          />
           <span className="text-[13px] font-medium text-slate-900 dark:text-white truncate max-w-[140px]">{quote.customerName}</span>
         </div>
       ),
@@ -192,27 +195,27 @@ export function Quotes() {
       render: (quote) => (
         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity translate-x-2 group-hover:translate-x-0">
           {quote.status === 'draft' && (
-            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleMarkSent(quote); }} className="text-[11px] h-8 px-4 rounded-xl font-bold text-teal-600 hover:text-teal-700 hover:bg-teal-50">
+            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleMarkSent(quote); }} className="text-[11px] h-8 px-4 rounded-xl font-bold text-accent hover:text-accent hover:bg-accent-dim">
               Mark Sent
             </Button>
           )}
           {quote.status === 'sent' && (
-            <Button variant="default" size="sm" onClick={(e) => { e.stopPropagation(); handleAccept(quote); }} className="bg-teal-600 hover:bg-teal-700 text-[11px] h-8 px-4 rounded-xl font-bold shadow-lg shadow-teal-600/20 transition-all active:scale-95">
+            <Button variant="default" size="sm" onClick={(e) => { e.stopPropagation(); handleAccept(quote); }} className="bg-accent hover:bg-accent/90 text-[11px] h-8 px-4 rounded-xl font-bold shadow-lg shadow-accent/20 transition-all active:scale-95">
               Accept
             </Button>
           )}
           {(quote.status === 'sent' || quote.status === 'accepted') && (
             <div className="inline-flex items-center rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-900">
-              <Button variant="ghost" size="sm" onClick={(e) => handleDownloadPDF(quote, e as any)} className="text-[11px] h-8 px-3 rounded-none text-slate-500 font-bold hover:bg-teal-50 hover:text-teal-600 border-none" title="Download PDF">
+              <Button variant="ghost" size="sm" onClick={(e) => handleDownloadPDF(quote, e as any)} className="text-[11px] h-8 px-3 rounded-none text-slate-500 font-bold hover:bg-accent-dim hover:text-accent border-none" title="Download PDF">
                 <FileDown className="w-3.5 h-3.5" />
               </Button>
               <div className="w-px h-4 bg-slate-200 dark:bg-slate-700" />
-              <Button variant="ghost" size="sm" onClick={(e) => handleSendEmail(quote, e as any)} className="text-[11px] h-8 px-3 rounded-none text-slate-500 font-bold hover:bg-teal-50 hover:text-teal-600 border-none" title="Send Email">
+              <Button variant="ghost" size="sm" onClick={(e) => handleSendEmail(quote, e as any)} className="text-[11px] h-8 px-3 rounded-none text-slate-500 font-bold hover:bg-accent-dim hover:text-accent border-none" title="Send Email">
                 <Mail className="w-3.5 h-3.5" />
               </Button>
             </div>
           )}
-          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); navigate(`/quotes/${quote.id}`) }} className="text-[11px] h-8 px-4 rounded-xl text-slate-500 font-bold hover:text-teal-600">
+          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); navigate(`/quotes/${quote.id}`) }} className="text-[11px] h-8 px-4 rounded-xl text-slate-500 font-bold hover:text-accent">
             Details
           </Button>
         </div>
@@ -232,7 +235,7 @@ export function Quotes() {
         {/* Header Region */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">Sales & Revenue</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-1">Sales & Revenue</p>
             <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Quotations</h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Manage and track customer price estimates and validities.</p>
           </div>
@@ -255,7 +258,7 @@ export function Quotes() {
             label="Total Quote Value"
             value={fmtCurrency(quotes.reduce((sum, q) => sum + q.amount, 0))}
             icon={<DollarSign className="w-5 h-5" />}
-            accentColor="teal"
+            accentColor="accent"
             badge="+15.3%"
             badgeColor="emerald"
           />
@@ -285,7 +288,7 @@ export function Quotes() {
               placeholder="Search quotes, customers..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
+              className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all"
             />
           </div>
 

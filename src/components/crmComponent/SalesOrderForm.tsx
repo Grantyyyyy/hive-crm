@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react"
 import { Trash2, Info, ChevronDown, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { FormActions } from "@/components/reusables/form-actions"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { DatePicker } from "@/components/ui/date-picker"
@@ -234,6 +235,14 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
     onSave(order)
   }
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2
+    }).format(amount)
+  }
+
   return (
     <div className={cn("flex flex-col h-full bg-slate-50 dark:bg-slate-950 font-sans", className)}>
       {/* Scrollable Content Area */}
@@ -243,7 +252,7 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
           {/* Section 1: Order Identity */}
           <section className="bg-white dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
+              <div className="w-1 h-3.5 bg-accent rounded-full" />
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Order Context</h3>
             </div>
 
@@ -253,7 +262,7 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
                 <div className="relative group">
                   <div
                     className={cn(
-                      "w-full h-11 px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between cursor-pointer focus-within:ring-4 focus-within:ring-teal-500/10 transition-all shadow-sm",
+                      "w-full h-11 px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between cursor-pointer focus-within:ring-4 focus-within:ring-accent/10 transition-all shadow-sm",
                       errors.customerId && "border-red-500 ring-4 ring-red-500/10"
                     )}
                     onClick={() => !isSaving && setShowCustomerDropdown(!showCustomerDropdown)}
@@ -273,7 +282,7 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
                           type="text"
                           autoFocus
                           placeholder="Search customers..."
-                          className="w-full h-9 px-3 bg-slate-50 dark:bg-slate-800/50 border-none rounded-lg text-xs font-bold focus:ring-2 focus:ring-teal-500 outline-none"
+                          className="w-full h-9 px-3 bg-slate-50 dark:bg-slate-800/50 border-none rounded-lg text-xs font-bold focus:ring-2 focus:ring-accent outline-none"
                           value={customerSearch}
                           onChange={(e) => setCustomerSearch(e.target.value)}
                           onClick={(e) => e.stopPropagation()}
@@ -293,7 +302,7 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
                                 return n
                               })
                             }}
-                            className="w-full text-left p-3 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors flex flex-col gap-0.5"
+                            className="w-full text-left p-3 hover:bg-accent-dim transition-colors flex flex-col gap-0.5"
                           >
                             <span className="text-[13px] font-bold text-slate-900 dark:text-white">{c.name}</span>
                             <span className="text-[10px] text-slate-500 font-medium">
@@ -337,7 +346,7 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
           <section className="bg-white dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <div id="items" className="w-1 h-3.5 bg-teal-500 rounded-full" />
+                <div id="items" className="w-1 h-3.5 bg-accent rounded-full" />
                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Products & Pricing</h3>
               </div>
               {errors.items && <p className="text-[9px] font-bold text-red-500 uppercase tracking-wide mr-auto px-4">{errors.items}</p>}
@@ -352,7 +361,7 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
                       className={cn(
                         "h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
                         !canAddNewItem ? "opacity-40 grayscale cursor-not-allowed" :
-                          showInventory ? "bg-teal-50 text-teal-700 underline underline-offset-4" : "text-teal-600 hover:bg-teal-50/50"
+                          showInventory ? "bg-accent-dim text-accent underline underline-offset-4" : "text-accent hover:bg-accent-dim/70"
                       )}
                     >
                       Quick Add
@@ -364,7 +373,7 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
                             type="text"
                             autoFocus
                             placeholder="Search catalog..."
-                            className="w-full h-9 px-3 bg-slate-50 dark:bg-slate-800/50 border-none rounded-lg text-xs font-bold focus:ring-2 focus:ring-teal-500 outline-none"
+                            className="w-full h-9 px-3 bg-slate-50 dark:bg-slate-800/50 border-none rounded-lg text-xs font-bold focus:ring-2 focus:ring-accent outline-none"
                             value={inventorySearch}
                             onChange={(e) => setInventorySearch(e.target.value)}
                           />
@@ -380,21 +389,12 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
                               className="w-full text-left p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group flex items-start justify-between gap-4"
                             >
                               <div className="min-w-0 flex-1">
-                                <div className="text-[13px] font-black text-slate-900 dark:text-white group-hover:text-teal-600 truncate">{item.name}</div>
+                                <div className="text-[13px] font-black text-slate-900 dark:text-white group-hover:text-accent truncate">{item.name}</div>
                                 <div className="text-[10px] font-bold text-slate-400 mt-0.5 tracking-tight line-clamp-1">{item.sku} • {item.description}</div>
                               </div>
                               <div className="text-right shrink-0 flex flex-col items-end gap-1">
-                                <div className="text-[13px] font-black text-slate-900 dark:text-white">
-                                  ${item.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                                </div>
-                                <div className={cn(
-                                  "text-[9px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded-md",
-                                  (item.stockQuantity - item.reservedQuantity) > 0
-                                    ? "bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400"
-                                    : "bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
-                                )}>
-                                  {item.stockQuantity - item.reservedQuantity} Avail
-                                </div>
+                                <div className="text-[13px] font-black text-slate-900 dark:text-white">{formatCurrency(item.price)}</div>
+                                <div className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded">In Stock</div>
                               </div>
                             </button>
                           ))}
@@ -448,7 +448,7 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
                             id={`item_${index}_name`}
                             ref={index === items.length - 1 ? lastItemRef : null}
                             className={cn(
-                              "w-full bg-transparent border-none focus:ring-0 p-0 text-[13px] font-black placeholder:text-slate-300 transition-colors focus:placeholder:text-teal-400",
+                              "w-full bg-transparent border-none focus:ring-0 p-0 text-[13px] font-black placeholder:text-slate-300 transition-colors focus:placeholder:text-accent/60",
                               errors[`item_${index}_name`] ? "text-red-500 placeholder:text-red-300" : "text-slate-900 dark:text-slate-100"
                             )}
                             placeholder="Product name..."
@@ -467,7 +467,7 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
                       <td className="px-4 py-4 align-top">
                         <input
                           type="number"
-                          className="w-full h-9 bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl focus:ring-4 focus:ring-teal-500/10 p-0 text-[13px] font-black text-slate-900 dark:text-slate-100 text-center transition-all outline-none"
+                          className="w-full h-9 bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl focus:ring-4 focus:ring-accent/10 p-0 text-[13px] font-black text-slate-900 dark:text-slate-100 text-center transition-all outline-none"
                           value={item.quantity}
                           onChange={(e) => updateItem(item.id, { quantity: parseInt(e.target.value) || 0 })}
                         />
@@ -475,7 +475,7 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
                       <td className="px-4 py-4 align-top">
                         <input
                           type="number"
-                          className="w-full h-9 bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl focus:ring-4 focus:ring-teal-500/10 pl-2 pr-2 text-[13px] font-black text-slate-900 dark:text-slate-100 text-right transition-all outline-none"
+                          className="w-full h-9 bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl focus:ring-4 focus:ring-accent/10 pl-2 pr-2 text-[13px] font-black text-slate-900 dark:text-slate-100 text-right transition-all outline-none"
                           value={item.price}
                           onChange={(e) => updateItem(item.id, { price: parseFloat(e.target.value) || 0 })}
                         />
@@ -593,7 +593,7 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
                       ))}
                     </select>
                     {orderDiscountAmount > 0 && (
-                      <span className="text-teal-600 dark:text-teal-400">-${orderDiscountAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                      <span className="text-accent">-${orderDiscountAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                     )}
                   </div>
                 </div>
@@ -610,7 +610,7 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
                 </div>
                 <div className="w-full h-px bg-slate-200 dark:bg-slate-800 my-1" />
                 <div className="flex items-center gap-6 w-full justify-between">
-                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-teal-600">Total Amount</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-accent">Total Amount</span>
                   <span className="text-4xl font-black text-slate-900 dark:text-white tabular-nums tracking-tighter">
                     ${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                   </span>
@@ -635,34 +635,20 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
         </div>
       </div>
 
-      {/* Sticky Action Footer */}
-      <div className="px-8 py-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-4 shrink-0 shadow-[0_-8px_30px_-10px_rgba(0,0,0,0.05)] z-20">
-        <Button
-          variant="outline"
-          onClick={() => handleSave('draft')}
-          disabled={isSaving}
-          className="h-9 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 border-slate-200 dark:border-slate-800 transition-all hover:bg-slate-50 active:scale-95"
-        >
-          {isSaving ? "Processing..." : "Park Order"}
-        </Button>
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            onClick={onCancel}
-            disabled={isSaving}
-            className="h-9 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 transition-all"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={() => handleSave('pending')}
-            disabled={isSaving}
-            className="h-9 px-8 bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-600/20 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
-          >
-            {isSaving ? "Initializing..." : "Place Order"}
-          </Button>
-        </div>
-      </div>
+      <FormActions
+        className="z-20"
+        secondary={{
+          label: isSaving ? "Processing..." : "Park Order",
+          onClick: () => handleSave("draft"),
+          disabled: isSaving,
+        }}
+        cancel={{ label: "Cancel", onClick: onCancel, disabled: isSaving }}
+        primary={{
+          label: isSaving ? "Initializing..." : "Place Order",
+          onClick: () => handleSave("pending"),
+          disabled: isSaving,
+        }}
+      />
     </div>
   )
 }

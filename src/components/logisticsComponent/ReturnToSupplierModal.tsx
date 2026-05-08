@@ -168,7 +168,7 @@ export function ReturnToSupplierModal({ lineItem, onClose, onSuccess }: ReturnTo
             <div className="space-y-1.5">
               <div className="flex justify-between items-end">
                 <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Return Quantity</Label>
-                <span className="text-[10px] font-bold text-teal-600 dark:text-teal-400">Available: {availableToReturn}</span>
+                <span className="text-[10px] font-bold text-accent">Available: {availableToReturn}</span>
               </div>
               <div className="relative">
                 <Input
@@ -181,7 +181,7 @@ export function ReturnToSupplierModal({ lineItem, onClose, onSuccess }: ReturnTo
                     const val = e.target.value === "" ? 0 : parseInt(e.target.value)
                     setQuantity(Math.min(val, availableToReturn))
                   }}
-                  className="pl-3 h-11 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 font-bold"
+                  className="pl-3 h-11 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:ring-4 focus:ring-accent/20 focus:border-accent font-bold"
                 />
               </div>
             </div>
@@ -192,7 +192,7 @@ export function ReturnToSupplierModal({ lineItem, onClose, onSuccess }: ReturnTo
                 placeholder="Ex: RMA-12345"
                 value={vendorReference}
                 onChange={e => setVendorReference(e.target.value)}
-                className="h-11 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600"
+                className="h-11 rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:ring-4 focus:ring-accent/20 focus:border-accent"
               />
             </div>
 
@@ -202,7 +202,7 @@ export function ReturnToSupplierModal({ lineItem, onClose, onSuccess }: ReturnTo
                 placeholder="Ex: Defective batch, wrong specification..."
                 value={reason}
                 onChange={e => setReason(e.target.value)}
-                className="min-h-[100px] rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600"
+                className="min-h-[100px] rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 focus:ring-4 focus:ring-accent/20 focus:border-accent"
               />
             </div>
           </div>

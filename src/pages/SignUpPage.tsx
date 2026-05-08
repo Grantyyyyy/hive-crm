@@ -96,7 +96,7 @@ export function SignUpPage() {
     <AuthLayout>
       {/* Heading */}
       <div className="mb-8">
-        <div className="w-10 h-10 bg-teal-600 rounded-xl flex items-center justify-center mb-6 shadow-lg shadow-teal-600/20 lg:hidden">
+        <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center mb-6 shadow-lg shadow-accent/20 lg:hidden">
           <BarChart3 className="w-6 h-6 text-white" />
         </div>
         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted mb-2">
@@ -136,7 +136,7 @@ export function SignUpPage() {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="John Doe"
                 required
-                className="w-full px-4 py-3 border border-border rounded-xl text-sm bg-bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 transition-all"
+                className="w-full px-4 py-3 border border-border rounded-xl text-sm bg-bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-4 focus:ring-accent/20 focus:border-accent transition-all"
               />
             </div>
 
@@ -150,7 +150,7 @@ export function SignUpPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@company.com"
                 required
-                className="w-full px-4 py-3 border border-border rounded-xl text-sm bg-bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 transition-all"
+                className="w-full px-4 py-3 border border-border rounded-xl text-sm bg-bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-4 focus:ring-accent/20 focus:border-accent transition-all"
               />
             </div>
 
@@ -164,7 +164,7 @@ export function SignUpPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full px-4 py-3 border border-border rounded-xl text-sm bg-bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 transition-all"
+                className="w-full px-4 py-3 border border-border rounded-xl text-sm bg-bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-4 focus:ring-accent/20 focus:border-accent transition-all"
               />
             </div>
 
@@ -178,14 +178,14 @@ export function SignUpPage() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full px-4 py-3 border border-border rounded-xl text-sm bg-bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 transition-all"
+                className="w-full px-4 py-3 border border-border rounded-xl text-sm bg-bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-4 focus:ring-accent/20 focus:border-accent transition-all"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading || !email || !password || !confirmPassword || !name}
-              className="w-full mt-2 px-5 py-3 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-teal-600/20 transition-colors flex items-center justify-center gap-2"
+              className="w-full mt-2 px-5 py-3 bg-accent hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-accent/20 transition-all flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
@@ -206,7 +206,7 @@ export function SignUpPage() {
       {/* Sign in link */}
       <p className="mt-8 text-center text-sm text-text-secondary font-medium">
         Already have an account?{" "}
-        <Link href="/sign-in" className="text-teal-600 hover:text-teal-700 font-semibold transition-colors">
+        <Link href="/sign-in" className="text-accent hover:opacity-80 font-semibold transition-colors">
           Sign in
         </Link>
       </p>

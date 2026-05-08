@@ -16,6 +16,9 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useCRMResource } from "@/lib/hooks"
+import { useAuth } from "@/lib/AuthContext"
+import { useTheme } from "@/lib/ThemeProvider"
+import { getBrandColorPreset } from "@/lib/brandColors"
 import { ListSkeleton } from "@/components/ui/skeletons"
 import type { SalesOrder, Quote, Deal, InventoryItem, Contact, Lead, InventoryTransaction } from "@/lib/types"
 import { StatCard } from "@/components/reusables/StatCard"
@@ -62,10 +65,8 @@ function isInRange(dateStr: string | undefined, range: { start: Date; end: Date 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 const fmtCurrency = (v: number) => formatCurrency(v)
-
 const fmtPct = (v: number) => `${v.toFixed(1)}%`
-
-const COLORS = ["#0d9488", "#0ea5e9", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"]
+const REPORT_BASE_COLORS = ["#0ea5e9", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"]
 
 function getMonthKey(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-US", { month: "short", year: "2-digit" })
@@ -74,6 +75,8 @@ function getMonthKey(dateStr: string): string {
 // ── Component ────────────────────────────────────────────────────────────────
 
 export function Reports() {
+  const { brandColor } = useAuth()
+  const { theme } = useTheme()
   const { data: orders, isLoaded: ordersLoaded } = useCRMResource<SalesOrder>("orders")
   const { data: quotes, isLoaded: quotesLoaded } = useCRMResource<Quote>("quotes")
   const { data: deals, isLoaded: dealsLoaded } = useCRMResource<Deal>("deals")
@@ -85,54 +88,53 @@ export function Reports() {
   const [period, setPeriod] = useState<Period>("6m")
   const [periodOpen, setPeriodOpen] = useState(false)
   const range = useMemo(() => getDateRange(period), [period])
+  const accentColor = useMemo(() => {
+    const preset = getBrandColorPreset(brandColor)
+    return theme === "dark" ? preset.dark.accent : preset.light.accent
+  }, [brandColor, theme])
+  const categoryColors = useMemo(() => [accentColor, ...REPORT_BASE_COLORS], [accentColor])
 
-  const allLoaded = ordersLoaded && quotesLoaded && dealsLoaded && invLoaded && contactsLoaded && leadsLoaded && txLoaded
-  if (!allLoaded) return <ListSkeleton />
+  // ── Hook Safety: Ensure all hooks are called before any early returns ──────
 
-  // ── Filtered Data ──────────────────────────────────────────────────────────
+  const filteredOrders = useMemo(() => orders.filter(o => isInRange(o.orderDate, range)), [orders, range])
+  const filteredQuotes = useMemo(() => quotes.filter(q => isInRange(q.date, range)), [quotes, range])
+  const filteredDeals = useMemo(() => deals.filter(d => isInRange(d.createdAt, range)), [deals, range])
+  const filteredTransactions = useMemo(() => transactions.filter(t => isInRange(t.createdAt, range)), [transactions, range])
 
-  const filteredOrders = orders.filter(o => isInRange(o.orderDate, range))
-  const filteredQuotes = quotes.filter(q => isInRange(q.date, range))
-  const filteredDeals = deals.filter(d => isInRange(d.createdAt, range))
-  const filteredTransactions = transactions.filter(t => isInRange(t.createdAt, range))
-
-  // ── KPI Calculations ───────────────────────────────────────────────────────
-
-  const deliveredRevenue = filteredOrders
+  // KPI Calculations (Wrapped in useMemo for consistency)
+  const deliveredRevenue = useMemo(() => filteredOrders
     .filter(o => o.status === "delivered")
-    .reduce((sum, o) => sum + o.totalValue, 0)
+    .reduce((sum, o) => sum + o.totalValue, 0), [filteredOrders])
 
-  const prevRange = (() => {
+  const prevRange = useMemo(() => {
     const diff = range.end.getTime() - range.start.getTime()
     return { start: new Date(range.start.getTime() - diff), end: new Date(range.start.getTime() - 1) }
-  })()
-  const prevRevenue = orders
+  }, [range])
+
+  const prevRevenue = useMemo(() => orders
     .filter(o => o.status === "delivered" && isInRange(o.orderDate, prevRange))
-    .reduce((sum, o) => sum + o.totalValue, 0)
-  const revenueChange = prevRevenue > 0 ? ((deliveredRevenue - prevRevenue) / prevRevenue) * 100 : 0
+    .reduce((sum, o) => sum + o.totalValue, 0), [orders, prevRange])
 
-  const pipelineValue = deals
+  const revenueChange = useMemo(() => prevRevenue > 0 ? ((deliveredRevenue - prevRevenue) / prevRevenue) * 100 : 0, [deliveredRevenue, prevRevenue])
+
+  const pipelineValue = useMemo(() => deals
     .filter(d => !["won", "lost"].includes(d.stage))
-    .reduce((sum, d) => sum + d.value, 0)
+    .reduce((sum, d) => sum + d.value, 0), [deals])
 
-  const wonDeals = deals.filter(d => d.stage === "won")
-  const lostDeals = deals.filter(d => d.stage === "lost")
-  const winRate = (wonDeals.length + lostDeals.length) > 0
+  const wonDeals = useMemo(() => deals.filter(d => d.stage === "won"), [deals])
+  const lostDeals = useMemo(() => deals.filter(d => d.stage === "lost"), [deals])
+  const winRate = useMemo(() => (wonDeals.length + lostDeals.length) > 0
     ? (wonDeals.length / (wonDeals.length + lostDeals.length)) * 100
-    : 0
+    : 0, [wonDeals, lostDeals])
 
-  // Inventory Turnover Calculation
-  // Turnover = COGS / Average Inventory
-  const cogs = filteredTransactions
+  const cogs = useMemo(() => filteredTransactions
     .filter(t => t.type === 'shipment')
-    .reduce((sum, t) => sum + (t.totalCost || 0), 0)
+    .reduce((sum, t) => sum + (t.totalCost || 0), 0), [filteredTransactions])
 
-  const totalStockValue = inventory.reduce((sum, i) => sum + (i.stockQuantity * (i.movingAverageCost || i.price)), 0)
-  const inventoryTurnover = totalStockValue > 0 ? (cogs / totalStockValue) : 0
+  const totalStockValue = useMemo(() => inventory.reduce((sum, i) => sum + (i.stockQuantity * (i.movingAverageCost || i.price)), 0), [inventory])
+  const inventoryTurnover = useMemo(() => totalStockValue > 0 ? (cogs / totalStockValue) : 0, [cogs, totalStockValue])
 
-  // ── Chart Data ─────────────────────────────────────────────────────────────
-
-  // Revenue by month
+  // Chart Data useMemo hooks
   const revenueByMonth = useMemo(() => {
     const map = new Map<string, { revenue: number; quotes: number; month: string }>()
     filteredOrders
@@ -156,7 +158,6 @@ export function Reports() {
     })
   }, [filteredOrders, filteredQuotes])
 
-  // Top 5 Products by Sales Volume
   const topProducts = useMemo(() => {
     const productMap = new Map<string, { name: string; quantity: number; revenue: number }>()
     filteredOrders.forEach(order => {
@@ -172,12 +173,10 @@ export function Reports() {
       .slice(0, 5)
   }, [filteredOrders])
 
-  // Revenue by Category
   const revenueByCategory = useMemo(() => {
     const catMap = new Map<string, number>()
     filteredOrders.forEach(order => {
       order.items.forEach(item => {
-        // Find category from inventory
         const invItem = inventory.find(i => i.name === item.name || i.id === item.inventoryItemId)
         const category = invItem?.category || "Uncategorized"
         catMap.set(category, (catMap.get(category) || 0) + (item.quantity * item.price))
@@ -186,7 +185,6 @@ export function Reports() {
     return Array.from(catMap.entries()).map(([name, value]) => ({ name, value }))
   }, [filteredOrders, inventory])
 
-  // Top Customers by Revenue
   const topCustomers = useMemo(() => {
     const custMap = new Map<string, number>()
     filteredOrders.forEach(order => {
@@ -198,7 +196,6 @@ export function Reports() {
       .slice(0, 5)
   }, [filteredOrders])
 
-  // Deals by stage (Funnel)
   const dealsByStage = useMemo(() => {
     const stages = ["discovery", "proposal", "negotiation", "won", "lost"]
     return stages.map(stage => ({
@@ -207,6 +204,11 @@ export function Reports() {
       value: deals.filter(d => d.stage === stage).reduce((sum, d) => sum + d.value, 0),
     }))
   }, [deals])
+
+  // ── Early Return (AFTER all hooks) ──────────────────────────────────────────
+
+  const allLoaded = ordersLoaded && quotesLoaded && dealsLoaded && invLoaded && contactsLoaded && leadsLoaded && txLoaded
+  if (!allLoaded) return <ListSkeleton />
 
   const selectedPeriodLabel = PERIOD_OPTIONS.find(p => p.value === period)?.label || "Last 6 Months"
 
@@ -218,7 +220,7 @@ export function Reports() {
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
           <div className="flex items-center gap-4">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">Intelligence</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-1">Intelligence</p>
               <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Reports</h1>
               <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Actionable insights for your business operations.</p>
             </div>
@@ -256,7 +258,7 @@ export function Reports() {
             label="Total Revenue"
             value={fmtCurrency(deliveredRevenue)}
             icon={<Banknote className="w-5 h-5" />}
-            accentColor="teal"
+            accentColor="accent"
             badge={revenueChange >= 0 ? `+${revenueChange.toFixed(1)}%` : `${revenueChange.toFixed(1)}%`}
             badgeColor={revenueChange >= 0 ? "emerald" : "rose"}
           />
@@ -295,8 +297,8 @@ export function Reports() {
           <div className="p-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-lg group">
             <div className="flex justify-between items-center mb-8">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                  <Layers className="w-4 h-4 text-blue-600" />
+                <div className="w-8 h-8 bg-accent-dim rounded-lg flex items-center justify-center">
+                  <Layers className="w-4 h-4 text-accent" />
                 </div>
                 <h4 className="font-black text-lg text-slate-900 dark:text-white uppercase tracking-tight">Sales Pipeline</h4>
               </div>
@@ -318,7 +320,7 @@ export function Reports() {
                     contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: "12px", fontWeight: 700 }}
                     formatter={(v: any) => fmtCurrency(Number(v))}
                   />
-                  <Bar dataKey="value" fill="#0d9488" radius={[0, 10, 10, 0]} name="Value ($)" />
+                  <Bar dataKey="value" fill={accentColor} radius={[0, 10, 10, 0]} name="Value ($)" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -328,13 +330,13 @@ export function Reports() {
           <div className="p-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:shadow-lg group">
             <div className="flex justify-between items-center mb-8">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-teal-100 dark:bg-teal-900/30 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="w-4 h-4 text-teal-600" />
+                <div className="w-8 h-8 bg-accent-dim rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-4 h-4 text-accent" />
                 </div>
                 <h4 className="font-black text-lg text-slate-900 dark:text-white uppercase tracking-tight">Revenue Trends</h4>
               </div>
               <div className="flex gap-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-teal-600" /> Revenue</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-accent" /> Revenue</span>
                 <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-cyan-500" /> Quotes</span>
               </div>
             </div>
@@ -348,7 +350,7 @@ export function Reports() {
                     contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: "12px", fontWeight: 700 }}
                     formatter={(v: any, name: any) => name === "revenue" ? fmtCurrency(Number(v)) : v}
                   />
-                  <Area type="monotone" dataKey="revenue" fill="#0d9488" fillOpacity={0.05} stroke="#0d9488" strokeWidth={3} />
+                  <Area type="monotone" dataKey="revenue" fill={accentColor} fillOpacity={0.08} stroke={accentColor} strokeWidth={3} />
                   <Line type="monotone" dataKey="quotes" stroke="#06b6d4" strokeWidth={2} dot={{ r: 4, fill: "#06b6d4", strokeWidth: 2, stroke: "#fff" }} />
                 </ComposedChart>
               </ResponsiveContainer>
@@ -409,7 +411,7 @@ export function Reports() {
                     paddingAngle={5}
                   >
                     {revenueByCategory.map((_, i) => (
-                      <Cell key={`cell-${i}`} fill={COLORS[i % COLORS.length]} />
+                      <Cell key={`cell-${i}`} fill={categoryColors[i % categoryColors.length]} />
                     ))}
                   </Pie>
                   <Tooltip formatter={(v: any) => fmtCurrency(Number(v))} />
@@ -420,7 +422,7 @@ export function Reports() {
               {revenueByCategory.slice(0, 4).map((item, i) => (
                 <div key={item.name} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: categoryColors[i % categoryColors.length] }} />
                     <span className="text-xs font-bold text-slate-600 dark:text-slate-400">{item.name}</span>
                   </div>
                   <span className="text-xs font-black text-slate-900 dark:text-white">{fmtCurrency(item.value)}</span>
@@ -440,21 +442,21 @@ export function Reports() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
             {topCustomers.map((customer, i) => (
-              <div key={customer.name} className="p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-teal-600/30 transition-all hover:shadow-lg bg-slate-50/30 dark:bg-slate-800/30">
+              <div key={customer.name} className="p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-accent/30 transition-all hover:shadow-lg bg-slate-50/30 dark:bg-slate-800/30">
                 <div className="flex justify-between items-start mb-4">
                   <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs shadow-sm",
-                    i === 0 ? "bg-teal-600 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400"
+                    i === 0 ? "bg-accent text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400"
                   )}>
                     #{i + 1}
                   </div>
                   {i === 0 && <ArrowUpRight className="w-4 h-4 text-emerald-500" />}
                 </div>
                 <p className="text-sm font-black text-slate-900 dark:text-white mb-1 truncate">{customer.name}</p>
-                <p className="text-lg font-black text-teal-600 dark:text-teal-400">{fmtCurrency(customer.revenue)}</p>
+                <p className="text-lg font-black text-accent">{fmtCurrency(customer.revenue)}</p>
                 <div className="w-full bg-slate-200 dark:bg-slate-700 h-1 rounded-full mt-4 overflow-hidden">
                   <div
-                    className="bg-teal-600 h-full rounded-full"
-                    style={{ width: `${(customer.revenue / topCustomers[0].revenue) * 100}%` }}
+                    className="bg-accent h-full rounded-full"
+                    style={{ width: `${(customer.revenue / (topCustomers[0]?.revenue || 1)) * 100}%` }}
                   />
                 </div>
               </div>
@@ -466,4 +468,3 @@ export function Reports() {
     </div>
   )
 }
-

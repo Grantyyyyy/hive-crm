@@ -1,7 +1,7 @@
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { FormActions } from "@/components/reusables/form-actions"
 import type { Activity, ActivityType, Deal, Contact } from "@/lib/types"
 import { generateId } from "@/lib/helpers"
 import { cn } from "@/lib/utils"
@@ -61,7 +61,7 @@ export function ActivityForm({ contactId, deals, contacts, onSave, onCancel }: A
           {/* Main Activity Info Section */}
           <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
+              <div className="w-1 h-3.5 bg-accent rounded-full" />
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Interaction Details</h3>
             </div>
 
@@ -78,7 +78,7 @@ export function ActivityForm({ contactId, deals, contacts, onSave, onCancel }: A
                       className={cn(
                         "h-10 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all scale-100 active:scale-95",
                         type === t
-                          ? "bg-teal-600 border-teal-600 text-white shadow-lg shadow-teal-600/20"
+                          ? "bg-accent border-accent text-white shadow-lg shadow-accent/20"
                           : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-400 hover:border-slate-300"
                       )}
                     >
@@ -98,7 +98,7 @@ export function ActivityForm({ contactId, deals, contacts, onSave, onCancel }: A
                     onChange={(e) => setContent(e.target.value)}
                     placeholder="Briefly describe the interaction..."
                     className={cn(
-                      "h-32 px-4 py-3 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-medium transition-all focus:ring-4 focus:ring-teal-500/10 resize-none",
+                      "h-32 px-4 py-3 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-medium transition-all focus:ring-4 focus:ring-accent/10 resize-none",
                       errors.content && "border-red-500 ring-4 ring-red-500/10"
                     )}
                   />
@@ -125,7 +125,7 @@ export function ActivityForm({ contactId, deals, contacts, onSave, onCancel }: A
                       value={selectedContactId}
                       onChange={(e) => setSelectedContactId(e.target.value)}
                       className={cn(
-                        "w-full h-11 px-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-teal-500/10 transition-all shadow-sm",
+                        "w-full h-11 px-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-accent/10 transition-all shadow-sm",
                         errors.contact && "border-red-500"
                       )}
                     >
@@ -147,7 +147,7 @@ export function ActivityForm({ contactId, deals, contacts, onSave, onCancel }: A
                       id="activity-deal"
                       value={dealId}
                       onChange={(e) => setDealId(e.target.value)}
-                      className="w-full h-11 px-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-teal-500/10 transition-all shadow-sm"
+                      className="w-full h-11 px-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
                     >
                       <option value="">None</option>
                       {deals.map((d) => (
@@ -162,25 +162,10 @@ export function ActivityForm({ contactId, deals, contacts, onSave, onCancel }: A
         </div>
       </div>
 
-      {/* Sticky Action Footer */}
-      <div className="px-8 py-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
-        {onCancel && (
-          <Button
-            type="button"
-            variant="outlineNeutral"
-            onClick={onCancel}
-            className="h-9 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest border-2"
-          >
-            Cancel
-          </Button>
-        )}
-        <Button
-          type="submit"
-          className="h-9 px-10 bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-600/20 text-[10px] font-black uppercase tracking-widest"
-        >
-          Log Interaction
-        </Button>
-      </div>
+      <FormActions
+        cancel={onCancel ? { label: "Cancel", onClick: onCancel } : undefined}
+        primary={{ label: "Log Interaction", type: "submit" }}
+      />
     </form>
   )
 }

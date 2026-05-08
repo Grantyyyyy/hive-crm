@@ -13,6 +13,7 @@ import { DeleteModal } from "@/components/ui/delete-modal"
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
 import { BackButton } from "@/components/reusables/BackButton"
+import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 import { formatCurrency, relativeTime } from "@/lib/helpers"
 import type { Vendor, PurchaseOrder } from "@/lib/types"
 
@@ -77,8 +78,6 @@ export function VendorDetail() {
     on_hold: 'On Hold',
   }
 
-  const initials = vendor.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
-
   // PO stats
   const totalSpend = vendorPOs
     .filter(po => po.status !== 'cancelled')
@@ -106,9 +105,11 @@ export function VendorDetail() {
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 md:p-8">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
             <div className="flex items-start gap-5">
-              <div className="size-16 rounded-2xl bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center text-teal-600 dark:text-teal-400 text-xl font-black shrink-0 shadow-sm">
-                {initials}
-              </div>
+              <InitialsAvatar
+                name={vendor.name}
+                className="size-16 rounded-2xl shrink-0 shadow-sm"
+                textClassName="text-xl font-black"
+              />
               <div>
                 <div className="flex flex-wrap items-center gap-3 mb-1">
                   <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
@@ -155,7 +156,7 @@ export function VendorDetail() {
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">Email</p>
                   {vendor.email ? (
-                    <a href={`mailto:${vendor.email}`} className="text-sm font-semibold text-slate-900 dark:text-white hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
+                    <a href={`mailto:${vendor.email}`} className="text-sm font-semibold text-slate-900 dark:text-white hover:text-accent transition-colors">
                       {vendor.email}
                     </a>
                   ) : (
@@ -165,7 +166,7 @@ export function VendorDetail() {
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">Phone</p>
                   {vendor.phone ? (
-                    <a href={`tel:${vendor.phone}`} className="text-sm font-semibold text-slate-900 dark:text-white hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
+                    <a href={`tel:${vendor.phone}`} className="text-sm font-semibold text-slate-900 dark:text-white hover:text-accent transition-colors">
                       {vendor.phone}
                     </a>
                   ) : (
@@ -175,7 +176,7 @@ export function VendorDetail() {
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">Website</p>
                   {vendor.website ? (
-                    <a href={vendor.website} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-slate-900 dark:text-white hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
+                    <a href={vendor.website} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-slate-900 dark:text-white hover:text-accent transition-colors">
                       {vendor.website}
                     </a>
                   ) : (
@@ -309,7 +310,7 @@ export function VendorDetail() {
                           <td className="px-4 py-3">
                             <Link
                               href={`/purchase-orders/${po.id}`}
-                              className="text-sm font-semibold text-teal-600 dark:text-teal-400 hover:underline"
+                              className="text-sm font-semibold text-accent hover:underline"
                             >
                               {po.poNumber}
                             </Link>

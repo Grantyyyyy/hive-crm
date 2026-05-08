@@ -24,8 +24,8 @@ export function BrandingSettings() {
 
   useEffect(() => {
     if (org) {
-      setAppName(org.appName || "CRM Hub");
-      setAppLogoUrl(org.appLogoUrl || "");
+      setAppName(org.appName || "Hive CRM");
+      setAppLogoUrl(org.appLogoUrl || "/hub.svg");
       setAppTagline(org.appTagline || "Enterprise Suite");
     }
   }, [org]);
@@ -93,7 +93,7 @@ export function BrandingSettings() {
 
   const handleReset = () => {
     if (org) {
-      setAppName(org.appName || "CRM Hub");
+      setAppName(org.appName || "Hive CRM");
       setAppLogoUrl(org.appLogoUrl || "");
       setAppTagline(org.appTagline || "Enterprise Suite");
     }
@@ -128,7 +128,7 @@ export function BrandingSettings() {
             variant="brand"
             onClick={handleSave}
             disabled={isSaving}
-            className="h-10 rounded-md font-bold text-xs uppercase tracking-widest w-full sm:w-auto shadow-md shadow-teal-100 dark:shadow-none px-8"
+            className="h-10 rounded-md font-bold text-xs uppercase tracking-widest w-full sm:w-auto shadow-md shadow-accent/10 dark:shadow-none px-8"
           >
             {isSaving ? (
               <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -145,13 +145,13 @@ export function BrandingSettings() {
         <div className="group relative overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-0 shadow-sm transition-all duration-500">
           {/* Background Decorative Element */}
           <div className="absolute top-0 right-0 p-8 -mr-8 -mt-8 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity pointer-events-none">
-            <Layout className="size-32 rotate-12 text-teal-600" />
+            <Layout className="size-32 rotate-12 text-accent" />
           </div>
 
           <div className="p-8 relative space-y-8">
             <div className="space-y-1">
               <h3 className="font-black text-slate-900 dark:text-white text-lg tracking-tight flex items-center gap-2">
-                <Layout className="w-5 h-5 text-teal-600" />
+                <Layout className="w-5 h-5 text-accent" />
                 App Configuration
               </h3>
               <p className="text-xs text-slate-400 font-medium">Set the name and tagline for your organization's instance.</p>
@@ -165,7 +165,7 @@ export function BrandingSettings() {
                   value={appName}
                   onChange={(e) => setAppName(e.target.value)}
                   placeholder="e.g. Acme CRM"
-                  className="h-11 rounded-md border-slate-200 dark:border-slate-800 focus:ring-4 focus:ring-teal-600/10 focus:border-teal-600 transition-all bg-slate-50/50 dark:bg-slate-900/50"
+                  className="h-11 rounded-md border-slate-200 dark:border-slate-800 focus:ring-4 focus:ring-accent/10 focus:border-accent transition-all bg-slate-50/50 dark:bg-slate-900/50"
                 />
               </div>
               
@@ -176,7 +176,7 @@ export function BrandingSettings() {
                   value={appTagline}
                   onChange={(e) => setAppTagline(e.target.value)}
                   placeholder="e.g. Enterprise Suite"
-                  className="h-11 rounded-md border-slate-200 dark:border-slate-800 focus:ring-4 focus:ring-teal-600/10 focus:border-teal-600 transition-all bg-slate-50/50 dark:bg-slate-900/50"
+                  className="h-11 rounded-md border-slate-200 dark:border-slate-800 focus:ring-4 focus:ring-accent/10 focus:border-accent transition-all bg-slate-50/50 dark:bg-slate-900/50"
                 />
                 <p className="text-[10px] text-slate-400 italic">Short descriptor appearing in the navigation sidebar.</p>
               </div>
@@ -222,7 +222,7 @@ export function BrandingSettings() {
         <div className="group relative overflow-hidden bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-2xl p-0 transition-all duration-500 flex flex-col">
           <div className="p-8 border-b border-slate-200 dark:border-slate-800">
             <h3 className="font-black text-slate-900 dark:text-white text-lg tracking-tight flex items-center gap-2">
-              <ImageIcon className="w-5 h-5 text-teal-600" />
+              <ImageIcon className="w-5 h-5 text-accent" />
               Sidebar Preview
             </h3>
             <p className="text-xs text-slate-400 font-medium">Visual validation of your current branding configuration.</p>
@@ -230,21 +230,19 @@ export function BrandingSettings() {
 
           <div className="flex-1 flex items-center justify-center p-6 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-100/50 via-transparent to-transparent dark:from-slate-800/20">
             <div className="flex items-center gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-[0_20px_50px_-20px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_-20px_rgba(0,0,0,0.5)] border border-slate-100 dark:border-slate-800 w-full max-w-sm transition-all duration-500 group-hover:scale-105 group-hover:rotate-1">
-              <div className="w-14 h-14 bg-teal-600 rounded-2xl flex items-center justify-center shrink-0 shadow-xl shadow-teal-500/20 overflow-hidden relative group/logo">
-                {appLogoUrl ? (
-                  <img src={appLogoUrl} alt="Logo" className="w-full h-full object-cover transition-transform duration-700 group-hover/logo:scale-110" />
-                ) : (
-                  <div className="w-8 h-8 text-white font-black flex items-center justify-center text-2xl tracking-tighter">
-                    {appName.slice(0, 1).toUpperCase() || "?"}
-                  </div>
-                )}
+              <div className="w-14 h-14 bg-accent rounded-2xl flex items-center justify-center shrink-0 overflow-hidden relative group/logo">
+                <img 
+                  src={appLogoUrl || "/hub.svg"} 
+                  alt="Logo" 
+                  className="w-full h-full object-contain p-2 transition-transform duration-700 group-hover/logo:scale-110 invert" 
+                />
                 <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
               </div>
               <div className="flex flex-col min-w-0">
                 <span className="text-[18px] font-black text-slate-900 dark:text-white truncate leading-tight tracking-tight">
-                  {appName || "CRM Hub"}
+                  {appName || "Hive CRM"}
                 </span>
-                <span className="text-[10px] text-teal-600 dark:text-teal-400 font-black truncate uppercase tracking-[0.2em] mt-0.5">
+                <span className="text-[10px] text-accent font-black truncate uppercase tracking-[0.2em] mt-0.5">
                   {appTagline || "Enterprise Suite"}
                 </span>
               </div>

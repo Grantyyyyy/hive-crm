@@ -45,6 +45,7 @@ import { AddPurchaseRequestModal } from "@/components/logisticsComponent/AddPurc
 import { useUser } from "@/lib/AuthContext"
 import { updateRow } from "@/lib/CRMContext"
 import { AuditTimeline } from "@/components/reusables/AuditTimeline"
+import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -428,7 +429,6 @@ export function SalesOrderDetail() {
   }
   const currentStepIdx = statusOrderMap[order.status]
   const cfg = STATUS_CONFIG[order.status]
-  const initials = order.customerName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
   // ── Action Buttons Logic ──────────────────────────────────────────────────
   const canDownloadInvoice = ["shipped", "delivered", "fulfilled"].includes(order.status)
 
@@ -515,9 +515,11 @@ export function SalesOrderDetail() {
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
             <div className="flex items-start gap-5">
               {/* Avatar */}
-              <div className="size-16 rounded-2xl bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center text-teal-600 dark:text-teal-400 text-xl font-black shrink-0 shadow-sm">
-                {initials}
-              </div>
+              <InitialsAvatar
+                name={order.customerName}
+                className="size-16 rounded-2xl shrink-0 shadow-sm"
+                textClassName="text-xl font-black"
+              />
               <div>
                 <div className="flex flex-wrap items-center gap-3 mb-1">
                   <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
@@ -557,17 +559,17 @@ export function SalesOrderDetail() {
                           <div className={cn(
                             "size-10 rounded-full flex items-center justify-center transition-all shrink-0",
                             done
-                              ? "bg-teal-600 text-white shadow-lg shadow-teal-200 dark:shadow-none"
+                              ? "bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400 shadow-lg shadow-teal-500/20 dark:shadow-none"
                               : "bg-slate-100 dark:bg-slate-800 text-slate-400"
                           )}>
                             <Icon className="w-5 h-5" />
                           </div>
                           <span className={cn(
                             "text-[10px] font-bold uppercase tracking-widest whitespace-nowrap",
-                            done ? "text-teal-600 dark:text-teal-400" : "text-slate-400"
+                            done ? "text-accent" : "text-slate-400"
                           )}>
                             {active
-                              ? <span className="relative">{step.label}<span className="absolute -top-1 -right-2 w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" /></span>
+                              ? <span className="relative">{step.label}<span className="absolute -top-1 -right-2 w-1.5 h-1.5 rounded-full bg-accent animate-pulse" /></span>
                               : step.label
                             }
                           </span>
@@ -575,7 +577,7 @@ export function SalesOrderDetail() {
                         {i < TIMELINE.length - 1 && (
                           <div className={cn(
                             "flex-1 h-0.5 mx-2 rounded-full mb-5 transition-colors",
-                            currentStepIdx > i ? "bg-teal-600" : "bg-slate-200 dark:bg-slate-800"
+                            currentStepIdx > i ? "bg-accent" : "bg-slate-200 dark:bg-slate-800"
                           )} />
                         )}
                       </div>
@@ -650,7 +652,7 @@ export function SalesOrderDetail() {
                         <td className="px-6 py-4 text-sm text-right text-slate-600 dark:text-slate-400">{fmt(item.price)}</td>
                         <td className="px-6 py-4 text-sm text-right text-slate-600 dark:text-slate-400">
                            {item.discountId && item.discountValue !== undefined ? (
-                              <span className="text-teal-600 dark:text-teal-400 font-medium">
+                              <span className="text-accent font-medium">
                                 -{item.discountType === 'fixed' ? fmt(item.discountValue) : `${item.discountValue}%`}
                               </span>
                            ) : <span className="text-slate-300">-</span>}
@@ -677,7 +679,7 @@ export function SalesOrderDetail() {
                   {orderDiscountAmount > 0 && (
                     <tr>
                       <td colSpan={5} className="px-6 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400">Order Discount</td>
-                      <td className="px-6 py-2 text-right text-sm font-bold text-teal-600 dark:text-teal-400">-{fmt(orderDiscountAmount)}</td>
+                      <td className="px-6 py-2 text-right text-sm font-bold text-accent">-{fmt(orderDiscountAmount)}</td>
                     </tr>
                   )}
                   {orderDiscountAmount > 0 && (
@@ -692,7 +694,7 @@ export function SalesOrderDetail() {
                   </tr>
                   <tr className="bg-slate-50/50 dark:bg-slate-800/30">
                     <td colSpan={5} className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300">Total Due</td>
-                    <td className="px-6 py-4 text-right text-lg font-black text-teal-600 dark:text-teal-400">{fmt(total)}</td>
+                    <td className="px-6 py-4 text-right text-lg font-black text-accent">{fmt(total)}</td>
                   </tr>
                 </tfoot>
               </table>
@@ -710,7 +712,7 @@ export function SalesOrderDetail() {
                   <Hash className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Order Number</p>
-                    <p className="text-sm font-bold text-teal-600 dark:text-teal-400">#{order.orderNumber}</p>
+                    <p className="text-sm font-bold text-accent">#{order.orderNumber}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -761,7 +763,7 @@ export function SalesOrderDetail() {
                 {orderDiscountAmount > 0 && (
                   <div className="flex justify-between">
                     <span className="text-slate-500 font-medium">Order Discount</span>
-                    <span className="font-semibold text-teal-600 dark:text-teal-400">-{fmt(orderDiscountAmount)}</span>
+                    <span className="font-semibold text-accent">-{fmt(orderDiscountAmount)}</span>
                   </div>
                 )}
                 {orderDiscountAmount > 0 && (
@@ -776,12 +778,12 @@ export function SalesOrderDetail() {
                 </div>
                 <div className="flex justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
                   <span className="font-black text-slate-900 dark:text-white">Total</span>
-                  <span className="font-black text-xl text-teal-600 dark:text-teal-400">{fmt(total)}</span>
+                  <span className="font-black text-xl text-accent">{fmt(total)}</span>
                 </div>
               </div>
 
               <Button
-                className="w-full mt-5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-teal-100 dark:shadow-none"
+                className="w-full mt-5 rounded-xl bg-accent hover:bg-accent/90 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-accent/20 dark:shadow-none"
                 onClick={() => setInvoiceOpen(true)}
               >
                 <Receipt className="w-4 h-4 mr-2" /> View Invoice

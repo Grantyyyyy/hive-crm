@@ -566,6 +566,7 @@ export interface AppUser {
   ownerId: string
   organizationId?: string
   isSuperadmin?: boolean
+  brandColor?: string
   createdAt: string
   updatedAt: string
 }

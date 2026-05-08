@@ -87,7 +87,7 @@ export function Vendors() {
       header: "Company",
       render: (vendor) => (
         <div className="flex items-center gap-3 min-w-0">
-          <Building2 className="size-4 text-slate-300 group-hover:text-teal-500 transition-colors shrink-0" />
+          <Building2 className="size-4 text-slate-300 group-hover:text-accent transition-colors shrink-0" />
           <div className="min-w-0">
             <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{vendor.name}</p>
             <p className="text-[10px] text-slate-400 font-medium pt-0.5 uppercase tracking-tighter">ID: {vendor.id.slice(0, 8)}</p>
@@ -154,7 +154,7 @@ export function Vendors() {
         {/* Simplified Header */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">Procurement</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-1">Procurement</p>
             <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Vendors</h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Manage your global supply chain and procurement partners.</p>
           </div>
@@ -179,7 +179,7 @@ export function Vendors() {
               placeholder="Search vendors by name, category, or email..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setCurrentPage(1) }}
-              className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
+              className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all"
             />
           </div>
 

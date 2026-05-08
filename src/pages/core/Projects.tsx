@@ -78,7 +78,7 @@ export function Projects() {
         {/* Header Area */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">Work Organization</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-1">Work Organization</p>
             <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Projects</h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Organize tasks into projects for better workflow management.</p>
           </div>
@@ -93,12 +93,12 @@ export function Projects() {
         <div className="flex items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
           <div className="flex-1 max-w-xl">
             <div className="relative group/search">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within/search:text-teal-600 transition-colors" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within/search:text-accent transition-colors" />
               <input
                 placeholder="Search projects..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-semibold focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all duration-300"
+                className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-semibold focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all duration-300"
               />
             </div>
           </div>
@@ -126,7 +126,7 @@ export function Projects() {
               return (
                 <div
                   key={project.id}
-                  className="group bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 p-5 hover:shadow-lg hover:shadow-teal-600/5 hover:border-teal-600/30 transition-all duration-300 cursor-pointer"
+                  className="group bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 p-5 hover:shadow-lg hover:shadow-accent/5 hover:border-accent/30 transition-all duration-300 cursor-pointer"
                   onClick={() => setLocation(`/projects/${project.id}`)}
                 >
                   {/* Header */}
@@ -139,7 +139,7 @@ export function Projects() {
                         <FolderOpen className="w-5 h-5" style={{ color: project.color }} />
                       </div>
                       <div className="min-w-0">
-                        <h3 className="text-[15px] font-bold text-slate-900 dark:text-white truncate group-hover:text-teal-600 transition-colors">
+                        <h3 className="text-[15px] font-bold text-slate-900 dark:text-white truncate group-hover:text-accent transition-colors">
                           {project.name}
                         </h3>
                         <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">

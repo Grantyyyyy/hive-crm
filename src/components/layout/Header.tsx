@@ -1,10 +1,11 @@
-import { Search, Bell, HelpCircle, Sun, Moon, User, LogOut, Settings } from "lucide-react";
+import { Search, Bell, Palette, Sun, Moon, User, LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUser, useAuth } from "@/lib/AuthContext";
 import { useTheme } from "@/lib/ThemeProvider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useLocation } from "wouter";
 import { NotificationPanel } from "./NotificationPanel";
+import { AppearancePopover } from "./AppearancePopover";
 import { useCRMResource } from "@/lib/hooks";
 import type { Notification } from "@/lib/types";
 
@@ -29,7 +30,7 @@ export function Header({ onSearchClick }: HeaderProps) {
           onClick={onSearchClick}
           className="relative group w-full flex items-center text-left h-11 px-4 bg-bg-elevated border-transparent rounded-xl text-sm hover:bg-bg-surface hover:border-accent/20 focus:ring-4 focus:ring-accent/5 transition-all outline-none cursor-text"
         >
-          <Search className="w-4 h-4 text-slate-400 group-hover:text-teal-500 transition-colors mr-3" />
+          <Search className="w-4 h-4 text-slate-400 group-hover:text-accent transition-colors mr-3" />
           <span className="flex-1 text-slate-400">Search leads, products, or orders...</span>
           <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border border-border bg-bg-surface px-1.5 font-mono text-[10px] font-medium text-slate-400 opacity-100">
             <span className="text-xs">⌘</span>K
@@ -53,9 +54,16 @@ export function Header({ onSearchClick }: HeaderProps) {
             <NotificationPanel />
           </PopoverContent>
         </Popover>
-        <Button variant="ghost" size="icon" className="transition-all hover:bg-accent/5 hover:text-accent">
-          <HelpCircle className="w-5 h-5" />
-        </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon" className="transition-all hover:bg-accent/5 hover:text-accent">
+              <Palette className="w-5 h-5" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="end" sideOffset={8}>
+            <AppearancePopover />
+          </PopoverContent>
+        </Popover>
         <Button variant="ghost" size="icon" onClick={toggleTheme} className="transition-all hover:bg-accent/5 hover:text-accent">
           {theme === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
         </Button>

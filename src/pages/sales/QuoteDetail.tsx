@@ -38,6 +38,7 @@ import {
 import { useUser } from "@/lib/AuthContext"
 import { SendEmailModal } from "@/components/crmComponent/SendEmailModal"
 import { AuditTimeline } from "@/components/reusables/AuditTimeline"
+import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -216,10 +217,6 @@ export function QuoteDetail() {
   const cfg = STATUS_CONFIG[quote.status] || DEFAULT_CONFIG
   const progressIdx = PROGRESS_ORDER.indexOf(quote.status)
   const isExpired = quote.status === "expired"
-  const initials = quote.customerName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
-
-
-
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 font-sans min-h-screen text-slate-900 dark:text-slate-100">
       <div className="mx-auto p-4 md:p-8 max-w-full space-y-6 animate-fade-in">
@@ -236,9 +233,11 @@ export function QuoteDetail() {
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 md:p-8">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
             <div className="flex items-start gap-5">
-              <div className="size-16 rounded-2xl bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center text-teal-600 dark:text-teal-400 text-xl font-black shrink-0 shadow-sm">
-                {initials}
-              </div>
+              <InitialsAvatar
+                name={quote.customerName}
+                className="size-16 rounded-2xl shrink-0 shadow-sm"
+                textClassName="text-xl font-black"
+              />
               <div>
                 <div className="flex flex-wrap items-center gap-3 mb-1">
                   <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight italic">
@@ -270,13 +269,13 @@ export function QuoteDetail() {
             {/* Actions */}
             <div className="flex flex-wrap items-center gap-2 shrink-0">
               {quote.status === "draft" && (
-                <Button variant="default" onClick={handleMarkSent} disabled={isSending} className="bg-teal-600 hover:bg-teal-700 rounded-xl px-6 transition-all active:scale-95 shadow-lg shadow-teal-600/20 text-[10px] font-black uppercase tracking-widest">
+                <Button variant="default" onClick={handleMarkSent} disabled={isSending} className="bg-accent hover:bg-accent/90 rounded-xl px-6 transition-all active:scale-95 shadow-lg shadow-accent/20 text-[10px] font-black uppercase tracking-widest">
                   <Send className="w-4 h-4 mr-2" /> {isSending ? 'Sending...' : 'Send Quote'}
                 </Button>
               )}
               {quote.status === "sent" && (
                 <>
-                  <Button variant="default" onClick={handleAccept} disabled={isAccepting} className="bg-teal-600 hover:bg-teal-700 rounded-xl px-6 transition-all active:scale-95 shadow-lg shadow-teal-600/20 text-[10px] font-black uppercase tracking-widest">
+                  <Button variant="default" onClick={handleAccept} disabled={isAccepting} className="bg-accent hover:bg-accent/90 rounded-xl px-6 transition-all active:scale-95 shadow-lg shadow-accent/20 text-[10px] font-black uppercase tracking-widest">
                     <CheckCircle2 className="w-4 h-4 mr-2" /> {isAccepting ? 'Accepting...' : 'Accept & Create Order'}
                   </Button>
                   <Button variant="outlineNeutral" onClick={handleFollowUp} className="rounded-xl border-2 transition-all active:scale-95 text-[10px] font-black uppercase tracking-widest">
@@ -286,11 +285,11 @@ export function QuoteDetail() {
               )}
               {(quote.status === "sent" || quote.status === "accepted") && (
                 <div className="inline-flex items-center rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-900">
-                  <Button variant="outline" size="sm" onClick={handleDownloadPDF} className="rounded-none border-none h-9 px-5 text-[10px] font-black uppercase tracking-widest hover:bg-teal-50 hover:text-teal-600">
+                  <Button variant="outline" size="sm" onClick={handleDownloadPDF} className="rounded-none border-none h-9 px-5 text-[10px] font-black uppercase tracking-widest hover:bg-accent-dim hover:text-accent">
                     <Download className="w-4 h-4 mr-2" /> Download
                   </Button>
                   <div className="w-px h-4 bg-slate-200 dark:bg-slate-700" />
-                  <Button variant="outline" size="sm" onClick={handleSendEmail} className="rounded-none border-none h-9 px-5 text-[10px] font-black uppercase tracking-widest hover:bg-teal-50 hover:text-teal-600">
+                  <Button variant="outline" size="sm" onClick={handleSendEmail} className="rounded-none border-none h-9 px-5 text-[10px] font-black uppercase tracking-widest hover:bg-accent-dim hover:text-accent">
                     <Mail className="w-4 h-4 mr-2" /> Send Email
                   </Button>
                 </div>
@@ -345,24 +344,24 @@ export function QuoteDetail() {
                         <div className={cn(
                           "size-10 rounded-full flex items-center justify-center transition-all shrink-0",
                           done
-                            ? "bg-teal-600 text-white shadow-lg shadow-teal-200 dark:shadow-none"
+                            ? "bg-accent text-white shadow-lg shadow-accent/20 dark:shadow-none"
                             : "bg-slate-100 dark:bg-slate-800 text-slate-400"
                         )}>
                           <Icon className="w-5 h-5" />
                         </div>
                         <span className={cn(
                           "text-[10px] font-bold uppercase tracking-widest whitespace-nowrap",
-                          done ? "text-teal-600 dark:text-teal-400" : "text-slate-400"
+                          done ? "text-accent" : "text-slate-400"
                         )}>
                           {active && quote.status !== "accepted"
-                            ? <span className="relative">{step.label}<span className="absolute -top-1 -right-2 w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" /></span>
+                            ? <span className="relative">{step.label}<span className="absolute -top-1 -right-2 w-1.5 h-1.5 rounded-full bg-accent animate-pulse" /></span>
                             : step.label}
                         </span>
                       </div>
                       {i < TIMELINE_STEPS.length - 1 && (
                         <div className={cn(
                           "flex-1 h-0.5 mx-2 rounded-full mb-5 transition-colors",
-                          progressIdx > i ? "bg-teal-600" : "bg-slate-200 dark:bg-slate-800"
+                          progressIdx > i ? "bg-accent" : "bg-slate-200 dark:bg-slate-800"
                         )} />
                       )}
                     </div>
@@ -421,7 +420,7 @@ export function QuoteDetail() {
                   </tr>
                   <tr className="bg-slate-50/50 dark:bg-slate-800/30">
                     <td colSpan={4} className="px-6 py-4 text-right text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300">Total</td>
-                    <td className="px-6 py-4 text-right text-lg font-black text-teal-600 dark:text-teal-400 italic tabular-nums inline-flex items-baseline gap-1">
+                    <td className="px-6 py-4 text-right text-lg font-black text-accent italic tabular-nums inline-flex items-baseline gap-1">
                       <span className="text-[11px] text-slate-400 font-bold">{quote.currency || 'USD'}</span>
                       {fmt(total).replace(/[^\d.,]/g, '')}
                     </td>
@@ -453,7 +452,7 @@ export function QuoteDetail() {
                   <Hash className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Quote Number</p>
-                    <p className="text-sm font-black text-teal-600 dark:text-teal-400 tracking-tight italic">#{quote.quoteNumber}</p>
+                    <p className="text-sm font-black text-accent tracking-tight italic">#{quote.quoteNumber}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -516,7 +515,7 @@ export function QuoteDetail() {
                 </div>
                 <div className="flex justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
                   <span className="font-black text-slate-900 dark:text-white">Total</span>
-                  <span className="font-black text-xl text-teal-600 dark:text-teal-400 italic tabular-nums inline-flex items-baseline gap-1">
+                  <span className="font-black text-xl text-accent italic tabular-nums inline-flex items-baseline gap-1">
                     <span className="text-xs text-slate-400 font-bold">{quote.currency || 'USD'}</span>
                     {fmt(total).replace(/[^\d.,]/g, '')}
                   </span>
@@ -526,7 +525,7 @@ export function QuoteDetail() {
               {/* CTA based on status */}
               {quote.status === "sent" && (
                 <Button
-                  className="w-full mt-5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-teal-600/20 active:scale-95 transition-all"
+                  className="w-full mt-5 rounded-xl bg-accent hover:bg-accent/90 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-accent/20 active:scale-95 transition-all"
                   onClick={handleAccept}
                   disabled={isAccepting}
                 >
@@ -535,7 +534,7 @@ export function QuoteDetail() {
               )}
               {quote.status === "draft" && (
                 <Button
-                  className="w-full mt-5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-teal-600/20 active:scale-95 transition-all"
+                  className="w-full mt-5 rounded-xl bg-accent hover:bg-accent/90 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-accent/20 active:scale-95 transition-all"
                   onClick={handleMarkSent}
                   disabled={isSending}
                 >

@@ -126,10 +126,10 @@ export function ProcurementDataTable<T extends { id: string | number }>({
                       className={cn(
                         "size-[18px] rounded border-2 flex items-center justify-center transition-all duration-150",
                         allSelected
-                          ? "bg-teal-600 border-teal-600 text-white shadow-sm"
+                          ? "bg-accent border-accent text-white shadow-sm"
                           : someSelected
-                            ? "bg-teal-600/20 border-teal-600 text-teal-600"
-                            : "border-slate-300 dark:border-slate-600 hover:border-teal-500"
+                            ? "bg-accent/20 border-accent text-accent"
+                            : "border-slate-300 dark:border-slate-600 hover:border-accent"
                       )}
                     >
                       {allSelected ? <Check className="w-3 h-3" /> : someSelected ? <Minus className="w-3 h-3" /> : null}
@@ -154,7 +154,7 @@ export function ProcurementDataTable<T extends { id: string | number }>({
                 <tr>
                   <td colSpan={columns.length + (selection ? 1 : 0)} className="px-6 py-20 text-center">
                     <div className="flex flex-col items-center gap-3">
-                      <div className="w-8 h-8 border-2 border-teal-600 border-t-transparent rounded-full animate-spin" />
+                      <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
                       <p className="text-slate-500 font-medium italic">Loading data...</p>
                     </div>
                   </td>
@@ -178,9 +178,9 @@ export function ProcurementDataTable<T extends { id: string | number }>({
                       key={item.id}
                       onClick={() => onRowClick?.(item)}
                       className={cn(
-                        "hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-all cursor-pointer group border-l-2 border-l-transparent hover:border-l-teal-500",
+                        "hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-all cursor-pointer group border-l-2 border-l-transparent hover:border-l-accent",
                         onRowClick && "cursor-pointer",
-                        isSelected && "bg-teal-50/50 dark:bg-teal-900/10 border-l-teal-500",
+                        isSelected && "bg-accent-dim border-l-accent",
                         rowClassName
                       )}
                     >
@@ -191,8 +191,8 @@ export function ProcurementDataTable<T extends { id: string | number }>({
                             className={cn(
                               "size-[18px] rounded border-2 flex items-center justify-center transition-all duration-150",
                               isSelected
-                                ? "bg-teal-600 border-teal-600 text-white shadow-sm"
-                                : "border-slate-300 dark:border-slate-600 hover:border-teal-500"
+                                ? "bg-accent border-accent text-white shadow-sm"
+                                : "border-slate-300 dark:border-slate-600 hover:border-accent"
                             )}
                           >
                             {isSelected && <Check className="w-3 h-3" />}

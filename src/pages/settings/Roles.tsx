@@ -284,7 +284,7 @@ export function Roles() {
               placeholder="Search roles..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
+              className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all"
             />
           </div>
 
@@ -292,7 +292,7 @@ export function Roles() {
             <Button
               variant="brand"
               onClick={() => setShowCreateDialog(true)}
-              className="shadow-md shadow-teal-100 dark:shadow-none h-10 w-full sm:w-auto"
+              className="shadow-md shadow-accent/10 dark:shadow-none h-10 w-full sm:w-auto"
             >
               <PlusCircle className="w-4 h-4 mr-2" /> Create Role
             </Button>
@@ -305,7 +305,7 @@ export function Roles() {
         {filteredRoles.map((role) => (
           <div
             key={role.id}
-            className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 shadow-sm hover:shadow-xl hover:shadow-teal-500/10 dark:hover:shadow-teal-500/5 transition-all duration-300"
+            className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 shadow-sm hover:shadow-xl hover:shadow-accent/10 transition-all duration-300"
           >
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-4">
@@ -369,7 +369,7 @@ export function Roles() {
                 const isFullAccess = allPermIds.length > 0 && allPermIds.every(id => rolePermIds.includes(id));
                 if (isFullAccess) {
                   return (
-                    <Badge className="text-[10px] font-bold bg-teal-600 border-none mb-2">
+                    <Badge className="text-[10px] font-bold bg-accent border-none mb-2">
                       <Layers className="w-3 h-3 mr-1" /> FULL ACCESS
                     </Badge>
                   );
@@ -396,7 +396,7 @@ export function Roles() {
 
             {canUpdate && (
               <div
-                className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-teal-600 dark:text-teal-400 cursor-pointer group/link hover:text-teal-700"
+                className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-accent cursor-pointer group/link hover:text-accent/80"
                 onClick={() => handleEdit(role)}
               >
                 <span>{role.isSystem ? 'View Configuration' : 'Edit Capabilities'}</span>
@@ -494,7 +494,7 @@ export function Roles() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <Label className="text-xs font-black uppercase tracking-wider text-slate-500">Granular Capabilities</Label>
-                  <span className="text-[10px] font-bold text-teal-600 bg-teal-50 dark:bg-teal-950/40 px-2 py-0.5 rounded-full border border-teal-100 dark:border-teal-900">
+                  <span className="text-[10px] font-bold text-accent bg-accent-dim px-2 py-0.5 rounded-full border border-accent/10">
                     {formData.permissionIds.length} SELECTED
                   </span>
                 </div>
@@ -505,8 +505,8 @@ export function Roles() {
                   className={cn(
                     "flex items-center justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200",
                     formData.fullAccess
-                      ? "bg-gradient-to-r from-teal-600 to-teal-500 border-teal-500 shadow-lg shadow-teal-200 dark:shadow-teal-900/30"
-                      : "bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 hover:border-teal-300 dark:hover:border-teal-700"
+                      ? "bg-accent border-accent shadow-lg shadow-accent/20 dark:shadow-none"
+                      : "bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 hover:border-accent/40"
                   )}
                 >
                   <div className="flex items-center gap-3">
@@ -542,7 +542,7 @@ export function Roles() {
                       ? "bg-white border-white"
                       : "border-slate-300 dark:border-slate-600"
                   )}>
-                    {formData.fullAccess && <Check className="w-4 h-4 text-teal-600" />}
+                    {formData.fullAccess && <Check className="w-4 h-4 text-accent" />}
                   </div>
                 </div>
 
@@ -571,7 +571,7 @@ export function Roles() {
                               <span className={cn(
                                 "text-[10px] font-bold transition-colors",
                                 moduleAllSelected
-                                  ? "text-teal-600 dark:text-teal-400"
+                                  ? "text-accent"
                                   : isPartial
                                     ? "text-amber-600 dark:text-amber-400"
                                     : "text-slate-400"
@@ -581,7 +581,7 @@ export function Roles() {
                               <div className={cn(
                                 "size-5 rounded-md border-2 flex items-center justify-center transition-all",
                                 moduleAllSelected
-                                  ? "bg-teal-600 border-teal-600"
+                                  ? "bg-accent border-accent"
                                   : isPartial
                                     ? "bg-amber-500 border-amber-500"
                                     : "border-slate-300 dark:border-slate-600"
@@ -601,20 +601,20 @@ export function Roles() {
                                 className={cn(
                                   "flex items-center justify-between p-3 rounded-2xl border cursor-pointer transition-all duration-200",
                                   formData.permissionIds.includes(permission.id)
-                                    ? "bg-white dark:bg-teal-900/20 border-teal-600 shadow-sm"
+                                    ? "bg-white dark:bg-slate-900/50 border-accent shadow-sm"
                                     : "bg-white/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 hover:border-slate-300"
                                 )}
                               >
                                 <span className={cn(
                                   "text-xs font-bold capitalize",
-                                  formData.permissionIds.includes(permission.id) ? "text-teal-600 dark:text-teal-400" : "text-slate-600 dark:text-slate-400"
+                                  formData.permissionIds.includes(permission.id) ? "text-accent" : "text-slate-600 dark:text-slate-400"
                                 )}>
                                   {permission.action}
                                 </span>
                                 <div className={cn(
                                   "size-4 rounded-full border-2 transition-all flex items-center justify-center",
                                   formData.permissionIds.includes(permission.id)
-                                    ? "bg-teal-600 border-teal-600"
+                                    ? "bg-accent border-accent"
                                     : "border-slate-300 dark:border-slate-700"
                                 )}>
                                   {formData.permissionIds.includes(permission.id) && <div className="size-1.5 rounded-full bg-white" />}
@@ -637,7 +637,7 @@ export function Roles() {
             <Button
               type="submit"
               onClick={handleSubmit}
-              className="h-12 rounded-lg px-10 bg-teal-600 hover:bg-teal-700 shadow-lg shadow-teal-200 dark:shadow-none font-bold"
+              className="h-12 rounded-lg px-10 bg-accent hover:bg-accent/90 shadow-lg shadow-accent/20 dark:shadow-none font-bold"
               disabled={createMutation.isPending || updateMutation.isPending}
             >
               {(createMutation.isPending || updateMutation.isPending) ? (

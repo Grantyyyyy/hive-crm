@@ -76,8 +76,8 @@ export function VendorInvoiceModal({ order, onClose }: VendorInvoiceModalProps) 
         {/* Modal Header */}
         <div className="flex items-center justify-between px-8 py-5 border-b border-slate-100 dark:border-slate-800 shrink-0">
           <div className="flex items-center gap-4">
-            <div className="size-10 rounded-xl bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center">
-              <Receipt className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+            <div className="size-10 rounded-xl bg-accent-dim flex items-center justify-center">
+              <Receipt className="w-5 h-5 text-accent" />
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Vendor Invoice</p>
@@ -104,7 +104,7 @@ export function VendorInvoiceModal({ order, onClose }: VendorInvoiceModalProps) 
             {/* Invoice Header */}
             <div className="flex items-start justify-between">
               <div className="flex flex-col gap-2">
-                <div className="size-12 rounded-2xl bg-teal-600 flex items-center justify-center shadow-lg shadow-teal-200 dark:shadow-none">
+                <div className="size-12 rounded-2xl bg-accent flex items-center justify-center shadow-lg shadow-accent/20 dark:shadow-none">
                   <Building2 className="w-6 h-6 text-white" />
                 </div>
                 <div className="mt-1 text-slate-900 dark:text-white">
@@ -113,7 +113,7 @@ export function VendorInvoiceModal({ order, onClose }: VendorInvoiceModalProps) 
                 </div>
               </div>
               <div className="text-right flex flex-col gap-2">
-                <span className="inline-block px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 italic tabular-nums">
+                <span className="inline-block px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-accent-dim text-accent italic tabular-nums">
                   PURCHASE INVOICE
                 </span>
                 <p className="text-3xl font-black text-slate-900 dark:text-white italic tabular-nums">{order.poNumber}</p>
@@ -182,7 +182,7 @@ export function VendorInvoiceModal({ order, onClose }: VendorInvoiceModalProps) 
                 </div>
                 <div className="flex justify-between items-center pt-4 border-t-2 border-slate-200 dark:border-slate-700">
                   <span className="text-base font-black text-slate-900 dark:text-white uppercase tracking-tight italic">Grand Total</span>
-                  <span className="text-xl font-black text-teal-600 dark:text-teal-400 tabular-nums">{fmt(total)}</span>
+                  <span className="text-xl font-black text-accent tabular-nums">{fmt(total)}</span>
                 </div>
               </div>
             </div>

@@ -60,7 +60,7 @@ export function AuditLogs() {
               placeholder="Search activity..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
+              className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all"
             />
           </div>
 
@@ -123,7 +123,7 @@ export function AuditLogs() {
                             {log.changedBy?.name || "System"}
                           </span>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[9px] text-teal-600 dark:text-teal-400 font-bold uppercase tracking-widest">{log.entityType.replace(/_/g, ' ')}</span>
+                            <span className="text-[9px] text-accent font-bold uppercase tracking-widest">{log.entityType.replace(/_/g, ' ')}</span>
                           </div>
                         </div>
                       </div>
@@ -136,7 +136,7 @@ export function AuditLogs() {
 
                         {log.entityId && log.action !== 'DELETE' && log.entityType !== 'auth' && (
                           <Link href={getEntityLink(log.entityType, log.entityId)}>
-                            <button className="p-1.5 text-slate-400 hover:text-teal-600 transition-colors">
+                            <button className="p-1.5 text-slate-400 hover:text-accent transition-colors">
                               <ArrowRight className="w-4 h-4" />
                             </button>
                           </Link>
@@ -283,7 +283,7 @@ function Badge({ text, variant }: { text: string, variant: 'muted' | 'accent' | 
         ? "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700"
         : variant === 'accent'
           ? "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 border-blue-100 dark:border-blue-800 shadow-[0_0_15px_rgba(59,130,246,0.1)]"
-          : "bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400 border-teal-100 dark:border-teal-800 shadow-[0_0_15px_rgba(20,184,166,0.1)]"
+          : "bg-accent-dim text-accent border-accent/10 shadow-[0_0_15px_color-mix(in_srgb,var(--accent)_15%,transparent)]"
     )}>
       {text}
     </span>

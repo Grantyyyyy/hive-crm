@@ -66,7 +66,7 @@ function OrganizationMembers({ organizationId }: { organizationId: string }) {
 
   if (isLoading) return (
     <div className="flex items-center justify-center p-8">
-      <Loader2 className="w-5 h-5 animate-spin text-teal-600" />
+      <Loader2 className="w-5 h-5 animate-spin text-accent" />
     </div>
   );
 
@@ -80,7 +80,7 @@ function OrganizationMembers({ organizationId }: { organizationId: string }) {
     <div className="bg-slate-50/50 dark:bg-slate-900/30 px-6 py-4 border-y border-slate-100 dark:border-slate-800 animate-in fade-in slide-in-from-top-1 duration-200">
       <div className="max-w-4xl">
         <div className="flex items-center gap-2 mb-4">
-          <Users className="w-3.5 h-3.5 text-teal-600" />
+          <Users className="w-3.5 h-3.5 text-accent" />
           <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Active Members</h4>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -264,7 +264,7 @@ export function OrganizationsPage() {
   if (!authLoaded || !permLoaded || orgsLoading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-accent" />
       </div>
     );
   }
@@ -300,7 +300,7 @@ export function OrganizationsPage() {
               placeholder="Search organizations..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
+              className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all"
             />
           </div>
 
@@ -308,7 +308,7 @@ export function OrganizationsPage() {
             <Button
               variant="brand"
               onClick={() => setShowAddDialog(true)}
-              className="shadow-md shadow-teal-100 dark:shadow-none w-full sm:w-auto h-10"
+              className="shadow-md shadow-accent/10 dark:shadow-none w-full sm:w-auto h-10"
             >
               <PlusCircle className="w-4 h-4 mr-2" /> New Organization
             </Button>
@@ -345,27 +345,27 @@ export function OrganizationsPage() {
                   <React.Fragment key={org.id}>
                     <tr
                       className={cn(
-                        "hover:bg-slate-50 dark:hover:bg-slate-800/30 border-l-4 border-transparent hover:border-teal-600 transition-all cursor-pointer group",
-                        expandedOrgId === org.id && "bg-slate-50/50 dark:bg-slate-800/20 border-teal-600"
+                        "hover:bg-slate-50 dark:hover:bg-slate-800/30 border-l-4 border-transparent hover:border-accent transition-all cursor-pointer group",
+                        expandedOrgId === org.id && "bg-slate-50/50 dark:bg-slate-800/20 border-accent"
                       )}
                       onClick={() => setExpandedOrgId(expandedOrgId === org.id ? null : org.id)}
                     >
                       <td className="px-4 py-4 text-center">
                         {expandedOrgId === org.id ? (
-                          <ChevronDown className="w-4 h-4 text-teal-600" />
+                          <ChevronDown className="w-4 h-4 text-accent" />
                         ) : (
-                          <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-teal-600" />
+                          <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-accent" />
                         )}
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="size-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-teal-600 group-hover:bg-teal-600 group-hover:text-white transition-colors">
+                          <div className="size-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-accent group-hover:bg-accent group-hover:text-white transition-colors">
                             <Building2 className="w-5 h-5" />
                           </div>
                           <div>
                             <p className="text-sm font-bold text-slate-900 dark:text-white">{org.name}</p>
                             {org.id === currentOrgId && (
-                              <Badge className="text-[9px] font-black uppercase tracking-widest bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 border-teal-100 dark:border-teal-800 mt-0.5">Your Organization</Badge>
+                              <Badge className="text-[9px] font-black uppercase tracking-widest bg-accent-dim text-accent border-accent/10 mt-0.5">Your Organization</Badge>
                             )}
                           </div>
                         </div>
@@ -387,7 +387,7 @@ export function OrganizationsPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="size-8 rounded-lg text-slate-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20"
+                            className="size-8 rounded-lg text-slate-400 hover:text-accent hover:bg-accent-dim"
                             onClick={() => {
                               setEditingOrg(org);
                               setShowEditDialog(true);
@@ -440,7 +440,7 @@ export function OrganizationsPage() {
                 <Input
                   id="name"
                   placeholder="Acme Corporation"
-                  className="h-12 rounded-xl focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600"
+                  className="h-12 rounded-xl focus:ring-4 focus:ring-accent/20 focus:border-accent"
                   value={newOrg.name}
                   onChange={(e) => handleNameChange(e.target.value)}
                   required
@@ -452,7 +452,7 @@ export function OrganizationsPage() {
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">crm.app/</span>
                   <Input
                     id="slug"
-                    className="h-12 pl-20 rounded-xl focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600"
+                    className="h-12 pl-20 rounded-xl focus:ring-4 focus:ring-accent/20 focus:border-accent"
                     value={newOrg.slug}
                     onChange={(e) => setNewOrg({ ...newOrg, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
                     required
@@ -465,7 +465,7 @@ export function OrganizationsPage() {
               <Button type="button" variant="outline" onClick={() => setShowAddDialog(false)} className="h-11 rounded-xl uppercase text-xs font-bold">Cancel</Button>
               <Button
                 type="submit"
-                className="h-11 rounded-xl bg-teal-600 hover:bg-teal-700 text-white uppercase text-xs font-bold shadow-lg shadow-teal-100 dark:shadow-none min-w-[120px]"
+                className="h-11 rounded-xl bg-accent hover:bg-accent/90 text-white uppercase text-xs font-bold shadow-lg shadow-accent/20 dark:shadow-none min-w-[120px]"
                 disabled={createOrgMutation.isPending}
               >
                 {createOrgMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Partition'}
@@ -509,7 +509,7 @@ export function OrganizationsPage() {
               <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)} className="h-11 rounded-xl uppercase text-xs font-bold">Cancel</Button>
               <Button
                 type="submit"
-                className="h-11 rounded-xl bg-teal-600 hover:bg-teal-700 text-white uppercase text-xs font-bold"
+                className="h-11 rounded-xl bg-accent hover:bg-accent/90 text-white uppercase text-xs font-bold"
                 disabled={updateOrgMutation.isPending}
               >
                 {updateOrgMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save Changes'}

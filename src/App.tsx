@@ -145,7 +145,7 @@ function AppContent() {
   
   const ctx = useCRMContext();
   const { data: organizations } = ctx.getResource<Organization>("organizations");
-  const appName = organizations[0]?.appName || "CRM Hub";
+  const appName = organizations[0]?.appName || "Hive CRM";
 
   useEffect(() => {
     document.title = appName;
@@ -154,7 +154,7 @@ function AppContent() {
   if (!authLoaded || !authReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-600 border-r-transparent"></div>
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-r-transparent"></div>
       </div>
     );
   }
@@ -241,13 +241,13 @@ function AppContent() {
 export function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <ThemeProvider>
           <CRMProvider>
             <AppContent />
           </CRMProvider>
-        </AuthProvider>
-      </ThemeProvider>
+        </ThemeProvider>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }

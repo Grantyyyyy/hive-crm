@@ -174,14 +174,14 @@ export function Discounts() {
               placeholder="Search discounts..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
+              className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all"
             />
           </div>
 
           <Button
             variant="brand"
             onClick={() => setShowDialog(true)}
-            className="shadow-md shadow-teal-100 dark:shadow-none w-full sm:w-auto h-10"
+            className="shadow-md shadow-accent/10 dark:shadow-none w-full sm:w-auto h-10"
           >
             <PlusCircle className="w-4 h-4 mr-2" /> Add Discount
           </Button>
@@ -194,13 +194,13 @@ export function Discounts() {
           <div
             key={discount.id}
             className={cn(
-              "group relative overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-0 shadow-sm hover:shadow-2xl hover:shadow-teal-500/10 dark:hover:shadow-teal-500/5 transition-all duration-500",
+              "group relative overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-0 shadow-sm hover:shadow-2xl hover:shadow-accent/10 transition-all duration-500",
               !discount.isActive && "opacity-75 grayscale-[0.5]"
             )}
           >
             {/* Background Decorative Element */}
             <div className="absolute top-0 right-0 p-8 -mr-8 -mt-8 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity pointer-events-none">
-              <Tag className="size-32 rotate-12 text-teal-600" />
+              <Tag className="size-32 rotate-12 text-accent" />
             </div>
 
             <div className="p-6 h-full flex flex-col relative">
@@ -219,8 +219,8 @@ export function Discounts() {
                     <span className={cn(
                       "text-[9px] font-black uppercase tracking-[0.1em] px-2 py-0.5 rounded-full border",
                       discount.scope === 'order' 
-                        ? "bg-teal-50 text-teal-600 border-teal-100 dark:bg-teal-900/20 dark:text-teal-400 dark:border-teal-800/50" 
-                        : "bg-teal-50 text-teal-600 border-teal-100 dark:bg-teal-900/20 dark:text-teal-400 dark:border-teal-800/50"
+                        ? "bg-accent-dim text-accent border-accent/10"
+                        : "bg-accent-dim text-accent border-accent/10"
                     )}>
                       {discount.scope === 'order' ? 'Whole Order' : 'Line Item'}
                     </span>
@@ -231,10 +231,10 @@ export function Discounts() {
                   <Switch
                     checked={discount.isActive}
                     onCheckedChange={(checked) => toggleActive(discount, checked)}
-                    className="data-[state=checked]:bg-teal-600"
+                    className="data-[state=checked]:bg-accent"
                   />
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-teal-50 dark:hover:bg-teal-950/30 text-slate-400 hover:text-teal-600 transition-colors" onClick={() => handleEdit(discount)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-accent-dim text-slate-400 hover:text-accent transition-colors" onClick={() => handleEdit(discount)}>
                       <Edit className="w-4 h-4" />
                     </Button>
                     {!discount.isSystem && (
@@ -253,7 +253,7 @@ export function Discounts() {
 
               {/* Discount Value Section */}
               <div className="flex items-center gap-4 mb-6">
-                <div className="size-14 rounded-2xl bg-teal-50 dark:bg-teal-900/20 flex items-center justify-center text-teal-600 dark:text-teal-400 shadow-inner">
+                <div className="size-14 rounded-2xl bg-accent-dim flex items-center justify-center text-accent shadow-inner">
                   <Tag className="w-7 h-7" />
                 </div>
                 <div className="flex flex-col">
@@ -287,7 +287,7 @@ export function Discounts() {
                 {discount.type === 'percentage' && (
                   <div className="space-y-1 text-right">
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Maximum Cap</p>
-                    <p className="text-sm font-bold text-teal-600 dark:text-teal-400">
+                    <p className="text-sm font-bold text-accent">
                       {discount.maxDiscountAmount ? `$${discount.maxDiscountAmount}` : 'No Limit'}
                     </p>
                   </div>
@@ -350,7 +350,7 @@ export function Discounts() {
                     <select
                       value={formData.type}
                       onChange={e => setFormData({ ...formData, type: e.target.value as DiscountType })}
-                      className="w-full h-10 pl-3 pr-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md text-sm appearance-none outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
+                      className="w-full h-10 pl-3 pr-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md text-sm appearance-none outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
                     >
                       <option value="percentage">Percentage (%)</option>
                       <option value="fixed">Fixed Amount ($)</option>
@@ -378,7 +378,7 @@ export function Discounts() {
                     <select
                       value={formData.scope}
                       onChange={e => setFormData({ ...formData, scope: e.target.value as DiscountScope })}
-                      className="w-full h-10 pl-3 pr-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md text-sm appearance-none outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all"
+                      className="w-full h-10 pl-3 pr-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md text-sm appearance-none outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
                     >
                       <option value="line_item">Line Item (Per Product)</option>
                       <option value="order">Whole Order (Subtotal)</option>

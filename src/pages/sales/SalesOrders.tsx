@@ -39,6 +39,7 @@ import {
 } from "@/services/orderService"
 import { useUser } from "@/lib/AuthContext"
 import { StatCard } from "@/components/reusables/StatCard"
+import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 import { StatusTabs } from "@/components/reusables/StatusTabs"
 import type { StatusTab } from "@/components/reusables/StatusTabs"
 import { SalesTable, type SalesColumn } from "@/components/reusables/SalesTable"
@@ -107,7 +108,7 @@ function ActionsMenu({ order, onShip, onDeliver, onCancel, onViewInvoice, onView
     {
       label: "View Invoice",
       icon: Receipt,
-      color: "text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20",
+      color: "text-accent hover:bg-accent-dim",
       action: onViewInvoice,
     },
     {
@@ -303,16 +304,18 @@ export function SalesOrders() {
     {
       header: "Order ID",
       render: (order) => (
-        <span className="text-[13px] font-bold text-teal-600 dark:text-teal-400">#{order.orderNumber}</span>
+        <span className="text-[13px] font-bold text-accent">#{order.orderNumber}</span>
       ),
     },
     {
       header: "Customer",
       render: (order) => (
         <div className="flex items-center gap-2">
-          <div className="size-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 text-[10px] font-black uppercase shadow-sm">
-            {order.customerName.split(' ').map(n => n[0]).join('').slice(0, 2)}
-          </div>
+          <InitialsAvatar
+            name={order.customerName}
+            className="size-8 rounded-xl ring-1 ring-white dark:ring-slate-900 shadow-sm"
+            textClassName="text-[11px] font-black uppercase"
+          />
           <span className="text-[13px] font-medium text-slate-900 dark:text-white truncate max-w-[140px]">{order.customerName}</span>
         </div>
       ),
@@ -378,7 +381,7 @@ export function SalesOrders() {
                 variant="ghost"
                 size="sm"
                 onClick={(e) => { e.stopPropagation(); handleDownloadInvoice(order, e as any) }}
-                className="text-slate-500 hover:bg-teal-50 hover:text-teal-600 border-none rounded-none h-8 w-8 p-0"
+                className="text-slate-500 hover:bg-accent-dim hover:text-accent border-none rounded-none h-8 w-8 p-0"
               >
                 <FileDown className="w-3.5 h-3.5" />
               </Button>
@@ -387,7 +390,7 @@ export function SalesOrders() {
                 variant="ghost"
                 size="sm"
                 onClick={(e) => { e.stopPropagation(); handleSendEmail(order, e as any) }}
-                className="text-slate-500 hover:bg-teal-50 hover:text-teal-600 border-none rounded-none h-8 w-8 p-0"
+                className="text-slate-500 hover:bg-accent-dim hover:text-accent border-none rounded-none h-8 w-8 p-0"
               >
                 <Mail className="w-3.5 h-3.5" />
               </Button>
@@ -410,10 +413,6 @@ export function SalesOrders() {
     },
   ]
 
-  if (!isLoaded) {
-    return <ListSkeleton />
-  }
-
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen font-sans">
       <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
@@ -421,7 +420,7 @@ export function SalesOrders() {
         {/* Header Region */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">Commerce & Fulfillment</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-1">Commerce & Fulfillment</p>
             <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Sales Orders</h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Manage and track all customer orders and fulfillment status in real-time.</p>
           </div>
@@ -444,7 +443,7 @@ export function SalesOrders() {
             label="Total Revenue"
             value={fmtCurrency(orders.filter(o => o.status === 'delivered').reduce((sum, o) => sum + o.totalValue, 0))}
             icon={<DollarSign className="w-5 h-5" />}
-            accentColor="teal"
+            accentColor="accent"
             badge="+12.5%"
             badgeColor="emerald"
           />
@@ -474,7 +473,7 @@ export function SalesOrders() {
               placeholder="Search by order number, customer name..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all"
+              className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all"
             />
           </div>
 

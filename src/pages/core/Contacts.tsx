@@ -19,6 +19,7 @@ import { ListSkeleton } from "@/components/ui/skeletons"
 import { exportToCSV, debounce, calculateRelationshipScore, getRelationshipLabel } from "@/lib/helpers"
 import { cn } from "@/lib/utils"
 import { ProcurementDataTable, type ProcurementColumn } from "@/components/reusables/ProcurementDataTable"
+import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 import { StatusTabs, type StatusTab } from "@/components/reusables/StatusTabs"
 
 interface EnrichedContact extends Contact {
@@ -155,12 +156,13 @@ export function Contacts() {
     {
       header: "Contact",
       render: (c) => {
-        const initials = c.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
         return (
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 flex items-center justify-center text-[10px] font-black uppercase text-slate-600 dark:text-slate-400 ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm">
-              {initials}
-            </div>
+            <InitialsAvatar
+              name={c.name}
+              className="w-8 h-8 rounded-full overflow-hidden shrink-0 ring-1 ring-slate-200 dark:ring-slate-800 shadow-sm"
+              textClassName="text-[10px] font-black uppercase"
+            />
             <div className="min-w-0">
               <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{c.name}</p>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{c.email || "No email"}</p>
@@ -213,7 +215,7 @@ export function Contacts() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-slate-400 hover:text-teal-600 transition-all"
+            className="h-8 w-8 text-slate-400 hover:text-accent transition-all"
             onClick={(e) => {
               e.stopPropagation()
               setEditingContact(c)
@@ -250,7 +252,7 @@ export function Contacts() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-600 dark:text-teal-400 mb-1">Customer Database</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-1">Customer Database</p>
             <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Contacts</h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Relationship management and contact details.</p>
           </div>
@@ -291,7 +293,7 @@ export function Contacts() {
                 placeholder="Search by name, company, or email..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-semibold focus:ring-4 focus:ring-teal-600/20 focus:border-teal-600 placeholder:text-slate-400 outline-none transition-all duration-300"
+                className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-semibold focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all duration-300"
               />
             </div>
           }

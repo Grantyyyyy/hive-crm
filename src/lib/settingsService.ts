@@ -38,6 +38,7 @@ function toAppUser(row: any, role?: Role): AppUser {
     role,
     ownerId: row.owner_id,
     isSuperadmin: row.is_superadmin,
+    brandColor: row.brand_color,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }

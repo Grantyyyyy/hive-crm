@@ -77,16 +77,16 @@ function TaskRowContent({
     <div
       className={cn(
         "grid grid-cols-[40px_50px_1fr_120px_160px_140px_140px_60px] items-center gap-4 px-6 py-2.5 transition-all border-l-4 border-transparent bg-white dark:bg-slate-900 shadow-xs",
-        isSelected && !isOverlay && "bg-teal-50/40 dark:bg-teal-900/10 border-l-teal-600",
+        isSelected && !isOverlay && "bg-accent-dim/70 border-l-accent",
         isDragging && !isOverlay && "opacity-0",
-        isOverlay && "shadow-xl border-l-teal-600 ring-2 ring-teal-500/20 rounded-md opacity-100 scale-[1.01] cursor-grabbing border-y border-slate-200 dark:border-slate-800",
+        isOverlay && "shadow-xl border-l-accent ring-2 ring-accent/20 rounded-md opacity-100 scale-[1.01] cursor-grabbing border-y border-slate-200 dark:border-slate-800",
         !isOverlay && "hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
       )}
       onClick={() => onEdit(task)}
     >
       <div 
         className={cn(
-          "flex justify-center text-slate-400 dark:text-slate-500 hover:text-teal-600 cursor-grab p-1",
+          "flex justify-center text-slate-400 dark:text-slate-500 hover:text-accent cursor-grab p-1",
           isSelectionMode && "pointer-events-none opacity-20"
         )}
         {...(dragHandleProps || {})}
@@ -101,7 +101,7 @@ function TaskRowContent({
             onClick={(e) => { e.stopPropagation(); onToggleSelect(e, task.id); }}
             className={cn(
               "w-4 h-4 rounded-sm border transition-all flex items-center justify-center shadow-xs",
-              isSelected ? "bg-teal-600 border-teal-600 text-white" : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 hover:border-teal-600"
+              isSelected ? "bg-accent border-accent text-white" : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 hover:border-accent"
             )}
           >
             {isSelected && <Check className="w-2.5 h-2.5 stroke-[4]" />}
@@ -189,7 +189,7 @@ function SortableTaskRow(props: SortableTaskRowProps) {
 function DroppableGroup({ id, children, className }: any) {
   const { setNodeRef, isOver } = useDroppable({ id })
   return (
-    <div ref={setNodeRef} className={cn(className, isOver && "bg-teal-50/10 dark:bg-teal-900/10 border-teal-600/50")}>
+    <div ref={setNodeRef} className={cn(className, isOver && "bg-accent-dim/60 border-accent/50")}>
       {children}
     </div>
   )
@@ -268,7 +268,7 @@ export function TaskListView({
                     {statusTasks.length}
                   </span>
                 </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-teal-600 rounded-md transition-colors" onClick={() => onAddTask(status)}>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-accent rounded-md transition-colors" onClick={() => onAddTask(status)}>
                   <PlusCircle className="w-4 h-4" />
                 </Button>
               </div>
@@ -276,8 +276,8 @@ export function TaskListView({
               <DroppableGroup id={status} className="rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex flex-col min-h-[100px] transition-all">
                 <div className="grid grid-cols-[40px_50px_1fr_120px_160px_140px_140px_60px] items-center gap-4 px-6 py-3.5 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
                   <div /><div className="flex justify-center">
-                    <button onClick={(e) => onSelectAll(status, e)} className={cn("w-4 h-4 rounded-sm border transition-all flex items-center justify-center shadow-xs", isStatusSelected ? "bg-teal-600 border-teal-600 text-white" : hasPartialSelection ? "bg-white border-teal-600 text-teal-600" : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950")}>
-                      {isStatusSelected ? <Check className="w-2.5 h-2.5 stroke-[4]" /> : hasPartialSelection ? <div className="w-1.5 h-[2px] bg-teal-600 rounded-full" /> : null}
+                    <button onClick={(e) => onSelectAll(status, e)} className={cn("w-4 h-4 rounded-sm border transition-all flex items-center justify-center shadow-xs", isStatusSelected ? "bg-accent border-accent text-white" : hasPartialSelection ? "bg-white border-accent text-accent" : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950")}>
+                      {isStatusSelected ? <Check className="w-2.5 h-2.5 stroke-[4]" /> : hasPartialSelection ? <div className="w-1.5 h-[2px] bg-accent rounded-full" /> : null}
                     </button>
                   </div>
                   <div className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Description</div>

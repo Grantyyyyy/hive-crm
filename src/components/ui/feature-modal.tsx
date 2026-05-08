@@ -33,7 +33,7 @@ export function FeatureModal({
       >
         <div className="flex flex-col">
           {/* Banner Section */}
-          <div className="h-44 bg-gradient-to-br from-teal-500 via-purple-500 to-pink-500 flex items-center justify-center relative overflow-hidden">
+          <div className="h-44 bg-gradient-to-br from-accent via-purple-500 to-pink-500 flex items-center justify-center relative overflow-hidden">
             {/* Ambient decorative elements */}
             <div className="absolute top-0 left-0 w-32 h-32 bg-white/10 rounded-full blur-2xl transform -translate-x-1/2 -translate-y-1/2" />
             <div className="absolute bottom-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl transform translate-x-1/4 translate-y-1/4" />

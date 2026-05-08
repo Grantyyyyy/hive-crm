@@ -3,12 +3,11 @@ import {
   Mail, 
   Phone, 
   Building2, 
-  UserPlus, 
   ChevronDown,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { FormActions } from "@/components/reusables/form-actions"
 import type { Contact, ContactSource, CreateContactInput } from "@/lib/types"
 import { SOURCE_LABELS } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -63,7 +62,7 @@ export function ContactForm({ onSave, onCancel, initialData }: ContactFormProps)
           {/* Section 1: Personal Information */}
           <section className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm transition-all hover:shadow-md hover:border-slate-300/60 dark:hover:border-slate-700/60">
             <div className="flex items-center gap-2 mb-6">
-              <div className="w-1 h-3.5 bg-teal-500 rounded-full" />
+              <div className="w-1 h-3.5 bg-accent rounded-full" />
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Personal Information</h3>
             </div>
 
@@ -76,7 +75,7 @@ export function ContactForm({ onSave, onCancel, initialData }: ContactFormProps)
                     onChange={(e) => setFirstName(e.target.value)}
                     placeholder="e.g. John"
                     className={cn(
-                      "h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10",
+                      "h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10",
                       errors.firstName && "border-red-500 ring-4 ring-red-500/10"
                     )}
                   />
@@ -90,7 +89,7 @@ export function ContactForm({ onSave, onCancel, initialData }: ContactFormProps)
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   placeholder="e.g. Doe"
-                  className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10"
+                  className="h-11 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10"
                 />
               </div>
             </div>
@@ -107,14 +106,14 @@ export function ContactForm({ onSave, onCancel, initialData }: ContactFormProps)
               <div className="space-y-1.5">
                 <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Email Address</Label>
                 <div className="group relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-teal-600 transition-colors" />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-accent transition-colors" />
                   <Input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="john@example.com"
                     className={cn(
-                      "h-11 pl-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10",
+                      "h-11 pl-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10",
                       errors.email && "border-red-500 ring-4 ring-red-500/10"
                     )}
                   />
@@ -125,12 +124,12 @@ export function ContactForm({ onSave, onCancel, initialData }: ContactFormProps)
               <div className="space-y-1.5">
                 <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Phone Number</Label>
                 <div className="group relative">
-                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-teal-600 transition-colors" />
+                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-accent transition-colors" />
                   <Input
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+1 (555) 000-0000"
-                    className="h-11 pl-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10"
+                    className="h-11 pl-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10"
                   />
                 </div>
               </div>
@@ -148,12 +147,12 @@ export function ContactForm({ onSave, onCancel, initialData }: ContactFormProps)
               <div className="space-y-1.5">
                 <Label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Company Name</Label>
                 <div className="group relative">
-                  <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-teal-600 transition-colors" />
+                  <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 group-focus-within:text-accent transition-colors" />
                   <Input
                     value={company}
                     onChange={(e) => setCompany(e.target.value)}
                     placeholder="Acme Corp"
-                    className="h-11 pl-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-teal-500/10"
+                    className="h-11 pl-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-sm font-bold transition-all focus:ring-4 focus:ring-accent/10"
                   />
                 </div>
               </div>
@@ -164,7 +163,7 @@ export function ContactForm({ onSave, onCancel, initialData }: ContactFormProps)
                   <select
                     value={source}
                     onChange={(e) => setSource(e.target.value as ContactSource)}
-                    className="w-full h-11 px-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-teal-500/10 transition-all shadow-sm"
+                    className="w-full h-11 px-4 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-100 rounded-xl text-xs font-bold appearance-none cursor-pointer focus:ring-4 focus:ring-accent/10 transition-all shadow-sm"
                   >
                     {(Object.entries(SOURCE_LABELS) as [ContactSource, string][]).map(([val, label]) => (
                       <option key={val} value={val}>{label}</option>
@@ -178,30 +177,13 @@ export function ContactForm({ onSave, onCancel, initialData }: ContactFormProps)
         </div>
       </div>
 
-      {/* Sticky Action Footer */}
-      <div className="px-8 py-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
-        <Button
-          type="button"
-          variant="outlineNeutral"
-          onClick={onCancel}
-          className="h-9 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest border-2"
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          className="h-9 px-10 bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-600/20 text-[10px] font-black uppercase tracking-widest"
-        >
-          {initialData?.id ? (
-             <>Save Changes</>
-          ) : (
-            <>
-              <UserPlus className="w-4 h-4 mr-2" />
-              Create Contact
-            </>
-          )}
-        </Button>
-      </div>
+      <FormActions
+        cancel={{ label: "Cancel", onClick: onCancel }}
+        primary={{
+          label: initialData?.id ? "Save Changes" : "Create Contact",
+          type: "submit",
+        }}
+      />
     </form>
   )
 }

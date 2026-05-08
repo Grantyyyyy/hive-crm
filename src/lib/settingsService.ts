@@ -328,11 +328,12 @@ export async function fetchPermissions(client: SupabaseClient): Promise<Record<s
 
 // ── Users Service ────────────────────────────────────────────────────────────
 
-export async function fetchAppUsers(client: SupabaseClient): Promise<AppUser[]> {
-  // 1. Fetch all app_users
+export async function fetchAppUsers(client: SupabaseClient, organizationId: string): Promise<AppUser[]> {
+  // 1. Fetch all app_users in the current organization
   const { data: users, error } = await client
     .from('app_users')
     .select('*')
+    .eq('organization_id', organizationId)
     .order('created_at', { ascending: false })
   if (error) throw error
 

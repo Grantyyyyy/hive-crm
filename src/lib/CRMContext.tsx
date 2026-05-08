@@ -293,6 +293,8 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           .order("created_at", { ascending: false })
           .range(offset, offset + limit - 1)
 
+        if (organizationId) query = query.eq('organization_id', organizationId)
+
         const { data: rows, error } = await query
 
         if (error) throw error
@@ -314,7 +316,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         }))
       }
     },
-    [getClient]
+    [getClient, organizationId]
   )
 
   // ── Pre-fetch all primary resources once the user is ready ─────────────────

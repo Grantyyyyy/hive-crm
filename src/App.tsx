@@ -5,7 +5,8 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LandingPage } from "@/pages/LandingPage";
 import { SignInPage } from "@/pages/SignInPage";
 import { SignUpPage } from "@/pages/SignUpPage";
-import { OnboardingPage } from "@/pages/OnboardingPage";
+import OnboardingPage from "@/pages/OnboardingPage";
+import AcceptInvitePage from "@/pages/AcceptInvitePage";
 import { Dashboard } from "@/pages/core/Dashboard";
 import { Contacts } from "@/pages/core/Contacts";
 import { ContactDetail } from "@/pages/core/ContactDetail";
@@ -172,6 +173,7 @@ function AppContent() {
               <Route path="/sign-in">{() => (isSignedIn ? <Redirect to={organizationId && organizationId !== "null" ? "/dashboard" : "/onboarding"} /> : <SignInPage />)}</Route>
               <Route path="/sign-up">{() => (isSignedIn ? <Redirect to={organizationId && organizationId !== "null" ? "/dashboard" : "/onboarding"} /> : <SignUpPage />)}</Route>
               <Route path="/onboarding" component={OnboardingPage} />
+              <Route path="/accept-invite" component={AcceptInvitePage} />
               <Route path="/design">{() => <Design />}</Route>
               <Route path="/fonts">{() => <Fonts />}</Route>
               <Route path="/dialogs">{() => <DialogsPreview />}</Route>

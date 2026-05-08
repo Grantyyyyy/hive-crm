@@ -40,6 +40,7 @@ import { UserSheet } from '@/components/crmComponent/UserSheet';
 import type { UserFormData } from '@/components/crmComponent/UserForm';
 import { InitialsAvatar } from '@/components/reusables/InitialsAvatar';
 import { logger } from '@/lib/logger';
+import { checkSeatLimit } from '@/lib/helpers';
 
 // ── Actions dropdown ──────────────────────────────────────────────────────────
 
@@ -254,13 +255,14 @@ export function Users() {
 
   // Data Fetching
   const { data: usersData, isLoading: usersLoading, error: usersError, isFetching } = useQuery({
-    queryKey: ['app-users'],
+    queryKey: ['app-users', organizationId],
     queryFn: async () => {
       const client = await getClient();
       if (!client) throw new Error('Not authenticated');
-      return fetchAppUsers(client);
+      if (!organizationId) throw new Error('Organization ID not available');
+      return fetchAppUsers(client, organizationId);
     },
-    enabled: userLoaded && isSignedIn && !!userId,
+    enabled: userLoaded && isSignedIn && !!userId && !!organizationId,
     staleTime: 0,
     retry: false,
   });
@@ -273,6 +275,23 @@ export function Users() {
       return fetchRoles(client);
     },
     enabled: !!user,
+  });
+
+  // Fetch organization for seat limit display
+  const { data: orgData } = useQuery({
+    queryKey: ['organization', organizationId],
+    queryFn: async () => {
+      const client = await getClient();
+      if (!client || !organizationId) throw new Error('Not authenticated');
+      const { data, error } = await client
+        .from('organizations')
+        .select('plan, seats_limit, is_system')
+        .eq('id', organizationId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!organizationId && !!user,
   });
 
   const availableRoles = useMemo(() => {
@@ -337,25 +356,66 @@ export function Users() {
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
 
   // Handlers
-  const handleSaveUser = (data: UserFormData) => {
+  const handleSaveUser = async (data: UserFormData) => {
     if (selectedUser) {
+      // Updating existing user's role - no seat limit check needed
       if (data.roleId) {
         updateRoleMutation.mutate({ appUserId: selectedUser.id, roleId: data.roleId });
       } else {
         toast.error("Please select a role");
       }
     } else {
-      if (data.inviteMode) {
-        inviteUserMutation.mutate({
-          name: data.name,
-          email: data.email,
-          roleId: data.roleId || undefined,
-        });
-      } else {
-        addUserMutation.mutate({
-          name: data.name,
-          email: data.email,
-          roleId: data.roleId || undefined,
+      // Creating new user - check seat limit
+      if (!organizationId) {
+        toast.error("Organization ID not available");
+        return;
+      }
+
+      try {
+        const client = await getClient();
+        if (!client) {
+          toast.error("Not authenticated");
+          return;
+        }
+
+        // Check seat limit
+        const seatCheck = await checkSeatLimit(client, organizationId);
+
+        if (!seatCheck.allowed) {
+          // Show plan-specific upgrade message
+          let upgradeMessage = "";
+          if (seatCheck.plan === "free") {
+            upgradeMessage = "Free plan allows 1 user. Upgrade to Standard for up to 10 users.";
+          } else if (seatCheck.plan === "standard") {
+            upgradeMessage = "Standard plan allows 10 users. Upgrade to Elite for unlimited users.";
+          } else {
+            upgradeMessage = "Seat limit reached. Upgrade your plan to invite more users.";
+          }
+
+          toast.error("Seat limit reached", {
+            description: upgradeMessage,
+          });
+          return;
+        }
+
+        // Proceed with invite or add
+        if (data.inviteMode) {
+          inviteUserMutation.mutate({
+            name: data.name,
+            email: data.email,
+            roleId: data.roleId || undefined,
+          });
+        } else {
+          addUserMutation.mutate({
+            name: data.name,
+            email: data.email,
+            roleId: data.roleId || undefined,
+          });
+        }
+      } catch (error) {
+        logger.error("Error checking seat limit:", error);
+        toast.error("Error checking seat limit", {
+          description: "Please try again",
         });
       }
     }
@@ -405,6 +465,18 @@ export function Users() {
         <div>
           <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Organization Members</h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm">Manage and track your team members.</p>
+          {orgData && usersData && !orgData.is_system && (
+            <div className="mt-3 flex items-center gap-2">
+              <div className="inline-block px-3 py-1.5 rounded-lg bg-teal-50 dark:bg-teal-900/20">
+                <p className="text-xs font-bold text-teal-700 dark:text-teal-400">
+                  {usersData.length} / {orgData.seats_limit} seats used
+                </p>
+              </div>
+              {orgData.plan !== 'elite' && usersData.length >= orgData.seats_limit && (
+                <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">Limit reached</span>
+              )}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-3 shrink-0">
           {canCreate && (
@@ -560,6 +632,7 @@ export function Users() {
         initialData={selectedUser}
         availableRoles={availableRoles}
         isPending={inviteUserMutation.isPending || addUserMutation.isPending || updateRoleMutation.isPending}
+        organizationId={organizationId}
       />
 
       {/* Delete User Modal */}

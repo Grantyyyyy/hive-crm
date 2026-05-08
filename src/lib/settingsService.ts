@@ -328,11 +328,12 @@ export async function fetchPermissions(client: SupabaseClient): Promise<Record<s
 
 // ── Users Service ────────────────────────────────────────────────────────────
 
-export async function fetchAppUsers(client: SupabaseClient): Promise<AppUser[]> {
-  // 1. Fetch all app_users
+export async function fetchAppUsers(client: SupabaseClient, organizationId: string): Promise<AppUser[]> {
+  // 1. Fetch all app_users in the current organization
   const { data: users, error } = await client
     .from('app_users')
     .select('*')
+    .eq('organization_id', organizationId)
     .order('created_at', { ascending: false })
   if (error) throw error
 
@@ -461,30 +462,29 @@ export async function inviteUser(
 ): Promise<{ appUser: AppUser; authUserId: string }> {
   await assertPermission(client, 'users', 'create')
   await assertRoleAssignmentPerms(client, data.roleId, ownerId)
-  // Step 1: Call the invitation API
-  const inviteResponse = await fetch('/api/invite-user', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
+
+  // Call the invite-user edge function
+  const { data: result, error: inviteError } = await client.functions.invoke('invite-user', {
+    body: {
       email: data.email,
-      name: data.name,
-      role: data.roleId,
-    }),
-  });
+      roleId: data.roleId,
+      organizationId: organizationId
+    }
+  })
 
-  const result = await inviteResponse.json();
-
-  if (!inviteResponse.ok) {
-    throw new Error(result.error || 'Failed to send invitation');
+  if (inviteError) {
+    throw new Error(inviteError.message || 'Failed to send invitation')
   }
 
-  // Step 2: Create local app_users record with a placeholder auth_user_id
-  // This will be updated to the real Supabase user ID when the user accepts the invitation
-  const placeholderId = `manual_invite_${result.invitationId || result.authUserId}`;
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to send invitation')
+  }
 
-  const { data: created, error } = await client
+  // Create local app_users record with a placeholder auth_user_id
+  // This will be updated when the user accepts the invitation
+  const placeholderId = `pending_invite_${Date.now()}`
+
+  const { data: created, error: insertError } = await client
     .from('app_users')
     .insert({
       auth_user_id: placeholderId,
@@ -497,7 +497,7 @@ export async function inviteUser(
     .select()
     .single();
 
-  if (error) throw error;
+  if (insertError) throw insertError;
 
   return {
     appUser: toAppUser(created),

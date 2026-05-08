@@ -288,6 +288,93 @@ export function exportToCSV<T extends Record<string, any>>(
   URL.revokeObjectURL(url)
 }
 
+// ── Subscription & Seat Limits ────────────────────────────────────────────────
+
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+/** Mirrors the DB column default / plan cap per tier. Update here when the DB default changes. */
+export const PLAN_SEAT_LIMITS: Record<string, number> = {
+  free: 5,
+  standard: 10,
+  elite: Infinity,
+}
+
+export interface SeatLimitCheckResult {
+  allowed: boolean
+  current: number
+  limit: number
+  plan: string
+  is_system?: boolean
+}
+
+export async function checkSeatLimit(
+  supabase: SupabaseClient,
+  organizationId: string
+): Promise<SeatLimitCheckResult> {
+  try {
+    // 1. Count current users in organization
+    const { count, error: countError } = await supabase
+      .from('app_users')
+      .select('*', { count: 'exact', head: true })
+      .eq('organization_id', organizationId)
+
+    if (countError) throw countError
+    const currentUserCount = count ?? 0
+
+    // 2. Get organization plan, seat limit, and system flag
+    const { data: org, error: orgError } = await supabase
+      .from('organizations')
+      .select('plan, seats_limit, is_system')
+      .eq('id', organizationId)
+      .single()
+
+    if (orgError) throw orgError
+    if (!org) throw new Error('Organization not found')
+
+    const { plan, seats_limit, is_system } = org
+
+    // 3. System orgs bypass all seat restrictions
+    if (is_system) {
+      return {
+        allowed: true,
+        current: currentUserCount,
+        limit: 999,
+        plan: 'elite',
+        is_system: true,
+      }
+    }
+
+    // 4. Elite plan always allows (unlimited seats)
+    if (plan === 'elite') {
+      return {
+        allowed: true,
+        current: currentUserCount,
+        limit: seats_limit,
+        plan,
+      }
+    }
+
+    // 5. For free and standard plans, enforce seats_limit (free default: 5, standard default: 10)
+    const allowed = currentUserCount < seats_limit
+
+    return {
+      allowed,
+      current: currentUserCount,
+      limit: seats_limit,
+      plan,
+    }
+  } catch (error) {
+    console.error('Error checking seat limit:', error)
+    // On error, deny access to be safe
+    return {
+      allowed: false,
+      current: 0,
+      limit: 0,
+      plan: 'unknown',
+    }
+  }
+}
+
 // ── Debounce ──────────────────────────────────────────────────────────────────
 
 export function debounce<T extends (...args: any[]) => any>(

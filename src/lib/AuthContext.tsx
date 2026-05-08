@@ -37,6 +37,7 @@ interface AuthContextValue {
   isSignedIn: boolean
   userId: string
   organizationId: string | null
+  orgName: string | null
   brandColor: BrandColorId
   setBrandColor: (brandColor: BrandColorId) => void
   signOut: () => Promise<void>
@@ -95,24 +96,26 @@ async function resolveOrganizationId(session: Session | null): Promise<string | 
   }
 }
 
-async function resolveAuthProfile(session: Session | null): Promise<{ organizationId: string | null; brandColor: BrandColorId }> {
+async function resolveAuthProfile(session: Session | null): Promise<{ organizationId: string | null; orgName: string | null; brandColor: BrandColorId }> {
   const authUserId = session?.user?.id
   if (!authUserId) {
-    return { organizationId: null, brandColor: DEFAULT_BRAND_COLOR }
+    return { organizationId: null, orgName: null, brandColor: DEFAULT_BRAND_COLOR }
   }
 
   let organizationId = extractOrgId(session)
+  let orgName: string | null = null
   let brandColor = DEFAULT_BRAND_COLOR
 
   try {
     const { data, error } = await supabase
       .from("app_users")
-      .select("organization_id, brand_color")
+      .select('organization_id, brand_color, organizations(name)')
       .eq("auth_user_id", authUserId)
       .maybeSingle()
 
     if (error) throw error
     if (!organizationId) organizationId = data?.organization_id ?? null
+    orgName = data?.organizations?.[0]?.name ?? null
     if (isBrandColorId(data?.brand_color)) brandColor = data.brand_color
   } catch (error) {
     logger.warn("[AuthContext] app_users profile lookup failed:", error)
@@ -122,13 +125,14 @@ async function resolveAuthProfile(session: Session | null): Promise<{ organizati
     organizationId = await resolveOrganizationId(session)
   }
 
-  return { organizationId, brandColor }
+  return { organizationId, orgName, brandColor }
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const [organizationId, setOrganizationId] = useState<string | null>(null)
+  const [orgName, setOrgName] = useState<string | null>(null)
   const [brandColor, setBrandColor] = useState<BrandColorId>(DEFAULT_BRAND_COLOR)
   const [isLoaded, setIsLoaded] = useState(false)
 
@@ -143,13 +147,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const syncSessionState = async (nextSession: Session | null, seedRefs = false) => {
       const syncVersion = ++syncVersionRef.current
       const nextUser = nextSession?.user ?? null
-      const { organizationId: nextOrganizationId, brandColor: nextBrandColor } = await resolveAuthProfile(nextSession)
+      const { organizationId: nextOrganizationId, orgName: nextOrgName, brandColor: nextBrandColor } = await resolveAuthProfile(nextSession)
 
       if (cancelled || syncVersion !== syncVersionRef.current) return
 
       setSession(nextSession)
       setUser(nextUser)
       setOrganizationId(nextOrganizationId)
+      setOrgName(nextOrgName)
       setBrandColor(nextBrandColor)
       setIsLoaded(true)
 
@@ -220,6 +225,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSession(null)
     setUser(null)
     setOrganizationId(null)
+    setOrgName(null)
     setBrandColor(DEFAULT_BRAND_COLOR)
     setIsLoaded(true)
   }, [organizationId])
@@ -230,10 +236,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error
 
       if (data.session) {
-        const { organizationId: nextOrganizationId, brandColor: nextBrandColor } = await resolveAuthProfile(data.session)
+        const { organizationId: nextOrganizationId, orgName: nextOrgName, brandColor: nextBrandColor } = await resolveAuthProfile(data.session)
         setSession(data.session)
         setUser(data.session.user)
         setOrganizationId(nextOrganizationId)
+        setOrgName(nextOrgName)
         setBrandColor(nextBrandColor)
         return nextOrganizationId
       }
@@ -260,27 +267,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isSignedIn,
       userId,
       organizationId,
+      orgName,
       brandColor,
       setBrandColor,
       signOut,
       getToken,
       refreshSession,
     }),
-    [user, session, isLoaded, isSignedIn, userId, organizationId, brandColor, signOut, getToken, refreshSession],
+    [user, session, isLoaded, isSignedIn, userId, organizationId, orgName, brandColor, signOut, getToken, refreshSession],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-export function useAuth(): Pick<AuthContextValue, "isLoaded" | "isSignedIn" | "userId" | "organizationId" | "brandColor" | "setBrandColor" | "signOut" | "getToken" | "refreshSession"> {
+export function useAuth(): Pick<AuthContextValue, "user" | "isLoaded" | "isSignedIn" | "userId" | "organizationId" | "orgName" | "brandColor" | "setBrandColor" | "signOut" | "getToken" | "refreshSession"> {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error("useAuth must be used within an AuthProvider")
 
   return {
+    user: ctx.user,
     isLoaded: ctx.isLoaded,
     isSignedIn: ctx.isSignedIn,
     userId: ctx.userId,
     organizationId: ctx.organizationId,
+    orgName: ctx.orgName,
     brandColor: ctx.brandColor,
     setBrandColor: ctx.setBrandColor,
     signOut: ctx.signOut,

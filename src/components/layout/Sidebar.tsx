@@ -56,7 +56,7 @@ interface SidebarProps {
 export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: SidebarProps) {
   const [location] = useLocation();
   const { user } = useUser();
-  const { userId, signOut, isLoaded } = useAuth();
+  const { userId, signOut, isLoaded, orgName } = useAuth();
   const { can, hasFullAccess, isLoaded: permLoaded } = usePermission();
   const ctx = useCRMContext();
   const { data: organizations } = ctx.getResource<Organization>("organizations");
@@ -327,6 +327,16 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
             </div>
           ))}
         </nav>
+
+        {/* Organization Name */}
+        {!collapsed && (
+          <div className="px-3 py-2">
+            <div className="px-3 py-2 rounded-md bg-slate-100 dark:bg-slate-800">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Organization</p>
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 truncate">{orgName ?? '—'}</p>
+            </div>
+          </div>
+        )}
 
         {/* Bottom Section - User Profile */}
         <div className="p-4 border-t border-border shrink-0">

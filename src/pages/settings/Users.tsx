@@ -632,6 +632,7 @@ export function Users() {
         initialData={selectedUser}
         availableRoles={availableRoles}
         isPending={inviteUserMutation.isPending || addUserMutation.isPending || updateRoleMutation.isPending}
+        organizationId={organizationId}
       />
 
       {/* Delete User Modal */}

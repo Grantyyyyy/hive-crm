@@ -15,6 +15,7 @@ interface UserSheetProps {
   initialData?: AppUser | null
   availableRoles: Role[]
   isPending?: boolean
+  organizationId?: string | null
 }
 
 export function UserSheet({
@@ -23,7 +24,8 @@ export function UserSheet({
   onSave,
   initialData,
   availableRoles,
-  isPending
+  isPending,
+  organizationId
 }: UserSheetProps) {
   const isEditing = !!initialData
 
@@ -52,6 +54,7 @@ export function UserSheet({
             initialData={initialData}
             availableRoles={availableRoles}
             isPending={isPending}
+            organizationId={organizationId}
           />
         </div>
       </SheetContent>

@@ -553,7 +553,7 @@ export function Users() {
                           className="size-9 rounded-full shadow-sm text-sm font-bold"
                         />
                         <div>
-                          <p className="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                          <div className="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
                             {u.name}
                             {u.role?.name === 'Admin' && (
                               <span title="Admin User"><Shield className="w-3.5 h-3.5 text-amber-500" /></span>
@@ -561,7 +561,7 @@ export function Users() {
                             {u.authUserId === userId && (
                               <Badge variant="secondary" className="text-[9px] uppercase tracking-tighter h-4 px-1 bg-accent-dim text-accent border-accent/10">You</Badge>
                             )}
-                          </p>
+                          </div>
                           <p className="text-[11px] text-slate-400 font-medium md:hidden">{u.email}</p>
                         </div>
                       </div>

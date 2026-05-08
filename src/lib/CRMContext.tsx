@@ -293,7 +293,10 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           .order("created_at", { ascending: false })
           .range(offset, offset + limit - 1)
 
-        if (organizationId) query = query.eq('organization_id', organizationId)
+        if (organizationId) {
+          const filterCol = tableName === 'organizations' ? 'id' : 'organization_id';
+          query = query.eq(filterCol, organizationId)
+        }
 
         const { data: rows, error } = await query
 

@@ -115,7 +115,9 @@ async function resolveAuthProfile(session: Session | null): Promise<{ organizati
 
     if (error) throw error
     if (!organizationId) organizationId = data?.organization_id ?? null
-    orgName = data?.organizations?.[0]?.name ?? null
+    orgName = Array.isArray(data?.organizations) 
+      ? data?.organizations?.[0]?.name 
+      : (data?.organizations as any)?.name ?? null;
     if (isBrandColorId(data?.brand_color)) brandColor = data.brand_color
   } catch (error) {
     logger.warn("[AuthContext] app_users profile lookup failed:", error)

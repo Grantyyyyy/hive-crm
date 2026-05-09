@@ -13,6 +13,8 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCRMResource } from "@/lib/hooks"
+import { usePlan } from "@/lib/usePlan"
+import { UpgradeBanner } from "@/components/reusables/UpgradeBanner"
 import { cn } from "@/lib/utils"
 import type { PurchaseRequest, PurchaseRequestStatus, InventoryTransaction } from "@/lib/types"
 import { AddPurchaseRequestModal } from "@/components/logisticsComponent/AddPurchaseRequestModal"
@@ -40,6 +42,12 @@ export function PurchaseRequests() {
     data: inventoryTransactions
   } = useCRMResource<InventoryTransaction>('inventory_transactions')
   const ctx = useCRMContext()
+
+  const { canAccess } = usePlan()
+
+  if (!canAccess('procurement')) {
+    return <UpgradeBanner feature="Procurement" description="Manage purchase orders, vendors, and procurement workflows." />
+  }
 
   const adapter = useMemo<JobAdapter>(() => ({
     getQuotes: () => ctx.getResource<Quote>('quotes').data,
@@ -269,13 +277,13 @@ export function PurchaseRequests() {
               <Button
                 variant="brand"
                 onClick={() => setIsAddModalOpen(true)}
+
               >
                 <PlusCircle className="w-4 h-4 mr-2" /> Create Request
               </Button>
             </div>
           }
         />
-
         <ProcurementDataTable<PurchaseRequest>
           data={paginatedRequests}
           columns={columns}

@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button"
 import { Pagination } from "@/components/ui/Pagination"
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
+import { usePlan } from "@/lib/usePlan"
+import { UpgradeBanner } from "@/components/reusables/UpgradeBanner"
 import { cn } from "@/lib/utils"
 import type { Vendor, VendorStatus } from "@/lib/types"
 import {
@@ -42,6 +44,12 @@ export function Vendors() {
   const [activeTab, setActiveTab] = useState<VendorStatus | 'all'>('all')
   const [currentPage, setCurrentPage] = useState(1)
   const [showSheet, setShowSheet] = useState(false)
+
+  const { canAccess } = usePlan()
+
+  if (!canAccess('procurement')) {
+    return <UpgradeBanner feature="Procurement" description="Manage purchase orders, vendors, and procurement workflows." />
+  }
 
   const itemsPerPage = 10
 
@@ -164,13 +172,13 @@ export function Vendors() {
               <Button
                 variant="brand"
                 onClick={() => setShowSheet(true)}
+
               >
                 <PlusCircle className="w-4 h-4 mr-2" /> Register Partner
               </Button>
             </div>
           }
         />
-
         {/* Search & Filters */}
         <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center">
           <div className="relative flex-1 w-full lg:max-w-md">

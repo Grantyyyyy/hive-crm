@@ -46,6 +46,7 @@ import { LostReasonModal } from "@/components/crmComponent/LostReasonModal"
 import { formatCurrency, getDealHealth } from "@/lib/helpers"
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
+import { usePlan } from "@/lib/usePlan"
 import { ListSkeleton } from "@/components/ui/skeletons"
 import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 import type { Deal, DealStage, Contact } from "@/lib/types"
@@ -275,6 +276,10 @@ export function Deals() {
 
   const { data: activities } = useCRMResource<Activity>('activities')
 
+  const { isAtLimit } = usePlan()
+
+  const atDealLimit = isAtLimit('deals', deals.length)
+
   const [showModal, setShowModal] = useState(false)
   const [viewMode, setViewMode] = useState<"board" | "list">("board")
   const [autoPrioritize, setAutoPrioritize] = useState(true)
@@ -447,6 +452,9 @@ export function Deals() {
                 <Button
                   variant="brand"
                   onClick={() => handleOpenCreateModal()}
+                  disabled={atDealLimit}
+                  title={atDealLimit ? "Upgrade to add more deals" : undefined}
+                  className={atDealLimit ? "disabled:opacity-50 disabled:cursor-not-allowed" : ""}
                 >
                   <PlusCircle className="w-4 h-4" /> Create Deal
                 </Button>
@@ -669,7 +677,9 @@ export function Deals() {
                           <Button
                             variant="ghost"
                             onClick={() => handleOpenCreateModal(stage)}
-                            className="w-full h-12 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 group"
+                            disabled={atDealLimit}
+                            title={atDealLimit ? "Upgrade to add more deals" : undefined}
+                            className={cn("w-full h-12 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 group", atDealLimit && "disabled:opacity-50 disabled:cursor-not-allowed")}
                           >
                             <PlusCircle className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
                             Add {STAGE_LABELS[stage]}

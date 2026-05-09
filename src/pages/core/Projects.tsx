@@ -17,6 +17,7 @@ import { AddProjectModal } from "@/components/crmComponent/AddProjectModal"
 import { EditProjectModal } from "@/components/crmComponent/EditProjectModal"
 import { useCRMResource } from "@/lib/hooks"
 import { useUser } from "@/lib/AuthContext"
+import { usePlan } from "@/lib/usePlan"
 import { ListSkeleton } from "@/components/ui/skeletons"
 import { DeleteModal } from "@/components/ui/delete-modal"
 
@@ -33,6 +34,10 @@ export function Projects() {
 
   const { data: tasks } = useCRMResource<Task>('tasks')
   const isLoaded = userLoaded && projectsLoaded
+
+  const { isAtLimit } = usePlan()
+
+  const atProjectLimit = isAtLimit('projects', projects.length)
 
   // UI State
   const [search, setSearch] = useState("")
@@ -82,7 +87,13 @@ export function Projects() {
           description="Organize tasks into projects for better workflow management."
           className="px-0 bg-transparent border-none pb-2"
           actions={
-            <Button variant="brand" onClick={() => setShowAddModal(true)}>
+            <Button 
+              variant="brand" 
+              onClick={() => setShowAddModal(true)}
+              disabled={atProjectLimit}
+              title={atProjectLimit ? "Upgrade to add more projects" : undefined}
+              className={atProjectLimit ? "disabled:opacity-50 disabled:cursor-not-allowed" : ""}
+            >
               <PlusCircle className="w-4 h-4" /> Create Project
             </Button>
           }
@@ -112,7 +123,7 @@ export function Projects() {
             <div className="col-span-full p-6 text-center">
               <FolderOpen className="w-16 h-16 text-slate-300 dark:text-slate-700 mx-auto mb-4 opacity-50" />
               <p className="text-slate-500 dark:text-slate-400 font-medium mb-4">No projects found</p>
-              <Button variant="brand" onClick={() => setShowAddModal(true)}>
+              <Button variant="brand" onClick={() => setShowAddModal(true)} disabled={atProjectLimit} title={atProjectLimit ? "Upgrade to add more projects" : undefined} className={atProjectLimit ? "disabled:opacity-50 disabled:cursor-not-allowed" : ""}>
                 <PlusCircle className="w-4 h-4 mr-2" /> Create your first project
               </Button>
             </div>

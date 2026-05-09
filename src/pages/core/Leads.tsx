@@ -25,6 +25,7 @@ import { LeadSheet } from "@/components/crmComponent/EditLeadSheet"
 import { LeadForm } from "@/components/crmComponent/LeadForm"
 import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 import { useCRMResource } from "@/lib/hooks"
+import { usePlan } from "@/lib/usePlan"
 import { ListSkeleton } from "@/components/ui/skeletons"
 import { DeleteModal } from "@/components/ui/delete-modal"
 import type { Lead, LeadStatus, LeadSource } from "@/lib/types"
@@ -64,6 +65,9 @@ export function Leads() {
     updateItem,
     deleteItem
   } = useCRMResource<Lead>('leads')
+  const { isAtLimit } = usePlan()
+
+  const atLeadLimit = isAtLimit('leads', leads.length)
 
   const [statusFilter, setStatusFilter] = useState<LeadStatus | "all">("all")
   const [showModal, setShowModal] = useState(false)
@@ -358,6 +362,9 @@ export function Leads() {
               <Button
                 variant="brand"
                 onClick={() => { setEditingLead(null); setShowModal(true) }}
+                disabled={atLeadLimit}
+                title={atLeadLimit ? "Upgrade to add more leads" : undefined}
+                className={atLeadLimit ? "disabled:opacity-50 disabled:cursor-not-allowed" : ""}
               >
                 <PlusCircle className="w-4 h-4" />
                 Create Lead

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth, useUser } from '@/lib/AuthContext';
 import { usePermission } from '@/lib/usePermission';
+import { usePlan } from '@/lib/usePlan';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCRMContext } from '@/lib/CRMContext';
 import {
@@ -161,6 +162,8 @@ export function Users() {
   const queryClient = useQueryClient();
   const { can, hasFullAccess, isLoaded: permLoaded, roleName, isSuperAdmin } = usePermission();
 
+  const { isAtLimit } = usePlan()
+
   const isAdmin = roleName === 'Admin';
   // Super Admins and Admins can invite users. Others cannot.
   const canCreate = permLoaded && (isSuperAdmin || isAdmin);
@@ -268,6 +271,8 @@ export function Users() {
     staleTime: 0,
     retry: false,
   });
+
+  const atSeatLimit = isAtLimit('seats', usersData?.length || 0)
 
   const { data: rolesData, error: rolesError } = useQuery({
     queryKey: ['roles'],
@@ -387,9 +392,9 @@ export function Users() {
           // Show plan-specific upgrade message
           let upgradeMessage = "";
           if (seatCheck.plan === "free") {
-            upgradeMessage = "Free plan allows 1 user. Upgrade to Standard for up to 10 users.";
-          } else if (seatCheck.plan === "standard") {
-            upgradeMessage = "Standard plan allows 10 users. Upgrade to Elite for unlimited users.";
+            upgradeMessage = "Free plan allows 1 user. Upgrade to Pro for up to 10 users.";
+          } else if (seatCheck.plan === "pro") {
+            upgradeMessage = "Pro plan allows 10 users. Upgrade to Enterprise for unlimited users.";
           } else {
             upgradeMessage = "Seat limit reached. Upgrade your plan to invite more users.";
           }
@@ -486,17 +491,23 @@ export function Users() {
         }
         className="px-0 bg-transparent border-none pb-2"
         actions={
-          canCreate && (
-            <Button
-              variant="brand"
-              onClick={() => {
-                setSelectedUser(null);
-                setUserSheetOpen(true);
-              }}
-            >
-              <PlusCircle className="w-4 h-4" /> Create User
-            </Button>
-          )
+          canCreate ? (
+            atSeatLimit ? (
+              <p className="text-sm text-amber-600 dark:text-amber-400 font-semibold">
+                Seat limit reached. Upgrade to invite more users.
+              </p>
+            ) : (
+              <Button
+                variant="brand"
+                onClick={() => {
+                  setSelectedUser(null);
+                  setUserSheetOpen(true);
+                }}
+              >
+                <PlusCircle className="w-4 h-4" /> Create User
+              </Button>
+            )
+          ) : null
         }
       />
       {/* Search and Filters Bar (Match Leads.tsx Style exactly) */}

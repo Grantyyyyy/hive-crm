@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button"
 import { Pagination } from "@/components/ui/Pagination"
 import { AddInventorySheet } from "@/components/logisticsComponent/AddInventorySheet"
 import { useCRMResource } from "@/lib/hooks"
+import { usePlan } from "@/lib/usePlan"
+import { UpgradeBanner } from "@/components/reusables/UpgradeBanner"
 import { cn } from "@/lib/utils"
 import type { InventoryItem, StockLevel, InventoryStatus } from "@/lib/types"
 import { ListSkeleton } from "@/components/ui/skeletons"
@@ -26,6 +28,11 @@ export function Inventory() {
     data: items,
     isLoaded
   } = useCRMResource<InventoryItem>('inventory')
+  const { canAccess } = usePlan()
+
+  if (!canAccess('inventory')) {
+    return <UpgradeBanner feature="Inventory Management" description="Track stock levels, manage SKUs, and automate reorder alerts." />
+  }
 
   const [search, setSearch] = useState("")
   const [filterState, setFilterState] = useState<'all' | 'low_stock' | 'out_of_stock' | 'draft'>('all')

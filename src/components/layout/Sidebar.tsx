@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { useUser, useAuth } from "@/lib/AuthContext";
 import { usePermission } from "@/lib/usePermission";
+import { usePlan } from "@/lib/usePlan";
 import { supabase } from "@/lib/supabaseClient";
 import { useCRMContext } from "@/lib/CRMContext";
 import {
@@ -58,6 +59,7 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
   const { user } = useUser();
   const { userId, signOut, isLoaded, orgName } = useAuth();
   const { can, hasFullAccess, isLoaded: permLoaded } = usePermission();
+  const { canAccess } = usePlan();
   const ctx = useCRMContext();
   const { data: organizations } = ctx.getResource<Organization>("organizations");
   const org = organizations[0];
@@ -176,6 +178,11 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
     return navGroups.map(group => ({
       ...group,
       links: group.links.filter(link => {
+        // Plan-based gating
+        if (link.href === "/inventory" && !canAccess('inventory')) return false
+        if ((link.href === "/purchase-orders" || link.href === "/purchase-requests" || link.href === "/vendors") && !canAccess('procurement')) return false
+        if (link.href === "/reports" && !canAccess('reports')) return false
+
         // No perm required — always visible (dashboard, profile)
         if (!link.perm) return true
         // Permissions not loaded yet — hide until we know (prevents flashing)
@@ -186,7 +193,7 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
         return can(link.perm!, "read")
       }),
     })).filter(group => group.links.length > 0) // drop empty groups
-  }, [navGroups, permLoaded, hasFullAccess, can])
+  }, [navGroups, permLoaded, hasFullAccess, can, canAccess])
 
   const sidebarClass = cn(
     "fixed inset-y-0 left-0 z-50 flex flex-col bg-bg-surface border-r border-border transition-[width] duration-300 ease-in-out",

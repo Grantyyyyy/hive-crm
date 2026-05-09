@@ -8,9 +8,11 @@ import {
   History, 
   Settings as SettingsIcon,
   ChevronRight,
-  Palette
+  Palette,
+  CreditCard
 } from "lucide-react";
 import { usePermission } from "@/lib/usePermission";
+import { usePlan } from "@/lib/usePlan";
 import { PageHeader } from "@/components/reusables/PageHeader";
 
 interface SettingsLayoutProps {
@@ -20,6 +22,7 @@ interface SettingsLayoutProps {
 export function SettingsLayout({ children }: SettingsLayoutProps) {
   const [location] = useLocation();
   const { can, hasFullAccess } = usePermission();
+  const { canAccess } = usePlan();
 
   const settingsLinks = [
     { href: "/settings/profile", label: "Profile", icon: User },
@@ -30,9 +33,11 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
     { href: "/settings/branding", label: "Branding", icon: Palette, perm: "organizations" },
     { href: "/settings/discounts", label: "Discounts", icon: SettingsIcon, perm: "organizations" },
     { href: "/settings/audit-logs", label: "Audit Logs", icon: History, perm: "users" },
+    { href: "/settings/billing", label: "Billing", icon: CreditCard },
   ];
 
   const filteredLinks = settingsLinks.filter(link => {
+    if (link.href === "/settings/roles" && !canAccess('customRoles')) return false;
     if (!link.perm) return true;
     if (hasFullAccess) return true;
     return can(link.perm as any, "read");

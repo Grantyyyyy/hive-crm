@@ -15,6 +15,9 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCRMResource } from "@/lib/hooks"
+import { usePlan } from "@/lib/usePlan"
+import { UpgradeBanner } from "@/components/reusables/UpgradeBanner"
+import { PageHeader } from "@/components/reusables/PageHeader"
 import { cn } from "@/lib/utils"
 import type { PurchaseOrder, PurchaseOrderStatus, InventoryTransaction } from "@/lib/types"
 
@@ -29,7 +32,6 @@ import { ProcurementDataTable, type ProcurementColumn } from "@/components/reusa
 import { StatCard } from "@/components/reusables/StatCard"
 import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 import { StatusTabs, type StatusTab } from "@/components/reusables/StatusTabs"
-import { PageHeader } from "@/components/reusables/PageHeader"
 export function PurchaseOrders() {
   const [, navigate] = useLocation()
   const { user, isLoaded: userLoaded } = useUser()
@@ -42,6 +44,12 @@ export function PurchaseOrders() {
     data: inventoryTransactions
   } = useCRMResource<InventoryTransaction>('inventory_transactions')
   const ctx = useCRMContext()
+
+  const { canAccess } = usePlan()
+
+  if (!canAccess('procurement')) {
+    return <UpgradeBanner feature="Procurement" description="Manage purchase orders, vendors, and procurement workflows." />
+  }
 
   const adapter = useMemo<JobAdapter>(() => ({
     getQuotes: () => ctx.getResource<Quote>('quotes').data,
@@ -258,11 +266,8 @@ export function PurchaseOrders() {
               <Button variant="outlineNeutral">
                 <Download className="w-4 h-4 mr-2" /> Export
               </Button>
-              <Button
-                variant="brand"
-                onClick={() => setIsAddModalOpen(true)}
-              >
-                <PlusCircle className="w-4 h-4 mr-2" /> Create PO
+              <Button variant="brand" onClick={() => setIsAddModalOpen(true)}>
+                <PlusCircle className="w-4 h-4 mr-2" /> Create Purchase Order
               </Button>
             </div>
           }

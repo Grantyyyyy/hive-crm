@@ -16,6 +16,7 @@ import { DeleteModal } from "@/components/ui/delete-modal"
 import { Button } from "@/components/ui/button"
 import { EditContactSheet } from "@/components/crmComponent/EditContactSheet"
 import { useCRMResource } from "@/lib/hooks"
+import { usePlan } from "@/lib/usePlan"
 import type { Contact, Activity, Deal } from "@/lib/types"
 import { ListSkeleton } from "@/components/ui/skeletons"
 import { exportToCSV, debounce, calculateRelationshipScore, getRelationshipLabel } from "@/lib/helpers"
@@ -40,6 +41,9 @@ export function Contacts() {
     error,
     refresh
   } = useCRMResource<Contact>('contacts')
+  const { isAtLimit } = usePlan()
+
+  const atContactLimit = isAtLimit('contacts', contacts.length)
 
   const { data: activities } = useCRMResource<Activity>('activities')
   const { data: deals } = useCRMResource<Deal>('deals')
@@ -265,6 +269,9 @@ export function Contacts() {
               <Button
                 variant="brand"
                 onClick={() => { setEditingContact(null); setShowModal(true) }}
+                disabled={atContactLimit}
+                title={atContactLimit ? "Upgrade to add more contacts" : undefined}
+                className={atContactLimit ? "disabled:opacity-50 disabled:cursor-not-allowed" : ""}
               >
                 <PlusCircle className="w-4 h-4" /> Create Contact
               </Button>

@@ -17,6 +17,8 @@ import {
 import { cn } from "@/lib/utils"
 import { useCRMResource } from "@/lib/hooks"
 import { useAuth } from "@/lib/AuthContext"
+import { usePlan } from "@/lib/usePlan"
+import { UpgradeBanner } from "@/components/reusables/UpgradeBanner"
 import { useTheme } from "@/lib/ThemeProvider"
 import { getBrandColorPreset } from "@/lib/brandColors"
 import { ListSkeleton } from "@/components/ui/skeletons"
@@ -94,6 +96,8 @@ export function Reports() {
     return theme === "dark" ? preset.dark.accent : preset.light.accent
   }, [brandColor, theme])
   const categoryColors = useMemo(() => [accentColor, ...REPORT_BASE_COLORS], [accentColor])
+
+  const { canAccess } = usePlan()
 
   // ── Hook Safety: Ensure all hooks are called before any early returns ──────
 
@@ -210,6 +214,10 @@ export function Reports() {
 
   const allLoaded = ordersLoaded && quotesLoaded && dealsLoaded && invLoaded && contactsLoaded && leadsLoaded && txLoaded
   if (!allLoaded) return <ListSkeleton />
+
+  if (!canAccess('reports')) {
+    return <UpgradeBanner feature="Reports" description="Access detailed inventory and procurement analytics." />
+  }
 
   const selectedPeriodLabel = PERIOD_OPTIONS.find(p => p.value === period)?.label || "Last 6 Months"
 

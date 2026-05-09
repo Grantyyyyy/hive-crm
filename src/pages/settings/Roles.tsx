@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useUser } from '@/lib/AuthContext';
 import { usePermission } from '@/lib/usePermission';
+import { usePlan } from '@/lib/usePlan';
+import { UpgradeBanner } from '@/components/reusables/UpgradeBanner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCRMContext } from '@/lib/CRMContext';
 import {
@@ -45,6 +47,7 @@ export function Roles() {
   const { getClient, userId, organizationId } = useCRMContext();
   const queryClient = useQueryClient();
   const { can, hasFullAccess, isLoaded: permLoaded, isSuperAdmin } = usePermission();
+  const { canAccess } = usePlan();
 
   // Derived permission flags
   const canCreate = permLoaded && (hasFullAccess || can('roles', 'create'));
@@ -252,6 +255,22 @@ export function Roles() {
       role.description?.toLowerCase().includes(search.toLowerCase())
     );
   }, [rolesData, search]);
+
+  if (!canAccess('customRoles')) {
+    return (
+      <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen font-sans">
+        <div className="mx-auto px-4 pt-2 pb-4 md:px-8 md:pt-4 md:pb-8 max-w-full animate-fade-in space-y-6">
+          <PageHeader
+            category="Organization Members"
+            title="Roles"
+            description="Create and manage permission roles for your organization."
+            className="px-0 bg-transparent border-none pb-2"
+          />
+          <UpgradeBanner feature="Custom Roles" description="Create and manage granular permission roles for your team." />
+        </div>
+      </div>
+    )
+  }
 
   if (!userLoaded || rolesLoading) {
     return <ListSkeleton />;

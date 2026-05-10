@@ -35,10 +35,10 @@ import {
   Layers,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ListSkeleton } from "@/components/ui/skeletons";
+import { SettingsSkeleton } from "@/components/ui/skeletons";
 import { toast } from 'sonner';
 import { DeleteModal } from "@/components/ui/delete-modal";
-import { PageHeader } from "@/components/reusables/PageHeader";
+import { SettingsHeader } from "@/components/reusables/SettingsHeader";
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
@@ -258,22 +258,18 @@ export function Roles() {
 
   if (!canAccess('customRoles')) {
     return (
-      <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen font-sans">
-        <div className="mx-auto px-4 pt-2 pb-4 md:px-8 md:pt-4 md:pb-8 max-w-full animate-fade-in space-y-6">
-          <PageHeader
-            category="Organization Members"
-            title="Roles"
-            description="Create and manage permission roles for your organization."
-            className="px-0 bg-transparent border-none pb-2"
-          />
-          <UpgradeBanner feature="Custom Roles" description="Create and manage granular permission roles for your team." />
-        </div>
+      <div className="animate-in fade-in duration-500 space-y-6">
+        <SettingsHeader
+          category="Organization Members"
+          title="Roles"
+        />
+        <UpgradeBanner feature="Custom Roles" description="Create and manage granular permission roles for your team." />
       </div>
     )
   }
 
   if (!userLoaded || rolesLoading) {
-    return <ListSkeleton />;
+    return <SettingsSkeleton />;
   }
 
   if (rolesError) {
@@ -289,21 +285,18 @@ export function Roles() {
   }
 
   return (
-    <div className="animate-fade-in space-y-6">
-      <PageHeader 
+    <div className="animate-in fade-in duration-500 space-y-6">
+      <SettingsHeader 
         category="System Configuration"
         title="Role Management"
-        description="Define granular access permissions for your team."
-        className="px-0 bg-transparent border-none pb-0"
         actions={
           <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
-            {/* Minimized Search */}
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
                 placeholder="Search roles..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all"
               />
             </div>

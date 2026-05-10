@@ -1,4 +1,5 @@
 import { useAuth } from './AuthContext'
+import { usePermission } from './usePermission'
 
 export const PLAN_LIMITS = {
   free: {
@@ -11,6 +12,7 @@ export const PLAN_LIMITS = {
     procurement: false,
     reports: false,
     customRoles: false,
+    customBranding: false,
   },
   pro: {
     seats: 10,
@@ -22,6 +24,7 @@ export const PLAN_LIMITS = {
     procurement: true,
     reports: true,
     customRoles: false,
+    customBranding: true,
   },
   enterprise: {
     seats: null, // unlimited
@@ -33,11 +36,13 @@ export const PLAN_LIMITS = {
     procurement: true,
     reports: true,
     customRoles: true,
+    customBranding: true,
   },
 } as const
 
 export function usePlan() {
-  const { plan: rawPlan, seatsLimit, trialEndsAt } = useAuth()
+  const { plan: rawPlan, trialEndsAt } = useAuth()
+  const { isSuperAdmin, isLoaded: permLoaded } = usePermission()
 
   const plan = rawPlan ?? 'free'
   const isTrialing = trialEndsAt ? new Date(trialEndsAt) > new Date() : false
@@ -48,11 +53,13 @@ export function usePlan() {
     ? Math.ceil((new Date(trialEndsAt!).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
     : null
 
-  const canAccess = (feature: 'inventory' | 'procurement' | 'reports' | 'customRoles'): boolean => {
+  const canAccess = (feature: 'inventory' | 'procurement' | 'reports' | 'customRoles' | 'customBranding'): boolean => {
+    if (isSuperAdmin) return true
     return limits[feature] === true
   }
 
   const isAtLimit = (resource: 'leads' | 'contacts' | 'deals' | 'projects' | 'seats', currentCount: number): boolean => {
+    if (isSuperAdmin) return false
     const limit = limits[resource]
     if (limit === null) return false // unlimited
     return currentCount >= limit
@@ -75,5 +82,7 @@ export function usePlan() {
     getLimit,
     isPro,
     isEnterprise,
+    isSuperAdmin,
+    isLoaded: permLoaded,
   }
 }

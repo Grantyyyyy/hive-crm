@@ -35,7 +35,7 @@ import { DeleteModal } from "@/components/ui/delete-modal";
 import { BackButton } from "@/components/reusables/BackButton";
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { PageHeader } from "@/components/reusables/PageHeader";
+import { SettingsHeader } from "@/components/reusables/SettingsHeader";
 import type { Organization, CreateOrganizationInput } from '@/lib/types';
 import { format } from 'date-fns';
 
@@ -285,15 +285,12 @@ export function OrganizationsPage() {
   }
 
   return (
-    <div className="animate-fade-in space-y-6">
-      <PageHeader
+    <div className="animate-in fade-in duration-500 space-y-6">
+      <SettingsHeader 
         category="System Configuration"
         title="Tenants & Organizations"
-        description="Manage multi-tenant isolation and platform entities."
-        className="px-0 bg-transparent border-none pb-2"
         actions={
           <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
-            {/* Minimized Search Bar */}
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input

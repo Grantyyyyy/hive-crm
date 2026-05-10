@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { SettingsHeader } from '@/components/reusables/SettingsHeader';
 import { useAuth, useUser } from '@/lib/AuthContext';
 import { usePermission } from '@/lib/usePermission';
 import { usePlan } from '@/lib/usePlan';
@@ -31,11 +32,12 @@ import {
   Filter,
   PlusCircle,
   Users as UsersIcon,
+  Infinity,
 } from 'lucide-react';
 import { PageHeader } from "@/components/reusables/PageHeader";
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { ListSkeleton } from "@/components/ui/skeletons";
+import { SettingsSkeleton } from "@/components/ui/skeletons";
 import { Pagination } from "@/components/ui/Pagination";
 import { DeleteModal } from "@/components/ui/delete-modal";
 import { StatusTabs, type StatusTab } from '@/components/reusables/StatusTabs';
@@ -264,10 +266,10 @@ export function Users() {
     queryFn: async () => {
       const client = await getClient();
       if (!client) throw new Error('Not authenticated');
-      if (!organizationId) throw new Error('Organization ID not available');
-      return fetchAppUsers(client, organizationId);
+      if (!organizationId && !isSuperAdmin) throw new Error('Organization ID not available');
+      return fetchAppUsers(client, organizationId, isSuperAdmin);
     },
-    enabled: userLoaded && isSignedIn && !!userId && !!organizationId,
+    enabled: userLoaded && isSignedIn && !!userId && (!!organizationId || isSuperAdmin),
     staleTime: 0,
     retry: false,
   });
@@ -392,7 +394,7 @@ export function Users() {
           // Show plan-specific upgrade message
           let upgradeMessage = "";
           if (seatCheck.plan === "free") {
-            upgradeMessage = "Free plan allows 1 user. Upgrade to Pro for up to 10 users.";
+            upgradeMessage = "Free plan allows 5 seats. Upgrade to Pro for up to 10 seats.";
           } else if (seatCheck.plan === "pro") {
             upgradeMessage = "Pro plan allows 10 users. Upgrade to Enterprise for unlimited users.";
           } else {
@@ -450,7 +452,7 @@ export function Users() {
   };
 
   if (!userLoaded || usersLoading) {
-    return <ListSkeleton />;
+    return <SettingsSkeleton />;
   }
 
   if (usersError) {
@@ -466,30 +468,43 @@ export function Users() {
   }
 
   return (
-    <div className="animate-fade-in space-y-6">
-      <PageHeader 
+    <div className="animate-in fade-in duration-500 space-y-6">
+      <SettingsHeader 
         category="Organization Members"
         title="Users"
-        description={
-          <div className="space-y-3">
-            <p className="text-text-muted text-sm md:text-base font-medium max-w-2xl leading-relaxed">
-              Manage your team members and their access permissions.
-            </p>
+        children={
+          <div className="flex flex-col gap-2">
+            {isSuperAdmin && (
+              <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 rounded-xl p-3 flex items-center gap-3 animate-in fade-in slide-in-from-top-1 duration-500">
+                <Shield className="w-4 h-4 text-teal-600" />
+                <p className="text-xs font-semibold text-teal-700 dark:text-teal-400">
+                  Super Admin Mode — All organization limits are currently waived.
+                </p>
+              </div>
+            )}
             {orgData && usersData && !orgData.is_system && (
               <div className="flex items-center gap-2">
-                <div className="inline-block px-3 py-1.5 rounded-lg bg-teal-50 dark:bg-teal-900/20">
-                  <p className="text-xs font-bold text-teal-700 dark:text-teal-400">
-                    {usersData.length} / {orgData.seats_limit} seats used
+                <div className="inline-block px-2 py-1 rounded-lg bg-teal-50 dark:bg-teal-900/20">
+                  <p className="text-[10px] font-bold text-teal-700 dark:text-teal-400">
+                    {isSuperAdmin ? (
+                      <div className="flex items-center gap-1.5">
+                        <Infinity className="w-3 h-3" />
+                        <span>Unlimited Access</span>
+                      </div>
+                    ) : (
+                      <>
+                        {usersData.length} / {orgData.seats_limit} seats used
+                      </>
+                    )}
                   </p>
                 </div>
-                {orgData.plan !== 'elite' && usersData.length >= orgData.seats_limit && (
-                  <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">Limit reached</span>
+                {orgData.plan !== 'enterprise' && usersData.length >= orgData.seats_limit && !isSuperAdmin && (
+                  <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">Limit reached</span>
                 )}
               </div>
             )}
           </div>
         }
-        className="px-0 bg-transparent border-none pb-2"
         actions={
           canCreate ? (
             atSeatLimit ? (
@@ -504,12 +519,13 @@ export function Users() {
                   setUserSheetOpen(true);
                 }}
               >
-                <PlusCircle className="w-4 h-4" /> Create User
+                <PlusCircle className="w-4 h-4 mr-2" /> Create User
               </Button>
             )
           ) : null
         }
-      />
+      >
+      </SettingsHeader>
       {/* Search and Filters Bar (Match Leads.tsx Style exactly) */}
       <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
         <div className="relative flex-1 w-full lg:max-w-md">

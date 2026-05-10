@@ -1,11 +1,12 @@
 import { useState, useMemo, useEffect } from "react"
+import { SettingsHeader } from "@/components/reusables/SettingsHeader"
 import { Bell, Check, Trash2, Clock, Inbox, AlertCircle, Info } from "lucide-react"
 import { useLocation } from "wouter"
 import { useCRMResource } from "@/lib/hooks"
 import type { Notification } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { ListSkeleton } from "@/components/ui/skeletons"
+import { SettingsSkeleton } from "@/components/ui/skeletons"
 import { StatusTabs, type StatusTab } from "@/components/reusables/StatusTabs"
 import { Pagination } from "@/components/ui/Pagination"
 import { PageHeader } from "@/components/reusables/PageHeader"
@@ -83,15 +84,13 @@ export function Notifications() {
     { value: 'read', label: 'Archived' },
   ]
 
-  if (!isLoaded) return <ListSkeleton />
+  if (!isLoaded) return <SettingsSkeleton />
 
   return (
-    <div className="animate-fade-in space-y-6">
-      <PageHeader
+    <div className="animate-in fade-in duration-500 space-y-6">
+      <SettingsHeader 
         category="System Configuration"
         title="Recent Alerts"
-        description="Stay updated with system events."
-        className="px-0 bg-transparent border-none pb-2"
         actions={
           notifications.some(n => !n.isRead) && (
             <Button

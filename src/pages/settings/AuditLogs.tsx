@@ -6,7 +6,7 @@ import { Link } from "wouter"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Pagination } from "@/components/ui/Pagination"
-import { PageHeader } from "@/components/reusables/PageHeader"
+import { SettingsHeader } from "@/components/reusables/SettingsHeader"
 
 export function AuditLogs() {
   const ctx = useCRMContext()
@@ -46,12 +46,10 @@ export function AuditLogs() {
   }, [searchTerm])
 
   return (
-    <div className="space-y-6 animate-fade-in font-sans">
-      <PageHeader 
+    <div className="space-y-6 animate-in fade-in duration-500 font-sans">
+      <SettingsHeader 
         category="System Configuration"
         title="System Activity Stream"
-        description="Real-time audit trail of all platform operations."
-        className="px-0 bg-transparent border-none pb-2"
         actions={
           <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
             {/* Minimized Search Bar */}

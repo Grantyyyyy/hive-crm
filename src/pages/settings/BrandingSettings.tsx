@@ -5,12 +5,11 @@ import type { Organization } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ListSkeleton } from "@/components/ui/skeletons";
+import { SettingsSkeleton } from "@/components/ui/skeletons";
 import { toast } from "sonner";
-import { Layout, Image as ImageIcon, Save, RefreshCcw, Upload, Loader2, Type } from "lucide-react";
+import { Layout, Image as ImageIcon, Save, RefreshCcw, Upload, Loader2 } from "lucide-react";
 import { logger } from "@/lib/logger";
-import { PageHeader } from "@/components/reusables/PageHeader";
+import { SettingsHeader } from "@/components/reusables/SettingsHeader";
 
 export function BrandingSettings() {
   const ctx = useCRMContext();
@@ -54,7 +53,6 @@ export function BrandingSettings() {
     const file = e.target.files?.[0];
     if (!file || !org) return;
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
       toast.error("Please upload an image file");
       return;
@@ -65,8 +63,6 @@ export function BrandingSettings() {
       const fileExt = file.name.split(".").pop();
       const fileName = `logo_${org.id}_${Date.now()}.${fileExt}`;
       
-      // We'll try to use a 'branding' bucket. 
-      // Note: User may need to create this bucket in Supabase dashboard if it doesn't exist.
       const { data, error: uploadError } = await supabase.storage
         .from("branding")
         .upload(fileName, file, { upsert: true });
@@ -102,16 +98,14 @@ export function BrandingSettings() {
   };
 
   if (!isLoaded) {
-    return <ListSkeleton />;
+    return <SettingsSkeleton />;
   }
 
   return (
-    <div className="animate-fade-in space-y-6">
-      <PageHeader 
+    <div className="animate-in fade-in duration-500 space-y-6">
+      <SettingsHeader 
         category="System Configuration"
         title="Branding & Identity"
-        description="Customize the platform's visual identity and brand presence."
-        className="px-0 bg-transparent border-none pb-0"
         actions={
           <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
             <Button
@@ -141,7 +135,6 @@ export function BrandingSettings() {
       <div className="grid gap-8 md:grid-cols-2">
         {/* Configuration Card */}
         <div className="group relative overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-0 shadow-sm transition-all duration-500">
-          {/* Background Decorative Element */}
           <div className="absolute top-0 right-0 p-8 -mr-8 -mt-8 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity pointer-events-none">
             <Layout className="size-32 rotate-12 text-accent" />
           </div>

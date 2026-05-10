@@ -2,12 +2,14 @@ import { useEffect, useState } from "react"
 import { Check, Loader2, Palette } from "lucide-react"
 import { toast } from "sonner"
 import { useAuth, useUser } from "@/lib/AuthContext"
+import { usePlan } from "@/lib/usePlan"
 import { supabase } from "@/lib/supabaseClient"
 import { BRAND_COLOR_PRESETS, type BrandColorId } from "@/lib/brandColors"
 
 export function AppearancePopover() {
   const { user } = useUser()
   const { brandColor, setBrandColor } = useAuth()
+  const { canAccess, plan } = usePlan()
   const [selectedBrandColor, setSelectedBrandColor] = useState<BrandColorId>(brandColor)
   const [savingBrandColor, setSavingBrandColor] = useState<BrandColorId | null>(null)
 
@@ -17,6 +19,13 @@ export function AppearancePopover() {
 
   const handleBrandColorSelect = async (nextBrandColor: BrandColorId) => {
     if (!user || nextBrandColor === selectedBrandColor || savingBrandColor) return
+
+    if (!canAccess('customBranding')) {
+      toast.error("Upgrade required", {
+        description: "Custom branding is available on Pro and Enterprise plans.",
+      })
+      return
+    }
 
     const previousBrandColor = selectedBrandColor
     setSelectedBrandColor(nextBrandColor)

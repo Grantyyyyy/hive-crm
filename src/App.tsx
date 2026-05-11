@@ -37,6 +37,7 @@ import { AuditLogs } from "@/pages/settings/AuditLogs";
 import { Notifications } from "@/pages/settings/Notifications";
 import { BrandingSettings } from "@/pages/settings/BrandingSettings";
 import { Discounts } from "@/pages/settings/Discounts";
+import { Billing } from "@/pages/settings/Billing";
 import { Navbar } from "@/components/Navbar";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -220,6 +221,7 @@ function AppContent() {
                       <Route path="/settings/profile">{() => <SettingsLayout><ProtectedRoute component={ProfilePage} /></SettingsLayout>}</Route>
                       <Route path="/settings/audit-logs">{() => <SettingsLayout><RequirePermission module="users" action="read" component={AuditLogs} /></SettingsLayout>}</Route>
                       <Route path="/settings/notifications">{() => <SettingsLayout><ProtectedRoute component={Notifications} /></SettingsLayout>}</Route>
+                      <Route path="/settings/billing">{() => <SettingsLayout><ProtectedRoute component={Billing} /></SettingsLayout>}</Route>
                       <Route path="/settings">{() => <SettingsLayout><ProtectedRoute component={ProfilePage} /></SettingsLayout>}</Route>
 
                       {/* 404 */}

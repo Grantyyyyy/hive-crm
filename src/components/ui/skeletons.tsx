@@ -140,3 +140,45 @@ export function DashboardSkeleton() {
     </div>
   )
 }
+
+export function SettingsSkeleton() {
+  return (
+    <div className="space-y-8 animate-pulse">
+      {/* Header Skeleton — Matches SettingsHeader */}
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <div className="h-8 w-48 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
+          <div className="h-5 w-32 bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-full"></div>
+        </div>
+        <div className="h-6 w-1/3 bg-slate-200/50 dark:bg-slate-800/50 rounded-lg"></div>
+      </div>
+
+      {/* Content Area Skeleton */}
+      <div className="space-y-6">
+        {/* Search Bar / Action Bar Mock */}
+        <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
+          <div className="h-10 w-full md:w-64 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+          <div className="flex gap-2">
+            <div className="h-10 w-24 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+            <div className="h-10 w-32 bg-slate-200 dark:bg-slate-800 rounded-xl"></div>
+          </div>
+        </div>
+
+        {/* Data Card/Table Mock */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+          <div className="h-12 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800"></div>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-16 border-b border-slate-200 dark:border-slate-800 last:border-0 flex items-center px-6 gap-6">
+              <div className="h-10 w-10 rounded-full bg-slate-200 dark:bg-slate-800 shrink-0"></div>
+              <div className="space-y-2 flex-1">
+                <div className="h-4 w-1/4 bg-slate-200 dark:bg-slate-800 rounded"></div>
+                <div className="h-3 w-1/3 bg-slate-100 dark:bg-slate-800 rounded"></div>
+              </div>
+              <div className="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded hidden md:block"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}

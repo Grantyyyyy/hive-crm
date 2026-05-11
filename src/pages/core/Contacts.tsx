@@ -8,12 +8,15 @@ import {
   Trash2,
   Filter,
   ArrowRight,
-  FileSearch
+  FileSearch,
+  UserRound as UserRoundIcon,
 } from "lucide-react"
+import { PageHeader } from "@/components/reusables/PageHeader"
 import { DeleteModal } from "@/components/ui/delete-modal"
 import { Button } from "@/components/ui/button"
 import { EditContactSheet } from "@/components/crmComponent/EditContactSheet"
 import { useCRMResource } from "@/lib/hooks"
+import { usePlan } from "@/lib/usePlan"
 import type { Contact, Activity, Deal } from "@/lib/types"
 import { ListSkeleton } from "@/components/ui/skeletons"
 import { exportToCSV, debounce, calculateRelationshipScore, getRelationshipLabel } from "@/lib/helpers"
@@ -38,6 +41,9 @@ export function Contacts() {
     error,
     refresh
   } = useCRMResource<Contact>('contacts')
+  const { isAtLimit } = usePlan()
+
+  const atContactLimit = isAtLimit('contacts', contacts.length)
 
   const { data: activities } = useCRMResource<Activity>('activities')
   const { data: deals } = useCRMResource<Deal>('deals')
@@ -247,28 +253,31 @@ export function Contacts() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen font-sans">
-      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
+      <div className="mx-auto px-4 pt-2 pb-4 md:px-8 md:pt-4 md:pb-8 max-w-full animate-fade-in space-y-6">
 
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-1">Customer Database</p>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Contacts</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Relationship management and contact details.</p>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <Button variant="outline" onClick={handleExportCSV} className="border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
-              <Download className="w-4 h-4" />
-              Export CSV
-            </Button>
-            <Button
-              variant="brand"
-              onClick={() => { setEditingContact(null); setShowModal(true) }}
-            >
-              <PlusCircle className="w-4 h-4" /> Create Contact
-            </Button>
-          </div>
-        </div>
+        <PageHeader 
+          category="Customer Database"
+          title="Contacts"
+          description="Relationship management and contact details."
+          className="px-0 bg-transparent border-none pb-2"
+          actions={
+            <>
+              <Button variant="outline" onClick={handleExportCSV} className="border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
+                <Download className="w-4 h-4" />
+                Export CSV
+              </Button>
+              <Button
+                variant="brand"
+                onClick={() => { setEditingContact(null); setShowModal(true) }}
+                disabled={atContactLimit}
+                title={atContactLimit ? "Upgrade to add more contacts" : undefined}
+                className={atContactLimit ? "disabled:opacity-50 disabled:cursor-not-allowed" : ""}
+              >
+                <PlusCircle className="w-4 h-4" /> Create Contact
+              </Button>
+            </>
+          }
+        />
 
         <ProcurementDataTable<EnrichedContact>
           data={paginatedContacts}

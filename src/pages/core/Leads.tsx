@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react"
+import { useState, useMemo, useEffect, useCallback, useRef } from "react"
 import { useLocation } from "wouter"
 import {
   UserSearch,
@@ -7,6 +7,8 @@ import {
   Trash2,
   Download,
   Upload,
+  ChevronDown,
+  MoreHorizontal,
   Filter,
   Globe,
   Users,
@@ -18,6 +20,7 @@ import {
 } from "lucide-react"
 import { PageHeader } from "@/components/reusables/PageHeader"
 import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import {
   SheetDescription,
 } from "@/components/ui/sheet"
@@ -51,6 +54,68 @@ const STATUS_STYLE: Record<LeadStatus, { bg: string; text: string; dot: string }
   qualified: { bg: "bg-emerald-50 dark:bg-emerald-900/20", text: "text-emerald-700 dark:text-emerald-400", dot: "bg-emerald-600" },
   unqualified: { bg: "bg-slate-50 dark:bg-slate-900/30", text: "text-slate-500 dark:text-slate-400", dot: "bg-slate-400" },
   converted: { bg: "bg-teal-50 dark:bg-teal-900/20", text: "text-teal-700 dark:text-teal-400", dot: "bg-teal-600" },
+}
+
+interface LeadActionsDropdownProps {
+  onImportCSV: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onExportCSV: () => void
+}
+
+function LeadActionsDropdown({ onImportCSV, onExportCSV }: LeadActionsDropdownProps) {
+  const [open, setOpen] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".csv"
+        className="hidden"
+        onChange={onImportCSV}
+      />
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          aria-expanded={open}
+          className="border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
+        >
+          <MoreHorizontal className="w-4 h-4" />
+          Actions
+          <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", open && "rotate-180")} />
+        </Button>
+      </PopoverTrigger>
+
+      <PopoverContent
+        align="end"
+        sideOffset={8}
+        className="w-48 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none"
+      >
+        <button
+          type="button"
+          onClick={() => {
+            fileInputRef.current?.click()
+            setOpen(false)
+          }}
+          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+        >
+          <Upload className="w-4 h-4" />
+          Import CSV
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            onExportCSV()
+            setOpen(false)
+          }}
+          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+        >
+          <Download className="w-4 h-4" />
+          Export CSV
+        </button>
+      </PopoverContent>
+    </Popover>
+  )
 }
 
 export function Leads() {
@@ -340,25 +405,7 @@ export function Leads() {
           className="px-0 bg-transparent border-none pb-2"
           actions={
             <>
-              <input
-                type="file"
-                id="csv-upload"
-                accept=".csv"
-                className="hidden"
-                onChange={handleImportCSV}
-              />
-              <Button 
-                variant="outline" 
-                onClick={() => document.getElementById('csv-upload')?.click()} 
-                className="border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
-              >
-                <Upload className="w-4 h-4" />
-                Import CSV
-              </Button>
-              <Button variant="outline" onClick={handleExportCSV} className="border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
-                <Download className="w-4 h-4" />
-                Export CSV
-              </Button>
+              <LeadActionsDropdown onImportCSV={handleImportCSV} onExportCSV={handleExportCSV} />
               <Button
                 variant="brand"
                 onClick={() => { setEditingLead(null); setShowModal(true) }}

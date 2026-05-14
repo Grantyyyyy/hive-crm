@@ -1,10 +1,9 @@
 import React, { useEffect, useState, useMemo } from "react"
 import { useCRMContext } from "@/lib/CRMContext"
 import { format } from "date-fns"
-import { History, Search, Filter, ArrowRight, Clock, Activity, CheckCircle2, Plus, Trash2, LogIn, LogOut } from "lucide-react"
+import { History, Search, ArrowRight, Clock, Activity, CheckCircle2, Plus, Trash2, LogIn, LogOut } from "lucide-react"
 import { Link } from "wouter"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 import { Pagination } from "@/components/ui/Pagination"
 import { SettingsHeader } from "@/components/reusables/SettingsHeader"
 
@@ -63,12 +62,6 @@ export function AuditLogs() {
               />
             </div>
 
-            <Button
-              variant="outlineNeutral"
-              className="h-10 px-4 rounded-md font-bold text-xs uppercase tracking-widest w-full sm:w-auto shadow-sm"
-            >
-              <Filter className="w-4 h-4 mr-2" /> More Filters
-            </Button>
           </div>
         }
       />

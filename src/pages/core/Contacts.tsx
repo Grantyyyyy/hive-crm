@@ -6,7 +6,6 @@ import {
   PlusCircle,
   Download,
   Trash2,
-  Filter,
   ArrowRight,
   FileSearch,
   UserRound as UserRoundIcon,
@@ -314,10 +313,6 @@ export function Contacts() {
                 onChange={setActiveTab}
                 allLabel="All Contacts"
               />
-              <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
-              <Button variant="outlineNeutral" className="h-10 px-4 rounded-md font-bold text-xs uppercase tracking-widest">
-                <Filter className="w-4 h-4" /> Advanced
-              </Button>
             </>
           }
         />

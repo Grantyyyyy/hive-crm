@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from "react"
 import { DataTable } from "@/components/reusables/DataTable"
 import { PageHeader } from "@/components/reusables/PageHeader"
+import { StatusTabs, type StatusTab } from "@/components/reusables/StatusTabs"
 import { useLocation } from "wouter"
 import {
   BarChart3,
@@ -282,11 +283,14 @@ export function Deals() {
 
   const [showModal, setShowModal] = useState(false)
   const [viewMode, setViewMode] = useState<"board" | "list">("board")
-  const [autoPrioritize, setAutoPrioritize] = useState(true)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [prefilledStage, setPrefilledStage] = useState<DealStage | undefined>(undefined)
   const [pendingDelete, setPendingDelete] = useState<Deal | null>(null)
   const [pendingLostDeal, setPendingLostDeal] = useState<Deal | null>(null)
+  const [dealViewFilter, setDealViewFilter] = useState<'all' | 'won_lost'>('all')
+  const dealViewTabs: StatusTab<'won_lost'>[] = [
+    { value: 'won_lost', label: 'Won / Lost' }
+  ]
   const [currentPage, setCurrentPage] = useState(1)
   const [searchInput, setSearchInput] = useState("")
   const itemsPerPage = 10
@@ -314,13 +318,20 @@ export function Deals() {
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
     return deals
-      .filter(
-        (d) =>
+      .filter((d) => {
+        const matchesFilter = dealViewFilter === 'won_lost'
+          ? d.stage === 'won' || d.stage === 'lost'
+          : d.stage !== 'won' && d.stage !== 'lost'
+
+        if (!matchesFilter) return false
+
+        return (
           d.title.toLowerCase().includes(q) ||
           (contactMap.get(d.contactId)?.toLowerCase().includes(q) ?? false)
-      )
+        )
+      })
       .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))
-  }, [deals, search, contactMap])
+  }, [deals, search, contactMap, dealViewFilter])
 
   const totalDeals = filtered.length
   const totalPages = Math.ceil(totalDeals / itemsPerPage)
@@ -330,13 +341,16 @@ export function Deals() {
   )
 
   const dealsByStage = useMemo(() => {
-    return DEAL_STAGES.reduce((acc, stage) => {
-      const filtered = deals.filter(d => d.stage === stage)
-      
-      // Sort by health only if autoPrioritize is active
-      acc[stage] = [...filtered].sort((a, b) => {
-        if (!autoPrioritize) return 0 // Maintain original order (by creation)
+    const visibleDeals = deals.filter((d) =>
+      dealViewFilter === 'won_lost'
+        ? d.stage === 'won' || d.stage === 'lost'
+        : d.stage !== 'won' && d.stage !== 'lost'
+    )
 
+    return DEAL_STAGES.reduce((acc, stage) => {
+      const filtered = visibleDeals.filter(d => d.stage === stage)
+      
+      acc[stage] = [...filtered].sort((a, b) => {
         const healthA = getDealHealth(getLastActivityDate(a.id, activities), a.createdAt, a.expectedCloseDate, a.updatedAt)
         const healthB = getDealHealth(getLastActivityDate(b.id, activities), b.createdAt, b.expectedCloseDate, b.updatedAt)
         
@@ -350,7 +364,7 @@ export function Deals() {
       
       return acc
     }, {} as Record<DealStage, Deal[]>)
-  }, [deals, activities])
+  }, [deals, activities, dealViewFilter])
 
   const totalsByStage = useMemo(() => {
     const map: Record<string, number> = {}
@@ -459,73 +473,57 @@ export function Deals() {
                   <PlusCircle className="w-4 h-4" /> Create Deal
                 </Button>
               )}
-              <div className="bg-white dark:bg-slate-900 p-1 rounded-md border border-slate-200 dark:border-slate-800 flex items-center mr-2 shadow-sm gap-1">
-                <button
-                  onClick={() => setAutoPrioritize(!autoPrioritize)}
-                  className={cn(
-                    "h-8 px-3 rounded text-[11px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-2",
-                    autoPrioritize
-                      ? "bg-amber-500 text-white shadow-md shadow-amber-500/20"
-                      : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                  )}
-                >
-                  <Zap className={cn("w-3.5 h-3.5", autoPrioritize ? "fill-current" : "")} />
-                  Prioritize
-                </button>
-              </div>
 
-              <div className="bg-white dark:bg-slate-900 p-1 rounded-md border border-slate-200 dark:border-slate-800 flex items-center mr-2 shadow-sm gap-1">
-                <button
-                  onClick={() => setViewMode("board")}
-                  className={cn(
-                    "h-8 px-3 rounded text-[11px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-2",
-                    viewMode === "board"
-                      ? "bg-accent text-white shadow-md shadow-accent/20"
-                      : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                  )}
-                >
-                  <LayoutGrid className="w-3.5 h-3.5" />
-                  Kanban
-                </button>
-                <button
-                  onClick={() => setViewMode("list")}
-                  className={cn(
-                    "h-8 px-3 rounded text-[11px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-2",
-                    viewMode === "list"
-                      ? "bg-accent text-white shadow-md shadow-accent/20"
-                      : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                  )}
-                >
-                  <List className="w-3.5 h-3.5" />
-                  List
-                </button>
-              </div>
             </div>
           }
         />
 
         {/* Unified Search Bar */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6 mb-2">
-          <div className="flex items-center gap-8 overflow-x-auto scrollbar-none">
-            <button className="pb-4 font-bold text-sm tracking-wide text-accent relative flex items-center gap-2 cursor-pointer">
-              Active Deals
-              <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-accent rounded-t-full" />
-            </button>
-            <button className="pb-4 font-bold text-sm tracking-wide text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors cursor-pointer opacity-50">
-              Won / Lost
-            </button>
-          </div>
-
-          <div className="flex-1 w-full lg:max-w-xl pb-4 lg:pb-3">
-            <div className="relative group/search">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within/search:text-accent transition-colors" />
+        <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center border-b border-slate-200 dark:border-slate-800 pb-6 mb-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-1 min-w-0">
+            <div className="relative flex-1 w-full lg:max-w-md">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
                 placeholder="Search deals, contacts or companies..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-semibold focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all duration-300"
+                className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-semibold focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all duration-300"
               />
             </div>
+
+            <StatusTabs<'won_lost'>
+              tabs={dealViewTabs}
+              value={dealViewFilter}
+              onChange={setDealViewFilter}
+              allLabel="Active Deals"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setViewMode("board")}
+              className={cn(
+                "h-8 px-3 rounded text-[11px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-2",
+                viewMode === "board"
+                  ? "bg-accent text-white shadow-md shadow-accent/20"
+                  : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+              )}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              Kanban
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={cn(
+                "h-8 px-3 rounded text-[11px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-2",
+                viewMode === "list"
+                  ? "bg-accent text-white shadow-md shadow-accent/20"
+                  : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+              )}
+            >
+              <List className="w-3.5 h-3.5" />
+              List
+            </button>
           </div>
         </div>
 

@@ -52,7 +52,7 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
     <div className="flex flex-col h-full bg-bg-base/50 overflow-hidden">
       {/* Settings Top Navigation Section */}
       <div className="border-b border-border/50 bg-bg-surface/40 backdrop-blur-md sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
+        <div className="max-w-full mx-auto px-4 md:px-8">
           <nav className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1">
             {mainLinks.map((link) => {
               const isActive = location === link.href;
@@ -150,8 +150,8 @@ export function SettingsLayout({ children }: SettingsLayoutProps) {
       </div>
 
       {/* Settings Content Area */}
-      <main className="flex-1 overflow-y-auto bg-bg-base/30 px-4 md:px-8 py-6 md:py-8">
-        <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <main className="flex-1 overflow-y-auto bg-bg-base/30 px-4 md:px-8 pt-4 pb-8">
+        <div className="max-w-full mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
           {children}
         </div>
       </main>

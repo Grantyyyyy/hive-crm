@@ -451,17 +451,17 @@ export function Users() {
         children={
           <div className="flex flex-col gap-2">
             {isSuperAdmin && (
-              <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 rounded-xl p-3 flex items-center gap-3 animate-in fade-in slide-in-from-top-1 duration-500">
-                <Shield className="w-4 h-4 text-teal-600" />
-                <p className="text-xs font-semibold text-teal-700 dark:text-teal-400">
+              <div className="bg-accent-dim border border-accent/20 rounded-xl p-3 flex items-center gap-3 animate-in fade-in slide-in-from-top-1 duration-500">
+                <Shield className="w-4 h-4 text-accent" />
+                <p className="text-xs font-semibold text-accent">
                   Super Admin Mode — All organization limits are currently waived.
                 </p>
               </div>
             )}
             {orgData && usersData && !orgData.is_system && (
               <div className="flex items-center gap-2">
-                <div className="inline-block px-2 py-1 rounded-lg bg-teal-50 dark:bg-teal-900/20">
-                  <p className="text-[10px] font-bold text-teal-700 dark:text-teal-400">
+                <div className="inline-block px-2 py-1 rounded-lg bg-accent-dim">
+                  <p className="text-[10px] font-bold text-accent">
                     {isSuperAdmin ? (
                       <div className="flex items-center gap-1.5">
                         <Infinity className="w-3 h-3" />

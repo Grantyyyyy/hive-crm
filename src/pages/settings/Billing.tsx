@@ -1,9 +1,10 @@
 import { useMemo } from 'react'
-import { ShieldCheck, Check, X, Infinity, Shield } from 'lucide-react'
+import { ShieldCheck, Check, X, Infinity, Shield, Sprout, Zap, Crown } from 'lucide-react'
 import { usePlan, PLAN_LIMITS } from '@/lib/usePlan'
 import { useCRMResource } from '@/lib/hooks'
 import { SettingsHeader } from '@/components/reusables/SettingsHeader'
 import { SettingsSkeleton } from '@/components/ui/skeletons'
+import { cn } from "@/lib/utils"
 
 export function Billing() {
   const { 
@@ -45,9 +46,9 @@ export function Billing() {
   ]
 
   const renderFeatureValue = (val: number | boolean | null) => {
-    if (val === null) return <span className="text-sm font-semibold text-teal-600 dark:text-teal-400">Unlimited</span>
+    if (val === null) return <span className="text-sm font-semibold text-emerald-500">Unlimited</span>
     if (typeof val === 'number') return <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{val}</span>
-    if (val === true) return <Check className="w-4 h-4 text-teal-600 mx-auto" />
+    if (val === true) return <Check className="w-4 h-4 text-emerald-500 mx-auto" />
     return <X className="w-4 h-4 text-slate-300 dark:text-slate-600 mx-auto" />
   }
 
@@ -78,9 +79,9 @@ export function Billing() {
       >
         <div className="flex flex-col gap-2">
           {isSuperAdmin && (
-            <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 rounded-xl p-3 flex items-center gap-3 animate-in fade-in slide-in-from-top-1 duration-500">
-              <Shield className="w-4 h-4 text-teal-600" />
-              <p className="text-xs font-semibold text-teal-700 dark:text-teal-400">
+            <div className="bg-accent-dim border border-accent/20 rounded-xl p-3 flex items-center gap-3 animate-in fade-in slide-in-from-top-1 duration-500">
+              <Shield className="w-4 h-4 text-accent" />
+              <p className="text-xs font-semibold text-accent">
                 Super Admin Mode — Unlimited access to all platform features.
               </p>
             </div>
@@ -114,7 +115,7 @@ export function Billing() {
                   Free
                 </span>
               ) : (
-                <span className="text-[9px] font-black uppercase tracking-widest rounded-md px-2 py-0.5 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400">
+                <span className="text-[9px] font-black uppercase tracking-widest rounded-md px-2 py-0.5 bg-accent-dim text-accent">
                   {plan === 'pro' ? 'Pro' : 'Enterprise'}
                 </span>
               )}
@@ -135,7 +136,7 @@ export function Billing() {
           {plan === 'free' && !isTrialing && !isSuperAdmin && (
             <a 
               href="#" 
-              className="bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-md shadow-teal-200 dark:shadow-none transition-colors px-4 py-2"
+              className="bg-accent hover:opacity-90 text-white text-[10px] font-bold uppercase tracking-wider rounded-lg shadow-md shadow-accent/20 transition-all px-4 py-2"
             >
               Upgrade to Pro
             </a>
@@ -158,7 +159,7 @@ export function Billing() {
                   </span>
                   <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1">
                     {isSuperAdmin ? (
-                      <Infinity className="w-3 h-3 text-teal-600" />
+                      <Infinity className="w-3 h-3 text-emerald-500" />
                     ) : (
                       <>
                         {item.count} / {item.limit === null ? '∞' : item.limit}
@@ -168,11 +169,11 @@ export function Billing() {
                 </div>
                 <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1">
                   {isSuperAdmin ? (
-                    <div className="h-1 rounded-full bg-teal-600 w-full" />
+                    <div className="h-1 rounded-full bg-emerald-500 w-full" />
                   ) : item.limit !== null && (
                     <div
                       className={`h-1 rounded-full transition-all ${
-                        (item.count / item.limit) >= 0.9 ? 'bg-red-500' : 'bg-teal-600'
+                        (item.count / item.limit) >= 0.9 ? 'bg-red-500' : 'bg-emerald-500'
                       }`}
                       style={{ width: `${Math.min((item.count / item.limit) * 100, 100)}%` }}
                     />
@@ -184,84 +185,150 @@ export function Billing() {
         </div>
       </div>
 
-      {/* SECTION 5 — Plan Comparison Card */}
+      {/* SECTION 5 — Plan Comparison Cards */}
       {!isSuperAdmin && (
-        <div className="bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Compare Plans</h2>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400">Available Plans</h2>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800">
-                  <th className="px-4 py-5 bg-slate-50 dark:bg-slate-900/50 w-1/4"></th>
-                  {(['free', 'pro', 'enterprise'] as const).map((p) => (
-                    <th 
-                      key={p} 
-                      className={`px-4 py-5 text-center transition-all ${
-                        isCurrentPlan(p) 
-                          ? 'bg-teal-50/30 dark:bg-teal-900/10 border-x-2 border-t-2 border-teal-600/20' 
-                          : ''
-                      }`}
-                    >
-                      <div className="flex flex-col items-center gap-2">
-                        <span className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
-                          {p}
-                        </span>
-                        {isCurrentPlan(p) && (
-                          <span className="text-[10px] font-black uppercase tracking-widest rounded-lg px-2 py-0.5 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-400">
-                            CURRENT
-                          </span>
-                        )}
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                id: 'free',
+                name: 'Free',
+                tagline: 'Basic partition',
+                price: '0',
+                icon: Sprout,
+                features: [
+                  'Up to 5 users',
+                  '100 leads & contacts',
+                  '50 deals tracking',
+                  '3 active projects',
+                  'Task management'
+                ],
+                highlight: false
+              },
+              {
+                id: 'pro',
+                name: 'Pro',
+                tagline: 'Full workflow',
+                price: '29',
+                icon: Zap,
+                features: [
+                  'Up to 10 users',
+                  'Unlimited leads & contacts',
+                  'Unlimited deals & pipeline',
+                  'Inventory & stock tracking',
+                  'Procurement management',
+                  'Custom branding'
+                ],
+                highlight: true
+              },
+              {
+                id: 'enterprise',
+                name: 'Enterprise',
+                tagline: 'Maximum scale',
+                price: '129',
+                icon: Crown,
+                features: [
+                  'Unlimited users',
+                  'Full procurement workflow',
+                  'Advanced quotes & orders',
+                  'Custom roles & RBAC',
+                  'Multi-org management',
+                  'Priority support & SLA'
+                ],
+                highlight: false
+              }
+            ].map((p) => {
+              const isActive = isCurrentPlan(p.id);
+              const Icon = p.icon;
+              
+              return (
+                <div 
+                  key={p.id}
+                  className={cn(
+                    "relative flex flex-col rounded-md border transition-all duration-300",
+                    p.highlight 
+                      ? "bg-white dark:bg-slate-900 border-accent/30 shadow-xl shadow-accent/5 ring-1 ring-accent/10" 
+                      : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm",
+                    isActive && "ring-2 ring-accent border-accent/50 shadow-accent/10"
+                  )}
+                >
+                  {p.highlight && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                      <span className="px-3 py-1 bg-accent text-white text-[9px] font-black uppercase tracking-widest rounded-full shadow-lg">
+                        Most Popular
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="p-6 flex flex-col h-full">
+                    <div className="flex items-start justify-between mb-6">
+                      <div className={cn(
+                        "w-10 h-10 rounded-xl flex items-center justify-center",
+                        p.highlight ? "bg-accent text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+                      )}>
+                        <Icon className="w-5 h-5" />
                       </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                {planComparisonFeatures.map((feat, idx) => (
-                  <tr 
-                    key={feat.key} 
-                    className={idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50 dark:bg-slate-900/50'}
-                  >
-                    <td className="text-xs font-semibold text-slate-500 dark:text-slate-400 px-4 py-3">
-                      {feat.label}
-                    </td>
-                    {(['free', 'pro', 'enterprise'] as const).map((p) => (
-                      <td 
-                        key={`${p}-${feat.key}`} 
-                        className={`text-center px-4 py-3 transition-all ${
-                          isCurrentPlan(p) ? 'bg-teal-50/30 dark:bg-teal-900/10 border-x-2 border-teal-600/20' : ''
-                        }`}
-                      >
-                        {renderFeatureValue((PLAN_LIMITS[p] as any)[feat.key])}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-                {/* Action Row */}
-                <tr>
-                  <td className="px-4 py-6"></td>
-                  {(['free', 'pro', 'enterprise'] as const).map((p) => (
-                    <td 
-                      key={`${p}-action`} 
-                      className={`px-4 py-6 text-center transition-all ${
-                        isCurrentPlan(p) ? 'bg-teal-50/30 dark:bg-teal-900/10 border-x-2 border-b-2 border-teal-600/20 rounded-b-md' : ''
-                      }`}
-                    >
-                      {!isCurrentPlan(p) && (
-                        <a 
-                          href="#" 
-                          className="inline-flex bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-teal-200 dark:shadow-none transition-colors px-5 py-2.5"
-                        >
-                          Upgrade
-                        </a>
+                      {isActive && (
+                        <div className="flex items-center gap-1.5 px-2 py-1 bg-accent-dim text-accent text-[9px] font-black uppercase tracking-widest rounded-lg border border-accent/10">
+                          <Check className="w-3 h-3" /> Current
+                        </div>
                       )}
-                    </td>
-                  ))}
-                </tr>
-              </tbody>
-            </table>
+                    </div>
+
+                    <div className="mb-6">
+                      <h3 className="text-xl font-bold text-slate-900 dark:text-white">{p.name}</h3>
+                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">{p.tagline}</p>
+                    </div>
+
+                    <div className="mb-6 pb-6 border-b border-slate-100 dark:border-slate-800">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-xs font-bold text-slate-400">$</span>
+                        <span className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">{p.price}</span>
+                        <span className="text-xs font-medium text-slate-400">/mo</span>
+                      </div>
+                    </div>
+
+                    <ul className="space-y-3 mb-8 flex-1">
+                      {p.features.map((feat) => (
+                        <li key={feat} className="flex items-start gap-3">
+                          <div className={cn(
+                            "mt-0.5 w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0",
+                            p.highlight ? "bg-accent/10" : "bg-slate-100 dark:bg-slate-800"
+                          )}>
+                            <Check className={cn(
+                              "w-2.5 h-2.5",
+                              p.highlight ? "text-accent" : "text-slate-400"
+                            )} />
+                          </div>
+                          <span className="text-xs font-medium text-slate-600 dark:text-slate-400 leading-tight">
+                            {feat}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    {!isActive ? (
+                      <button className={cn(
+                        "w-full py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95",
+                        p.highlight 
+                          ? "bg-accent text-white hover:opacity-90 shadow-lg shadow-accent/20" 
+                          : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700"
+                      )}>
+                        Upgrade to {p.name}
+                      </button>
+                    ) : (
+                      <div className="w-full py-3 text-[10px] font-black uppercase tracking-widest rounded-xl bg-accent-dim text-accent border border-accent/10 text-center">
+                        Active Plan
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

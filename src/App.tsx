@@ -165,7 +165,14 @@ function AppContent() {
     <FontProvider>
       <Router>
         <div className="min-h-screen flex flex-col bg-background font-sans antialiased text-foreground">
-          <Toaster position="top-center" richColors />
+          <Toaster 
+            position="top-right" 
+            expand={true}
+            richColors={false} // Disable default rich colors to avoid solid backgrounds
+            toastOptions={{
+              className: 'premium-glass-toast',
+            }}
+          />
           <main className="flex-[1_0_auto] flex flex-col">
             <InventoryAlertRunner />
             <Switch>

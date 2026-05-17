@@ -10,7 +10,5 @@
       "destination": "/src/server/api/:path*"
     }
   ],
-  "env": {
-    "VITE_APP_URL": "@app-url"
-  }
+  "env": {}
 }

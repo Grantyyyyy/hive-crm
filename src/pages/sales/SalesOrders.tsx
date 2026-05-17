@@ -1,9 +1,8 @@
-import { useState, useMemo, useRef, useEffect } from "react"
+import { useState, useMemo } from "react"
 import {
   ShoppingCart,
   PlusCircle,
   Search,
-  Filter,
   Download,
   MoreVertical,
   Truck,
@@ -20,6 +19,7 @@ import {
   TrendingUp
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Pagination } from "@/components/ui/Pagination"
 import { useCRMResource } from "@/lib/hooks"
 import { useCRMContext, updateRow } from "@/lib/CRMContext"
@@ -62,30 +62,6 @@ interface ActionsMenuProps {
 
 function ActionsMenu({ order, onShip, onDeliver, onCancel, onViewInvoice, onViewDetails }: ActionsMenuProps) {
   const [open, setOpen] = useState(false)
-  const [coords, setCoords] = useState({ top: 0, left: 0 })
-  const btnRef = useRef<HTMLButtonElement>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (
-        menuRef.current && !menuRef.current.contains(e.target as Node) &&
-        btnRef.current && !btnRef.current.contains(e.target as Node)
-      ) {
-        setOpen(false)
-      }
-    }
-    if (open) document.addEventListener("mousedown", handleClick)
-    return () => document.removeEventListener("mousedown", handleClick)
-  }, [open])
-
-  const handleOpen = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (!btnRef.current) return
-    const rect = btnRef.current.getBoundingClientRect()
-    setCoords({ top: rect.bottom + 6, left: rect.right - 208 })
-    setOpen(v => !v)
-  }
 
   const items = [
     (order.status === 'pending' || order.status === 'partially_fulfilled') && {
@@ -127,38 +103,37 @@ function ActionsMenu({ order, onShip, onDeliver, onCancel, onViewInvoice, onView
   ].filter(Boolean) as { label: string; icon: React.ElementType; color: string; action: () => void }[]
 
   return (
-    <>
-      <button
-        ref={btnRef}
-        onClick={handleOpen}
-        className="size-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-      >
-        <MoreVertical className="w-4 h-4" />
-      </button>
-
-      {open && (
-        <div
-          ref={menuRef}
-          style={{ position: "fixed", top: coords.top, left: coords.left, zIndex: 9999 }}
-          className="w-52 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/60 dark:shadow-slate-900/60 py-2 overflow-hidden"
-          onClick={e => e.stopPropagation()}
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          onClick={(e) => e.stopPropagation()}
+          className="size-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
         >
-          {items.map(({ label, icon: Icon, color, action }) => (
-            <button
-              key={label}
-              onClick={(e) => { e.stopPropagation(); setOpen(false); action() }}
-              className={cn(
-                "w-full flex items-center gap-3 px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider transition-colors",
-                color
-              )}
-            >
-              <Icon className="w-4 h-4 shrink-0" />
-              {label}
-            </button>
-          ))}
-        </div>
-      )}
-    </>
+          <MoreVertical className="w-4 h-4" />
+        </button>
+      </PopoverTrigger>
+
+      <PopoverContent
+        align="end"
+        sideOffset={8}
+        className="w-52 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-900/60"
+        onClick={e => e.stopPropagation()}
+      >
+        {items.map(({ label, icon: Icon, color, action }) => (
+          <button
+            key={label}
+            onClick={(e) => { e.stopPropagation(); setOpen(false); action() }}
+            className={cn(
+              "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider transition-colors",
+              color
+            )}
+          >
+            <Icon className="w-4 h-4 shrink-0" />
+            {label}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
   )
 }
 
@@ -484,12 +459,6 @@ export function SalesOrders() {
             onChange={setStatusFilter}
             allLabel="All Orders"
           />
-
-          <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
-
-          <Button variant="outlineNeutral" className="h-10 px-4 rounded-md font-bold text-xs uppercase tracking-widest">
-            <Filter className="w-4 h-4" /> More Filters
-          </Button>
         </div>
 
         <SalesTable<SalesOrder>

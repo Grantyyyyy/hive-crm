@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { SettingsHeader } from '@/components/reusables/SettingsHeader';
 import { useAuth, useUser } from '@/lib/AuthContext';
 import { usePermission } from '@/lib/usePermission';
@@ -17,6 +17,7 @@ import {
 import type { AppUser } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
@@ -29,7 +30,6 @@ import {
   Search,
   MoreVertical,
   User as UserIcon,
-  Filter,
   PlusCircle,
   Users as UsersIcon,
   Infinity,
@@ -61,74 +61,50 @@ interface UserActionsMenuProps {
 
 function UserActionsMenu({ u, currentUserId, onChangeRole, onRemove, removePending, canUpdate, canDelete }: UserActionsMenuProps) {
   const [open, setOpen] = useState(false);
-  const [coords, setCoords] = useState({ top: 0, left: 0 });
-  const btnRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (
-        menuRef.current && !menuRef.current.contains(e.target as Node) &&
-        btnRef.current && !btnRef.current.contains(e.target as Node)
-      ) {
-        setOpen(false);
-      }
-    }
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
-
-  const handleOpen = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!btnRef.current) return;
-    const rect = btnRef.current.getBoundingClientRect();
-    setCoords({ top: rect.bottom + 6, left: rect.right - 208 });
-    setOpen(v => !v);
-  };
 
   const isSelf = u.authUserId === currentUserId;
 
   if (isSelf) return null;
+  if (!canUpdate && !canDelete) return null;
 
   return (
-    <>
-      <button
-        ref={btnRef}
-        onClick={handleOpen}
-        className="size-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-      >
-        <MoreVertical className="w-4 h-4" />
-      </button>
-
-      {open && (canUpdate || canDelete) && (
-        <div
-          ref={menuRef}
-          style={{ position: "fixed", top: coords.top, left: coords.left, zIndex: 9999 }}
-          className="w-52 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/60 dark:shadow-slate-900/60 py-2 overflow-hidden"
-          onClick={e => e.stopPropagation()}
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          onClick={(e) => e.stopPropagation()}
+          className="size-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
         >
-          {canUpdate && (
-            <button
-              onClick={(e) => { e.stopPropagation(); setOpen(false); onChangeRole(); }}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-accent hover:bg-accent-dim transition-colors"
-            >
-              <Shield className="w-4 h-4 shrink-0" />
-              Change Role
-            </button>
-          )}
-          {canDelete && (
-            <button
-              onClick={(e) => { e.stopPropagation(); setOpen(false); onRemove(); }}
-              disabled={removePending}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors disabled:opacity-50"
-            >
-              <Trash2 className="w-4 h-4 shrink-0" />
-              Remove User
-            </button>
-          )}
-        </div>
-      )}
-    </>
+          <MoreVertical className="w-4 h-4" />
+        </button>
+      </PopoverTrigger>
+
+      <PopoverContent
+        align="end"
+        sideOffset={8}
+        className="w-52 overflow-hidden rounded-xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-900/60"
+        onClick={e => e.stopPropagation()}
+      >
+        {canUpdate && (
+          <button
+            onClick={(e) => { e.stopPropagation(); setOpen(false); onChangeRole(); }}
+            className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-accent hover:bg-accent-dim transition-colors"
+          >
+            <Shield className="w-4 h-4 shrink-0" />
+            Change Role
+          </button>
+        )}
+        {canDelete && (
+          <button
+            onClick={(e) => { e.stopPropagation(); setOpen(false); onRemove(); }}
+            disabled={removePending}
+            className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors disabled:opacity-50"
+          >
+            <Trash2 className="w-4 h-4 shrink-0" />
+            Remove User
+          </button>
+        )}
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -475,17 +451,17 @@ export function Users() {
         children={
           <div className="flex flex-col gap-2">
             {isSuperAdmin && (
-              <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 rounded-xl p-3 flex items-center gap-3 animate-in fade-in slide-in-from-top-1 duration-500">
-                <Shield className="w-4 h-4 text-teal-600" />
-                <p className="text-xs font-semibold text-teal-700 dark:text-teal-400">
+              <div className="bg-accent-dim border border-accent/20 rounded-xl p-3 flex items-center gap-3 animate-in fade-in slide-in-from-top-1 duration-500">
+                <Shield className="w-4 h-4 text-accent" />
+                <p className="text-xs font-semibold text-accent">
                   Super Admin Mode — All organization limits are currently waived.
                 </p>
               </div>
             )}
             {orgData && usersData && !orgData.is_system && (
               <div className="flex items-center gap-2">
-                <div className="inline-block px-2 py-1 rounded-lg bg-teal-50 dark:bg-teal-900/20">
-                  <p className="text-[10px] font-bold text-teal-700 dark:text-teal-400">
+                <div className="inline-block px-2 py-1 rounded-lg bg-accent-dim">
+                  <p className="text-[10px] font-bold text-accent">
                     {isSuperAdmin ? (
                       <div className="flex items-center gap-1.5">
                         <Infinity className="w-3 h-3" />
@@ -545,10 +521,6 @@ export function Users() {
             onChange={setRoleFilter}
             allLabel="All Users"
           />
-          <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
-          <Button variant="outlineNeutral" className="h-10 px-4 rounded-md font-bold text-xs uppercase tracking-widest">
-            <Filter className="w-4 h-4" /> More Filters
-          </Button>
         </div>
       </div>
 

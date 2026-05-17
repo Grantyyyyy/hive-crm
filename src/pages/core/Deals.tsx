@@ -321,7 +321,7 @@ export function Deals() {
       .filter((d) => {
         const matchesFilter = dealViewFilter === 'won_lost'
           ? d.stage === 'won' || d.stage === 'lost'
-          : d.stage !== 'won' && d.stage !== 'lost'
+          : true // Show all deals in 'Active Deals' (All) mode
 
         if (!matchesFilter) return false
 
@@ -341,10 +341,12 @@ export function Deals() {
   )
 
   const dealsByStage = useMemo(() => {
+    // If 'all' (Active), show all deals in their respective stages.
+    // If 'won_lost', show only won/lost deals.
     const visibleDeals = deals.filter((d) =>
       dealViewFilter === 'won_lost'
         ? d.stage === 'won' || d.stage === 'lost'
-        : d.stage !== 'won' && d.stage !== 'lost'
+        : true
     )
 
     return DEAL_STAGES.reduce((acc, stage) => {
@@ -636,8 +638,13 @@ export function Deals() {
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-                {DEAL_STAGES.map((stage) => (
+              <div className={cn(
+                "grid gap-6",
+                dealViewFilter === 'won_lost' 
+                  ? "grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto" 
+                  : "grid-cols-1 md:grid-cols-2 lg:grid-cols-5"
+              )}>
+                {(dealViewFilter === 'won_lost' ? (['won', 'lost'] as DealStage[]) : DEAL_STAGES).map((stage) => (
                   <div key={stage} className="flex flex-col gap-4">
                     {/* Column Header */}
                     <div className="flex items-center justify-between px-2">

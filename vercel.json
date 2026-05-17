@@ -10,8 +10,5 @@
       "destination": "/src/server/api/:path*"
     }
   ],
-  "env": {
-    "SUPABASE_SERVICE_ROLE_KEY": "@supabase-service-role-key",
-    "VITE_APP_URL": "@app-url"
-  }
+  "env": {}
 }

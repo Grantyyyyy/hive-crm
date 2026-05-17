@@ -3,7 +3,6 @@ import { useLocation } from "wouter"
 import {
   PlusCircle,
   Search,
-  Filter,
   Download,
   FileSearch,
   DollarSign,
@@ -372,12 +371,6 @@ export function PurchaseOrders() {
                 onChange={setStatusFilter}
                 allLabel="All Orders"
               />
-
-              <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
-
-              <Button variant="outlineNeutral" className="h-10 px-4 rounded-md font-bold text-xs uppercase tracking-widest">
-                <Filter className="w-4 h-4" /> More Filters
-              </Button>
             </>
           }
         />

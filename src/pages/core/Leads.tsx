@@ -9,7 +9,6 @@ import {
   Upload,
   ChevronDown,
   MoreHorizontal,
-  Filter,
   Globe,
   Users,
   Target,
@@ -455,10 +454,6 @@ export function Leads() {
                 onChange={setStatusFilter}
                 allLabel="All Leads"
               />
-              <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
-              <Button variant="outlineNeutral" className="h-10 px-4 rounded-md font-bold text-xs uppercase tracking-widest">
-                <Filter className="w-4 h-4" /> More Filters
-              </Button>
             </>
           }
         />

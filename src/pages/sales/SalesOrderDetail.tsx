@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react"
+import { useState, useMemo } from "react"
 import { useRoute, useLocation, Link } from "wouter"
 import {
   ArrowLeft,
@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { DetailSkeleton } from "@/components/ui/skeletons"
 import { InvoiceModal } from "@/components/crmComponent/InvoiceModal"
 import { DeleteModal } from "@/components/ui/delete-modal"
@@ -90,53 +91,47 @@ interface DropdownItem {
 
 function ActionsDropdown({ items }: { items: DropdownItem[] }) {
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handle(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener("mousedown", handle)
-    return () => document.removeEventListener("mousedown", handle)
-  }, [])
 
   if (items.length === 0) return null
 
   return (
-    <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="h-9 px-3 flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-xs font-bold uppercase tracking-wider"
-      >
-        <MoreHorizontal className="w-4 h-4" />
-        <span className="hidden sm:inline">More</span>
-        <ChevronDown className={cn("w-3 h-3 transition-transform", open && "rotate-180")} />
-      </button>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          className="h-9 px-3 flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-xs font-bold uppercase tracking-wider"
+        >
+          <MoreHorizontal className="w-4 h-4" />
+          <span className="hidden sm:inline">More</span>
+          <ChevronDown className={cn("w-3 h-3 transition-transform", open && "rotate-180")} />
+        </button>
+      </PopoverTrigger>
 
-      {open && (
-        <div className="absolute right-0 top-full mt-1.5 w-52 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg shadow-slate-200/50 dark:shadow-none z-50 overflow-hidden">
-          {items.map((item, i) => {
-            const Icon = item.icon
-            return (
-              <button
-                key={i}
-                disabled={item.disabled}
-                onClick={() => { item.onClick(); setOpen(false) }}
-                className={cn(
-                  "w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed",
-                  item.danger
-                    ? "text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
-                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
-                )}
-              >
-                {Icon && <Icon className="w-3.5 h-3.5 shrink-0" />}
-                {item.label}
-              </button>
-            )
-          })}
-        </div>
-      )}
-    </div>
+      <PopoverContent
+        align="end"
+        sideOffset={8}
+        className="w-52 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none"
+      >
+        {items.map((item, i) => {
+          const Icon = item.icon
+          return (
+            <button
+              key={i}
+              disabled={item.disabled}
+              onClick={() => { item.onClick(); setOpen(false) }}
+              className={cn(
+                "w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed",
+                item.danger
+                  ? "text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
+                  : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+              )}
+            >
+              {Icon && <Icon className="w-3.5 h-3.5 shrink-0" />}
+              {item.label}
+            </button>
+          )
+        })}
+      </PopoverContent>
+    </Popover>
   )
 }
 

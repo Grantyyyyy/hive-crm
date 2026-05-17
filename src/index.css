@@ -260,3 +260,77 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+
+/* ── Sonner Toast Customization (Premium Glass) ────────────────── */
+:root {
+  --toast-glass-bg: rgba(255, 255, 255, 0.4);
+  --toast-glass-border: rgba(255, 255, 255, 0.6);
+  --toast-glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  
+  --toast-success-glass: rgba(167, 243, 208, 0.4);
+  --toast-error-glass: rgba(254, 202, 202, 0.4);
+}
+
+.dark {
+  --toast-glass-bg: rgba(15, 23, 42, 0.4);
+  --toast-glass-border: rgba(255, 255, 255, 0.1);
+  --toast-glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  
+  --toast-success-glass: rgba(6, 78, 59, 0.3);
+  --toast-error-glass: rgba(127, 29, 29, 0.3);
+}
+
+[data-sonner-toast] {
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  background: var(--toast-glass-bg) !important;
+  border-radius: var(--radius-md) !important;
+  border: 1px solid var(--toast-glass-border) !important;
+  box-shadow: var(--toast-glass-shadow) !important;
+  padding: 16px !important;
+  overflow: hidden !important;
+}
+
+[data-sonner-toast]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+  z-index: -1;
+}
+
+[data-sonner-toast][data-type="success"] {
+  background: var(--toast-success-glass) !important;
+  border: 1px solid rgba(52, 211, 153, 0.4) !important;
+}
+
+[data-sonner-toast][data-type="error"] {
+  background: var(--toast-error-glass) !important;
+  border: 1px solid rgba(248, 113, 113, 0.4) !important;
+}
+
+[data-sonner-toast] [data-title] {
+  @apply !text-[14px] !font-black !tracking-tight !text-slate-900 dark:!text-white;
+  font-family: var(--font-outfit) !important;
+}
+
+[data-sonner-toast] [data-description] {
+  @apply !text-[12px] !font-bold !text-slate-600 dark:!text-slate-300;
+  opacity: 0.8;
+}
+
+[data-sonner-toast] [data-icon] {
+  @apply !scale-125 !mr-3;
+}
+
+[data-sonner-toast][data-type="success"] [data-icon] {
+  @apply !text-emerald-500 !drop-shadow-[0_0_8px_rgba(16,185,129,0.4)];
+}
+
+[data-sonner-toast][data-type="error"] [data-icon] {
+  @apply !text-rose-500 !drop-shadow-[0_0_8px_rgba(244,63,94,0.4)];
+}
+
+[data-sonner-toast] [data-close-button] {
+  @apply !bg-white/20 !backdrop-blur-md !border-white/30 !text-slate-900 dark:!text-white !transition-all hover:!bg-white/40;
+}

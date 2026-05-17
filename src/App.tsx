@@ -42,13 +42,9 @@ import { Navbar } from "@/components/Navbar";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SettingsLayout } from "@/components/layout/SettingsLayout";
-import { InProgress } from "@/pages/InProgress";
 import { Inventory } from "@/pages/logistics/Inventory";
 import { InventoryDetail } from "@/pages/logistics/InventoryDetail";
 import { Reports } from "@/pages/logistics/Reports";
-import { Design } from "@/pages/Design";
-import { DialogsPreview } from "@/pages/DialogsPreview";
-import { Fonts } from "@/pages/Fonts";
 import { Toaster } from "sonner";
 import { CRMProvider, useCRMContext } from "@/lib/CRMContext";
 import { useInventoryAlerts } from "@/lib/hooks/useInventoryAlerts";
@@ -182,9 +178,6 @@ function AppContent() {
               <Route path="/sign-up">{() => (isSignedIn ? <Redirect to={organizationId && organizationId !== "null" ? "/dashboard" : "/onboarding"} /> : <SignUpPage />)}</Route>
               <Route path="/onboarding" component={OnboardingPage} />
               <Route path="/accept-invite" component={AcceptInvitePage} />
-              <Route path="/design">{() => <Design />}</Route>
-              <Route path="/fonts">{() => <Fonts />}</Route>
-              <Route path="/dialogs">{() => <DialogsPreview />}</Route>
 
               {/* All authenticated routes — single persistent AppLayout */}
               <Route>
@@ -216,7 +209,6 @@ function AppContent() {
                       <Route path="/reports">{() => <PermissionProtected module="reports" component={Reports} />}</Route>
                       <Route path="/vendors/:id">{() => <PermissionProtected module="vendors" component={VendorDetail} />}</Route>
                       <Route path="/vendors">{() => <PermissionProtected module="vendors" component={Vendors} />}</Route>
-                      <Route path="/in-progress">{() => <Protected component={InProgress} />}</Route>
                       <Route path="/notifications">{() => <Protected component={Notifications} />}</Route>
 
                       {/* Settings routes with SettingsLayout nested inside AppLayout */}

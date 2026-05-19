@@ -3,17 +3,16 @@ import { useUser } from '@/lib/AuthContext';
 import { usePermission } from '@/lib/usePermission';
 import { usePlan } from '@/lib/usePlan';
 import { UpgradeBanner } from '@/components/reusables/UpgradeBanner';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCRMContext } from '@/lib/CRMContext';
+import { useCRMResource } from '@/lib/hooks';
 import {
-  fetchRoles,
-  fetchPermissions,
   createRole,
   updateRole,
   deleteRole,
-  type Role,
+  fetchPermissions,
   type Permission,
 } from '@/lib/settingsService';
+import type { Role } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,16 +44,14 @@ import { SettingsHeader } from "@/components/reusables/SettingsHeader";
 export function Roles() {
   const { user, isLoaded: userLoaded } = useUser();
   const { getClient, userId, organizationId } = useCRMContext();
-  const queryClient = useQueryClient();
+  const { data: rolesData, isLoaded: rolesLoaded, setData: setRolesData } = useCRMResource<Role>('roles');
   const { can, hasFullAccess, isLoaded: permLoaded, isSuperAdmin } = usePermission();
   const { canAccess } = usePlan();
 
-  // Derived permission flags
   const canCreate = permLoaded && (hasFullAccess || can('roles', 'create'));
   const canUpdate = permLoaded && (hasFullAccess || can('roles', 'update'));
   const canDelete = permLoaded && (hasFullAccess || can('roles', 'delete'));
 
-  // State
   const [search, setSearch] = useState("");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -67,80 +64,61 @@ export function Roles() {
     fullAccess: false,
   });
 
-  // Delete Modal State
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [roleToDelete, setRoleToDelete] = useState<Role | null>(null);
+  const [isPending, setIsPending] = useState(false);
+  const [permissionsData, setPermissionsData] = useState<Record<string, Permission[]>>({});
 
-  // Queries
-  const { data: rolesData, isLoading: rolesLoading, error: rolesError } = useQuery({
-    queryKey: ['roles'],
-    queryFn: async () => {
-      const client = await getClient();
-      if (!client) throw new Error('Not authenticated');
-      return fetchRoles(client);
-    },
-    enabled: !!user,
-  });
-
-  const { data: permissionsData } = useQuery({
-    queryKey: ['permissions'],
-    queryFn: async () => {
-      const client = await getClient();
-      if (!client) throw new Error('Not authenticated');
-      return fetchPermissions(client);
-    },
-    enabled: !!user,
-  });
-
-  // Mutations
-  const createMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
+  const handleCreateRole = async (data: typeof formData) => {
+    setIsPending(true);
+    try {
       const client = await getClient();
       if (!client) throw new Error('Not authenticated');
       if (!organizationId) throw new Error('No organization selected');
-      return createRole(client, data, userId, organizationId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['roles'] });
+      const newRole = await createRole(client, data, userId, organizationId);
+      setRolesData((prev: Role[]) => [...prev, newRole]);
       toast.success('Role created successfully');
       resetForm();
-    },
-    onError: (error) => {
+    } catch (error: any) {
       toast.error('Failed to create role', { description: error.message });
+    } finally {
+      setIsPending(false);
     }
-  });
+  };
 
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
+  const handleUpdateRole = async (id: string, data: typeof formData) => {
+    setIsPending(true);
+    try {
       const client = await getClient();
       if (!client) throw new Error('Not authenticated');
       if (!organizationId) throw new Error('No organization selected');
-      return updateRole(client, id, data, organizationId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['roles'] });
+      const updatedRole = await updateRole(client, id, data, organizationId);
+      setRolesData((prev: Role[]) => prev.map((r: Role) => r.id === id ? updatedRole : r));
       toast.success('Role updated successfully');
       resetForm();
-    },
-    onError: (error) => {
+    } catch (error: any) {
       toast.error('Failed to update role', { description: error.message });
+    } finally {
+      setIsPending(false);
     }
-  });
+  };
 
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
+  const handleDeleteRole = async (id: string) => {
+    setIsPending(true);
+    try {
       const client = await getClient();
       if (!client) throw new Error('Not authenticated');
-      return deleteRole(client, id);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['roles'] });
+      await deleteRole(client, id);
+      setRolesData((prev: Role[]) => prev.filter((r: Role) => r.id !== id));
       toast.success('Role deleted');
-    },
-    onError: (error) => {
+      setShowDeleteModal(false);
+      setRoleToDelete(null);
+    } catch (error: any) {
       toast.error('Failed to delete role', { description: error.message });
+    } finally {
+      setIsPending(false);
     }
-  });
+  };
 
   const resetForm = () => {
     setShowCreateDialog(false);
@@ -175,39 +153,35 @@ export function Roles() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingRole) {
-      updateMutation.mutate({ id: editingRole.id, data: formData });
+      handleUpdateRole(editingRole.id, formData);
     } else {
-      createMutation.mutate(formData);
+      handleCreateRole(formData);
     }
   };
 
   const togglePermission = (permissionId: string) => {
     setFormData(prev => ({
       ...prev,
-      fullAccess: false, // any individual toggle disables full access
+      fullAccess: false,
       permissionIds: prev.permissionIds.includes(permissionId)
         ? prev.permissionIds.filter(id => id !== permissionId)
         : [...prev.permissionIds, permissionId],
     }));
   };
 
-  /** Check if ALL permissions for a module are selected */
   const isModuleAllSelected = (modulePermissions: Permission[]): boolean => {
     if (modulePermissions.length === 0) return false;
     return modulePermissions.every(p => formData.permissionIds.includes(p.id));
   };
 
-  /** Toggle all permissions for a specific module */
   const toggleModuleAll = (modulePermissions: Permission[]) => {
     setFormData(prev => {
       const allSelected = isModuleAllSelected(modulePermissions);
       const moduleIds = modulePermissions.map(p => p.id);
       if (allSelected) {
-        // Deselect all for this module
         const newIds = prev.permissionIds.filter(id => !moduleIds.includes(id));
         return { ...prev, permissionIds: newIds, fullAccess: false };
       } else {
-        // Add all for this module
         const newIds = [...new Set([...prev.permissionIds, ...moduleIds])];
         const allPermIds = permissionsData
           ? (Object.values(permissionsData).flat() as Permission[]).map(p => p.id)
@@ -218,7 +192,6 @@ export function Roles() {
     });
   };
 
-  /** Toggle full access — select ALL permissions across ALL modules */
   const toggleFullAccess = () => {
     setFormData(prev => {
       if (prev.fullAccess) {
@@ -238,23 +211,31 @@ export function Roles() {
 
   const confirmDeleteRole = () => {
     if (roleToDelete) {
-      deleteMutation.mutate(roleToDelete.id, {
-        onSuccess: () => {
-          setShowDeleteModal(false);
-          setRoleToDelete(null);
-        }
-      });
+      handleDeleteRole(roleToDelete.id);
     }
   };
 
-  // Filter Logic
   const filteredRoles = useMemo(() => {
-    if (!rolesData) return [];
     return rolesData.filter(role =>
       role.name.toLowerCase().includes(search.toLowerCase()) ||
       role.description?.toLowerCase().includes(search.toLowerCase())
     );
   }, [rolesData, search]);
+
+  useMemo(() => {
+    if (userLoaded && permissionsData && Object.keys(permissionsData).length === 0) {
+      (async () => {
+        const client = await getClient();
+        if (!client) return;
+        try {
+          const perms = await fetchPermissions(client);
+          setPermissionsData(perms);
+        } catch (e) {
+          console.error('Failed to fetch permissions:', e);
+        }
+      })();
+    }
+  }, [userLoaded, permissionsData, getClient]);
 
   if (!canAccess('customRoles')) {
     return (
@@ -268,20 +249,8 @@ export function Roles() {
     )
   }
 
-  if (!userLoaded || rolesLoading) {
+  if (!userLoaded || !rolesLoaded) {
     return <SettingsSkeleton />;
-  }
-
-  if (rolesError) {
-    return (
-      <div className="p-6 md:p-8">
-        <Card className="border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-900">
-          <CardContent className="pt-6">
-            <p className="text-red-600 dark:text-red-400 font-medium">Error loading roles: {(rolesError as Error).message}</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
   }
 
   return (
@@ -353,7 +322,7 @@ export function Roles() {
                       size="icon"
                       className="h-8 w-8 rounded-lg text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20"
                       onClick={() => handleDelete(role)}
-                      disabled={deleteMutation.isPending}
+                      disabled={isPending}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -652,9 +621,9 @@ export function Roles() {
               type="submit"
               onClick={handleSubmit}
               className="h-12 rounded-lg px-10 bg-accent hover:bg-accent/90 shadow-lg shadow-accent/20 dark:shadow-none font-bold"
-              disabled={createMutation.isPending || updateMutation.isPending}
+              disabled={isPending}
             >
-              {(createMutation.isPending || updateMutation.isPending) ? (
+              {isPending ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Processing...</>
               ) : (
                 editingRole ? 'Save Changes' : 'Establish Role'
@@ -676,7 +645,7 @@ export function Roles() {
           </>
         }
         onDelete={confirmDeleteRole}
-        loading={deleteMutation.isPending}
+        loading={isPending}
       />
     </div>
   );

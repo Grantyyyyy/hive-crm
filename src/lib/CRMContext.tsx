@@ -37,6 +37,8 @@ export const TABLE_MAP: Record<string, string> = {
   notifications: "notifications",
   users: "app_users",
   discounts: "discounts",
+  roles: "roles",
+  permissions: "permissions",
 }
 
 // ── Case converters ──────────────────────────────────────────────────────────
@@ -157,6 +159,7 @@ export interface CRMContextValue {
   fetchAllAuditLogs: () => Promise<any[]>
   insertAuditLog: (log: { entity_type: string, entity_id: string, action: string, diff?: any }) => Promise<void>
   fetchResource: (name: string, options?: { limit?: number; offset?: number; append?: boolean }) => Promise<void>
+  fetchRolesWithPermissions: () => Promise<any[]>
 }
 
 const CRMContext = createContext<CRMContextValue | null>(null)
@@ -238,6 +241,7 @@ function calculateDiff(oldItem: any, patch: any) {
 const PRELOAD_RESOURCES = [
   "leads", "contacts", "deals", "tasks", "activities", "projects",
   "task_tags", "task_tag_links", "notifications", "users", "organizations",
+  "roles", "permissions",
 ]
 
 /**
@@ -293,7 +297,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           .order("created_at", { ascending: false })
           .range(offset, offset + limit - 1)
 
-        if (organizationId) {
+        if (organizationId && name !== 'roles' && name !== 'permissions') {
           const filterCol = tableName === 'organizations' ? 'id' : 'organization_id';
           query = query.eq(filterCol, organizationId)
         }
@@ -575,8 +579,77 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     [getClient, userId, organizationId]
   )
 
+  const fetchRolesWithPermissions = useCallback(async () => {
+    const client = await getClient()
+    if (!client) return []
+
+    const { data: roles, error: rolesError } = await client
+      .from('roles')
+      .select('*')
+      .order('is_system', { ascending: false })
+      .order('name')
+    if (rolesError) {
+      logger.error("[CRMContext] fetchRolesWithPermissions roles error:", rolesError)
+      return []
+    }
+
+    const { data: rolePerms, error: rpError } = await client
+      .from('role_permissions')
+      .select('role_id, permission_id, permissions(id, module, action, description)')
+    if (rpError) {
+      logger.error("[CRMContext] fetchRolesWithPermissions rolePerms error:", rpError)
+      return []
+    }
+
+    const { data: userCounts, error: ucError } = await client
+      .from('app_users')
+      .select('role_id')
+    if (ucError) {
+      logger.error("[CRMContext] fetchRolesWithPermissions userCounts error:", ucError)
+      return []
+    }
+
+    const countMap: Record<string, number> = {}
+    userCounts?.forEach((u: any) => {
+      if (u.role_id) countMap[u.role_id] = (countMap[u.role_id] || 0) + 1
+    })
+
+    const permMap: Record<string, any[]> = {}
+    rolePerms?.forEach((rp: any) => {
+      if (!permMap[rp.role_id]) permMap[rp.role_id] = []
+      if (rp.permissions) {
+        permMap[rp.role_id].push({
+          id: rp.permissions.id,
+          module: rp.permissions.module,
+          action: rp.permissions.action,
+          description: rp.permissions.description,
+        })
+      }
+    })
+
+    const mapped = (roles || []).map((r: any) => ({
+      id: r.id,
+      name: r.name,
+      description: r.description,
+      color: r.color,
+      isSystem: r.is_system,
+      ownerId: r.owner_id,
+      permissions: permMap[r.id] || [],
+      _count: { users: countMap[r.id] || 0 },
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+    }))
+
+    setStore((prev) => ({
+      ...prev,
+      roles: { data: mapped, isLoaded: true },
+    }))
+
+    return mapped
+  }, [getClient])
+
   return (
-    <CRMContext.Provider value={{ userId, organizationId, getResource, setResourceData, getClient, runAtomicUpdate, fetchAuditLogs, fetchAllAuditLogs, insertAuditLog, fetchResource }}>
+    <CRMContext.Provider value={{ userId, organizationId, getResource, setResourceData, getClient, runAtomicUpdate, fetchAuditLogs, fetchAllAuditLogs, insertAuditLog, fetchResource, fetchRolesWithPermissions }}>
       {children}
     </CRMContext.Provider>
   )

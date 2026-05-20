@@ -244,7 +244,7 @@ export function Roles() {
           category="Organization Members"
           title="Roles"
         />
-        <UpgradeBanner feature="Custom Roles" description="Create and manage granular permission roles for your team." />
+        <UpgradeBanner feature="Custom Roles" description="Create and manage granular permission roles for your team." storageKey="banner-roles-dismissed" />
       </div>
     )
   }

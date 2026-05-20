@@ -216,7 +216,7 @@ export function Reports() {
   if (!allLoaded) return <ListSkeleton />
 
   if (!canAccess('reports')) {
-    return <UpgradeBanner feature="Reports" description="Access detailed inventory and procurement analytics." />
+    return <UpgradeBanner feature="Reports" description="Access detailed inventory and procurement analytics." storageKey="banner-reports-dismissed" />
   }
 
   const selectedPeriodLabel = PERIOD_OPTIONS.find(p => p.value === period)?.label || "Last 6 Months"

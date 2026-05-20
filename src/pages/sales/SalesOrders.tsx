@@ -38,6 +38,7 @@ import {
   generateInvoice
 } from "@/services/orderService"
 import { useUser } from "@/lib/AuthContext"
+import { usePlan } from "@/lib/usePlan"
 import { StatCard } from "@/components/reusables/StatCard"
 import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 import { StatusTabs } from "@/components/reusables/StatusTabs"
@@ -45,6 +46,7 @@ import type { StatusTab } from "@/components/reusables/StatusTabs"
 import { SalesTable, type SalesColumn } from "@/components/reusables/SalesTable"
 import { logger } from "@/lib/logger"
 import { PageHeader } from "@/components/reusables/PageHeader"
+import { UpgradeBanner } from "@/components/reusables/UpgradeBanner"
 
 const fmtCurrency = (v: number) =>
   v.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 })
@@ -58,19 +60,26 @@ interface ActionsMenuProps {
   onCancel: () => void
   onViewInvoice: () => void
   onViewDetails: () => void
+  hasInventory: boolean
 }
 
-function ActionsMenu({ order, onShip, onDeliver, onCancel, onViewInvoice, onViewDetails }: ActionsMenuProps) {
+function ActionsMenu({ order, onShip, onDeliver, onCancel, onViewInvoice, onViewDetails, hasInventory }: ActionsMenuProps) {
   const [open, setOpen] = useState(false)
 
   const items = [
-    (order.status === 'pending' || order.status === 'partially_fulfilled') && {
+    hasInventory && (order.status === 'pending' || order.status === 'partially_fulfilled') && {
       label: order.status === 'partially_fulfilled' ? "Fulfill Remaining" : "Fulfill Order",
       icon: Package,
       color: "text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20",
       action: onShip,
     },
-    (order.status === 'fulfilled' || (order.status === 'partially_fulfilled' && order.stockDeducted)) && {
+    !hasInventory && (order.status === 'pending' || order.status === 'pending_stock' || order.status === 'partially_fulfilled' || order.status === 'fulfilled') && {
+      label: "Mark as Shipped",
+      icon: Truck,
+      color: "text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20",
+      action: onDeliver,
+    },
+    hasInventory && (order.status === 'fulfilled' || (order.status === 'partially_fulfilled' && order.stockDeducted)) && {
       label: order.status === 'partially_fulfilled' ? "Ship Partial" : "Mark as Shipped",
       icon: Truck,
       color: "text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20",
@@ -82,7 +91,7 @@ function ActionsMenu({ order, onShip, onDeliver, onCancel, onViewInvoice, onView
       color: "text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20",
       action: onDeliver,
     },
-    {
+    order.status === 'delivered' && {
       label: "View Invoice",
       icon: Receipt,
       color: "text-accent hover:bg-accent-dim",
@@ -147,6 +156,8 @@ export function SalesOrders() {
     isLoaded
   } = useCRMResource<SalesOrder>('orders')
   const { data: contacts } = useCRMResource<Contact>('contacts')
+  const { canAccess } = usePlan()
+  const hasInventory = canAccess('inventory')
 
 
   const [search, setSearch] = useState("")
@@ -167,7 +178,11 @@ export function SalesOrders() {
         order.customerName.toLowerCase().includes(q)
       return matchesStatus && matchesSearch
     })
-    return result.sort((a, b) => b.orderDate.localeCompare(a.orderDate))
+    return result.sort((a, b) => {
+      const dateCompare = b.orderDate.localeCompare(a.orderDate)
+      if (dateCompare !== 0) return dateCompare
+      return (b.createdAt || '').localeCompare(a.createdAt || '')
+    })
   }, [orders, statusFilter, search])
 
   // Pagination
@@ -320,8 +335,7 @@ export function SalesOrders() {
       header: "Actions",
       render: (order) => (
         <div className="flex justify-end items-center gap-2">
-          {/* Quick action inline buttons for common next-step */}
-          {(order.status === 'pending' || order.status === 'partially_fulfilled') && (
+          {hasInventory && (order.status === 'pending' || order.status === 'partially_fulfilled') && (
             <Button
               variant="ghost"
               size="sm"
@@ -331,7 +345,17 @@ export function SalesOrders() {
               <Package className="w-3.5 h-3.5 mr-1" /> {order.status === 'partially_fulfilled' ? 'Fulfill Remaining' : 'Fulfill'}
             </Button>
           )}
-          {(order.status === 'fulfilled' || order.status === 'partially_fulfilled') && order.stockDeducted && (
+          {!hasInventory && (order.status === 'pending' || order.status === 'pending_stock' || order.status === 'partially_fulfilled' || order.status === 'fulfilled') && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => { e.stopPropagation(); handleShipOrder(order) }}
+              className="text-[11px] h-7 px-3 font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
+            >
+              <Truck className="w-3.5 h-3.5 mr-1" /> Mark Shipped
+            </Button>
+          )}
+          {hasInventory && (order.status === 'fulfilled' || order.status === 'partially_fulfilled') && order.stockDeducted && (
             <Button
               variant="ghost"
               size="sm"
@@ -341,7 +365,7 @@ export function SalesOrders() {
               <Truck className="w-3.5 h-3.5 mr-1" /> {order.status === 'partially_fulfilled' ? 'Ship Partial' : 'Ship'}
             </Button>
           )}
-          {order.status === 'shipped' && (
+          {(hasInventory && order.status === 'shipped') || (!hasInventory && order.status === 'shipped') && (
             <Button
               variant="ghost"
               size="sm"
@@ -376,12 +400,13 @@ export function SalesOrders() {
             order={order}
             onShip={() => handleFulfillOrder(order)}
             onDeliver={() => {
-              if (order.status === 'fulfilled') handleShipOrder(order)
+              if (order.status === 'pending' || order.status === 'pending_stock' || order.status === 'partially_fulfilled' || order.status === 'fulfilled') handleShipOrder(order)
               else if (order.status === 'shipped') handleDeliverOrder(order)
             }}
             onCancel={() => handleCancelOrder(order)}
             onViewInvoice={() => setInvoiceOrder(order)}
             onViewDetails={() => navigate(`/orders/${order.id}`)}
+            hasInventory={hasInventory}
           />
         </div>
       ),
@@ -412,6 +437,14 @@ export function SalesOrders() {
             </div>
           }
         />
+
+        {!hasInventory && (
+          <UpgradeBanner 
+            feature="Inventory & Fulfillment" 
+            description="Stock reservation, order fulfillment, and shipment tracking require the Pro plan. You can still create and manage orders with manual line items."
+            storageKey="banner-sales-orders-dismissed"
+          />
+        )}
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

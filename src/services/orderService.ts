@@ -576,12 +576,14 @@ export async function cancelOrderWithStockReversal(
     }
   }
 
-  if (itemsReversed > 0) {
-    updates.push({
-      resource: 'orders',
-      id: order.id,
-      patch: { status: 'cancelled', stockReserved: false, stockDeducted: false, items: updatedItems }
-    });
+  // Always update order status to cancelled, even if no inventory items were reversed
+  updates.push({
+    resource: 'orders',
+    id: order.id,
+    patch: { status: 'cancelled', stockReserved: false, stockDeducted: false, items: updatedItems }
+  });
+
+  if (updates.length > 1) {
     await ctx.runAtomicUpdate(updates);
   }
 

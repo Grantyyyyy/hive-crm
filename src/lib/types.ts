@@ -315,7 +315,7 @@ export interface Quote {
   items: QuoteItem[]
   terms?: string
   reminderSent?: boolean
-  stockReserved?: boolean      // indicates if this quote is holding a reservation
+  stockReserved?: boolean
   createdAt: string
   updatedAt: string
 }

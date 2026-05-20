@@ -31,7 +31,7 @@ export function Inventory() {
   const { canAccess } = usePlan()
 
   if (!canAccess('inventory')) {
-    return <UpgradeBanner feature="Inventory Management" description="Track stock levels, manage SKUs, and automate reorder alerts." />
+    return <UpgradeBanner feature="Inventory Management" description="Track stock levels, manage SKUs, and automate reorder alerts." storageKey="banner-inventory-dismissed" />
   }
 
   const [search, setSearch] = useState("")

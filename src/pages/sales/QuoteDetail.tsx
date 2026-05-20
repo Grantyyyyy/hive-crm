@@ -27,7 +27,7 @@ import { ConfirmModal } from "@/components/ui/confirm-modal"
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
 import { useCRMContext } from "@/lib/CRMContext"
-import type { Quote, QuoteStatus, Contact } from "@/lib/types"
+import type { Quote, QuoteStatus, Contact, SalesOrder } from "@/lib/types"
 import {
   acceptQuote,
   sendQuoteEmail,
@@ -36,9 +36,11 @@ import {
   releaseQuoteStock,
 } from "@/services/quoteService"
 import { useUser } from "@/lib/AuthContext"
+import { usePlan } from "@/lib/usePlan"
 import { SendEmailModal } from "@/components/crmComponent/SendEmailModal"
 import { AuditTimeline } from "@/components/reusables/AuditTimeline"
 import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
+import { UpgradeBanner } from "@/components/reusables/UpgradeBanner"
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -74,9 +76,12 @@ export function QuoteDetail() {
   const quoteId = params?.id ?? ""
   const ctx = useCRMContext()
   const { user, isLoaded: userLoaded } = useUser()
+  const { canAccess } = usePlan()
+  const hasInventory = canAccess('inventory')
 
   const { data: quotes, isLoaded, deleteItem } = useCRMResource<Quote>("quotes")
   const { data: contacts } = useCRMResource<Contact>("contacts")
+  const { data: orders } = useCRMResource<SalesOrder>("orders")
 
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
@@ -87,6 +92,8 @@ export function QuoteDetail() {
   const [isDeleting, setIsDeleting] = useState(false)
 
   const quote = useMemo(() => quotes.find(q => q.id === quoteId), [quotes, quoteId])
+
+  const linkedOrder = useMemo(() => orders?.find(o => o.quoteId === quoteId), [orders, quoteId])
 
   const customerEmail = useMemo(() => {
     if (!quote?.customerId) return undefined
@@ -105,9 +112,19 @@ export function QuoteDetail() {
     if (!quote || isSending) return
     setIsSending(true)
     try {
-      await reserveStockForQuote(quote, ctx, user?.id || 'system', user?.user_metadata?.full_name || 'Unknown User')
-      sendQuoteEmail(quote)
-      toast.success("Quote Sent & Stock Reserved", { description: "Inventory items are now 'Soft Reserved'. Download the PDF to email manually." })
+      if (hasInventory) {
+        await reserveStockForQuote(quote, ctx, user?.id || 'system', user?.user_metadata?.full_name || 'Unknown User')
+        sendQuoteEmail(quote)
+        toast.success("Quote Sent & Stock Reserved", { description: "Inventory items are now 'Soft Reserved'. Download the PDF to email manually." })
+      } else {
+        await ctx.runAtomicUpdate([{
+          resource: 'quotes',
+          id: quote.id,
+          patch: { status: 'sent' }
+        }])
+        sendQuoteEmail(quote)
+        toast.success("Quote Sent", { description: "Upgrade to Pro to enable stock reservation." })
+      }
     } catch (e: unknown) {
       toast.error("Failed to send quote", { description: (e as Error).message })
     } finally {
@@ -121,7 +138,7 @@ export function QuoteDetail() {
     try {
       const order = await acceptQuote(quote, ctx)
       toast.success("Quote Accepted", {
-        description: `Sales Order #${order.orderNumber} created. Reservation transferred.`,
+        description: `Sales Order #${order.orderNumber} created.`,
         action: { label: "View Order", onClick: () => navigate(`/orders/${order.id}`) },
       })
     } catch (e: unknown) {
@@ -228,6 +245,14 @@ export function QuoteDetail() {
         >
           <ArrowLeft className="h-4 w-4 mr-2" /> Back to Quotes
         </Link>
+
+        {!hasInventory && (
+          <UpgradeBanner 
+            feature="Inventory Integration" 
+            description="Stock reservation requires the Pro plan."
+            storageKey="banner-quote-detail-dismissed"
+          />
+        )}
 
         {/* Header Card */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 md:p-8">
@@ -540,6 +565,25 @@ export function QuoteDetail() {
                 >
                   <Send className="w-4 h-4 mr-2" /> {isSending ? 'Sending...' : 'Send to Customer'}
                 </Button>
+              )}
+
+              {linkedOrder && (
+                <Link href={`/orders/${linkedOrder.id}`}>
+                  <div className="mt-5 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors cursor-pointer group">
+                    <div className="flex items-center gap-3">
+                      <div className="size-8 rounded-lg bg-emerald-100 dark:bg-emerald-800 flex items-center justify-center shrink-0">
+                        <ShoppingCart className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Linked Sales Order</p>
+                        <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300 truncate">#{linkedOrder.orderNumber}</p>
+                      </div>
+                      <svg className="w-4 h-4 text-emerald-500 group-hover:translate-x-0.5 transition-transform shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </div>
+                </Link>
               )}
             </div>
 

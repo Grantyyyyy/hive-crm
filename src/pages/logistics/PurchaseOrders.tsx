@@ -47,7 +47,7 @@ export function PurchaseOrders() {
   const { canAccess } = usePlan()
 
   if (!canAccess('procurement')) {
-    return <UpgradeBanner feature="Procurement" description="Manage purchase orders, vendors, and procurement workflows." />
+    return <UpgradeBanner feature="Procurement" description="Manage purchase orders, vendors, and procurement workflows." storageKey="banner-po-dismissed" />
   }
 
   const adapter = useMemo<JobAdapter>(() => ({

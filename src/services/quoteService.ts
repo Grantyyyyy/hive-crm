@@ -72,10 +72,11 @@ export async function reserveStockForQuote(
     });
   }
 
-  // 3. Update quote status (sent if reserved, keep draft if no stock available but allow save)
-  const hasShortage = Object.keys(shortages).length > 0;
-  const newStatus = hasShortage ? 'sent' : 'sent'; // Still mark as sent, shortage tracked in items
-  const patch: Record<string, unknown> = { stockReserved: true, status: newStatus };
+  // 3. Update quote status
+  const hasActualReservation = Object.keys(pendingTally).length > 0
+  const hasShortage = Object.keys(shortages).length > 0
+  const newStatus = 'sent'
+  const patch: Record<string, unknown> = { stockReserved: hasActualReservation, status: newStatus }
   
   // If shortage exists, update items with shortageQuantity
   if (hasShortage) {
@@ -102,13 +103,14 @@ export async function reserveStockForQuote(
   for (const item of quote.items) {
     if (!item.inventoryItemId) continue;
     const invItem = inventory.find(i => i.id === item.inventoryItemId);
-    if (invItem) {
+    if (invItem && pendingTally[item.inventoryItemId]) {
+      const actualReserved = pendingTally[item.inventoryItemId];
       await createReservationTransaction({
         inventoryItemId: invItem.id,
         inventoryItemName: invItem.name,
-        reservedChange: item.quantity,
+        reservedChange: actualReserved,
         reservedBefore: invItem.reservedQuantity || 0,
-        reservedAfter: (invItem.reservedQuantity || 0) + item.quantity,
+        reservedAfter: (invItem.reservedQuantity || 0) + actualReserved,
         referenceId: quote.id,
         referenceNumber: quote.quoteNumber,
         reason: `Reserved for Quote ${quote.quoteNumber}`,
@@ -138,10 +140,9 @@ export async function releaseQuoteStock(
     const invItem = inventory.find(i => i.id === item.inventoryItemId);
     if (invItem) {
       const currentReserved = (invItem.reservedQuantity || 0);
-      if (currentReserved < item.quantity) {
-        throw new Error(`Inventory Inconsistency: Cannot release ${item.quantity} units for ${invItem.name}. Only ${currentReserved} units reserved.`);
-      }
-      const newReserved = currentReserved - item.quantity;
+      const toRelease = Math.min(item.quantity, currentReserved);
+      if (toRelease <= 0) continue;
+      const newReserved = currentReserved - toRelease;
       updates.push({
         resource: 'inventory',
         id: invItem.id,
@@ -174,12 +175,15 @@ export async function releaseQuoteStock(
     if (!item.inventoryItemId) continue;
     const invItem = inventory.find(i => i.id === item.inventoryItemId);
     if (invItem) {
+      const currentReserved = (invItem.reservedQuantity || 0);
+      const toRelease = Math.min(item.quantity, currentReserved);
+      if (toRelease <= 0) continue;
       await createReleaseTransaction({
         inventoryItemId: invItem.id,
         inventoryItemName: invItem.name,
-        reservedChange: -item.quantity,
-        reservedBefore: invItem.reservedQuantity || 0,
-        reservedAfter: (invItem.reservedQuantity || 0) - item.quantity,
+        reservedChange: -toRelease,
+        reservedBefore: currentReserved,
+        reservedAfter: currentReserved - toRelease,
         referenceId: quote.id,
         referenceNumber: quote.quoteNumber,
         reason: `Quote ${quote.quoteNumber} ${quote.status === 'expired' ? 'expired' : 'rejected'} - releasing reservation`,

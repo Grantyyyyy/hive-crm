@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useAuth, useUser } from '@/lib/AuthContext';
+import React, { useState, useMemo } from 'react';
+import { useAuth } from '@/lib/AuthContext';
 import { usePermission } from '@/lib/usePermission';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCRMContext, insertRows, updateRow, deleteRow } from '@/lib/CRMContext';
+import { useCRMContext } from '@/lib/CRMContext';
+import { useCRMResource } from '@/lib/hooks';
 import { supabase } from '@/lib/supabaseClient';
 import {
   Building2,
@@ -36,42 +36,25 @@ import { BackButton } from "@/components/reusables/BackButton";
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { SettingsHeader } from "@/components/reusables/SettingsHeader";
-import type { Organization, CreateOrganizationInput } from '@/lib/types';
+import type { Organization, CreateOrganizationInput, AppUser } from '@/lib/types';
 import { format } from 'date-fns';
 
 // ── Members List Component ───────────────────────────────────────────────────
 
 function OrganizationMembers({ organizationId }: { organizationId: string }) {
-  const { isLoaded: authLoaded } = useAuth();
+  const { data: allUsers, isLoaded } = useCRMResource<AppUser>('users');
 
-  const { data: members, isLoading } = useQuery({
-    queryKey: ['org-members', organizationId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('app_users')
-        .select(`
-          id,
-          name,
-          email,
-          roles (
-            name
-          )
-        `)
-        .eq('organization_id', organizationId);
+  const members = useMemo(() => {
+    return allUsers.filter(u => u.organizationId === organizationId);
+  }, [allUsers, organizationId]);
 
-      if (error) throw error;
-      return data as any[];
-    },
-    enabled: authLoaded,
-  });
-
-  if (isLoading) return (
+  if (!isLoaded) return (
     <div className="flex items-center justify-center p-8">
       <Loader2 className="w-5 h-5 animate-spin text-accent" />
     </div>
   );
 
-  if (!members || members.length === 0) return (
+  if (members.length === 0) return (
     <div className="p-8 text-center text-slate-500 text-xs font-medium uppercase tracking-wider italic">
       No members in this organization.
     </div>
@@ -100,7 +83,7 @@ function OrganizationMembers({ organizationId }: { organizationId: string }) {
                 </div>
               </div>
               <Badge variant="secondary" className="text-[9px] font-black uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-transparent">
-                {member.roles?.name || 'User'}
+                {member.role?.name || 'User'}
               </Badge>
             </div>
           ))}
@@ -116,107 +99,29 @@ export function OrganizationsPage() {
   const { userId, organizationId: currentOrgId, isLoaded: authLoaded } = useAuth();
   const { roleName, isLoaded: permLoaded } = usePermission();
   const ctx = useCRMContext();
-  const queryClient = useQueryClient();
+  const { data: orgs, isLoaded: orgsLoaded, setData: setOrgsData, deleteItem, updateItem } = useCRMResource<Organization>('organizations');
+  const { data: allUsers } = useCRMResource<AppUser>('users');
 
-  // Access Control
   const isSuperAdmin = useMemo(() => roleName === 'Super Admin', [roleName]);
   const isAdmin = useMemo(() => roleName === 'Admin' || isSuperAdmin, [roleName, isSuperAdmin]);
 
-  // Page State
   const [search, setSearch] = useState("");
   const [expandedOrgId, setExpandedOrgId] = useState<string | null>(null);
-
-  // Dialog State
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingOrg, setEditingOrg] = useState<Organization | null>(null);
   const [newOrg, setNewOrg] = useState<Partial<Organization>>({ name: '', slug: '' });
-
-  // Delete Modal State
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [orgToDelete, setOrgToDelete] = useState<Organization | null>(null);
+  const [isPending, setIsPending] = useState(false);
 
-  // Data Fetching
-  const { data: orgs, isLoading: orgsLoading, error: orgsError } = useQuery({
-    queryKey: ['organizations'],
-    queryFn: async () => {
-      // Fetch organizations and their member counts using the RPC helper
-      const { data, error } = await supabase
-        .from('organizations')
-        .select('*')
-        .order('created_at', { ascending: false });
+  const orgsWithCounts = useMemo(() => {
+    return orgs.map(org => {
+      const memberCount = allUsers.filter(u => u.organizationId === org.id).length;
+      return { ...org, memberCount };
+    });
+  }, [orgs, allUsers]);
 
-      if (error) throw error;
-
-      // Map snake_case from DB to camelCase for the UI
-      const mappedData = (data || []).map(org => ({
-        id: org.id,
-        name: org.name,
-        slug: org.slug,
-        createdAt: org.created_at,
-        updatedAt: org.updated_at,
-      }));
-
-      // Fetch member counts for each org
-      const orgsWithCounts = await Promise.all(mappedData.map(async (org) => {
-        const { data: count, error: countError } = await supabase.rpc('get_organization_member_count', {
-          org_id_param: org.id
-        });
-        return { ...org, memberCount: count || 0 };
-      }));
-
-      return orgsWithCounts as Organization[];
-    },
-    enabled: authLoaded && permLoaded && isAdmin,
-  });
-
-  // Mutations
-  const createOrgMutation = useMutation({
-    mutationFn: async (data: CreateOrganizationInput) => {
-      return insertRows<Organization>(ctx, 'organizations', [data as any]);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['organizations'] });
-      setShowAddDialog(false);
-      setNewOrg({ name: '', slug: '' });
-      toast.success('Organization created successfully');
-    },
-    onError: (error) => {
-      toast.error('Failed to create organization', { description: error.message });
-    }
-  });
-
-  const updateOrgMutation = useMutation({
-    mutationFn: async ({ id, updates }: { id: string, updates: Partial<Organization> }) => {
-      return updateRow<Organization>(ctx, 'organizations', id, updates);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['organizations'] });
-      setShowEditDialog(false);
-      setEditingOrg(null);
-      toast.success('Organization updated successfully');
-    },
-    onError: (error) => {
-      toast.error('Failed to update organization', { description: error.message });
-    }
-  });
-
-  const deleteOrgMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return deleteRow<Organization>(ctx, 'organizations', id);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['organizations'] });
-      setShowDeleteModal(false);
-      setOrgToDelete(null);
-      toast.success('Organization deleted successfully');
-    },
-    onError: (error) => {
-      toast.error('Failed to delete organization', { description: error.message });
-    }
-  });
-
-  // Helpers
   const generateSlug = (name: string) => {
     return name
       .toLowerCase()
@@ -234,35 +139,67 @@ export function OrganizationsPage() {
   };
 
   const filteredOrgs = useMemo(() => {
-    if (!orgs) return [];
-    return orgs.filter(o =>
+    return orgsWithCounts.filter(o =>
       o.name.toLowerCase().includes(search.toLowerCase()) ||
       o.slug.toLowerCase().includes(search.toLowerCase())
     );
-  }, [orgs, search]);
+  }, [orgsWithCounts, search]);
 
-  // Handlers
-  const handleCreateOrg = (e: React.FormEvent) => {
+  const handleCreateOrg = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newOrg.name && newOrg.slug) {
-      createOrgMutation.mutate({
-        name: newOrg.name,
-        slug: newOrg.slug,
-      } as CreateOrganizationInput);
+      setIsPending(true);
+      try {
+        await ctx.runAtomicUpdate([{
+          resource: 'organizations',
+          action: 'insert',
+          patch: { name: newOrg.name, slug: newOrg.slug },
+        }]);
+        setShowAddDialog(false);
+        setNewOrg({ name: '', slug: '' });
+        toast.success('Organization created successfully');
+      } catch (error: any) {
+        toast.error('Failed to create organization', { description: error.message });
+      } finally {
+        setIsPending(false);
+      }
     }
   };
 
-  const handleUpdateOrg = (e: React.FormEvent) => {
+  const handleUpdateOrg = async (e: React.FormEvent) => {
     e.preventDefault();
     if (editingOrg && editingOrg.name && editingOrg.slug) {
-      updateOrgMutation.mutate({
-        id: editingOrg.id,
-        updates: { name: editingOrg.name, slug: editingOrg.slug }
-      });
+      setIsPending(true);
+      try {
+        await updateItem(editingOrg.id, { name: editingOrg.name, slug: editingOrg.slug });
+        setShowEditDialog(false);
+        setEditingOrg(null);
+        toast.success('Organization updated successfully');
+      } catch (error: any) {
+        toast.error('Failed to update organization', { description: error.message });
+      } finally {
+        setIsPending(false);
+      }
     }
   };
 
-  if (!authLoaded || !permLoaded || orgsLoading) {
+  const handleDeleteOrg = async () => {
+    if (orgToDelete) {
+      setIsPending(true);
+      try {
+        await deleteItem(orgToDelete.id);
+        setShowDeleteModal(false);
+        setOrgToDelete(null);
+        toast.success('Organization deleted successfully');
+      } catch (error: any) {
+        toast.error('Failed to delete organization', { description: error.message });
+      } finally {
+        setIsPending(false);
+      }
+    }
+  };
+
+  if (!authLoaded || !permLoaded || !orgsLoaded) {
     return (
       <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-slate-950">
         <Loader2 className="w-8 h-8 animate-spin text-accent" />
@@ -270,7 +207,6 @@ export function OrganizationsPage() {
     );
   }
 
-  // Not an Admin gate
   if (!isAdmin) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-8 text-center">
@@ -464,9 +400,9 @@ export function OrganizationsPage() {
               <Button
                 type="submit"
                 className="h-11 rounded-xl bg-accent hover:bg-accent/90 text-white uppercase text-xs font-bold shadow-lg shadow-accent/20 dark:shadow-none min-w-[120px]"
-                disabled={createOrgMutation.isPending}
+                disabled={isPending}
               >
-                {createOrgMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Partition'}
+                {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Partition'}
               </Button>
             </DialogFooter>
           </form>
@@ -508,9 +444,9 @@ export function OrganizationsPage() {
               <Button
                 type="submit"
                 className="h-11 rounded-xl bg-accent hover:bg-accent/90 text-white uppercase text-xs font-bold"
-                disabled={updateOrgMutation.isPending}
+                disabled={isPending}
               >
-                {updateOrgMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save Changes'}
+                {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save Changes'}
               </Button>
             </DialogFooter>
           </form>
@@ -541,8 +477,8 @@ export function OrganizationsPage() {
             </div>
           </div>
         }
-        onDelete={() => orgToDelete && deleteOrgMutation.mutate(orgToDelete.id)}
-        loading={deleteOrgMutation.isPending}
+        onDelete={handleDeleteOrg}
+        loading={isPending}
         disabled={(orgToDelete?.memberCount || 0) > 0}
       />
     </div>

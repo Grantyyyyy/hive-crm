@@ -86,14 +86,16 @@ export function AddQuoteModal({ open, onOpenChange, onSuccess }: AddQuoteModalPr
         </DialogHeader>
 
         <div className="flex-1 overflow-hidden relative">
-          <QuoteForm
-            onSave={handleSave}
-            onCancel={() => onOpenChange(false)}
-            contacts={contacts}
-            inventory={inventory}
-            isSaving={isSaving}
-            className="flex-1"
-          />
+          {open && (
+            <QuoteForm
+              onSave={handleSave}
+              onCancel={() => onOpenChange(false)}
+              contacts={contacts}
+              inventory={inventory}
+              isSaving={isSaving}
+              className="flex-1"
+            />
+          )}
         </div>
       </DialogContent>
     </Dialog>

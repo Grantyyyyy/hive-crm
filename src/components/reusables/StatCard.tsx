@@ -84,15 +84,15 @@ export function StatCard({
 
   const CardContent = () => (
     <div className={cn(
-      "relative bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm border-l-4 border-l-transparent hover:border-l-transparent transition-all hover:shadow-xl group h-full",
+      "bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm border-l-4 border-l-transparent hover:border-l-transparent transition-all hover:shadow-xl group h-full",
       size === 'compact' ? "p-4" : "p-5 md:p-6"
     )}>
-      <div className="flex items-center justify-between md:block w-full">
-        <div className="flex items-center gap-3 md:block">
+      <div className="flex items-center justify-between w-full gap-4">
+        <div className="flex items-center gap-4 flex-1 min-w-0">
           {icon && (
             <div className={cn(
-              'rounded flex items-center justify-center transition-transform group-hover:scale-110 shrink-0',
-              size === 'compact' ? 'w-8 h-8 md:mb-4' : 'w-10 h-10 md:mb-6',
+              'rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 shrink-0',
+              size === 'compact' ? 'w-10 h-10' : 'w-12 h-12',
               colors.iconBg,
               colors.iconColor
             )}>
@@ -100,14 +100,14 @@ export function StatCard({
             </div>
           )}
           
-          <div className={cn(size === 'compact' ? "space-y-0.5" : "space-y-1")}>
-            <p className="text-[10px] md:text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+          <div className="space-y-1 min-w-0">
+            <p className="text-[10px] md:text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 truncate">
               {label}
             </p>
             {typeof value === 'string' ? (
               <h3 className={cn(
                 "font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight",
-                size === 'compact' ? "text-lg md:text-2xl" : "text-xl md:text-2xl lg:text-3xl"
+                size === 'compact' ? "text-lg md:text-xl" : "text-xl md:text-2xl lg:text-3xl"
               )}>{value}</h3>
             ) : (
               value
@@ -117,8 +117,7 @@ export function StatCard({
 
         {badge && (
           <div className={cn(
-            'px-2 py-1 text-[10px] font-black rounded uppercase tracking-wider shadow-sm shrink-0',
-            size === 'compact' ? 'md:absolute md:top-4 md:right-4' : 'md:absolute md:top-6 md:right-6',
+            'px-2 py-1 text-[10px] font-black rounded uppercase tracking-wider shadow-sm shrink-0 self-center',
             badgeColors
           )}>
             {badge}

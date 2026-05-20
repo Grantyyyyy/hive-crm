@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react"
-import { Trash2, Info, ChevronDown, Plus } from "lucide-react"
+import { Trash2, Info, ChevronDown, Plus, Tag } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { FormActions } from "@/components/reusables/form-actions"
 import { Input } from "@/components/ui/input"
@@ -10,7 +10,9 @@ import type { SalesOrder, SalesOrderStatus, Contact, InventoryItem, Discount, Di
 import { useCRMResource } from "@/lib/hooks"
 import { generateId } from "@/lib/helpers"
 import { toast } from 'sonner'
-
+import { DebouncedInput } from "@/components/reusables/DebouncedInput"
+import { MobileLineItemCard } from "@/components/reusables/MobileLineItemCard"
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 interface SalesOrderFormProps {
   onSave: (order: SalesOrder) => void
   onCancel: () => void
@@ -428,120 +430,208 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-200/60 dark:border-slate-800/60 overflow-hidden shadow-none bg-slate-50/30 dark:bg-slate-900/30">
-              <table className="w-full text-left border-collapse table-fixed">
-                <thead>
-                  <tr className="bg-slate-50/50 dark:bg-slate-800/50 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-200/60 dark:border-slate-800/60">
-                    <th className="px-6 py-4 w-1/2">Product / SKU</th>
-                    <th className="px-4 py-4 w-[12%] text-center">Qty</th>
-                    <th className="px-4 py-4 w-[18%] text-right">Unit Price</th>
-                    <th className="px-4 py-4 w-[15%] text-right">Total</th>
-                    <th className="px-6 py-4 w-12 text-right"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50/50 dark:divide-slate-800/20">
-                  {items.map((item, index) => (
-                    <tr key={item.id} className="group hover:bg-slate-50/30 dark:hover:bg-slate-800/10 transition-colors">
-                      <td className="px-6 py-4 align-top">
-                        <div className="space-y-1.5 pt-1">
-                          <input
-                            id={`item_${index}_name`}
-                            ref={index === items.length - 1 ? lastItemRef : null}
-                            className={cn(
-                              "w-full bg-transparent border-none focus:ring-0 p-0 text-[13px] font-black placeholder:text-slate-300 transition-colors focus:placeholder:text-accent/60",
-                              errors[`item_${index}_name`] ? "text-red-500 placeholder:text-red-300" : "text-slate-900 dark:text-slate-100"
-                            )}
-                            placeholder="Product name..."
-                            value={item.name}
-                            onChange={(e) => {
-                              updateItem(item.id, { name: e.target.value })
-                              if (errors[`item_${index}_name`]) setErrors(prev => {
-                                const n = { ...prev }
-                                delete n[`item_${index}_name`]
-                                return n
-                              })
-                            }}
-                          />
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 align-top">
-                        <input
-                          type="number"
-                          className="w-full h-9 bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl focus:ring-4 focus:ring-accent/10 p-0 text-[13px] font-black text-slate-900 dark:text-slate-100 text-center transition-all outline-none"
-                          value={item.quantity}
-                          onChange={(e) => updateItem(item.id, { quantity: parseInt(e.target.value) || 0 })}
-                        />
-                      </td>
-                      <td className="px-4 py-4 align-top">
-                        <input
-                          type="number"
-                          className="w-full h-9 bg-slate-50/50 dark:bg-slate-800/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 rounded-xl focus:ring-4 focus:ring-accent/10 pl-2 pr-2 text-[13px] font-black text-slate-900 dark:text-slate-100 text-right transition-all outline-none"
-                          value={item.price}
-                          onChange={(e) => updateItem(item.id, { price: parseFloat(e.target.value) || 0 })}
-                        />
-                        <div className="mt-2">
-                          <select
-                            className="w-full h-7 text-[10px] bg-slate-50 border border-slate-200 rounded text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400"
-                            value={item.discountId || ""}
-                            onChange={e => {
-                              const val = e.target.value;
-                              if (!val) {
-                                updateItem(item.id, { discountId: undefined, discountValue: undefined, discountType: undefined });
-                              } else {
-                                const d = activeLineDiscounts.find(x => x.id === val);
-                                if (d) {
-                                  // Check minOrderAmount against line total
-                                  const lineTotal = item.quantity * item.price;
-                                  if (d.minOrderAmount && lineTotal < d.minOrderAmount) {
-                                    toast.error(`Cannot apply "${d.name}"`, {
-                                      description: `Line total ($${lineTotal.toFixed(2)}) must be at least $${d.minOrderAmount.toFixed(2)}.`
-                                    });
-                                    e.target.value = item.discountId || "";
-                                    return;
-                                  }
-                                  updateItem(item.id, { discountId: d.id, discountValue: d.value, discountType: d.type });
-                                }
-                              }
-                            }}
-                          >
-                            <option value="">No Discount</option>
-                            {activeLineDiscounts.map(d => (
-                              <option key={d.id} value={d.id}>{d.name} ({d.type === 'percentage' ? `${d.value}%` : `$${d.value}`})</option>
-                            ))}
-                          </select>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 align-top text-right pt-5">
-                        <div className="flex flex-col items-end gap-1">
-                          {item.discountId && item.discountValue !== undefined && (
-                            <span className="text-[10px] text-slate-400 line-through">
-                              ${(item.quantity * item.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                            </span>
-                          )}
-                          <p className="text-[13px] font-black text-slate-900 dark:text-white tracking-tight">
-                            ${(() => {
-                              let total = item.quantity * item.price;
-                              if (item.discountId && item.discountValue !== undefined) {
-                                if (item.discountType === 'percentage') total *= (1 - item.discountValue / 100);
-                                else if (item.discountType === 'fixed') total = Math.max(0, total - item.discountValue);
-                              }
-                              return total;
-                            })().toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 align-top text-right pt-5">
-                        <button
-                          onClick={() => removeItem(item.id)}
-                          className="text-slate-300 hover:text-red-500 transition-all scale-100 hover:scale-110 active:scale-95"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
+            <div className="space-y-4">
+              {/* Desktop Table View */}
+              <div className="hidden md:block rounded-xl border border-slate-200/60 dark:border-slate-800/60 overflow-hidden shadow-none bg-slate-50/30 dark:bg-slate-900/30">
+                <table className="w-full text-left border-collapse table-fixed">
+                  <thead>
+                    <tr className="bg-slate-50/50 dark:bg-slate-800/50 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-200/60 dark:border-slate-800/60">
+                      <th className="px-6 py-4 w-1/2">Product / SKU</th>
+                      <th className="px-4 py-4 w-[20%] text-center">Qty</th>
+                      <th className="px-4 py-4 w-[18%] text-right">Unit Price</th>
+                      <th className="px-4 py-4 w-[15%] text-right">Total</th>
+                      <th className="px-6 py-4 w-12 text-right"></th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50/50 dark:divide-slate-800/20">
+                    {items.map((item, index) => {
+                      const lineTotal = item.quantity * item.price * (item.discountId && item.discountValue !== undefined ? (item.discountType === 'percentage' ? (1 - item.discountValue / 100) : 1) : 1) - (item.discountId && item.discountValue !== undefined && item.discountType === 'fixed' ? item.discountValue : 0);
+                      const activeDiscount = activeLineDiscounts.find(x => x.id === item.discountId);
+
+                      return (
+                        <tr key={item.id} className="group hover:bg-slate-50/30 dark:hover:bg-slate-800/10 transition-colors animate-in fade-in slide-in-from-left-4 duration-200">
+                          <td className="px-6 py-4 align-top">
+                            <div className="space-y-1.5 pt-1">
+                              <DebouncedInput
+                                id={`item_${index}_name`}
+                                ref={index === items.length - 1 ? lastItemRef : null}
+                                className={cn(
+                                  "w-full bg-transparent border-none focus:ring-0 p-0 text-[13px] font-black placeholder:text-slate-300 transition-colors focus:placeholder:text-accent/60 outline-none",
+                                  errors[`item_${index}_name`] ? "text-red-500 placeholder:text-red-300" : "text-slate-900 dark:text-slate-100"
+                                )}
+                                placeholder="Product name..."
+                                value={item.name}
+                                onChange={(val) => {
+                                  updateItem(item.id, { name: val })
+                                  if (errors[`item_${index}_name`]) setErrors(prev => {
+                                    const n = { ...prev }
+                                    delete n[`item_${index}_name`]
+                                    return n
+                                  })
+                                }}
+                              />
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 align-top">
+                            <div className="flex items-center justify-center border border-slate-200/60 dark:border-slate-800/60 rounded-xl bg-white dark:bg-slate-900 shadow-sm overflow-hidden h-9 w-[100px] mx-auto transition-all focus-within:ring-2 focus-within:ring-accent/20">
+                              <button
+                                type="button"
+                                onClick={() => updateItem(item.id, { quantity: Math.max(0, item.quantity - 1) })}
+                                className="w-8 h-full flex items-center justify-center text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all text-xs font-black"
+                              >
+                                -
+                              </button>
+                              <DebouncedInput
+                                type="number"
+                                min={0}
+                                onKeyDown={(e) => {
+                                  if (e.key === '-') e.preventDefault()
+                                }}
+                                className="w-8 bg-transparent border-none text-[12px] font-black text-slate-900 dark:text-slate-100 text-center focus:ring-0 p-0 outline-none"
+                                value={item.quantity}
+                                onChange={(val) => updateItem(item.id, { quantity: Math.max(0, parseInt(val) || 0) })}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => updateItem(item.id, { quantity: item.quantity + 1 })}
+                                className="w-8 h-full flex items-center justify-center text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all text-xs font-black"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 align-top">
+                            <div className="relative flex items-center h-9 w-full bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 rounded-xl shadow-sm overflow-hidden px-2 max-w-[110px] ml-auto transition-all focus-within:ring-2 focus-within:ring-accent/20">
+                              <span className="text-[10px] font-bold text-slate-400 mr-1">$</span>
+                              <DebouncedInput
+                                type="number"
+                                min={0}
+                                onKeyDown={(e) => {
+                                  if (e.key === '-') e.preventDefault()
+                                }}
+                                className="w-full bg-transparent border-none text-[12px] font-black text-slate-900 dark:text-slate-100 text-right focus:ring-0 p-0 outline-none"
+                                value={item.price}
+                                onChange={(val) => updateItem(item.id, { price: Math.max(0, parseFloat(val) || 0) })}
+                              />
+                            </div>
+                            <div className="mt-2 flex justify-end">
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  {activeDiscount ? (
+                                    <button type="button" className="text-[9px] font-black uppercase tracking-wider text-accent bg-accent/10 border border-accent/20 px-2 py-1 rounded-lg flex items-center gap-1 hover:bg-accent/20 transition-all select-none">
+                                      <Tag className="w-2.5 h-2.5" />
+                                      {activeDiscount.name} ({activeDiscount.type === 'percentage' ? `${activeDiscount.value}%` : `$${activeDiscount.value}`})
+                                    </button>
+                                  ) : (
+                                    <button type="button" className="text-[9px] font-black uppercase tracking-wider text-slate-400 border border-slate-200/60 dark:border-slate-800/60 px-2 py-1 rounded-lg flex items-center gap-1 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-700 transition-all select-none">
+                                      <Tag className="w-2.5 h-2.5" />
+                                      Discount
+                                    </button>
+                                  )}
+                                </PopoverTrigger>
+                                <PopoverContent align="end" className="w-64 p-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-xl rounded-xl space-y-2">
+                                  <div className="space-y-1">
+                                    <div className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2 px-1">Apply Line Discount</div>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        updateItem(item.id, { discountId: undefined, discountValue: undefined, discountType: undefined });
+                                      }}
+                                      className={cn(
+                                        "w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-bold hover:bg-slate-50 dark:hover:bg-slate-900/60 transition-colors flex items-center justify-between",
+                                        !item.discountId ? "text-accent bg-accent/5 font-black" : "text-slate-600 dark:text-slate-400"
+                                      )}
+                                    >
+                                      No Discount
+                                    </button>
+                                    {activeLineDiscounts.map(d => {
+                                      const isSelected = item.discountId === d.id;
+                                      return (
+                                        <button
+                                          key={d.id}
+                                          type="button"
+                                          onClick={() => {
+                                            const lineTotalVal = item.quantity * item.price;
+                                            if (d.minOrderAmount && lineTotalVal < d.minOrderAmount) {
+                                              toast.error(`Cannot apply "${d.name}"`, {
+                                                description: `Line total ($${lineTotalVal.toFixed(2)}) must be at least $${d.minOrderAmount.toFixed(2)}.`
+                                              });
+                                              return;
+                                            }
+                                            updateItem(item.id, { discountId: d.id, discountValue: d.value, discountType: d.type });
+                                          }}
+                                          className={cn(
+                                            "w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-bold hover:bg-slate-50 dark:hover:bg-slate-900/60 transition-colors flex items-center justify-between",
+                                            isSelected ? "text-accent bg-accent/5 font-black" : "text-slate-600 dark:text-slate-400"
+                                          )}
+                                        >
+                                          <span>{d.name}</span>
+                                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
+                                            {d.type === 'percentage' ? `${d.value}%` : `$${d.value}`}
+                                          </span>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 align-top text-right pt-5">
+                            <div className="flex flex-col items-end gap-1">
+                              {item.discountId && item.discountValue !== undefined && (
+                                <span className="text-[10px] text-slate-400 line-through">
+                                  ${(item.quantity * item.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                </span>
+                              )}
+                              <p className="text-[13px] font-black text-slate-900 dark:text-white tracking-tight">
+                                ${lineTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 align-top text-right pt-5">
+                            <button
+                              onClick={() => removeItem(item.id)}
+                              className="text-slate-300 hover:text-red-500 transition-all scale-100 hover:scale-110 active:scale-95"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>              {/* Mobile Cards View */}
+              <div className="md:hidden space-y-4">
+                {items.map((item, index) => (
+                  <MobileLineItemCard
+                    key={item.id}
+                    id={item.id}
+                    index={index}
+                    name={item.name}
+                    quantity={item.quantity}
+                    price={item.price}
+                    discountId={item.discountId}
+                    discountValue={item.discountValue}
+                    discountType={item.discountType}
+                    activeLineDiscounts={activeLineDiscounts}
+                    error={errors[`item_${index}_name`]}
+                    lastItemRef={index === items.length - 1 ? lastItemRef : null}
+                    onUpdate={(fields) => {
+                      updateItem(item.id, fields)
+                      if (fields.name && errors[`item_${index}_name`]) {
+                        setErrors(prev => {
+                          const n = { ...prev }
+                          delete n[`item_${index}_name`]
+                          return n
+                        })
+                      }
+                    }}
+                    onRemove={() => removeItem(item.id)}
+                  />
+                ))}
+              </div>
             </div>
 
             <div className="mt-8 flex justify-end">
@@ -550,60 +640,94 @@ export function SalesOrderForm({ onSave, onCancel, contacts, inventory, initialD
                   <span>Line Total</span>
                   <span className="text-slate-900 dark:text-white min-w-[100px] text-right">${subtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                 </div>
- 
-                <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 w-full justify-between">
+
+                 <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 w-full justify-between">
                   <span>Order Discount</span>
                   <div className="flex flex-col items-end gap-1">
-                    <select
-                      className={cn(
-                        "h-7 text-[10px] bg-slate-50 border border-slate-200 rounded text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400 max-w-[140px]",
-                        errors.orderDiscount && "border-red-500"
-                      )}
-                      value={orderDiscountId || ""}
-                      onChange={e => {
-                        const val = e.target.value;
-                        if (!val) {
-                          setOrderDiscountId(undefined);
-                          setOrderDiscountValue(undefined);
-                          setOrderDiscountType(undefined);
-                        } else {
-                          const d = activeOrderDiscounts.find(x => x.id === val);
-                          if (d) {
-                            // Check minOrderAmount against subtotal
-                            if (d.minOrderAmount && subtotal < d.minOrderAmount) {
-                              toast.error(`Cannot apply "${d.name}"`, {
-                                description: `Subtotal ($${subtotal.toFixed(2)}) must be at least $${d.minOrderAmount.toFixed(2)}.`
-                              });
-                              e.target.value = orderDiscountId || "";
-                              return;
-                            }
-                            setOrderDiscountId(d.id);
-                            setOrderDiscountValue(d.value);
-                            setOrderDiscountType(d.type);
-                          }
-                        }
-                        if (errors.orderDiscount) {
-                          setErrors(prev => { const n = { ...prev }; delete n.orderDiscount; return n; });
-                        }
-                      }}
-                    >
-                      <option value="">No Order Discount</option>
-                      {activeOrderDiscounts.map(d => (
-                        <option key={d.id} value={d.id}>{d.name} ({d.type === 'percentage' ? `${d.value}%` : `$${d.value}`})</option>
-                      ))}
-                    </select>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        {orderDiscountId && activeOrderDiscounts.find(x => x.id === orderDiscountId) ? (
+                          <button type="button" className="text-[10px] font-black uppercase tracking-wider text-accent bg-accent/10 border border-accent/20 px-2.5 py-1.5 rounded-lg flex items-center gap-1 hover:bg-accent/20 transition-all select-none">
+                            <Tag className="w-3 h-3" />
+                            {activeOrderDiscounts.find(x => x.id === orderDiscountId)?.name} ({orderDiscountType === 'percentage' ? `${orderDiscountValue}%` : `$${orderDiscountValue}`})
+                          </button>
+                        ) : (
+                          <button type="button" className={cn(
+                            "text-[10px] font-black uppercase tracking-wider text-slate-400 border px-2.5 py-1.5 rounded-lg flex items-center gap-1 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-700 transition-all select-none",
+                            errors.orderDiscount ? "border-red-500 text-red-500 hover:border-red-600" : "border-slate-200/60 dark:border-slate-800/60"
+                          )}>
+                            <Tag className="w-3 h-3" />
+                            Select Discount
+                          </button>
+                        )}
+                      </PopoverTrigger>
+                      <PopoverContent align="end" className="w-64 p-3 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-xl rounded-xl space-y-2">
+                        <div className="space-y-1">
+                          <div className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 mb-2 px-1">Apply Order Discount</div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOrderDiscountId(undefined);
+                              setOrderDiscountValue(undefined);
+                              setOrderDiscountType(undefined);
+                              if (errors.orderDiscount) {
+                                setErrors(prev => { const n = { ...prev }; delete n.orderDiscount; return n; });
+                              }
+                            }}
+                            className={cn(
+                              "w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-bold hover:bg-slate-50 dark:hover:bg-slate-900/60 transition-colors flex items-center justify-between",
+                              !orderDiscountId ? "text-accent bg-accent/5 font-black" : "text-slate-600 dark:text-slate-400"
+                            )}
+                          >
+                            No Order Discount
+                          </button>
+                          {activeOrderDiscounts.map(d => {
+                            const isSelected = orderDiscountId === d.id;
+                            return (
+                              <button
+                                key={d.id}
+                                type="button"
+                                onClick={() => {
+                                  if (d.minOrderAmount && subtotal < d.minOrderAmount) {
+                                    toast.error(`Cannot apply "${d.name}"`, {
+                                      description: `Subtotal ($${subtotal.toFixed(2)}) must be at least $${d.minOrderAmount.toFixed(2)}.`
+                                    });
+                                    return;
+                                  }
+                                  setOrderDiscountId(d.id);
+                                  setOrderDiscountValue(d.value);
+                                  setOrderDiscountType(d.type);
+                                  if (errors.orderDiscount) {
+                                    setErrors(prev => { const n = { ...prev }; delete n.orderDiscount; return n; });
+                                  }
+                                }}
+                                className={cn(
+                                  "w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-bold hover:bg-slate-50 dark:hover:bg-slate-900/60 transition-colors flex items-center justify-between",
+                                  isSelected ? "text-accent bg-accent/5 font-black" : "text-slate-600 dark:text-slate-400"
+                                )}
+                              >
+                                <span>{d.name}</span>
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
+                                  {d.type === 'percentage' ? `${d.value}%` : `$${d.value}`}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                     {orderDiscountAmount > 0 && (
-                      <span className="text-accent">-${orderDiscountAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                      <span className="text-accent text-[10px] font-bold">-${orderDiscountAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                     )}
                   </div>
                 </div>
                 {errors.orderDiscount && <p className="text-[9px] font-bold text-red-500 uppercase mt-[-8px] text-right">{errors.orderDiscount}</p>}
- 
+
                 <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 w-full justify-between">
                   <span>Discounted Total</span>
                   <span className="text-slate-900 dark:text-white min-w-[100px] text-right">${discountedSubtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                 </div>
- 
+
                 <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 w-full justify-between">
                   <span>VAT (12%)</span>
                   <span className="text-slate-900 dark:text-white min-w-[100px] text-right">${tax.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>

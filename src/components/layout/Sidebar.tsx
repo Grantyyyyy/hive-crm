@@ -3,7 +3,6 @@ import { Link, useLocation } from "wouter";
 import { useUser, useAuth } from "@/lib/AuthContext";
 import { usePermission } from "@/lib/usePermission";
 import { usePlan } from "@/lib/usePlan";
-import { supabase } from "@/lib/supabaseClient";
 import { useCRMContext } from "@/lib/CRMContext";
 import {
   LayoutDashboard,
@@ -58,12 +57,11 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
   const [location] = useLocation();
   const { user } = useUser();
   const { userId, signOut, isLoaded, orgName } = useAuth();
-  const { can, hasFullAccess, isLoaded: permLoaded } = usePermission();
+  const { can, hasFullAccess, isLoaded: permLoaded, roleName } = usePermission();
   const { canAccess } = usePlan();
   const ctx = useCRMContext();
   const { data: organizations } = ctx.getResource<Organization>("organizations");
   const org = organizations[0];
-  const [roleName, setRoleName] = useState<string | null>(null);
 
   // Preserve sidebar nav scroll position across remounts (e.g. Protected ↔ PermissionProtected)
   const navRef = useRef<HTMLElement>(null);
@@ -88,28 +86,6 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
       }
     });
   }, [location]);
-
-  // Fetch role name from app_users + roles tables
-  useEffect(() => {
-    if (!isLoaded || !userId) {
-      setRoleName(null);
-      return;
-    }
-    let cancelled = false;
-    supabase
-      .from('app_users')
-      .select('roles(name)')
-      .eq('auth_user_id', userId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!cancelled && (data as any)?.roles) {
-          setRoleName((data as any).roles.name);
-        } else if (!cancelled) {
-          setRoleName(null);
-        }
-      });
-    return () => { cancelled = true; };
-  }, [userId, isLoaded]);
 
   const displayName = user?.user_metadata?.full_name
     ?? user?.email?.split("@")[0]

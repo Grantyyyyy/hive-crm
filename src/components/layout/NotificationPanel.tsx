@@ -1,3 +1,4 @@
+import { useMemo } from "react"
 import { Bell, Check, Clock, Info, AlertCircle, ExternalLink, X } from "lucide-react"
 import { useCRMResource } from "@/lib/hooks"
 import type { Notification } from "@/lib/types"
@@ -9,7 +10,10 @@ export function NotificationPanel() {
   const { data: notifications, updateItem } = useCRMResource<Notification>('notifications')
   const [, navigate] = useLocation()
 
-  const unreadCount = notifications.filter(n => !n.isRead).length
+  const unreadCount = useMemo(
+    () => notifications.filter(n => !n.isRead).length,
+    [notifications]
+  )
 
   const handleMarkAsRead = async (id: string) => {
     await updateItem(id, { isRead: true }, true)
@@ -22,15 +26,15 @@ export function NotificationPanel() {
 
   const handleMarkAllAsRead = async () => {
     const unread = notifications.filter(n => !n.isRead)
-    for (const n of unread) {
-      await updateItem(n.id, { isRead: true }, true)
-    }
+    // Fire all updates in parallel instead of sequential awaits
+    await Promise.all(unread.map(n => updateItem(n.id, { isRead: true }, true)))
   }
 
   // Sort: unresolved first, then by date
-  const sortedNotifications = [...notifications].sort((a, b) => {
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  })
+  const sortedNotifications = useMemo(() =>
+    [...notifications].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    [notifications]
+  )
 
   const renderMessage = (message: string, isRead: boolean) => {
     const parts = message.split(/(\*\*.*?\*\*)/g)

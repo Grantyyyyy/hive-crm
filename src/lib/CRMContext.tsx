@@ -238,9 +238,11 @@ function calculateDiff(oldItem: any, patch: any) {
 
 // ── Provider ─────────────────────────────────────────────────────────────────
 
+// Only preload lightweight/essential resources needed for initial app shell.
+// Heavy tables (leads, contacts, deals, tasks, activities, projects) are
+// lazy-fetched on first use via getResource() to avoid blocking initial load.
 const PRELOAD_RESOURCES = [
-  "leads", "contacts", "deals", "tasks", "activities", "projects",
-  "task_tags", "task_tag_links", "notifications", "users", "organizations",
+  "notifications", "users", "organizations",
   "roles", "permissions",
 ]
 

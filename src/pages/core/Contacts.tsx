@@ -66,21 +66,41 @@ export function Contacts() {
     debouncedSetSearch(searchInput)
   }, [searchInput, debouncedSetSearch])
 
+  const contactActivityMap = useMemo(() => {
+    const map = new Map<string, { count: number; lastDate: string | null }>()
+    for (const a of activities) {
+      if (!a.contactId) continue
+      const existing = map.get(a.contactId)
+      if (!existing) {
+        map.set(a.contactId, { count: 1, lastDate: a.createdAt })
+      } else {
+        existing.count += 1
+        if (!existing.lastDate || a.createdAt > existing.lastDate) {
+          existing.lastDate = a.createdAt
+        }
+      }
+    }
+    return map
+  }, [activities])
+
+  const contactHasActiveDealSet = useMemo(() => {
+    const set = new Set<string>()
+    for (const d of deals) {
+      if (d.contactId && d.stage !== 'won' && d.stage !== 'lost') {
+        set.add(d.contactId)
+      }
+    }
+    return set
+  }, [deals])
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
     let result = contacts.map((contact): EnrichedContact => {
-      const contactActivities = activities
-        .filter(a => a.contactId === contact.id)
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      const lastActivity = contactActivities[0] ?? null
-      const hasActiveDeals = deals.some(
-        d => d.contactId === contact.id &&
-          d.stage !== 'won' &&
-          d.stage !== 'lost'
-      )
+      const activityInfo = contactActivityMap.get(contact.id) ?? { count: 0, lastDate: null }
+      const hasActiveDeals = contactHasActiveDealSet.has(contact.id)
       const score = calculateRelationshipScore(
-        contactActivities.length,
-        lastActivity?.createdAt ?? null,
+        activityInfo.count,
+        activityInfo.lastDate,
         hasActiveDeals
       )
       const scoreLabel = getRelationshipLabel(score)
@@ -89,7 +109,7 @@ export function Contacts() {
         ...contact,
         relationshipScore: score,
         relationshipLabel: scoreLabel,
-        lastActivityDate: lastActivity?.createdAt ?? null,
+        lastActivityDate: activityInfo.lastDate,
       }
     })
 
@@ -102,7 +122,6 @@ export function Contacts() {
       )
     }
 
-    // Tab filtering (mock logic for favorites/recent based on score/date)
     if (activeTab === 'recent') {
       result = result.sort((a, b) => (b.lastActivityDate || '').localeCompare(a.lastActivityDate || ''))
     } else if (activeTab === 'favorites') {
@@ -112,7 +131,7 @@ export function Contacts() {
     }
 
     return result
-  }, [contacts, search, activities, deals, activeTab])
+  }, [contacts, search, contactActivityMap, contactHasActiveDealSet, activeTab])
 
   const totalItems = filtered.length
   const totalPages = Math.ceil(totalItems / itemsPerPage)

@@ -136,15 +136,27 @@ function getLastActivityDate(dealId: string, activities: Activity[]): string | n
   return sorted[0]?.createdAt ?? null
 }
 
+function buildDealActivityMap(activities: Activity[]): Map<string, string | null> {
+  const map = new Map<string, string | null>()
+  for (const a of activities) {
+    if (!a.dealId) continue
+    const existing = map.get(a.dealId)
+    if (!existing || a.createdAt > existing) {
+      map.set(a.dealId, a.createdAt)
+    }
+  }
+  return map
+}
+
 interface DealCardContentProps {
   deal: Deal
   contactName: string
-  activities: Activity[]
+  lastActivityDate: string | null
   isDragging?: boolean
 }
 
 /** Pure presentational card — no dnd hooks, safe for DragOverlay */
-function DealCardContent({ deal, contactName, activities, isDragging = false }: DealCardContentProps) {
+function DealCardContent({ deal, contactName, lastActivityDate, isDragging = false }: DealCardContentProps) {
   const tags = ["SOFTWARE", "ENTERPRISE", "URGENT", "CONSULTING", "RECURRING"]
   const tag = tags[deal.id.charCodeAt(0) % tags.length]
 
@@ -173,7 +185,7 @@ function DealCardContent({ deal, contactName, activities, isDragging = false }: 
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
           <DealHealthBadge 
-            lastActivityDate={getLastActivityDate(deal.id, activities)} 
+            lastActivityDate={lastActivityDate} 
             createdAt={deal.createdAt}
             expectedCloseDate={deal.expectedCloseDate}
             updatedAt={deal.updatedAt}
@@ -207,11 +219,11 @@ function DealCardContent({ deal, contactName, activities, isDragging = false }: 
 interface SortableDealCardProps {
   deal: Deal
   contactName: string
-  activities: Activity[]
+  lastActivityDate: string | null
   onClick: () => void
 }
 
-function SortableDealCard({ deal, contactName, activities, onClick }: SortableDealCardProps) {
+function SortableDealCard({ deal, contactName, lastActivityDate, onClick }: SortableDealCardProps) {
   const {
     attributes,
     listeners,
@@ -235,7 +247,7 @@ function SortableDealCard({ deal, contactName, activities, onClick }: SortableDe
       {...listeners}
       onClick={onClick}
     >
-      <DealCardContent deal={deal} contactName={contactName} activities={activities} isDragging={isDragging} />
+      <DealCardContent deal={deal} contactName={contactName} lastActivityDate={lastActivityDate} isDragging={isDragging} />
     </div>
   )
 }
@@ -340,9 +352,9 @@ export function Deals() {
     currentPage * itemsPerPage
   )
 
+  const dealActivityMap = useMemo(() => buildDealActivityMap(activities), [activities])
+
   const dealsByStage = useMemo(() => {
-    // If 'all' (Active), show all deals in their respective stages.
-    // If 'won_lost', show only won/lost deals.
     const visibleDeals = deals.filter((d) =>
       dealViewFilter === 'won_lost'
         ? d.stage === 'won' || d.stage === 'lost'
@@ -353,8 +365,8 @@ export function Deals() {
       const filtered = visibleDeals.filter(d => d.stage === stage)
       
       acc[stage] = [...filtered].sort((a, b) => {
-        const healthA = getDealHealth(getLastActivityDate(a.id, activities), a.createdAt, a.expectedCloseDate, a.updatedAt)
-        const healthB = getDealHealth(getLastActivityDate(b.id, activities), b.createdAt, b.expectedCloseDate, b.updatedAt)
+        const healthA = getDealHealth(dealActivityMap.get(a.id) ?? null, a.createdAt, a.expectedCloseDate, a.updatedAt)
+        const healthB = getDealHealth(dealActivityMap.get(b.id) ?? null, b.createdAt, b.expectedCloseDate, b.updatedAt)
         
         const priority = { red: 0, amber: 1, green: 2 }
         if (priority[healthA] !== priority[healthB]) {
@@ -366,7 +378,7 @@ export function Deals() {
       
       return acc
     }, {} as Record<DealStage, Deal[]>)
-  }, [deals, activities, dealViewFilter])
+  }, [deals, dealActivityMap, dealViewFilter])
 
   const totalsByStage = useMemo(() => {
     const map: Record<string, number> = {}
@@ -570,7 +582,7 @@ export function Deals() {
                 header: "Health",
                 render: (d: Deal) => (
                   <DealHealthBadge 
-                    lastActivityDate={getLastActivityDate(d.id, activities)} 
+                    lastActivityDate={dealActivityMap.get(d.id) ?? null} 
                     createdAt={d.createdAt}
                     expectedCloseDate={d.expectedCloseDate}
                     updatedAt={d.updatedAt}
@@ -673,7 +685,7 @@ export function Deals() {
                             key={deal.id}
                             deal={deal}
                             contactName={contactMap.get(deal.contactId) || "Unknown"}
-                            activities={activities}
+                            lastActivityDate={dealActivityMap.get(deal.id) ?? null}
                             onClick={() => navigate(`/deals/${deal.id}`)}
                           />
                         ))}
@@ -702,7 +714,7 @@ export function Deals() {
                     <DealCardContent
                       deal={activeDeal}
                       contactName={contactMap.get(activeDeal.contactId) || "Unknown"}
-                      activities={activities}
+                      lastActivityDate={dealActivityMap.get(activeDeal.id) ?? null}
                       isDragging
                     />
                   </div>

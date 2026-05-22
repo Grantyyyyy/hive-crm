@@ -1,11 +1,20 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Search, Users, Handshake, FileText, ShoppingBag, ArrowRight } from "lucide-react";
 import { useLocation } from "wouter";
 import { useCRMResource } from "@/lib/hooks";
 import type { Contact, Deal, Quote, SalesOrder } from "@/lib/types";
 
-// Custom hook for debouncing the search query
+interface SearchableItem {
+  id: string;
+  type: string;
+  title: string;
+  subtitle: string;
+  searchText: string;
+  icon: any;
+  href: string;
+}
+
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
   useEffect(() => {
@@ -19,17 +28,15 @@ function useDebounce<T>(value: T, delay: number): T {
 
 export function GlobalSearch({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const [query, setQuery] = useState("");
-  const debouncedQuery = useDebounce(query, 200); // 200ms debounce
+  const debouncedQuery = useDebounce(query, 200);
   const [, setLocation] = useLocation();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch from unified CRM cache (data is already synced with backend via CRMProvider)
-  const { data: contacts } = useCRMResource<Contact>("contacts");
-  const { data: deals } = useCRMResource<Deal>("deals");
-  const { data: quotes } = useCRMResource<Quote>("quotes");
-  const { data: orders } = useCRMResource<SalesOrder>("orders");
+  const { data: contacts, isLoaded: contactsLoaded } = useCRMResource<Contact>("contacts");
+  const { data: deals, isLoaded: dealsLoaded } = useCRMResource<Deal>("deals");
+  const { data: quotes, isLoaded: quotesLoaded } = useCRMResource<Quote>("quotes");
+  const { data: orders, isLoaded: ordersLoaded } = useCRMResource<SalesOrder>("orders");
 
-  // Focus input when dialog opens
   useEffect(() => {
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -38,81 +45,77 @@ export function GlobalSearch({ open, onOpenChange }: { open: boolean; onOpenChan
     }
   }, [open]);
 
-  // Unified Search Results
+  // Pre-build flat searchable index — only runs when data changes, not on every keystroke
+  const searchIndex = useMemo<SearchableItem[]>(() => {
+    const items: SearchableItem[] = [];
+
+    for (const c of contacts) {
+      items.push({
+        id: c.id,
+        type: "contact",
+        title: c.name || "Unknown Contact",
+        subtitle: c.company || c.email || "Contact",
+        searchText: `${c.name} ${c.email ?? ""} ${c.company ?? ""}`.toLowerCase(),
+        icon: Users,
+        href: `/contacts/${c.id}`
+      });
+    }
+
+    for (const d of deals) {
+      items.push({
+        id: d.id,
+        type: "deal",
+        title: d.title || "Untitled Deal",
+        subtitle: d.value ? `$${Number(d.value).toLocaleString()}` : "Deal",
+        searchText: `${d.title}`.toLowerCase(),
+        icon: Handshake,
+        href: `/deals/${d.id}`
+      });
+    }
+
+    for (const q of quotes) {
+      items.push({
+        id: q.id,
+        type: "quote",
+        title: q.quoteNumber || "Quote",
+        subtitle: q.customerName || "No Customer",
+        searchText: `${q.quoteNumber} ${q.customerName ?? ""}`.toLowerCase(),
+        icon: FileText,
+        href: `/quotes/${q.id}`
+      });
+    }
+
+    for (const o of orders) {
+      items.push({
+        id: o.id,
+        type: "order",
+        title: o.orderNumber || "Order",
+        subtitle: o.customerName || "No Customer",
+        searchText: `${o.orderNumber} ${o.customerName ?? ""}`.toLowerCase(),
+        icon: ShoppingBag,
+        href: `/orders/${o.id}`
+      });
+    }
+
+    return items;
+  }, [contactsLoaded, dealsLoaded, quotesLoaded, ordersLoaded]);
+
+  // Fast search — single includes() check per item against pre-computed text
   const filteredResults = useMemo(() => {
     if (!debouncedQuery.trim()) return [];
 
     const lowerQ = debouncedQuery.toLowerCase();
-    const results: Array<{ id: string; type: string; title: string; subtitle: string; icon: any; href: string }> = [];
+    const results: SearchableItem[] = [];
 
-    // Filter Contacts
-    contacts.forEach(c => {
-      const matchName = c.name?.toLowerCase().includes(lowerQ);
-      const matchEmail = c.email?.toLowerCase().includes(lowerQ);
-      const matchCompany = c.company?.toLowerCase().includes(lowerQ);
-      
-      if (matchName || matchEmail || matchCompany) {
-        results.push({
-          id: c.id,
-          type: "contact",
-          title: c.name || "Unknown Contact",
-          subtitle: c.company || c.email || "Contact",
-          icon: Users,
-          href: `/contacts/${c.id}`
-        });
+    for (const item of searchIndex) {
+      if (item.searchText.includes(lowerQ)) {
+        results.push(item);
+        if (results.length >= 15) break;
       }
-    });
+    }
 
-    // Filter Deals
-    deals.forEach(d => {
-      const matchTitle = d.title?.toLowerCase().includes(lowerQ);
-      if (matchTitle) {
-        results.push({
-          id: d.id,
-          type: "deal",
-          title: d.title || "Untitled Deal",
-          subtitle: d.value ? `$${Number(d.value).toLocaleString()}` : "Deal",
-          icon: Handshake,
-          href: `/deals/${d.id}`
-        });
-      }
-    });
-
-    // Filter Quotes
-    quotes.forEach(q => {
-      const matchNumber = q.quoteNumber?.toLowerCase().includes(lowerQ);
-      const matchCustomer = q.customerName?.toLowerCase().includes(lowerQ);
-      if (matchNumber || matchCustomer) {
-        results.push({
-          id: q.id,
-          type: "quote",
-          title: q.quoteNumber || "Quote",
-          subtitle: q.customerName || "No Customer",
-          icon: FileText,
-          href: `/quotes/${q.id}`
-        });
-      }
-    });
-
-    // Filter Orders
-    orders.forEach(o => {
-      const matchNumber = o.orderNumber?.toLowerCase().includes(lowerQ);
-      const matchCustomer = o.customerName?.toLowerCase().includes(lowerQ);
-      if (matchNumber || matchCustomer) {
-        results.push({
-          id: o.id,
-          type: "order",
-          title: o.orderNumber || "Order",
-          subtitle: o.customerName || "No Customer",
-          icon: ShoppingBag,
-          href: `/orders/${o.id}`
-        });
-      }
-    });
-
-    // Limit to top 15 results to keep DOM light and snappy
-    return results.slice(0, 15);
-  }, [debouncedQuery, contacts, deals, quotes, orders]);
+    return results;
+  }, [debouncedQuery, searchIndex]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

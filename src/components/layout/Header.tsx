@@ -1,3 +1,4 @@
+import React, { useMemo } from "react";
 import { Search, Bell, Palette, Sun, Moon, User, LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUser, useAuth } from "@/lib/AuthContext";
@@ -13,14 +14,17 @@ interface HeaderProps {
   onSearchClick?: () => void;
 }
 
-export function Header({ onSearchClick }: HeaderProps) {
+export const Header = React.memo(function Header({ onSearchClick }: HeaderProps) {
   const { user } = useUser();
   const { signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [, setLocation] = useLocation();
 
   const { data: notifications } = useCRMResource<Notification>('notifications');
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = useMemo(
+    () => notifications.filter(n => !n.isRead).length,
+    [notifications]
+  );
   const initials = (user?.email ?? "U").slice(0, 2).toUpperCase();
 
   return (
@@ -108,4 +112,4 @@ export function Header({ onSearchClick }: HeaderProps) {
       </div>
     </header>
   );
-}
+});

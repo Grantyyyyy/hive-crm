@@ -1,1 +1,1 @@
-export { default } from '../src/server/api/invite-user';
+export { default } from '../src/server/api/invite-user.js';

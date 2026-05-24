@@ -46,14 +46,13 @@ export const TABLE_MAP: Record<string, string> = {
 type SnakeObject = Record<string, any>
 type CamelObject = Record<string, any>
 
-const UUID_FIELDS = [
+const UUID_FIELDS = new Set([
   "contact_id", "deal_id", "lead_id", "entity_id",
-  "converted_to_contact_id", "converted_to_deal_id",
   "converted_to_contact_id", "converted_to_deal_id",
   "customer_id", "project_id", "task_id", "tag_id",
   "parent_task_id", "inventory_item_id", "quote_id",
   "receipt_id", "receipt_item_id", "po_id", "po_item_id"
-]
+])
 
 const CAMEL_TO_DB: Record<string, string> = {
   isRead: "is_read",
@@ -92,6 +91,9 @@ const DB_TO_CAMEL: Record<string, string> = Object.fromEntries(
   Object.entries(CAMEL_TO_DB).map(([k, v]) => [v, k])
 )
 
+// Pre-compiled regex for snake_case → camelCase
+const SNAKE_TO_CAMEL_RE = /([-_][a-z])/g
+
 export function toSnake(obj: any): any {
   if (Array.isArray(obj)) {
     return obj.map((item) => toSnake(item))
@@ -100,10 +102,9 @@ export function toSnake(obj: any): any {
     const result: SnakeObject = {}
     for (const key in obj) {
       const mappedKey = CAMEL_TO_DB[key]
-      const snakeKey =
-        mappedKey || key.replace(/[A-Z]/g, (l) => `_${l.toLowerCase()}`)
+      const snakeKey = mappedKey ?? key.replace(/[A-Z]/g, (l) => `_${l.toLowerCase()}`)
       let value = obj[key]
-      if (UUID_FIELDS.includes(snakeKey) && value === "") value = null
+      if (UUID_FIELDS.has(snakeKey) && value === "") value = null
       result[snakeKey] = toSnake(value)
     }
     return result
@@ -119,11 +120,7 @@ export function toCamel(obj: any): any {
     const result: CamelObject = {}
     for (const key in obj) {
       const mappedKey = DB_TO_CAMEL[key]
-      const camelKey =
-        mappedKey ||
-        key.replace(/([-_][a-z])/g, (g) =>
-          g.toUpperCase().replace("-", "").replace("_", "")
-        )
+      const camelKey = mappedKey ?? key.replace(SNAKE_TO_CAMEL_RE, (g) => g.toUpperCase().replace("-", "").replace("_", ""))
       result[camelKey] = toCamel(obj[key])
     }
     return result
@@ -136,6 +133,7 @@ export function toCamel(obj: any): any {
 interface ResourceState<T> {
   data: T[]
   isLoaded: boolean
+  totalCount: number | null
 }
 
 // ── Context value ────────────────────────────────────────────────────────────
@@ -158,7 +156,7 @@ export interface CRMContextValue {
   fetchAuditLogs: (entityType: string, entityId: string) => Promise<any[]>
   fetchAllAuditLogs: () => Promise<any[]>
   insertAuditLog: (log: { entity_type: string, entity_id: string, action: string, diff?: any }) => Promise<void>
-  fetchResource: (name: string, options?: { limit?: number; offset?: number; append?: boolean }) => Promise<void>
+  fetchResource: (name: string, options?: { limit?: number; offset?: number; append?: boolean; withCount?: boolean }) => Promise<void>
   fetchRolesWithPermissions: () => Promise<any[]>
 }
 
@@ -261,7 +259,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
   // Single map holding arrays for every resource
   const [store, setStore] = useState<Record<string, ResourceState<any>>>(() =>
     Object.fromEntries(
-      Object.keys(TABLE_MAP).map((k) => [k, { data: [], isLoaded: false }])
+      Object.keys(TABLE_MAP).map((k) => [k, { data: [], isLoaded: false, totalCount: null }])
     )
   )
 
@@ -278,8 +276,8 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
 
   // ── Fetch a single resource ────────────────────────────────────────────────
   const fetchResource = useCallback(
-    async (name: string, options: { limit?: number; offset?: number; append?: boolean } = {}) => {
-      const { limit = FETCH_LIMIT, offset = 0, append = false } = options
+    async (name: string, options: { limit?: number; offset?: number; append?: boolean; withCount?: boolean } = {}) => {
+      const { limit = FETCH_LIMIT, offset = 0, append = false, withCount = false } = options
 
       // Only skip if we are doing a "full" fresh load and already have it
       if (!append && fetchedRef.current.has(name) && offset === 0) return
@@ -295,7 +293,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       try {
         let query = client
           .from(tableName)
-          .select("*")
+          .select("*", { count: withCount && offset === 0 ? "exact" : undefined })
           .order("created_at", { ascending: false })
           .range(offset, offset + limit - 1)
 
@@ -304,7 +302,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           query = query.eq(filterCol, organizationId)
         }
 
-        const { data: rows, error } = await query
+        const { data: rows, error, count } = await query
 
         if (error) throw error
 
@@ -314,7 +312,8 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
           ...prev,
           [name]: { 
             data: append ? [...(prev[name]?.data ?? []), ...mapped] : mapped, 
-            isLoaded: true 
+            isLoaded: true,
+            totalCount: count ?? prev[name]?.totalCount ?? null,
           },
         }))
       } catch (err) {
@@ -340,7 +339,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
       fetchedRef.current.clear()
       setStore(
         Object.fromEntries(
-          Object.keys(TABLE_MAP).map((k) => [k, { data: [], isLoaded: false }])
+          Object.keys(TABLE_MAP).map((k) => [k, { data: [], isLoaded: false, totalCount: null }])
         )
       )
     }
@@ -644,7 +643,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
 
     setStore((prev) => ({
       ...prev,
-      roles: { data: mapped, isLoaded: true },
+      roles: { data: mapped, isLoaded: true, totalCount: mapped.length },
     }))
 
     return mapped

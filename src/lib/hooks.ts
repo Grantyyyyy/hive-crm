@@ -18,7 +18,7 @@ export function useCRMResource<T extends { id: string }>(
   initialSearch: string = ""
 ) {
   const ctx = useCRMContext()
-  const { data, isLoaded } = ctx.getResource<T>(String(resourceName))
+  const { data, isLoaded, totalCount } = ctx.getResource<T>(String(resourceName))
   const [search, setSearch] = useState(initialSearch)
 
   const addItems = useCallback(
@@ -78,6 +78,7 @@ export function useCRMResource<T extends { id: string }>(
     setSearch,
     userId: ctx.userId,
     isLoaded,
+    totalCount,
     error: null,
     addItems,
     updateItem,

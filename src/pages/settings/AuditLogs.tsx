@@ -16,13 +16,11 @@ export function AuditLogs() {
   const itemsPerPage = 10
 
   useEffect(() => {
-    if (ctx?.fetchAllAuditLogs) {
-      ctx.fetchAllAuditLogs().then(data => {
-        setLogs(data)
-        setLoading(false)
-      })
-    }
-  }, [ctx])
+    ctx.fetchAllAuditLogs().then(data => {
+      setLogs(data)
+      setLoading(false)
+    })
+  }, [ctx.fetchAllAuditLogs])
 
   const filteredLogs = useMemo(() => {
     return logs.filter(log =>

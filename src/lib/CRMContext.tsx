@@ -3,6 +3,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react"
@@ -165,44 +166,45 @@ const CRMContext = createContext<CRMContextValue | null>(null)
 // ── Audit actor resolver ──────────────────────────────────────────────────────
 // changed_by stores the user's UID. We resolve display names from the app_users table via auth_user_id.
 
-async function resolveAuditActors(client: any, logs: any[], currentUser?: any): Promise<any[]> {
+async function resolveAuditActorsWithCache(
+  client: any,
+  logs: any[],
+  currentUser: any,
+  cache: Map<string, { name: string, avatarUrl: string }>
+): Promise<any[]> {
   if (logs.length === 0) return logs
 
-  // Collect unique auth UIDs from the logs
-  const authIds = [...new Set(logs.map((l: any) => l.changedBy).filter(Boolean))]
-  if (authIds.length === 0) return logs
-
-  // In Project 2 (the active one), the table is app_users and it lacks an avatarurl column.
-  // We match against both id and auth_user_id to be safe.
-  const { data: users } = await client
-    .from("app_users")
-    .select("id, auth_user_id, name")
-    .or(`id.in.(${authIds.map(id => `"${id}"`).join(',')}),auth_user_id.in.(${authIds.map(id => `"${id}"`).join(',')})`)
-
-  const userMap: Record<string, { name: string, avatarUrl: string }> = {}
-  
-  // Initialize with current user if provided
   if (currentUser) {
-    const profile = { 
-      name: currentUser.user_metadata?.full_name || currentUser.email || "Me", 
-      avatarUrl: currentUser.user_metadata?.avatar_url || "" 
-    }
-    userMap[currentUser.id] = profile
+    cache.set(currentUser.id, {
+      name: currentUser.user_metadata?.full_name || currentUser.email || "Me",
+      avatarUrl: currentUser.user_metadata?.avatar_url || "",
+    })
   }
 
-  for (const u of (users ?? [])) {
-    // Don't overwrite current user's rich metadata if we already have it
-    if (userMap[u.id] && userMap[u.id].avatarUrl) continue;
-    if (u.auth_user_id && userMap[u.auth_user_id] && userMap[u.auth_user_id].avatarUrl) continue;
+  const authIds = [...new Set(logs.map((l: any) => l.changedBy).filter(Boolean))]
+  const missingIds = authIds.filter((id) => !cache.has(id))
 
-    const profile = { name: u.name, avatarUrl: "" }
-    userMap[u.id] = profile
-    if (u.auth_user_id) userMap[u.auth_user_id] = profile
+  if (missingIds.length > 0) {
+    const quotedIds = missingIds.map(id => `"${id}"`).join(',')
+    const { data: users } = await client
+      .from("app_users")
+      .select("id, auth_user_id, name")
+      .or(`id.in.(${quotedIds}),auth_user_id.in.(${quotedIds})`)
+
+    for (const u of (users ?? [])) {
+      const profile = { name: u.name, avatarUrl: "" }
+      cache.set(u.id, profile)
+      if (u.auth_user_id) cache.set(u.auth_user_id, profile)
+    }
+
+    for (const id of missingIds) {
+      if (!cache.has(id)) cache.set(id, { name: "Unknown", avatarUrl: "" })
+    }
   }
 
   return logs.map((log: any) => ({
     ...log,
-    changedBy: userMap[log.changedBy] ?? { name: "Unknown", avatarUrl: "" },
+    changedBy: cache.get(log.changedBy) ?? { name: "Unknown", avatarUrl: "" },
   }))
 }
 
@@ -265,6 +267,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
 
   // Track which resources have already been fetched so we never double-fetch
   const fetchedRef = useRef<Set<string>>(new Set())
+  const auditActorCacheRef = useRef<Map<string, { name: string, avatarUrl: string }>>(new Map())
 
   // ── Supabase client factory ────────────────────────────────────────────────
   const getClient = useCallback(async () => {
@@ -538,7 +541,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         logger.error("[CRMContext] fetchAuditLogs error:", error)
         return []
       }
-      return resolveAuditActors(client, toCamel(data || []), user)
+      return resolveAuditActorsWithCache(client, toCamel(data || []), user, auditActorCacheRef.current)
     },
     [getClient, user]
   )
@@ -557,7 +560,7 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
         logger.error("[CRMContext] fetchAllAuditLogs error:", error)
         return []
       }
-      return resolveAuditActors(client, toCamel(data || []), user)
+      return resolveAuditActorsWithCache(client, toCamel(data || []), user, auditActorCacheRef.current)
     },
     [getClient, user]
   )
@@ -649,8 +652,37 @@ export function CRMProvider({ children }: { children: React.ReactNode }) {
     return mapped
   }, [getClient])
 
+  const value = useMemo<CRMContextValue>(
+    () => ({
+      userId,
+      organizationId,
+      getResource,
+      setResourceData,
+      getClient,
+      runAtomicUpdate,
+      fetchAuditLogs,
+      fetchAllAuditLogs,
+      insertAuditLog,
+      fetchResource,
+      fetchRolesWithPermissions,
+    }),
+    [
+      userId,
+      organizationId,
+      getResource,
+      setResourceData,
+      getClient,
+      runAtomicUpdate,
+      fetchAuditLogs,
+      fetchAllAuditLogs,
+      insertAuditLog,
+      fetchResource,
+      fetchRolesWithPermissions,
+    ]
+  )
+
   return (
-    <CRMContext.Provider value={{ userId, organizationId, getResource, setResourceData, getClient, runAtomicUpdate, fetchAuditLogs, fetchAllAuditLogs, insertAuditLog, fetchResource, fetchRolesWithPermissions }}>
+    <CRMContext.Provider value={value}>
       {children}
     </CRMContext.Provider>
   )

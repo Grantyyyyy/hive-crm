@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useCRMResource } from '@/lib/hooks';
 import type { Discount, DiscountType, DiscountScope } from '@/lib/types';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,11 +24,12 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ListSkeleton } from "@/components/ui/skeletons";
+import { SettingsSkeleton } from "@/components/ui/skeletons";
 import { toast } from 'sonner';
 import { DeleteModal } from "@/components/ui/delete-modal";
 import { Switch } from '@/components/ui/switch';
 import { generateId } from '@/lib/helpers';
+import { SettingsHeader } from "@/components/reusables/SettingsHeader";
 
 export function Discounts() {
   const { data: discounts, isLoaded, addItems, updateItem, deleteItem } = useCRMResource<Discount>('discounts');
@@ -37,7 +37,7 @@ export function Discounts() {
   const [search, setSearch] = useState("");
   const [showDialog, setShowDialog] = useState(false);
   const [editingDiscount, setEditingDiscount] = useState<Discount | null>(null);
-  
+
   const [formData, setFormData] = useState<{
     name: string;
     type: DiscountType;
@@ -155,40 +155,36 @@ export function Discounts() {
     }
   };
 
-  if (!isLoaded) return <ListSkeleton />;
+  if (!isLoaded) return <SettingsSkeleton />;
 
   return (
-    <div className="animate-fade-in space-y-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Discount Management</h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">Create and manage reusable pricing discounts and privileges.</p>
-        </div>
-        
-        <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
-          {/* Minimized Search */}
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              placeholder="Search discounts..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all"
-            />
+    <div className="animate-in fade-in duration-500 space-y-6">
+      <SettingsHeader 
+        category="Sales Configuration"
+        title="Discount Management"
+        actions={
+          <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                placeholder="Search discounts..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-medium focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all"
+              />
+            </div>
+
+            <Button
+              variant="brand"
+              onClick={() => setShowDialog(true)}
+              className="shadow-md shadow-accent/10 dark:shadow-none w-full sm:w-auto h-10"
+            >
+              <PlusCircle className="w-4 h-4 mr-2" /> Add Discount
+            </Button>
           </div>
+        }
+      />
 
-          <Button
-            variant="brand"
-            onClick={() => setShowDialog(true)}
-            className="shadow-md shadow-accent/10 dark:shadow-none w-full sm:w-auto h-10"
-          >
-            <PlusCircle className="w-4 h-4 mr-2" /> Add Discount
-          </Button>
-        </div>
-      </div>
-
-      {/* Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredDiscounts.map((discount) => (
           <div
@@ -198,13 +194,11 @@ export function Discounts() {
               !discount.isActive && "opacity-75 grayscale-[0.5]"
             )}
           >
-            {/* Background Decorative Element */}
             <div className="absolute top-0 right-0 p-8 -mr-8 -mt-8 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity pointer-events-none">
               <Tag className="size-32 rotate-12 text-accent" />
             </div>
 
             <div className="p-6 h-full flex flex-col relative">
-              {/* Header: Name, System Badge, Switch */}
               <div className="flex items-start justify-between mb-6">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -218,7 +212,7 @@ export function Discounts() {
                   <div className="flex gap-2">
                     <span className={cn(
                       "text-[9px] font-black uppercase tracking-[0.1em] px-2 py-0.5 rounded-full border",
-                      discount.scope === 'order' 
+                      discount.scope === 'order'
                         ? "bg-accent-dim text-accent border-accent/10"
                         : "bg-accent-dim text-accent border-accent/10"
                     )}>
@@ -251,7 +245,6 @@ export function Discounts() {
                 </div>
               </div>
 
-              {/* Discount Value Section */}
               <div className="flex items-center gap-4 mb-6">
                 <div className="size-14 rounded-2xl bg-accent-dim flex items-center justify-center text-accent shadow-inner">
                   <Tag className="w-7 h-7" />
@@ -269,14 +262,12 @@ export function Discounts() {
                 </div>
               </div>
 
-              {/* Description */}
               {discount.description && (
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 line-clamp-2 min-h-[40px] italic">
                   "{discount.description}"
                 </p>
               )}
 
-              {/* Bottom Info Grid */}
               <div className="mt-auto grid grid-cols-2 gap-3 pt-6 border-t border-slate-100 dark:border-slate-800">
                 <div className="space-y-1">
                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Min Requirement</p>
@@ -319,7 +310,6 @@ export function Discounts() {
         </div>
       )}
 
-      {/* Form Sheet */}
       <Sheet open={showDialog} onOpenChange={(v) => !v && resetForm()}>
         <SheetContent className="p-0 flex flex-col">
           <SheetHeader className="px-8 pt-8 pb-4 shrink-0">
@@ -386,7 +376,7 @@ export function Discounts() {
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-slate-400 pointer-events-none" />
                   </div>
                 </div>
-                
+
                 <div className="space-y-2 pt-8">
                   <div className="flex items-center gap-2">
                     <Switch

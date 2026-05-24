@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { useUser, useAuth } from "@/lib/AuthContext";
 import { usePermission } from "@/lib/usePermission";
-import { supabase } from "@/lib/supabaseClient";
+import { usePlan } from "@/lib/usePlan";
 import { useCRMContext } from "@/lib/CRMContext";
 import {
   LayoutDashboard,
@@ -56,12 +56,12 @@ interface SidebarProps {
 export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: SidebarProps) {
   const [location] = useLocation();
   const { user } = useUser();
-  const { userId, signOut, isLoaded } = useAuth();
-  const { can, hasFullAccess, isLoaded: permLoaded } = usePermission();
+  const { userId, signOut, isLoaded, orgName } = useAuth();
+  const { can, hasFullAccess, isLoaded: permLoaded, roleName } = usePermission();
+  const { canAccess } = usePlan();
   const ctx = useCRMContext();
   const { data: organizations } = ctx.getResource<Organization>("organizations");
   const org = organizations[0];
-  const [roleName, setRoleName] = useState<string | null>(null);
 
   // Preserve sidebar nav scroll position across remounts (e.g. Protected ↔ PermissionProtected)
   const navRef = useRef<HTMLElement>(null);
@@ -86,28 +86,6 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
       }
     });
   }, [location]);
-
-  // Fetch role name from app_users + roles tables
-  useEffect(() => {
-    if (!isLoaded || !userId) {
-      setRoleName(null);
-      return;
-    }
-    let cancelled = false;
-    supabase
-      .from('app_users')
-      .select('roles(name)')
-      .eq('auth_user_id', userId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!cancelled && (data as any)?.roles) {
-          setRoleName((data as any).roles.name);
-        } else if (!cancelled) {
-          setRoleName(null);
-        }
-      });
-    return () => { cancelled = true; };
-  }, [userId, isLoaded]);
 
   const displayName = user?.user_metadata?.full_name
     ?? user?.email?.split("@")[0]
@@ -176,6 +154,11 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
     return navGroups.map(group => ({
       ...group,
       links: group.links.filter(link => {
+        // Plan-based gating
+        if (link.href === "/inventory" && !canAccess('inventory')) return false
+        if ((link.href === "/purchase-orders" || link.href === "/purchase-requests" || link.href === "/vendors") && !canAccess('procurement')) return false
+        if (link.href === "/reports" && !canAccess('reports')) return false
+
         // No perm required — always visible (dashboard, profile)
         if (!link.perm) return true
         // Permissions not loaded yet — hide until we know (prevents flashing)
@@ -186,7 +169,7 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
         return can(link.perm!, "read")
       }),
     })).filter(group => group.links.length > 0) // drop empty groups
-  }, [navGroups, permLoaded, hasFullAccess, can])
+  }, [navGroups, permLoaded, hasFullAccess, can, canAccess])
 
   const sidebarClass = cn(
     "fixed inset-y-0 left-0 z-50 flex flex-col bg-bg-surface border-r border-border transition-[width] duration-300 ease-in-out",
@@ -194,52 +177,7 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
     mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
   );
 
-  // ── User avatar + sign-out popover (non-collapsed) ──────────────────────
-  const UserMenu = () => (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button className="flex items-center gap-3 w-full p-1 rounded-xl hover:bg-bg-elevated/50 transition-colors cursor-pointer">
-          <div className="w-9 h-9 shrink-0 rounded-lg bg-accent-dim border border-accent/20 flex items-center justify-center text-accent font-bold text-xs">
-            {initials}
-          </div>
-          {!collapsed && (
-            <div className="flex flex-col min-w-0 flex-1 text-left">
-              <span className="text-sm font-semibold text-text-primary truncate">
-                {displayName}
-              </span>
-              <span className="text-[11px] text-text-muted font-medium truncate uppercase tracking-tight">
-                {displayRole}
-              </span>
-            </div>
-          )}
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-56 p-2" align="start" side="top">
-        <div className="px-3 py-2 border-b border-border mb-2">
-          <p className="text-sm font-bold text-text-primary truncate">{displayName}</p>
-          <p className="text-xs text-text-muted truncate">{user?.email}</p>
-        </div>
-        <button
-          onClick={() => { signOut(); }}
-          className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-red/80 hover:bg-red/10 hover:text-red transition-all text-left"
-        >
-          <LogOut className="w-4 h-4" />
-          Sign Out
-        </button>
-      </PopoverContent>
-    </Popover>
-  );
 
-  // ── Compact avatar for collapsed sidebar ────────────────────────────────
-  const CompactUserAvatar = () => (
-    <button
-      onClick={() => signOut()}
-      className="w-9 h-9 shrink-0 rounded-lg bg-accent-dim border border-accent/20 flex items-center justify-center text-accent font-bold text-xs hover:ring-2 hover:ring-accent/30 transition-all cursor-pointer"
-      title={`Sign out (${displayName})`}
-    >
-      {initials}
-    </button>
-  );
 
   return (
     <>
@@ -328,30 +266,89 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
           ))}
         </nav>
 
-        {/* Bottom Section - User Profile */}
+        {/* Organization Section at Bottom */}
         <div className="p-4 border-t border-border shrink-0">
           {!collapsed ? (
             <div className="flex items-center gap-2">
               <div className="flex-1 min-w-0">
-                <UserMenu />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="flex items-center gap-2 w-full p-2 rounded-xl bg-slate-50 dark:bg-slate-900/50 hover:bg-bg-elevated transition-colors cursor-pointer border border-border/50 group/org">
+                      <div className="size-9 shrink-0 rounded-lg bg-accent-dim border border-accent/20 flex items-center justify-center text-accent">
+                        {org?.appLogoUrl ? (
+                          <img src={org.appLogoUrl} alt="" className="w-6 h-6 object-contain" />
+                        ) : (
+                          <Building2 className="w-5 h-5" />
+                        )}
+                      </div>
+                      <div className="flex flex-col min-w-0 flex-1 text-left">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-text-muted leading-tight group-hover/org:text-accent transition-colors">
+                          Organization
+                        </span>
+                        <span className="text-sm font-bold text-text-primary truncate">
+                          {orgName ?? '—'}
+                        </span>
+                      </div>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-56 p-2" align="start" side="top">
+                    <div className="px-3 py-2 border-b border-border mb-2">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-text-muted mb-1">Organization</p>
+                      <p className="text-sm font-bold text-text-primary truncate">{orgName ?? '—'}</p>
+                    </div>
+                    <button
+                      onClick={() => signOut()}
+                      className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-rose-500 hover:bg-rose-500/10 transition-all text-left"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </button>
+                  </PopoverContent>
+                </Popover>
               </div>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setCollapsed(true)}
-                className="p-1.5 h-8 w-8 text-text-muted shrink-0"
+                className="h-9 w-9 text-text-muted hover:bg-bg-elevated rounded-xl shrink-0"
               >
                 <PanelLeftClose className="w-4 h-4" />
               </Button>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-4 py-2">
-              <CompactUserAvatar />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button 
+                    className="w-10 h-10 shrink-0 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-border/50 flex items-center justify-center transition-all cursor-pointer hover:bg-bg-elevated text-accent"
+                    title={orgName ?? 'Organization'}
+                  >
+                    {org?.appLogoUrl ? (
+                      <img src={org.appLogoUrl} alt="" className="w-6 h-6 object-contain" />
+                    ) : (
+                      <Building2 className="w-5 h-5" />
+                    )}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 p-2" align="start" side="right">
+                  <div className="px-3 py-2 border-b border-border mb-2">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-text-muted mb-1">Organization</p>
+                    <p className="text-sm font-bold text-text-primary truncate">{orgName ?? '—'}</p>
+                  </div>
+                  <button
+                    onClick={() => signOut()}
+                    className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-rose-500 hover:bg-rose-500/10 transition-all text-left"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign Out
+                  </button>
+                </PopoverContent>
+              </Popover>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setCollapsed(false)}
-                className="p-1.5 h-8 w-8 text-text-muted"
+                className="h-10 w-10 text-text-muted hover:bg-bg-elevated rounded-xl"
               >
                 <PanelLeftOpen className="w-4 h-4" />
               </Button>

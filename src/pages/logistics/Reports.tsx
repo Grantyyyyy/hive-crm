@@ -17,6 +17,8 @@ import {
 import { cn } from "@/lib/utils"
 import { useCRMResource } from "@/lib/hooks"
 import { useAuth } from "@/lib/AuthContext"
+import { usePlan } from "@/lib/usePlan"
+import { UpgradeBanner } from "@/components/reusables/UpgradeBanner"
 import { useTheme } from "@/lib/ThemeProvider"
 import { getBrandColorPreset } from "@/lib/brandColors"
 import { ListSkeleton } from "@/components/ui/skeletons"
@@ -26,6 +28,7 @@ import { formatCurrency } from "@/lib/helpers"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, ComposedChart, Line
 } from "recharts"
+import { PageHeader } from "@/components/reusables/PageHeader"
 
 type Period = "30d" | "6m" | "1y" | "all"
 
@@ -93,6 +96,8 @@ export function Reports() {
     return theme === "dark" ? preset.dark.accent : preset.light.accent
   }, [brandColor, theme])
   const categoryColors = useMemo(() => [accentColor, ...REPORT_BASE_COLORS], [accentColor])
+
+  const { canAccess } = usePlan()
 
   // ── Hook Safety: Ensure all hooks are called before any early returns ──────
 
@@ -210,47 +215,49 @@ export function Reports() {
   const allLoaded = ordersLoaded && quotesLoaded && dealsLoaded && invLoaded && contactsLoaded && leadsLoaded && txLoaded
   if (!allLoaded) return <ListSkeleton />
 
+  if (!canAccess('reports')) {
+    return <UpgradeBanner feature="Reports" description="Access detailed inventory and procurement analytics." storageKey="banner-reports-dismissed" />
+  }
+
   const selectedPeriodLabel = PERIOD_OPTIONS.find(p => p.value === period)?.label || "Last 6 Months"
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen">
-      <div className="mx-auto p-4 md:p-6 max-w-full animate-fade-in space-y-4">
+      <div className="mx-auto px-4 pt-2 pb-4 md:px-8 md:pt-4 md:pb-8 max-w-full animate-fade-in space-y-6">
 
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
-          <div className="flex items-center gap-4">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-1">Intelligence</p>
-              <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Reports</h1>
-              <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Actionable insights for your business operations.</p>
+        <PageHeader 
+          category="Intelligence"
+          title="Reports"
+          description="Actionable insights for your business operations."
+          className="px-0 bg-transparent border-none pb-2"
+          actions={
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="relative">
+                <button
+                  onClick={() => setPeriodOpen(v => !v)}
+                  className="flex items-center gap-2 h-10 px-4 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95 shadow-sm"
+                >
+                  <Calendar className="w-4 h-4" />
+                  {selectedPeriodLabel}
+                  <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", periodOpen && "rotate-180")} />
+                </button>
+                {periodOpen && (
+                  <div className="absolute right-0 top-full mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl z-50 min-w-[180px] py-1 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                    {PERIOD_OPTIONS.map(opt => (
+                      <button
+                        key={opt.value}
+                        onClick={() => { setPeriod(opt.value); setPeriodOpen(false) }}
+                        className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="relative">
-              <button
-                onClick={() => setPeriodOpen(v => !v)}
-                className="flex items-center gap-2 h-10 px-4 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95 shadow-sm"
-              >
-                <Calendar className="w-4 h-4" />
-                {selectedPeriodLabel}
-                <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", periodOpen && "rotate-180")} />
-              </button>
-              {periodOpen && (
-                <div className="absolute right-0 top-full mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl z-50 min-w-[180px] py-1 overflow-hidden animate-in fade-in slide-in-from-top-2">
-                  {PERIOD_OPTIONS.map(opt => (
-                    <button
-                      key={opt.value}
-                      onClick={() => { setPeriod(opt.value); setPeriodOpen(false) }}
-                      className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+          }
+        />
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

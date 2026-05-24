@@ -78,14 +78,17 @@ export function AddSalesOrderModal({ open, onOpenChange, onSuccess }: AddSalesOr
         </DialogHeader>
 
         <div className="flex-1 overflow-hidden relative">
-          <SalesOrderForm
-            onSave={handleSave}
-            onCancel={() => onOpenChange(false)}
-            contacts={contacts}
-            inventory={inventory}
-            isSaving={isSaving}
-            className="flex-1"
-          />
+          {open && (
+            <SalesOrderForm
+              key="new-order"
+              onSave={handleSave}
+              onCancel={() => onOpenChange(false)}
+              contacts={contacts}
+              inventory={inventory}
+              isSaving={isSaving}
+              className="flex-1"
+            />
+          )}
         </div>
       </DialogContent>
     </Dialog>

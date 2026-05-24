@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button"
 import { Pagination } from "@/components/ui/Pagination"
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
+import { usePlan } from "@/lib/usePlan"
+import { UpgradeBanner } from "@/components/reusables/UpgradeBanner"
 import { cn } from "@/lib/utils"
 import type { Vendor, VendorStatus } from "@/lib/types"
 import {
@@ -25,9 +27,9 @@ import {
 } from "@/components/ui/sheet"
 import { VendorForm } from "@/components/crmComponent/VendorForm"
 import { ListSkeleton } from "@/components/ui/skeletons"
-import { StatusTabs } from "@/components/reusables/StatusTabs"
-import type { StatusTab } from "@/components/reusables/StatusTabs"
+import { StatusTabs, type StatusTab } from "@/components/reusables/StatusTabs"
 import { ProcurementDataTable, type ProcurementColumn } from "@/components/reusables/ProcurementDataTable"
+import { PageHeader } from "@/components/reusables/PageHeader"
 
 export function Vendors() {
   const [, navigate] = useLocation()
@@ -42,6 +44,12 @@ export function Vendors() {
   const [activeTab, setActiveTab] = useState<VendorStatus | 'all'>('all')
   const [currentPage, setCurrentPage] = useState(1)
   const [showSheet, setShowSheet] = useState(false)
+
+  const { canAccess } = usePlan()
+
+  if (!canAccess('procurement')) {
+    return <UpgradeBanner feature="Procurement" description="Manage purchase orders, vendors, and procurement workflows." storageKey="banner-vendors-dismissed" />
+  }
 
   const itemsPerPage = 10
 
@@ -149,28 +157,28 @@ export function Vendors() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen font-sans">
-      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
+      <div className="mx-auto px-4 pt-2 pb-4 md:px-8 md:pt-4 md:pb-8 max-w-full animate-fade-in space-y-6">
 
-        {/* Simplified Header */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-1">Procurement</p>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Vendors</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Manage your global supply chain and procurement partners.</p>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <Button variant="outlineNeutral">
-              <Download className="w-4 h-4" /> Export
-            </Button>
-            <Button
-              variant="brand"
-              onClick={() => setShowSheet(true)}
-            >
-              <PlusCircle className="w-4 h-4" /> Register Partner
-            </Button>
-          </div>
-        </div>
+        <PageHeader 
+          category="Procurement"
+          title="Vendors"
+          description="Manage your global supply chain and procurement partners."
+          className="px-0 bg-transparent border-none pb-2"
+          actions={
+            <div className="flex items-center gap-3 shrink-0">
+              <Button variant="outlineNeutral">
+                <Download className="w-4 h-4 mr-2" /> Export
+              </Button>
+              <Button
+                variant="brand"
+                onClick={() => setShowSheet(true)}
 
+              >
+                <PlusCircle className="w-4 h-4 mr-2" /> Register Partner
+              </Button>
+            </div>
+          }
+        />
         {/* Search & Filters */}
         <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center">
           <div className="relative flex-1 w-full lg:max-w-md">

@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from "react"
 import { DataTable } from "@/components/reusables/DataTable"
+import { PageHeader } from "@/components/reusables/PageHeader"
+import { StatusTabs, type StatusTab } from "@/components/reusables/StatusTabs"
 import { useLocation } from "wouter"
 import {
   BarChart3,
@@ -45,6 +47,7 @@ import { LostReasonModal } from "@/components/crmComponent/LostReasonModal"
 import { formatCurrency, getDealHealth } from "@/lib/helpers"
 import { toast } from "sonner"
 import { useCRMResource } from "@/lib/hooks"
+import { usePlan } from "@/lib/usePlan"
 import { ListSkeleton } from "@/components/ui/skeletons"
 import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 import type { Deal, DealStage, Contact } from "@/lib/types"
@@ -133,15 +136,27 @@ function getLastActivityDate(dealId: string, activities: Activity[]): string | n
   return sorted[0]?.createdAt ?? null
 }
 
+function buildDealActivityMap(activities: Activity[]): Map<string, string | null> {
+  const map = new Map<string, string | null>()
+  for (const a of activities) {
+    if (!a.dealId) continue
+    const existing = map.get(a.dealId)
+    if (!existing || a.createdAt > existing) {
+      map.set(a.dealId, a.createdAt)
+    }
+  }
+  return map
+}
+
 interface DealCardContentProps {
   deal: Deal
   contactName: string
-  activities: Activity[]
+  lastActivityDate: string | null
   isDragging?: boolean
 }
 
 /** Pure presentational card — no dnd hooks, safe for DragOverlay */
-function DealCardContent({ deal, contactName, activities, isDragging = false }: DealCardContentProps) {
+function DealCardContent({ deal, contactName, lastActivityDate, isDragging = false }: DealCardContentProps) {
   const tags = ["SOFTWARE", "ENTERPRISE", "URGENT", "CONSULTING", "RECURRING"]
   const tag = tags[deal.id.charCodeAt(0) % tags.length]
 
@@ -170,7 +185,7 @@ function DealCardContent({ deal, contactName, activities, isDragging = false }: 
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
           <DealHealthBadge 
-            lastActivityDate={getLastActivityDate(deal.id, activities)} 
+            lastActivityDate={lastActivityDate} 
             createdAt={deal.createdAt}
             expectedCloseDate={deal.expectedCloseDate}
             updatedAt={deal.updatedAt}
@@ -204,11 +219,11 @@ function DealCardContent({ deal, contactName, activities, isDragging = false }: 
 interface SortableDealCardProps {
   deal: Deal
   contactName: string
-  activities: Activity[]
+  lastActivityDate: string | null
   onClick: () => void
 }
 
-function SortableDealCard({ deal, contactName, activities, onClick }: SortableDealCardProps) {
+function SortableDealCard({ deal, contactName, lastActivityDate, onClick }: SortableDealCardProps) {
   const {
     attributes,
     listeners,
@@ -232,7 +247,7 @@ function SortableDealCard({ deal, contactName, activities, onClick }: SortableDe
       {...listeners}
       onClick={onClick}
     >
-      <DealCardContent deal={deal} contactName={contactName} activities={activities} isDragging={isDragging} />
+      <DealCardContent deal={deal} contactName={contactName} lastActivityDate={lastActivityDate} isDragging={isDragging} />
     </div>
   )
 }
@@ -274,13 +289,20 @@ export function Deals() {
 
   const { data: activities } = useCRMResource<Activity>('activities')
 
+  const { isAtLimit } = usePlan()
+
+  const atDealLimit = isAtLimit('deals', deals.length)
+
   const [showModal, setShowModal] = useState(false)
   const [viewMode, setViewMode] = useState<"board" | "list">("board")
-  const [autoPrioritize, setAutoPrioritize] = useState(true)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [prefilledStage, setPrefilledStage] = useState<DealStage | undefined>(undefined)
   const [pendingDelete, setPendingDelete] = useState<Deal | null>(null)
   const [pendingLostDeal, setPendingLostDeal] = useState<Deal | null>(null)
+  const [dealViewFilter, setDealViewFilter] = useState<'all' | 'won_lost'>('all')
+  const dealViewTabs: StatusTab<'won_lost'>[] = [
+    { value: 'won_lost', label: 'Won / Lost' }
+  ]
   const [currentPage, setCurrentPage] = useState(1)
   const [searchInput, setSearchInput] = useState("")
   const itemsPerPage = 10
@@ -308,13 +330,20 @@ export function Deals() {
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
     return deals
-      .filter(
-        (d) =>
+      .filter((d) => {
+        const matchesFilter = dealViewFilter === 'won_lost'
+          ? d.stage === 'won' || d.stage === 'lost'
+          : true // Show all deals in 'Active Deals' (All) mode
+
+        if (!matchesFilter) return false
+
+        return (
           d.title.toLowerCase().includes(q) ||
           (contactMap.get(d.contactId)?.toLowerCase().includes(q) ?? false)
-      )
+        )
+      })
       .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))
-  }, [deals, search, contactMap])
+  }, [deals, search, contactMap, dealViewFilter])
 
   const totalDeals = filtered.length
   const totalPages = Math.ceil(totalDeals / itemsPerPage)
@@ -323,16 +352,21 @@ export function Deals() {
     currentPage * itemsPerPage
   )
 
-  const dealsByStage = useMemo(() => {
-    return DEAL_STAGES.reduce((acc, stage) => {
-      const filtered = deals.filter(d => d.stage === stage)
-      
-      // Sort by health only if autoPrioritize is active
-      acc[stage] = [...filtered].sort((a, b) => {
-        if (!autoPrioritize) return 0 // Maintain original order (by creation)
+  const dealActivityMap = useMemo(() => buildDealActivityMap(activities), [activities])
 
-        const healthA = getDealHealth(getLastActivityDate(a.id, activities), a.createdAt, a.expectedCloseDate, a.updatedAt)
-        const healthB = getDealHealth(getLastActivityDate(b.id, activities), b.createdAt, b.expectedCloseDate, b.updatedAt)
+  const dealsByStage = useMemo(() => {
+    const visibleDeals = deals.filter((d) =>
+      dealViewFilter === 'won_lost'
+        ? d.stage === 'won' || d.stage === 'lost'
+        : true
+    )
+
+    return DEAL_STAGES.reduce((acc, stage) => {
+      const filtered = visibleDeals.filter(d => d.stage === stage)
+      
+      acc[stage] = [...filtered].sort((a, b) => {
+        const healthA = getDealHealth(dealActivityMap.get(a.id) ?? null, a.createdAt, a.expectedCloseDate, a.updatedAt)
+        const healthB = getDealHealth(dealActivityMap.get(b.id) ?? null, b.createdAt, b.expectedCloseDate, b.updatedAt)
         
         const priority = { red: 0, amber: 1, green: 2 }
         if (priority[healthA] !== priority[healthB]) {
@@ -344,7 +378,7 @@ export function Deals() {
       
       return acc
     }, {} as Record<DealStage, Deal[]>)
-  }, [deals, activities])
+  }, [deals, dealActivityMap, dealViewFilter])
 
   const totalsByStage = useMemo(() => {
     const map: Record<string, number> = {}
@@ -428,98 +462,82 @@ export function Deals() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen font-sans">
-      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
+      <div className="mx-auto px-4 pt-2 pb-4 md:px-8 md:pt-4 md:pb-8 max-w-full animate-fade-in space-y-6">
 
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-1">Sales Operations</p>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Pipeline</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Track and manage active sales opportunities.</p>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0">
-
-
-            <Button variant="outline" onClick={handleExportCSV} className="border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
-              <DollarSign className="w-4 h-4" />
-              Export CSV
-            </Button>
-
-            {viewMode === "list" && (
-              <Button
-                variant="brand"
-                onClick={() => handleOpenCreateModal()}
-              >
-                <PlusCircle className="w-4 h-4" /> Create Deal
+        <PageHeader 
+          category="Sales Operations"
+          title="Pipeline"
+          description="Track and manage active sales opportunities."
+          className="px-0 bg-transparent border-none pb-2"
+          actions={
+            <div className="flex items-center gap-3 shrink-0">
+              <Button variant="outline" onClick={handleExportCSV} className="border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
+                <DollarSign className="w-4 h-4" />
+                Export CSV
               </Button>
-            )}
-            <div className="bg-white dark:bg-slate-900 p-1 rounded-md border border-slate-200 dark:border-slate-800 flex items-center mr-2 shadow-sm gap-1">
-              <button
-                onClick={() => setAutoPrioritize(!autoPrioritize)}
-                className={cn(
-                  "h-8 px-3 rounded text-[11px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-2",
-                  autoPrioritize
-                    ? "bg-amber-500 text-white shadow-md shadow-amber-500/20"
-                    : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                )}
-              >
-                <Zap className={cn("w-3.5 h-3.5", autoPrioritize ? "fill-current" : "")} />
-                Prioritize
-              </button>
-            </div>
 
-            <div className="bg-white dark:bg-slate-900 p-1 rounded-md border border-slate-200 dark:border-slate-800 flex items-center mr-2 shadow-sm gap-1">
-              <button
-                onClick={() => setViewMode("board")}
-                className={cn(
-                  "h-8 px-3 rounded text-[11px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-2",
-                  viewMode === "board"
-                    ? "bg-accent text-white shadow-md shadow-accent/20"
-                    : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                )}
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                Kanban
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={cn(
-                  "h-8 px-3 rounded text-[11px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-2",
-                  viewMode === "list"
-                    ? "bg-accent text-white shadow-md shadow-accent/20"
-                    : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                )}
-              >
-                <List className="w-3.5 h-3.5" />
-                List
-              </button>
+              {viewMode === "list" && (
+                <Button
+                  variant="brand"
+                  onClick={() => handleOpenCreateModal()}
+                  disabled={atDealLimit}
+                  title={atDealLimit ? "Upgrade to add more deals" : undefined}
+                  className={atDealLimit ? "disabled:opacity-50 disabled:cursor-not-allowed" : ""}
+                >
+                  <PlusCircle className="w-4 h-4" /> Create Deal
+                </Button>
+              )}
+
             </div>
-          </div>
-        </div>
+          }
+        />
 
         {/* Unified Search Bar */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6 mb-2">
-          <div className="flex items-center gap-8 overflow-x-auto scrollbar-none">
-            <button className="pb-4 font-bold text-sm tracking-wide text-accent relative flex items-center gap-2 cursor-pointer">
-              Active Deals
-              <div className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-accent rounded-t-full" />
-            </button>
-            <button className="pb-4 font-bold text-sm tracking-wide text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors cursor-pointer opacity-50">
-              Won / Lost
-            </button>
-          </div>
-
-          <div className="flex-1 w-full lg:max-w-xl pb-4 lg:pb-3">
-            <div className="relative group/search">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within/search:text-accent transition-colors" />
+        <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center border-b border-slate-200 dark:border-slate-800 pb-6 mb-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-1 min-w-0">
+            <div className="relative flex-1 w-full lg:max-w-md">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
                 placeholder="Search deals, contacts or companies..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-semibold focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all duration-300"
+                className="w-full pl-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-sm text-sm font-semibold focus:ring-4 focus:ring-accent/20 focus:border-accent placeholder:text-slate-400 outline-none transition-all duration-300"
               />
             </div>
+
+            <StatusTabs<'won_lost'>
+              tabs={dealViewTabs}
+              value={dealViewFilter}
+              onChange={setDealViewFilter}
+              allLabel="Active Deals"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setViewMode("board")}
+              className={cn(
+                "h-8 px-3 rounded text-[11px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-2",
+                viewMode === "board"
+                  ? "bg-accent text-white shadow-md shadow-accent/20"
+                  : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+              )}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              Kanban
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={cn(
+                "h-8 px-3 rounded text-[11px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-2",
+                viewMode === "list"
+                  ? "bg-accent text-white shadow-md shadow-accent/20"
+                  : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+              )}
+            >
+              <List className="w-3.5 h-3.5" />
+              List
+            </button>
           </div>
         </div>
 
@@ -564,7 +582,7 @@ export function Deals() {
                 header: "Health",
                 render: (d: Deal) => (
                   <DealHealthBadge 
-                    lastActivityDate={getLastActivityDate(d.id, activities)} 
+                    lastActivityDate={dealActivityMap.get(d.id) ?? null} 
                     createdAt={d.createdAt}
                     expectedCloseDate={d.expectedCloseDate}
                     updatedAt={d.updatedAt}
@@ -632,8 +650,13 @@ export function Deals() {
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-                {DEAL_STAGES.map((stage) => (
+              <div className={cn(
+                "grid gap-6",
+                dealViewFilter === 'won_lost' 
+                  ? "grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto" 
+                  : "grid-cols-1 md:grid-cols-2 lg:grid-cols-5"
+              )}>
+                {(dealViewFilter === 'won_lost' ? (['won', 'lost'] as DealStage[]) : DEAL_STAGES).map((stage) => (
                   <div key={stage} className="flex flex-col gap-4">
                     {/* Column Header */}
                     <div className="flex items-center justify-between px-2">
@@ -662,7 +685,7 @@ export function Deals() {
                             key={deal.id}
                             deal={deal}
                             contactName={contactMap.get(deal.contactId) || "Unknown"}
-                            activities={activities}
+                            lastActivityDate={dealActivityMap.get(deal.id) ?? null}
                             onClick={() => navigate(`/deals/${deal.id}`)}
                           />
                         ))}
@@ -671,7 +694,9 @@ export function Deals() {
                           <Button
                             variant="ghost"
                             onClick={() => handleOpenCreateModal(stage)}
-                            className="w-full h-12 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 group"
+                            disabled={atDealLimit}
+                            title={atDealLimit ? "Upgrade to add more deals" : undefined}
+                            className={cn("w-full h-12 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 group", atDealLimit && "disabled:opacity-50 disabled:cursor-not-allowed")}
                           >
                             <PlusCircle className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
                             Add {STAGE_LABELS[stage]}
@@ -689,7 +714,7 @@ export function Deals() {
                     <DealCardContent
                       deal={activeDeal}
                       contactName={contactMap.get(activeDeal.contactId) || "Unknown"}
-                      activities={activities}
+                      lastActivityDate={dealActivityMap.get(activeDeal.id) ?? null}
                       isDragging
                     />
                   </div>

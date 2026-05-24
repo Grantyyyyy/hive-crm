@@ -15,6 +15,7 @@ import {
   Calendar,
   ArrowUpRight,
 } from "lucide-react"
+import { PageHeader } from "@/components/reusables/PageHeader"
 
 function formatDueLabel(dueDate: string): { label: string; overdue: boolean } {
   const today = new Date()
@@ -133,42 +134,38 @@ export function Workload() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen">
-      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
+      <div className="mx-auto px-4 pt-2 pb-4 md:px-8 md:pt-4 md:pb-8 max-w-full animate-fade-in space-y-6">
 
-        {/* Header & Integrated Summary Bar */}
-        <div className="flex flex-col gap-6 pb-2">
-          <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-            <div>
-              <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Workload</h1>
-              <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Team resource allocation.</p>
-            </div>
-          </div>
+        <PageHeader 
+          category="Team Operations"
+          title="Workload"
+          description="Team resource allocation and project capacity."
+          className="px-0 bg-transparent border-none pb-2"
+        />
 
-          {/* Summary Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-            <StatCard
-              label="Open"
-              value={totalOpen.toString()}
-              icon={<BarChart3 className="w-5 h-5" />}
-              accentColor="accent"
-              size="compact"
-            />
-            <StatCard
-              label="Due"
-              value={totalOverdue.toString()}
-              icon={<AlertCircle className="w-5 h-5" />}
-              accentColor="rose"
-              size="compact"
-            />
-            <StatCard
-              label="Active Team"
-              value={memberIds.length.toString()}
-              icon={<Users className="w-5 h-5" />}
-              accentColor="slate"
-              size="compact"
-              className="col-span-2 sm:col-span-1"
-            />
-          </div>
+        {/* Quick Stats Summary */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <StatCard
+            label="Open Tasks"
+            value={totalOpen.toString()}
+            icon={<BarChart3 className="w-5 h-5" />}
+            accentColor="accent"
+            size="compact"
+          />
+          <StatCard
+            label="Overdue"
+            value={totalOverdue.toString()}
+            icon={<AlertCircle className="w-5 h-5" />}
+            accentColor="rose"
+            size="compact"
+          />
+          <StatCard
+            label="Team Members"
+            value={memberIds.length.toString()}
+            icon={<Users className="w-5 h-5" />}
+            accentColor="slate"
+            size="compact"
+          />
         </div>
 
         {/* Compact Cards Grid */}

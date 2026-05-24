@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { SettingsHeader } from '@/components/reusables/SettingsHeader';
 import { useAuth, useUser } from '@/lib/AuthContext';
 import { usePermission } from '@/lib/usePermission';
+import { usePlan } from '@/lib/usePlan';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCRMContext } from '@/lib/CRMContext';
 import {
@@ -15,6 +17,7 @@ import {
 import type { AppUser } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
@@ -27,12 +30,14 @@ import {
   Search,
   MoreVertical,
   User as UserIcon,
-  Filter,
   PlusCircle,
+  Users as UsersIcon,
+  Infinity,
 } from 'lucide-react';
+import { PageHeader } from "@/components/reusables/PageHeader";
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { ListSkeleton } from "@/components/ui/skeletons";
+import { SettingsSkeleton } from "@/components/ui/skeletons";
 import { Pagination } from "@/components/ui/Pagination";
 import { DeleteModal } from "@/components/ui/delete-modal";
 import { StatusTabs, type StatusTab } from '@/components/reusables/StatusTabs';
@@ -40,6 +45,7 @@ import { UserSheet } from '@/components/crmComponent/UserSheet';
 import type { UserFormData } from '@/components/crmComponent/UserForm';
 import { InitialsAvatar } from '@/components/reusables/InitialsAvatar';
 import { logger } from '@/lib/logger';
+import { checkSeatLimit } from '@/lib/helpers';
 
 // ── Actions dropdown ──────────────────────────────────────────────────────────
 
@@ -55,74 +61,50 @@ interface UserActionsMenuProps {
 
 function UserActionsMenu({ u, currentUserId, onChangeRole, onRemove, removePending, canUpdate, canDelete }: UserActionsMenuProps) {
   const [open, setOpen] = useState(false);
-  const [coords, setCoords] = useState({ top: 0, left: 0 });
-  const btnRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (
-        menuRef.current && !menuRef.current.contains(e.target as Node) &&
-        btnRef.current && !btnRef.current.contains(e.target as Node)
-      ) {
-        setOpen(false);
-      }
-    }
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
-
-  const handleOpen = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!btnRef.current) return;
-    const rect = btnRef.current.getBoundingClientRect();
-    setCoords({ top: rect.bottom + 6, left: rect.right - 208 });
-    setOpen(v => !v);
-  };
 
   const isSelf = u.authUserId === currentUserId;
 
   if (isSelf) return null;
+  if (!canUpdate && !canDelete) return null;
 
   return (
-    <>
-      <button
-        ref={btnRef}
-        onClick={handleOpen}
-        className="size-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-      >
-        <MoreVertical className="w-4 h-4" />
-      </button>
-
-      {open && (canUpdate || canDelete) && (
-        <div
-          ref={menuRef}
-          style={{ position: "fixed", top: coords.top, left: coords.left, zIndex: 9999 }}
-          className="w-52 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/60 dark:shadow-slate-900/60 py-2 overflow-hidden"
-          onClick={e => e.stopPropagation()}
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          onClick={(e) => e.stopPropagation()}
+          className="size-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
         >
-          {canUpdate && (
-            <button
-              onClick={(e) => { e.stopPropagation(); setOpen(false); onChangeRole(); }}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-accent hover:bg-accent-dim transition-colors"
-            >
-              <Shield className="w-4 h-4 shrink-0" />
-              Change Role
-            </button>
-          )}
-          {canDelete && (
-            <button
-              onClick={(e) => { e.stopPropagation(); setOpen(false); onRemove(); }}
-              disabled={removePending}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors disabled:opacity-50"
-            >
-              <Trash2 className="w-4 h-4 shrink-0" />
-              Remove User
-            </button>
-          )}
-        </div>
-      )}
-    </>
+          <MoreVertical className="w-4 h-4" />
+        </button>
+      </PopoverTrigger>
+
+      <PopoverContent
+        align="end"
+        sideOffset={8}
+        className="w-52 overflow-hidden rounded-xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-900/60"
+        onClick={e => e.stopPropagation()}
+      >
+        {canUpdate && (
+          <button
+            onClick={(e) => { e.stopPropagation(); setOpen(false); onChangeRole(); }}
+            className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-accent hover:bg-accent-dim transition-colors"
+          >
+            <Shield className="w-4 h-4 shrink-0" />
+            Change Role
+          </button>
+        )}
+        {canDelete && (
+          <button
+            onClick={(e) => { e.stopPropagation(); setOpen(false); onRemove(); }}
+            disabled={removePending}
+            className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors disabled:opacity-50"
+          >
+            <Trash2 className="w-4 h-4 shrink-0" />
+            Remove User
+          </button>
+        )}
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -157,6 +139,8 @@ export function Users() {
   const { getClient } = useCRMContext();
   const queryClient = useQueryClient();
   const { can, hasFullAccess, isLoaded: permLoaded, roleName, isSuperAdmin } = usePermission();
+
+  const { isAtLimit } = usePlan()
 
   const isAdmin = roleName === 'Admin';
   // Super Admins and Admins can invite users. Others cannot.
@@ -254,16 +238,19 @@ export function Users() {
 
   // Data Fetching
   const { data: usersData, isLoading: usersLoading, error: usersError, isFetching } = useQuery({
-    queryKey: ['app-users'],
+    queryKey: ['app-users', organizationId],
     queryFn: async () => {
       const client = await getClient();
       if (!client) throw new Error('Not authenticated');
-      return fetchAppUsers(client);
+      if (!organizationId && !isSuperAdmin) throw new Error('Organization ID not available');
+      return fetchAppUsers(client, organizationId, isSuperAdmin);
     },
-    enabled: userLoaded && isSignedIn && !!userId,
+    enabled: userLoaded && isSignedIn && !!userId && (!!organizationId || isSuperAdmin),
     staleTime: 0,
     retry: false,
   });
+
+  const atSeatLimit = isAtLimit('seats', usersData?.length || 0)
 
   const { data: rolesData, error: rolesError } = useQuery({
     queryKey: ['roles'],
@@ -273,6 +260,23 @@ export function Users() {
       return fetchRoles(client);
     },
     enabled: !!user,
+  });
+
+  // Fetch organization for seat limit display
+  const { data: orgData } = useQuery({
+    queryKey: ['organization', organizationId],
+    queryFn: async () => {
+      const client = await getClient();
+      if (!client || !organizationId) throw new Error('Not authenticated');
+      const { data, error } = await client
+        .from('organizations')
+        .select('plan, seats_limit, is_system')
+        .eq('id', organizationId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!organizationId && !!user,
   });
 
   const availableRoles = useMemo(() => {
@@ -337,25 +341,66 @@ export function Users() {
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
 
   // Handlers
-  const handleSaveUser = (data: UserFormData) => {
+  const handleSaveUser = async (data: UserFormData) => {
     if (selectedUser) {
+      // Updating existing user's role - no seat limit check needed
       if (data.roleId) {
         updateRoleMutation.mutate({ appUserId: selectedUser.id, roleId: data.roleId });
       } else {
         toast.error("Please select a role");
       }
     } else {
-      if (data.inviteMode) {
-        inviteUserMutation.mutate({
-          name: data.name,
-          email: data.email,
-          roleId: data.roleId || undefined,
-        });
-      } else {
-        addUserMutation.mutate({
-          name: data.name,
-          email: data.email,
-          roleId: data.roleId || undefined,
+      // Creating new user - check seat limit
+      if (!organizationId) {
+        toast.error("Organization ID not available");
+        return;
+      }
+
+      try {
+        const client = await getClient();
+        if (!client) {
+          toast.error("Not authenticated");
+          return;
+        }
+
+        // Check seat limit
+        const seatCheck = await checkSeatLimit(client, organizationId);
+
+        if (!seatCheck.allowed) {
+          // Show plan-specific upgrade message
+          let upgradeMessage = "";
+          if (seatCheck.plan === "free") {
+            upgradeMessage = "Free plan allows 5 seats. Upgrade to Pro for up to 10 seats.";
+          } else if (seatCheck.plan === "pro") {
+            upgradeMessage = "Pro plan allows 10 users. Upgrade to Enterprise for unlimited users.";
+          } else {
+            upgradeMessage = "Seat limit reached. Upgrade your plan to invite more users.";
+          }
+
+          toast.error("Seat limit reached", {
+            description: upgradeMessage,
+          });
+          return;
+        }
+
+        // Proceed with invite or add
+        if (data.inviteMode) {
+          inviteUserMutation.mutate({
+            name: data.name,
+            email: data.email,
+            roleId: data.roleId || undefined,
+          });
+        } else {
+          addUserMutation.mutate({
+            name: data.name,
+            email: data.email,
+            roleId: data.roleId || undefined,
+          });
+        }
+      } catch (error) {
+        logger.error("Error checking seat limit:", error);
+        toast.error("Error checking seat limit", {
+          description: "Please try again",
         });
       }
     }
@@ -383,7 +428,7 @@ export function Users() {
   };
 
   if (!userLoaded || usersLoading) {
-    return <ListSkeleton />;
+    return <SettingsSkeleton />;
   }
 
   if (usersError) {
@@ -399,27 +444,64 @@ export function Users() {
   }
 
   return (
-    <div className="animate-fade-in space-y-8">
-      {/* Header Region */}
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
-        <div>
-          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Organization Members</h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">Manage and track your team members.</p>
-        </div>
-        <div className="flex items-center gap-3 shrink-0">
-          {canCreate && (
-            <Button
-              variant="brand"
-              onClick={() => {
-                setSelectedUser(null);
-                setUserSheetOpen(true);
-              }}
-            >
-              <PlusCircle className="w-4 h-4" /> Create User
-            </Button>
-          )}
-        </div>
-      </div>
+    <div className="animate-in fade-in duration-500 space-y-6">
+      <SettingsHeader 
+        category="Organization Members"
+        title="Users"
+        children={
+          <div className="flex flex-col gap-2">
+            {isSuperAdmin && (
+              <div className="bg-accent-dim border border-accent/20 rounded-xl p-3 flex items-center gap-3 animate-in fade-in slide-in-from-top-1 duration-500">
+                <Shield className="w-4 h-4 text-accent" />
+                <p className="text-xs font-semibold text-accent">
+                  Super Admin Mode — All organization limits are currently waived.
+                </p>
+              </div>
+            )}
+            {orgData && usersData && !orgData.is_system && (
+              <div className="flex items-center gap-2">
+                <div className="inline-block px-2 py-1 rounded-lg bg-accent-dim">
+                  <p className="text-[10px] font-bold text-accent">
+                    {isSuperAdmin ? (
+                      <div className="flex items-center gap-1.5">
+                        <Infinity className="w-3 h-3" />
+                        <span>Unlimited Access</span>
+                      </div>
+                    ) : (
+                      <>
+                        {usersData.length} / {orgData.seats_limit} seats used
+                      </>
+                    )}
+                  </p>
+                </div>
+                {orgData.plan !== 'enterprise' && usersData.length >= orgData.seats_limit && !isSuperAdmin && (
+                  <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">Limit reached</span>
+                )}
+              </div>
+            )}
+          </div>
+        }
+        actions={
+          canCreate ? (
+            atSeatLimit ? (
+              <p className="text-sm text-amber-600 dark:text-amber-400 font-semibold">
+                Seat limit reached. Upgrade to invite more users.
+              </p>
+            ) : (
+              <Button
+                variant="brand"
+                onClick={() => {
+                  setSelectedUser(null);
+                  setUserSheetOpen(true);
+                }}
+              >
+                <PlusCircle className="w-4 h-4 mr-2" /> Create User
+              </Button>
+            )
+          ) : null
+        }
+      >
+      </SettingsHeader>
       {/* Search and Filters Bar (Match Leads.tsx Style exactly) */}
       <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
         <div className="relative flex-1 w-full lg:max-w-md">
@@ -439,10 +521,6 @@ export function Users() {
             onChange={setRoleFilter}
             allLabel="All Users"
           />
-          <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
-          <Button variant="outlineNeutral" className="h-10 px-4 rounded-md font-bold text-xs uppercase tracking-widest">
-            <Filter className="w-4 h-4" /> More Filters
-          </Button>
         </div>
       </div>
 
@@ -481,7 +559,7 @@ export function Users() {
                           className="size-9 rounded-full shadow-sm text-sm font-bold"
                         />
                         <div>
-                          <p className="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                          <div className="text-[14px] font-bold text-slate-900 dark:text-white flex items-center gap-2">
                             {u.name}
                             {u.role?.name === 'Admin' && (
                               <span title="Admin User"><Shield className="w-3.5 h-3.5 text-amber-500" /></span>
@@ -489,7 +567,7 @@ export function Users() {
                             {u.authUserId === userId && (
                               <Badge variant="secondary" className="text-[9px] uppercase tracking-tighter h-4 px-1 bg-accent-dim text-accent border-accent/10">You</Badge>
                             )}
-                          </p>
+                          </div>
                           <p className="text-[11px] text-slate-400 font-medium md:hidden">{u.email}</p>
                         </div>
                       </div>
@@ -560,6 +638,7 @@ export function Users() {
         initialData={selectedUser}
         availableRoles={availableRoles}
         isPending={inviteUserMutation.isPending || addUserMutation.isPending || updateRoleMutation.isPending}
+        organizationId={organizationId}
       />
 
       {/* Delete User Modal */}

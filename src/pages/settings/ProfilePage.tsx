@@ -4,81 +4,70 @@ import { supabase } from "@/lib/supabaseClient"
 import { Camera, Loader2, Save } from "lucide-react"
 import { toast } from "sonner"
 import { DetailSkeleton } from "@/components/ui/skeletons"
+import { Button } from "@/components/ui/button"
+import { SettingsHeader } from "@/components/reusables/SettingsHeader"
 
 export function ProfilePage() {
   const { user, isLoaded } = useUser()
-
-  const fullName = user?.user_metadata?.full_name ?? ""
-  const nameParts = fullName.split(" ")
-  const [firstName, setFirstName] = useState(nameParts[0] ?? "")
-  const [lastName, setLastName] = useState(nameParts.slice(1).join(" ") ?? "")
-  const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [fullName, setFullName] = useState("")
+  const [username, setUsername] = useState("")
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    const parts = (user?.user_metadata?.full_name ?? "").split(" ")
-    setFirstName(parts[0] ?? "")
-    setLastName(parts.slice(1).join(" ") ?? "")
-  }, [user?.user_metadata?.full_name])
+    if (user) {
+      setFullName(user.user_metadata?.full_name ?? "")
+      setUsername(user.user_metadata?.user_name ?? "")
+    }
+  }, [user])
 
-  const isDirty = firstName.trim() !== (nameParts[0] ?? "")
-    || lastName.trim() !== (nameParts.slice(1).join(" ") ?? "")
-
-  const handleSaveName = async () => {
-    if (!user) return
-    setSaving(true)
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
     try {
-      const { error } = await (supabase.auth as any).updateUser({
-        data: {
-          full_name: `${firstName.trim()} ${lastName.trim()}`.trim(),
-        },
+      const { error } = await supabase.auth.updateUser({
+        data: { full_name: fullName, user_name: username }
       })
       if (error) throw error
-      toast.success("Profile updated", {
-        description: "Your name has been saved."
-      })
-    } catch (err: unknown) {
-      toast.error("Update failed", {
-        description: (err as Error).message
-      })
+      toast.success("Profile updated successfully")
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update profile")
     } finally {
-      setSaving(false)
+      setLoading(false)
     }
   }
 
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file || !user) return
+    if (!file) return
+
     setUploadingAvatar(true)
     try {
       const fileExt = file.name.split(".").pop()
-      const fileName = `${user.id}.${fileExt}`
+      const fileName = `${user?.id}_${Math.random()}.${fileExt}`
+      const filePath = `avatars/${fileName}`
+
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(fileName, file, { upsert: true })
+        .upload(filePath, file)
 
       if (uploadError) throw uploadError
 
       const { data: { publicUrl } } = supabase.storage
         .from("avatars")
-        .getPublicUrl(fileName)
+        .getPublicUrl(filePath)
 
-      const { error: updateError } = await (supabase.auth as any).updateUser({
-        data: { avatar_url: publicUrl },
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: { avatar_url: publicUrl }
       })
+
       if (updateError) throw updateError
-
-      toast.success("Avatar updated", {
-        description: "Your profile photo has been changed."
-      })
-    } catch (err: unknown) {
-      toast.error("Upload failed", {
-        description: (err as Error).message
-      })
+      toast.success("Avatar updated successfully")
+    } catch (error: any) {
+      toast.error(error.message || "Failed to upload avatar")
     } finally {
       setUploadingAvatar(false)
-      e.target.value = ""
+      if (e.target) e.target.value = ""
     }
   }
 
@@ -88,7 +77,11 @@ export function ProfilePage() {
   if (!isLoaded) return <DetailSkeleton />
 
   return (
-    <div className="animate-content-in space-y-8">
+    <div className="animate-in fade-in duration-500 space-y-6">
+      <SettingsHeader 
+        category="Account Settings"
+        title="Personal Profile"
+      />
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-4 space-y-6">
           <div className="bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
@@ -103,158 +96,69 @@ export function ProfilePage() {
                     className="w-24 h-24 rounded-md object-cover ring-4 ring-white dark:ring-slate-900 shadow-lg"
                   />
                 ) : (
-                  <div className="w-24 h-24 rounded-md bg-accent-dim flex items-center justify-center text-accent text-3xl font-bold ring-4 ring-white dark:ring-slate-900 shadow-lg">
+                  <div className="w-24 h-24 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-2xl font-bold text-slate-400 ring-4 ring-white dark:ring-slate-900 shadow-lg">
                     {initials}
                   </div>
                 )}
-
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="absolute inset-0 bg-black/40 rounded-md opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
-                  disabled={uploadingAvatar}
-                >
-                  <Camera className="w-6 h-6" />
-                </button>
+                <label className="absolute bottom-0 right-0 p-1.5 bg-accent hover:bg-accent-dim text-white rounded-md shadow-md cursor-pointer transition-colors">
+                  <Camera className="w-4 h-4" />
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    disabled={uploadingAvatar}
+                  />
+                </label>
+                {uploadingAvatar && (
+                  <div className="absolute inset-0 bg-black/20 rounded-md flex items-center justify-center">
+                    <Loader2 className="w-6 h-6 animate-spin text-white" />
+                  </div>
+                )}
               </div>
-
-              <input
-                type="file"
-                accept="image/*"
-                ref={fileInputRef}
-                onChange={handleAvatarChange}
-                className="hidden"
-              />
 
               <div className="mt-4 text-center">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white font-outfit">
-                  {firstName} {lastName}
-                </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
-                  {user?.email}
-                </p>
-              </div>
-
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploadingAvatar}
-                className="mt-6 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold uppercase tracking-wider hover:bg-slate-50 dark:hover:bg-slate-800 transition-all disabled:opacity-50"
-              >
-                {uploadingAvatar ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Camera className="w-3.5 h-3.5" />
-                )}
-                {uploadingAvatar ? "Uploading..." : "Update Photo"}
-              </button>
-            </div>
-
-            <div className="border-t border-slate-100 dark:border-slate-800/50" />
-
-            <div className="p-6 grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">
-                  Member Since
-                </p>
-                <p className="text-xs font-bold text-slate-900 dark:text-white">
-                  {user?.created_at
-                    ? new Date(user.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short" })
-                    : "â€”"}
-                </p>
-              </div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">
-                  Last Activity
-                </p>
-                <p className="text-xs font-bold text-slate-900 dark:text-white">
-                  {user?.last_sign_in_at
-                    ? new Date(user.last_sign_in_at).toLocaleDateString("en-US", { year: "numeric", month: "short" })
-                    : "â€”"}
-                </p>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">{fullName || "User"}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{user?.email}</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="lg:col-span-8 space-y-6">
+        <div className="lg:col-span-8">
           <div className="bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800/50">
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white font-outfit">
-                Basic Information
-              </h2>
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">Profile Details</h3>
             </div>
-
-            <div className="p-6 space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block">
-                    First Name
-                  </label>
+            <form onSubmit={handleUpdateProfile} className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Full Name</label>
                   <input
                     type="text"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="e.g. John"
-                    className="w-full h-11 px-4 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/50 transition-all"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="w-full h-11 px-4 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 focus:ring-4 focus:ring-accent/10 focus:border-accent outline-none transition-all"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block">
-                    Last Name
-                  </label>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Username</label>
                   <input
                     type="text"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="e.g. Doe"
-                    className="w-full h-11 px-4 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/50 transition-all"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full h-11 px-4 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 focus:ring-4 focus:ring-accent/10 focus:border-accent outline-none transition-all"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end pt-2">
-                <button
-                  onClick={handleSaveName}
-                  disabled={!isDirty || saving}
-                  className="bg-slate-900 dark:bg-accent hover:bg-slate-800 dark:hover:bg-accent/90 text-white rounded-md h-10 px-6 text-xs font-bold uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all shadow-md shadow-slate-200 dark:shadow-none"
-                >
-                  {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                  {saving ? "Saving..." : "Save Changes"}
-                </button>
+              <div className="pt-4 flex justify-end">
+                <Button variant="brand" type="submit" disabled={loading}>
+                  {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                  Save Changes
+                </Button>
               </div>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800/50">
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white font-outfit">
-                Email Configuration
-              </h2>
-            </div>
-
-            <div className="p-6">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 block">
-                  Verified Email Address
-                </label>
-                <div className="relative group">
-                  <input
-                    type="text"
-                    value={user?.email ?? "â€”"}
-                    disabled
-                    className="w-full h-11 px-4 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 text-slate-500 dark:text-slate-500 text-sm font-medium cursor-not-allowed"
-                  />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-60">
-                    <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                    <span className="text-[9px] font-bold uppercase text-green-600 dark:text-green-500">Verified</span>
-                  </div>
-                </div>
-                <div className="mt-4 p-4 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20 rounded-md">
-                  <p className="text-xs text-blue-800/80 dark:text-blue-300/80 leading-relaxed font-medium">
-                    Your email address is linked to your authentication account. To change your login email, please visit the <strong>Security</strong> tab or contact support.
-                  </p>
-                </div>
-              </div>
-            </div>
+            </form>
           </div>
         </div>
       </div>

@@ -1,9 +1,8 @@
-import { useState, useMemo, useRef, useEffect } from "react"
+import { useState, useMemo } from "react"
 import {
   ShoppingCart,
   PlusCircle,
   Search,
-  Filter,
   Download,
   MoreVertical,
   Truck,
@@ -20,6 +19,7 @@ import {
   TrendingUp
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Pagination } from "@/components/ui/Pagination"
 import { useCRMResource } from "@/lib/hooks"
 import { useCRMContext, updateRow } from "@/lib/CRMContext"
@@ -38,12 +38,15 @@ import {
   generateInvoice
 } from "@/services/orderService"
 import { useUser } from "@/lib/AuthContext"
+import { usePlan } from "@/lib/usePlan"
 import { StatCard } from "@/components/reusables/StatCard"
 import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 import { StatusTabs } from "@/components/reusables/StatusTabs"
 import type { StatusTab } from "@/components/reusables/StatusTabs"
 import { SalesTable, type SalesColumn } from "@/components/reusables/SalesTable"
 import { logger } from "@/lib/logger"
+import { PageHeader } from "@/components/reusables/PageHeader"
+import { UpgradeBanner } from "@/components/reusables/UpgradeBanner"
 
 const fmtCurrency = (v: number) =>
   v.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 })
@@ -57,43 +60,26 @@ interface ActionsMenuProps {
   onCancel: () => void
   onViewInvoice: () => void
   onViewDetails: () => void
+  hasInventory: boolean
 }
 
-function ActionsMenu({ order, onShip, onDeliver, onCancel, onViewInvoice, onViewDetails }: ActionsMenuProps) {
+function ActionsMenu({ order, onShip, onDeliver, onCancel, onViewInvoice, onViewDetails, hasInventory }: ActionsMenuProps) {
   const [open, setOpen] = useState(false)
-  const [coords, setCoords] = useState({ top: 0, left: 0 })
-  const btnRef = useRef<HTMLButtonElement>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (
-        menuRef.current && !menuRef.current.contains(e.target as Node) &&
-        btnRef.current && !btnRef.current.contains(e.target as Node)
-      ) {
-        setOpen(false)
-      }
-    }
-    if (open) document.addEventListener("mousedown", handleClick)
-    return () => document.removeEventListener("mousedown", handleClick)
-  }, [open])
-
-  const handleOpen = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (!btnRef.current) return
-    const rect = btnRef.current.getBoundingClientRect()
-    setCoords({ top: rect.bottom + 6, left: rect.right - 208 })
-    setOpen(v => !v)
-  }
 
   const items = [
-    (order.status === 'pending' || order.status === 'partially_fulfilled') && {
+    hasInventory && (order.status === 'pending' || order.status === 'partially_fulfilled') && {
       label: order.status === 'partially_fulfilled' ? "Fulfill Remaining" : "Fulfill Order",
       icon: Package,
       color: "text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20",
       action: onShip,
     },
-    (order.status === 'fulfilled' || (order.status === 'partially_fulfilled' && order.stockDeducted)) && {
+    !hasInventory && (order.status === 'pending' || order.status === 'pending_stock' || order.status === 'partially_fulfilled' || order.status === 'fulfilled') && {
+      label: "Mark as Shipped",
+      icon: Truck,
+      color: "text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20",
+      action: onDeliver,
+    },
+    hasInventory && (order.status === 'fulfilled' || (order.status === 'partially_fulfilled' && order.stockDeducted)) && {
       label: order.status === 'partially_fulfilled' ? "Ship Partial" : "Mark as Shipped",
       icon: Truck,
       color: "text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20",
@@ -105,7 +91,7 @@ function ActionsMenu({ order, onShip, onDeliver, onCancel, onViewInvoice, onView
       color: "text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20",
       action: onDeliver,
     },
-    {
+    order.status === 'delivered' && {
       label: "View Invoice",
       icon: Receipt,
       color: "text-accent hover:bg-accent-dim",
@@ -126,38 +112,37 @@ function ActionsMenu({ order, onShip, onDeliver, onCancel, onViewInvoice, onView
   ].filter(Boolean) as { label: string; icon: React.ElementType; color: string; action: () => void }[]
 
   return (
-    <>
-      <button
-        ref={btnRef}
-        onClick={handleOpen}
-        className="size-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-      >
-        <MoreVertical className="w-4 h-4" />
-      </button>
-
-      {open && (
-        <div
-          ref={menuRef}
-          style={{ position: "fixed", top: coords.top, left: coords.left, zIndex: 9999 }}
-          className="w-52 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/60 dark:shadow-slate-900/60 py-2 overflow-hidden"
-          onClick={e => e.stopPropagation()}
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          onClick={(e) => e.stopPropagation()}
+          className="size-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
         >
-          {items.map(({ label, icon: Icon, color, action }) => (
-            <button
-              key={label}
-              onClick={(e) => { e.stopPropagation(); setOpen(false); action() }}
-              className={cn(
-                "w-full flex items-center gap-3 px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider transition-colors",
-                color
-              )}
-            >
-              <Icon className="w-4 h-4 shrink-0" />
-              {label}
-            </button>
-          ))}
-        </div>
-      )}
-    </>
+          <MoreVertical className="w-4 h-4" />
+        </button>
+      </PopoverTrigger>
+
+      <PopoverContent
+        align="end"
+        sideOffset={8}
+        className="w-52 overflow-hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-900/60"
+        onClick={e => e.stopPropagation()}
+      >
+        {items.map(({ label, icon: Icon, color, action }) => (
+          <button
+            key={label}
+            onClick={(e) => { e.stopPropagation(); setOpen(false); action() }}
+            className={cn(
+              "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider transition-colors",
+              color
+            )}
+          >
+            <Icon className="w-4 h-4 shrink-0" />
+            {label}
+          </button>
+        ))}
+      </PopoverContent>
+    </Popover>
   )
 }
 
@@ -171,6 +156,8 @@ export function SalesOrders() {
     isLoaded
   } = useCRMResource<SalesOrder>('orders')
   const { data: contacts } = useCRMResource<Contact>('contacts')
+  const { canAccess } = usePlan()
+  const hasInventory = canAccess('inventory')
 
 
   const [search, setSearch] = useState("")
@@ -191,7 +178,11 @@ export function SalesOrders() {
         order.customerName.toLowerCase().includes(q)
       return matchesStatus && matchesSearch
     })
-    return result.sort((a, b) => b.orderDate.localeCompare(a.orderDate))
+    return result.sort((a, b) => {
+      const dateCompare = b.orderDate.localeCompare(a.orderDate)
+      if (dateCompare !== 0) return dateCompare
+      return (b.createdAt || '').localeCompare(a.createdAt || '')
+    })
   }, [orders, statusFilter, search])
 
   // Pagination
@@ -344,8 +335,7 @@ export function SalesOrders() {
       header: "Actions",
       render: (order) => (
         <div className="flex justify-end items-center gap-2">
-          {/* Quick action inline buttons for common next-step */}
-          {(order.status === 'pending' || order.status === 'partially_fulfilled') && (
+          {hasInventory && (order.status === 'pending' || order.status === 'partially_fulfilled') && (
             <Button
               variant="ghost"
               size="sm"
@@ -355,7 +345,17 @@ export function SalesOrders() {
               <Package className="w-3.5 h-3.5 mr-1" /> {order.status === 'partially_fulfilled' ? 'Fulfill Remaining' : 'Fulfill'}
             </Button>
           )}
-          {(order.status === 'fulfilled' || order.status === 'partially_fulfilled') && order.stockDeducted && (
+          {!hasInventory && (order.status === 'pending' || order.status === 'pending_stock' || order.status === 'partially_fulfilled' || order.status === 'fulfilled') && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => { e.stopPropagation(); handleShipOrder(order) }}
+              className="text-[11px] h-7 px-3 font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
+            >
+              <Truck className="w-3.5 h-3.5 mr-1" /> Mark Shipped
+            </Button>
+          )}
+          {hasInventory && (order.status === 'fulfilled' || order.status === 'partially_fulfilled') && order.stockDeducted && (
             <Button
               variant="ghost"
               size="sm"
@@ -365,7 +365,7 @@ export function SalesOrders() {
               <Truck className="w-3.5 h-3.5 mr-1" /> {order.status === 'partially_fulfilled' ? 'Ship Partial' : 'Ship'}
             </Button>
           )}
-          {order.status === 'shipped' && (
+          {(hasInventory && order.status === 'shipped') || (!hasInventory && order.status === 'shipped') && (
             <Button
               variant="ghost"
               size="sm"
@@ -400,12 +400,13 @@ export function SalesOrders() {
             order={order}
             onShip={() => handleFulfillOrder(order)}
             onDeliver={() => {
-              if (order.status === 'fulfilled') handleShipOrder(order)
+              if (order.status === 'pending' || order.status === 'pending_stock' || order.status === 'partially_fulfilled' || order.status === 'fulfilled') handleShipOrder(order)
               else if (order.status === 'shipped') handleDeliverOrder(order)
             }}
             onCancel={() => handleCancelOrder(order)}
             onViewInvoice={() => setInvoiceOrder(order)}
             onViewDetails={() => navigate(`/orders/${order.id}`)}
+            hasInventory={hasInventory}
           />
         </div>
       ),
@@ -415,27 +416,35 @@ export function SalesOrders() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen font-sans">
-      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
+      <div className="mx-auto px-4 pt-2 pb-4 md:px-8 md:pt-4 md:pb-8 max-w-full animate-fade-in space-y-6">
 
-        {/* Header Region */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-1">Commerce & Fulfillment</p>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Sales Orders</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Manage and track all customer orders and fulfillment status in real-time.</p>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <Button variant="outlineNeutral">
-              <Download className="w-4 h-4" /> Export
-            </Button>
-            <Button
-              variant="brand"
-              onClick={() => setIsAddModalOpen(true)}
-            >
-              <PlusCircle className="w-4 h-4" /> Create Order
-            </Button>
-          </div>
-        </div>
+        <PageHeader 
+          category="Commerce & Fulfillment"
+          title="Sales Orders"
+          description="Manage and track all customer orders and fulfillment status in real-time."
+          className="px-0 bg-transparent border-none pb-2"
+          actions={
+            <div className="flex items-center gap-3 shrink-0">
+              <Button variant="outlineNeutral">
+                <Download className="w-4 h-4 mr-2" /> Export
+              </Button>
+              <Button
+                variant="brand"
+                onClick={() => setIsAddModalOpen(true)}
+              >
+                <PlusCircle className="w-4 h-4 mr-2" /> Create Order
+              </Button>
+            </div>
+          }
+        />
+
+        {!hasInventory && (
+          <UpgradeBanner 
+            feature="Inventory & Fulfillment" 
+            description="Stock reservation, order fulfillment, and shipment tracking require the Pro plan. You can still create and manage orders with manual line items."
+            storageKey="banner-sales-orders-dismissed"
+          />
+        )}
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -483,12 +492,6 @@ export function SalesOrders() {
             onChange={setStatusFilter}
             allLabel="All Orders"
           />
-
-          <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
-
-          <Button variant="outlineNeutral" className="h-10 px-4 rounded-md font-bold text-xs uppercase tracking-widest">
-            <Filter className="w-4 h-4" /> More Filters
-          </Button>
         </div>
 
         <SalesTable<SalesOrder>

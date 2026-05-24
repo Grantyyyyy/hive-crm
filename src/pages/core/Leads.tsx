@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react"
+import { useState, useMemo, useEffect, useCallback, useRef } from "react"
 import { useLocation } from "wouter"
 import {
   UserSearch,
@@ -7,15 +7,19 @@ import {
   Trash2,
   Download,
   Upload,
-  Filter,
+  ChevronDown,
+  MoreHorizontal,
   Globe,
   Users,
   Target,
   Mail,
   FileSearch,
-  ArrowRight
+  ArrowRight,
+  UserSearch as UserSearchIcon,
 } from "lucide-react"
+import { PageHeader } from "@/components/reusables/PageHeader"
 import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import {
   SheetDescription,
 } from "@/components/ui/sheet"
@@ -23,6 +27,7 @@ import { LeadSheet } from "@/components/crmComponent/EditLeadSheet"
 import { LeadForm } from "@/components/crmComponent/LeadForm"
 import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 import { useCRMResource } from "@/lib/hooks"
+import { usePlan } from "@/lib/usePlan"
 import { ListSkeleton } from "@/components/ui/skeletons"
 import { DeleteModal } from "@/components/ui/delete-modal"
 import type { Lead, LeadStatus, LeadSource } from "@/lib/types"
@@ -50,6 +55,68 @@ const STATUS_STYLE: Record<LeadStatus, { bg: string; text: string; dot: string }
   converted: { bg: "bg-teal-50 dark:bg-teal-900/20", text: "text-teal-700 dark:text-teal-400", dot: "bg-teal-600" },
 }
 
+interface LeadActionsDropdownProps {
+  onImportCSV: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onExportCSV: () => void
+}
+
+function LeadActionsDropdown({ onImportCSV, onExportCSV }: LeadActionsDropdownProps) {
+  const [open, setOpen] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".csv"
+        className="hidden"
+        onChange={onImportCSV}
+      />
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          aria-expanded={open}
+          className="border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
+        >
+          <MoreHorizontal className="w-4 h-4" />
+          Actions
+          <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", open && "rotate-180")} />
+        </Button>
+      </PopoverTrigger>
+
+      <PopoverContent
+        align="end"
+        sideOffset={8}
+        className="w-48 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none"
+      >
+        <button
+          type="button"
+          onClick={() => {
+            fileInputRef.current?.click()
+            setOpen(false)
+          }}
+          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+        >
+          <Upload className="w-4 h-4" />
+          Import CSV
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            onExportCSV()
+            setOpen(false)
+          }}
+          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+        >
+          <Download className="w-4 h-4" />
+          Export CSV
+        </button>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
 export function Leads() {
   const [, navigate] = useLocation()
   const {
@@ -62,6 +129,9 @@ export function Leads() {
     updateItem,
     deleteItem
   } = useCRMResource<Lead>('leads')
+  const { isAtLimit } = usePlan()
+
+  const atLeadLimit = isAtLimit('leads', leads.length)
 
   const [statusFilter, setStatusFilter] = useState<LeadStatus | "all">("all")
   const [showModal, setShowModal] = useState(false)
@@ -325,44 +395,29 @@ export function Leads() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen font-sans">
-      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
+      <div className="mx-auto px-4 pt-2 pb-4 md:px-8 md:pt-4 md:pb-8 max-w-full animate-fade-in space-y-6">
 
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-1">Sales Pipeline</p>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Leads</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Manage and track your prospective customers through the sales funnel.</p>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <input
-              type="file"
-              id="csv-upload"
-              accept=".csv"
-              className="hidden"
-              onChange={handleImportCSV}
-            />
-            <Button 
-              variant="outline" 
-              onClick={() => document.getElementById('csv-upload')?.click()} 
-              className="border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
-            >
-              <Upload className="w-4 h-4" />
-              Import CSV
-            </Button>
-            <Button variant="outline" onClick={handleExportCSV} className="border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
-              <Download className="w-4 h-4" />
-              Export CSV
-            </Button>
-            <Button
-              variant="brand"
-              onClick={() => { setEditingLead(null); setShowModal(true) }}
-            >
-              <PlusCircle className="w-4 h-4" />
-              Create Lead
-            </Button>
-          </div>
-        </div>
+        <PageHeader 
+          category="Sales Pipeline"
+          title="Leads"
+          description="Manage and track your prospective customers through the sales funnel."
+          className="px-0 bg-transparent border-none pb-2"
+          actions={
+            <>
+              <LeadActionsDropdown onImportCSV={handleImportCSV} onExportCSV={handleExportCSV} />
+              <Button
+                variant="brand"
+                onClick={() => { setEditingLead(null); setShowModal(true) }}
+                disabled={atLeadLimit}
+                title={atLeadLimit ? "Upgrade to add more leads" : undefined}
+                className={atLeadLimit ? "disabled:opacity-50 disabled:cursor-not-allowed" : ""}
+              >
+                <PlusCircle className="w-4 h-4" />
+                Create Lead
+              </Button>
+            </>
+          }
+        />
 
         <ProcurementDataTable<Lead>
           data={paginatedLeads}
@@ -399,10 +454,6 @@ export function Leads() {
                 onChange={setStatusFilter}
                 allLabel="All Leads"
               />
-              <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
-              <Button variant="outlineNeutral" className="h-10 px-4 rounded-md font-bold text-xs uppercase tracking-widest">
-                <Filter className="w-4 h-4" /> More Filters
-              </Button>
             </>
           }
         />

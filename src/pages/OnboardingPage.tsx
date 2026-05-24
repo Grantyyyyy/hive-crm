@@ -1,130 +1,108 @@
-import { useState } from "react"
-import { useLocation } from "wouter"
-import { Building2, Loader2, ArrowRight, ShieldCheck } from "lucide-react"
-import { AuthLayout } from "@/components/layout/AuthLayout"
+import React, { useState } from "react"
+import { useAuth } from "@/lib/AuthContext"
 import { supabase } from "@/lib/supabaseClient"
-import { setupFirstOrganization } from "@/lib/settingsService"
+import { useLocation } from "wouter"
 import { toast } from "sonner"
-import { useAuth, useUser } from "@/lib/AuthContext"
-import { logger } from "@/lib/logger"
+import { Building2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { generateId } from "@/lib/helpers"
 
-export function OnboardingPage() {
+export default function OnboardingPage() {
+  const { user } = useAuth()
   const [, navigate] = useLocation()
-  const { userId, refreshSession } = useAuth()
-  const { user } = useUser()
   const [orgName, setOrgName] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleCreateOrg = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!orgName.trim() || !userId) return
+    if (!user) return
 
-    setLoading(true)
+    setIsLoading(true)
     try {
-      const slug = orgName
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "")
+      const orgId = generateId()
 
-      const result = await setupFirstOrganization(supabase, {
-        name: orgName,
-        slug,
-        ownerId: userId,
-        userEmail: user?.email || "",
-        userName: user?.user_metadata?.full_name
-      })
+      // Insert into organizations
+      const { error: orgError } = await supabase
+        .from("organizations")
+        .insert({
+          id: orgId,
+          name: orgName.trim(),
+          owner_id: user.id
+        })
 
-      const refreshedOrganizationId = await refreshSession()
+      if (orgError) throw orgError
 
-      if (!refreshedOrganizationId && !result.organizationId) {
-        throw new Error("Organization was created, but your session could not be updated. Apply the onboarding SQL migration and sign in again.")
-      }
+      // Upsert into app_users
+      const { error: userError } = await supabase
+        .from("app_users")
+        .insert({
+          auth_user_id: user.id,
+          email: user.email,
+          organization_id: orgId
+        })
 
-      toast.success("Organization created! Setting up your workspace...")
+      if (userError) throw userError
 
-      navigate("/dashboard")
+      toast.success('Organization created!')
+      navigate('/dashboard')
     } catch (error: any) {
-      logger.error("Failed to setup organization:", error)
-      toast.error(error.message || "Failed to create organization")
+      console.error("Failed to create organization:", error)
+      toast.error("Failed to create organization", {
+        description: error.message
+      })
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
   return (
-    <AuthLayout>
-      <div className="mb-8">
-        <div className="w-12 h-12 bg-accent rounded-2xl flex items-center justify-center mb-6 shadow-xl shadow-accent/20">
-          <Building2 className="w-7 h-7 text-white" />
-        </div>
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted mb-2">
-          Setup Workspace
-        </p>
-        <h2 className="text-3xl font-bold tracking-tight text-text-primary">
-          Create your organization
-        </h2>
-        <p className="text-text-secondary font-medium text-sm mt-1.5">
-          To get started, we need a workspace for your team.
-        </p>
-      </div>
-
-      <form onSubmit={handleCreateOrg} className="space-y-6">
-        <div>
-          <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-2">
-            Organization Name
-          </label>
-          <input
-            type="text"
-            value={orgName}
-            onChange={(e) => setOrgName(e.target.value)}
-            placeholder="e.g. Acme Corporation"
-            required
-            autoFocus
-            className="w-full px-4 py-4 border border-border rounded-xl text-sm bg-bg-surface text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-4 focus:ring-accent/20 focus:border-accent transition-all shadow-sm"
-          />
-        </div>
-
-        <div className="p-4 bg-accent-dim border border-accent/10 rounded-xl space-y-3">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-accent" />
-            <span className="text-xs font-bold text-accent uppercase tracking-tight">Admin Privileges</span>
+    <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-md border border-slate-200 dark:border-slate-800 p-8 max-w-md w-full animate-fade-in">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-teal-50 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <Building2 className="w-8 h-8 text-teal-600" />
           </div>
-          <p className="text-xs text-accent/80 leading-relaxed">
-            As the creator, you will be automatically assigned the <strong>Admin</strong> role with full access to all features.
-          </p>
+          <div className="mb-2">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">GET STARTED</p>
+          </div>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Create your Organization</h1>
+          <p className="text-slate-500 font-medium">Set up your workspace to get started.</p>
         </div>
 
-        <button
-          type="submit"
-          disabled={loading || !orgName.trim()}
-          className="w-full px-5 py-4 bg-accent hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-accent/20 transition-all flex items-center justify-center gap-2 group"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Setting up...
-            </>
-          ) : (
-            <>
-              Initialize Workspace
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </>
-          )}
-        </button>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <Label htmlFor="orgName" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+              ORGANIZATION NAME
+            </Label>
+            <Input
+              id="orgName"
+              type="text"
+              placeholder="e.g. Acme Corp"
+              value={orgName}
+              onChange={(e) => setOrgName(e.target.value)}
+              className="mt-2"
+              required
+            />
+          </div>
 
-        <div className="pt-4 border-t border-border mt-6">
-          <button
-            type="button"
-            onClick={async () => {
-              await supabase.auth.signOut();
-              navigate("/sign-up");
-            }}
-            className="w-full py-3 text-text-muted hover:text-text-primary text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
+          <Button
+            type="submit"
+            disabled={isLoading || !orgName.trim()}
+            className="w-full bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-teal-200 dark:shadow-none"
           >
-            Back to Sign up
-          </button>
-        </div>
-      </form>
-    </AuthLayout>
+            {isLoading ? (
+              <>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-r-transparent mr-2"></div>
+                Creating...
+              </>
+            ) : (
+              "Create Organization"
+            )}
+          </Button>
+        </form>
+      </div>
+    </div>
   )
 }

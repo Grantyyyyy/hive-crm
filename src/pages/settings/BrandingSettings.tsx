@@ -5,10 +5,11 @@ import type { Organization } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SettingsSkeleton } from "@/components/ui/skeletons";
 import { toast } from "sonner";
-import { Layout, Image as ImageIcon, Save, RefreshCcw, Upload, Loader2, Type } from "lucide-react";
+import { Layout, Image as ImageIcon, Save, RefreshCcw, Upload, Loader2 } from "lucide-react";
 import { logger } from "@/lib/logger";
+import { SettingsHeader } from "@/components/reusables/SettingsHeader";
 
 export function BrandingSettings() {
   const ctx = useCRMContext();
@@ -52,7 +53,6 @@ export function BrandingSettings() {
     const file = e.target.files?.[0];
     if (!file || !org) return;
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
       toast.error("Please upload an image file");
       return;
@@ -63,8 +63,6 @@ export function BrandingSettings() {
       const fileExt = file.name.split(".").pop();
       const fileName = `logo_${org.id}_${Date.now()}.${fileExt}`;
       
-      // We'll try to use a 'branding' bucket. 
-      // Note: User may need to create this bucket in Supabase dashboard if it doesn't exist.
       const { data, error: uploadError } = await supabase.storage
         .from("branding")
         .upload(fileName, file, { upsert: true });
@@ -100,50 +98,43 @@ export function BrandingSettings() {
   };
 
   if (!isLoaded) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-r-transparent"></div>
-      </div>
-    );
+    return <SettingsSkeleton />;
   }
 
   return (
-    <div className="animate-fade-in space-y-8">
-      {/* Header Region */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-2">
-        <div>
-          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Branding & Identity</h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Customize the platform's visual identity and brand presence.</p>
-        </div>
-        
-        <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
-          <Button
-            variant="outline"
-            onClick={handleReset}
-            className="h-10 rounded-md font-bold text-xs uppercase tracking-widest w-full sm:w-auto border-slate-200 dark:border-slate-800"
-          >
-            <RefreshCcw className="w-4 h-4 mr-2" /> Reset
-          </Button>
-          <Button
-            variant="brand"
-            onClick={handleSave}
-            disabled={isSaving}
-            className="h-10 rounded-md font-bold text-xs uppercase tracking-widest w-full sm:w-auto shadow-md shadow-accent/10 dark:shadow-none px-8"
-          >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin mr-2" />
-            ) : (
-              <Save className="w-4 h-4 mr-2" />
-            )}
-            Save Configuration
-          </Button>
-        </div>
-      </div>
+    <div className="animate-in fade-in duration-500 space-y-6">
+      <SettingsHeader 
+        category="System Configuration"
+        title="Branding & Identity"
+        actions={
+          <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
+            <Button
+              variant="outline"
+              onClick={handleReset}
+              className="h-10 rounded-md font-bold text-xs uppercase tracking-widest w-full sm:w-auto border-slate-200 dark:border-slate-800"
+            >
+              <RefreshCcw className="w-4 h-4 mr-2" /> Reset
+            </Button>
+            <Button
+              variant="brand"
+              onClick={handleSave}
+              disabled={isSaving}
+              className="h-10 rounded-md font-bold text-xs uppercase tracking-widest w-full sm:w-auto shadow-md shadow-accent/10 dark:shadow-none px-8"
+            >
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              Save Configuration
+            </Button>
+          </div>
+        }
+      />
 
       <div className="grid gap-8 md:grid-cols-2">
         {/* Configuration Card */}
         <div className="group relative overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-0 shadow-sm transition-all duration-500">
-          {/* Background Decorative Element */}
           <div className="absolute top-0 right-0 p-8 -mr-8 -mt-8 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity pointer-events-none">
             <Layout className="size-32 rotate-12 text-accent" />
           </div>

@@ -3,6 +3,7 @@ import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { MobileTopBar } from "./MobileTopBar";
 import { GlobalSearch } from "./GlobalSearch";
+import { TrialBanner } from "../reusables/TrialBanner";
 import { cn } from "@/lib/utils";
 
 interface AppLayoutProps {
@@ -52,6 +53,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto">
+          <TrialBanner />
           {children}
         </main>
       </div>

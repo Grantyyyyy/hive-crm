@@ -10,12 +10,14 @@ import {
   Trash2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { PageHeader } from "@/components/reusables/PageHeader"
 import { Pagination } from "@/components/ui/Pagination"
 import type { Project, Task } from "@/lib/types"
 import { AddProjectModal } from "@/components/crmComponent/AddProjectModal"
 import { EditProjectModal } from "@/components/crmComponent/EditProjectModal"
 import { useCRMResource } from "@/lib/hooks"
 import { useUser } from "@/lib/AuthContext"
+import { usePlan } from "@/lib/usePlan"
 import { ListSkeleton } from "@/components/ui/skeletons"
 import { DeleteModal } from "@/components/ui/delete-modal"
 
@@ -32,6 +34,10 @@ export function Projects() {
 
   const { data: tasks } = useCRMResource<Task>('tasks')
   const isLoaded = userLoaded && projectsLoaded
+
+  const { isAtLimit } = usePlan()
+
+  const atProjectLimit = isAtLimit('projects', projects.length)
 
   // UI State
   const [search, setSearch] = useState("")
@@ -73,21 +79,25 @@ export function Projects() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen font-sans">
-      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
+      <div className="mx-auto px-4 pt-2 pb-4 md:px-8 md:pt-4 md:pb-8 max-w-full animate-fade-in space-y-6">
 
-        {/* Header Area */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-1">Work Organization</p>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Projects</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Organize tasks into projects for better workflow management.</p>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <Button variant="brand" onClick={() => setShowAddModal(true)}>
+        <PageHeader 
+          category="Work Organization"
+          title="Projects"
+          description="Organize tasks into projects for better workflow management."
+          className="px-0 bg-transparent border-none pb-2"
+          actions={
+            <Button 
+              variant="brand" 
+              onClick={() => setShowAddModal(true)}
+              disabled={atProjectLimit}
+              title={atProjectLimit ? "Upgrade to add more projects" : undefined}
+              className={atProjectLimit ? "disabled:opacity-50 disabled:cursor-not-allowed" : ""}
+            >
               <PlusCircle className="w-4 h-4" /> Create Project
             </Button>
-          </div>
-        </div>
+          }
+        />
 
         {/* Search */}
         <div className="flex items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
@@ -113,7 +123,7 @@ export function Projects() {
             <div className="col-span-full p-6 text-center">
               <FolderOpen className="w-16 h-16 text-slate-300 dark:text-slate-700 mx-auto mb-4 opacity-50" />
               <p className="text-slate-500 dark:text-slate-400 font-medium mb-4">No projects found</p>
-              <Button variant="brand" onClick={() => setShowAddModal(true)}>
+              <Button variant="brand" onClick={() => setShowAddModal(true)} disabled={atProjectLimit} title={atProjectLimit ? "Upgrade to add more projects" : undefined} className={atProjectLimit ? "disabled:opacity-50 disabled:cursor-not-allowed" : ""}>
                 <PlusCircle className="w-4 h-4 mr-2" /> Create your first project
               </Button>
             </div>

@@ -26,6 +26,7 @@ interface UserFormProps {
   initialData?: AppUser | null
   availableRoles: Role[]
   isPending?: boolean
+  organizationId?: string | null
 }
 
 export function UserForm({
@@ -33,12 +34,13 @@ export function UserForm({
   onCancel,
   initialData,
   availableRoles,
-  isPending
+  isPending,
+  organizationId
 }: UserFormProps) {
   const [name, setName] = useState(initialData?.name ?? "")
   const [email, setEmail] = useState(initialData?.email ?? "")
   const [roleId, setRoleId] = useState(initialData?.roleId ?? "")
-  const [inviteMode, setInviteMode] = useState(true)
+  const [inviteMode, setInviteMode] = useState(!organizationId ? false : true)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const isEditing = !!initialData
@@ -82,11 +84,13 @@ export function UserForm({
               <button
                 type="button"
                 onClick={() => setInviteMode(true)}
+                disabled={!organizationId}
                 className={cn(
                   "px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
                   inviteMode 
                     ? "bg-accent text-white shadow-md shadow-accent/20" 
-                    : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200",
+                  !organizationId && "opacity-50 cursor-not-allowed"
                 )}
               >
                 Invite

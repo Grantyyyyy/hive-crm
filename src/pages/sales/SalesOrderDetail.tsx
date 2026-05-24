@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react"
+import { useState, useMemo } from "react"
 import { useRoute, useLocation, Link } from "wouter"
 import {
   ArrowLeft,
@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { DetailSkeleton } from "@/components/ui/skeletons"
 import { InvoiceModal } from "@/components/crmComponent/InvoiceModal"
 import { DeleteModal } from "@/components/ui/delete-modal"
@@ -43,9 +44,11 @@ import {
 import { SendEmailModal } from "@/components/crmComponent/SendEmailModal"
 import { AddPurchaseRequestModal } from "@/components/logisticsComponent/AddPurchaseRequestModal"
 import { useUser } from "@/lib/AuthContext"
+import { usePlan } from "@/lib/usePlan"
 import { updateRow } from "@/lib/CRMContext"
 import { AuditTimeline } from "@/components/reusables/AuditTimeline"
 import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
+import { UpgradeBanner } from "@/components/reusables/UpgradeBanner"
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -76,7 +79,14 @@ const TIMELINE: { status: SalesOrderStatus; label: string; icon: React.ElementTy
   { status: "delivered", label: "Delivered", icon: PackageCheck },
 ]
 
+const TIMELINE_FREE: { status: SalesOrderStatus; label: string; icon: React.ElementType }[] = [
+  { status: "pending", label: "Order Placed", icon: ShoppingCart },
+  { status: "shipped", label: "Shipped", icon: Truck },
+  { status: "delivered", label: "Delivered", icon: PackageCheck },
+]
+
 const STATUS_ORDER: SalesOrderStatus[] = ["pending", "fulfilled", "shipped", "delivered"]
+const STATUS_ORDER_FREE: SalesOrderStatus[] = ["pending", "shipped", "delivered"]
 
 // ─── Dropdown Menu ────────────────────────────────────────────────────────────
 
@@ -90,53 +100,47 @@ interface DropdownItem {
 
 function ActionsDropdown({ items }: { items: DropdownItem[] }) {
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handle(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener("mousedown", handle)
-    return () => document.removeEventListener("mousedown", handle)
-  }, [])
 
   if (items.length === 0) return null
 
   return (
-    <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="h-9 px-3 flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-xs font-bold uppercase tracking-wider"
-      >
-        <MoreHorizontal className="w-4 h-4" />
-        <span className="hidden sm:inline">More</span>
-        <ChevronDown className={cn("w-3 h-3 transition-transform", open && "rotate-180")} />
-      </button>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          className="h-9 px-3 flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-xs font-bold uppercase tracking-wider"
+        >
+          <MoreHorizontal className="w-4 h-4" />
+          <span className="hidden sm:inline">More</span>
+          <ChevronDown className={cn("w-3 h-3 transition-transform", open && "rotate-180")} />
+        </button>
+      </PopoverTrigger>
 
-      {open && (
-        <div className="absolute right-0 top-full mt-1.5 w-52 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg shadow-slate-200/50 dark:shadow-none z-50 overflow-hidden">
-          {items.map((item, i) => {
-            const Icon = item.icon
-            return (
-              <button
-                key={i}
-                disabled={item.disabled}
-                onClick={() => { item.onClick(); setOpen(false) }}
-                className={cn(
-                  "w-full flex items-center gap-2.5 px-3.5 py-2.5 text-left text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed",
-                  item.danger
-                    ? "text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
-                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
-                )}
-              >
-                {Icon && <Icon className="w-3.5 h-3.5 shrink-0" />}
-                {item.label}
-              </button>
-            )
-          })}
-        </div>
-      )}
-    </div>
+      <PopoverContent
+        align="end"
+        sideOffset={8}
+        className="w-52 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none"
+      >
+        {items.map((item, i) => {
+          const Icon = item.icon
+          return (
+            <button
+              key={i}
+              disabled={item.disabled}
+              onClick={() => { item.onClick(); setOpen(false) }}
+              className={cn(
+                "w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed",
+                item.danger
+                  ? "text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
+                  : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+              )}
+            >
+              {Icon && <Icon className="w-3.5 h-3.5 shrink-0" />}
+              {item.label}
+            </button>
+          )
+        })}
+      </PopoverContent>
+    </Popover>
   )
 }
 
@@ -148,6 +152,8 @@ export function SalesOrderDetail() {
   const orderId = params?.id ?? ""
   const ctx = useCRMContext()
   const { user, isLoaded: userLoaded } = useUser()
+  const { canAccess } = usePlan()
+  const hasInventory = canAccess('inventory')
 
   const { data: orders, isLoaded, deleteItem, updateItem } = useCRMResource<SalesOrder>("orders")
   const { data: contacts } = useCRMResource<Contact>("contacts")
@@ -417,22 +423,34 @@ export function SalesOrderDetail() {
   const tax = discountedSubtotal * 0.12 // 12% VAT
   const total = discountedSubtotal + tax
 
-  const statusOrderMap: Record<SalesOrderStatus, number> = {
-    cancelled: -1,
-    draft: -1,
-    pending_stock: 0,
-    pending: 0,
-    partially_fulfilled: 1,
-    fulfilled: 1,
-    shipped: 2,
-    delivered: 3,
-  }
+  const statusOrderMap: Record<SalesOrderStatus, number> = hasInventory
+    ? { cancelled: -1, draft: -1, pending_stock: 0, pending: 0, partially_fulfilled: 1, fulfilled: 1, shipped: 2, delivered: 3 }
+    : { cancelled: -1, draft: -1, pending_stock: 0, pending: 0, partially_fulfilled: 0, fulfilled: 0, shipped: 1, delivered: 2 }
   const currentStepIdx = statusOrderMap[order.status]
   const cfg = STATUS_CONFIG[order.status]
+  const activeTimeline = hasInventory ? TIMELINE : TIMELINE_FREE
   // ── Action Buttons Logic ──────────────────────────────────────────────────
-  const canDownloadInvoice = ["shipped", "delivered", "fulfilled"].includes(order.status)
+  const canDownloadInvoice = order.status === "delivered"
 
   const primaryAction = (() => {
+    if (!hasInventory) {
+      if (order.status === "pending" || order.status === "pending_stock" || order.status === "partially_fulfilled") {
+        return (
+          <Button variant="brand" onClick={handleShip} disabled={isUpdatingStatus} className="rounded-xl h-9 px-4">
+            <Truck className="w-4 h-4 mr-2" /> {isUpdatingStatus ? 'Updating...' : 'Mark as Shipped'}
+          </Button>
+        )
+      }
+      if (order.status === "fulfilled" || order.status === "shipped") {
+        return (
+          <Button variant="brand" onClick={() => setConfirmDeliver(true)} disabled={isUpdatingStatus} className="rounded-xl h-9 px-4">
+            <PackageCheck className="w-4 h-4 mr-2" /> Mark Delivered
+          </Button>
+        )
+      }
+      return null
+    }
+
     // 1. Awaiting stock reservation
     if (order.status === "pending_stock") return (
       <Button variant="brand" onClick={handleReserveStock} disabled={isReserving} className="rounded-xl h-9 px-4">
@@ -467,7 +485,9 @@ export function SalesOrderDetail() {
 
   const dropdownItems: DropdownItem[] = []
 
-  dropdownItems.push({ label: "View Invoice", icon: Receipt, onClick: () => setInvoiceOpen(true) })
+  if (order.status === "delivered") {
+    dropdownItems.push({ label: "View Invoice", icon: Receipt, onClick: () => setInvoiceOpen(true) })
+  }
 
   if (canDownloadInvoice) {
     dropdownItems.push(
@@ -478,19 +498,27 @@ export function SalesOrderDetail() {
 
   const hasShortages = order.items.some(item => getPendingQuantity(item) > 0)
 
-  if (hasShortages) {
+  if (!hasInventory && (order.status === "pending" || order.status === "pending_stock" || order.status === "partially_fulfilled" || order.status === "fulfilled")) {
+    dropdownItems.push({ label: "Mark as Shipped", icon: Truck, onClick: handleShip })
+  }
+
+  if (!hasInventory && order.status === "shipped") {
+    dropdownItems.push({ label: "Mark as Delivered", icon: PackageCheck, onClick: () => setConfirmDeliver(true) })
+  }
+
+  if (hasInventory && hasShortages) {
     dropdownItems.push({ label: "Procure Shortages", icon: Package, onClick: handleProcureShortages, disabled: isProcuring })
   }
 
-  if (!["delivered", "cancelled"].includes(order.status)) {
+  if (!["delivered", "cancelled"].includes(order.status) && hasInventory) {
     dropdownItems.push({ label: "Additional Purchase Request", icon: Plus, onClick: () => handleProcureShortages(true) })
   }
 
-  if (order.items.some(i => (i.procuredQuantity || 0) > 0)) {
+  if (order.items.some(i => (i.procuredQuantity || 0) > 0) && hasInventory) {
     dropdownItems.push({ label: "Clear Procurement Status", icon: XCircle, onClick: handleClearProcurement, danger: true })
   }
 
-  if (["shipped", "fulfilled"].includes(order.status) && order.stockDeducted) {
+  if (["shipped", "fulfilled"].includes(order.status) && order.stockDeducted && hasInventory) {
     dropdownItems.push({ label: "Return & Cancel", icon: XCircle, onClick: () => setReturnOpen(true), danger: true })
   }
 
@@ -509,6 +537,14 @@ export function SalesOrderDetail() {
         >
           <ArrowLeft className="h-4 w-4 mr-2" /> Back to Orders
         </Link>
+
+        {!hasInventory && (
+          <UpgradeBanner 
+            feature="Inventory & Fulfillment" 
+            description="Stock reservation, order fulfillment, and procurement require the Pro plan."
+            storageKey="banner-order-detail-dismissed"
+          />
+        )}
 
         {/* Header Card */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 md:p-8">
@@ -539,6 +575,11 @@ export function SalesOrderDetail() {
             {/* Action Buttons */}
             <div className="flex items-center gap-2 shrink-0">
               {primaryAction}
+              {order.status === "delivered" && (
+                <Button variant="outlineNeutral" onClick={() => setInvoiceOpen(true)} className="rounded-xl h-9 px-4">
+                  <Receipt className="w-4 h-4 mr-2" /> View Invoice
+                </Button>
+              )}
               <ActionsDropdown items={dropdownItems} />
             </div>
           </div>
@@ -549,7 +590,7 @@ export function SalesOrderDetail() {
               <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-5">Fulfillment Progress</p>
                 <div className="flex items-center gap-0">
-                  {TIMELINE.map((step, i) => {
+                  {activeTimeline.map((step, i) => {
                     const done = currentStepIdx >= i
                     const active = currentStepIdx === i
                     const Icon = step.icon
@@ -574,7 +615,7 @@ export function SalesOrderDetail() {
                             }
                           </span>
                         </div>
-                        {i < TIMELINE.length - 1 && (
+                        {i < activeTimeline.length - 1 && (
                           <div className={cn(
                             "flex-1 h-0.5 mx-2 rounded-full mb-5 transition-colors",
                             currentStepIdx > i ? "bg-accent" : "bg-slate-200 dark:bg-slate-800"
@@ -625,28 +666,30 @@ export function SalesOrderDetail() {
                         <td className="px-6 py-4 text-xs font-bold text-slate-400">{String(i + 1).padStart(2, "0")}</td>
                         <td className="px-6 py-4">
                           <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.name}</p>
-                          <div className="flex flex-wrap gap-2 mt-1">
-                            {fulfilled > 0 && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tight bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800">
-                                {fulfilled} Fulfilled
-                              </span>
-                            )}
-                            {reserved > 0 && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tight bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 border border-teal-100 dark:border-teal-800">
-                                {reserved} Reserved
-                              </span>
-                            )}
-                            {procured > 0 && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tight bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800">
-                                {procured} Ordered
-                              </span>
-                            )}
-                            {pending > 0 && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tight bg-slate-50 dark:bg-slate-800/50 text-slate-400 border border-slate-100 dark:border-slate-800">
-                                {pending} Shortage
-                              </span>
-                            )}
-                          </div>
+                          {hasInventory && (
+                            <div className="flex flex-wrap gap-2 mt-1">
+                              {fulfilled > 0 && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tight bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800">
+                                  {fulfilled} Fulfilled
+                                </span>
+                              )}
+                              {reserved > 0 && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tight bg-teal-50 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 border border-teal-100 dark:border-teal-800">
+                                  {reserved} Reserved
+                                </span>
+                              )}
+                              {procured > 0 && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tight bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800">
+                                  {procured} Ordered
+                                </span>
+                              )}
+                              {pending > 0 && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tight bg-slate-50 dark:bg-slate-800/50 text-slate-400 border border-slate-100 dark:border-slate-800">
+                                  {pending} Shortage
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-sm text-center text-slate-600 dark:text-slate-400">{item.quantity}</td>
                         <td className="px-6 py-4 text-sm text-right text-slate-600 dark:text-slate-400">{fmt(item.price)}</td>
@@ -782,12 +825,14 @@ export function SalesOrderDetail() {
                 </div>
               </div>
 
-              <Button
-                className="w-full mt-5 rounded-xl bg-accent hover:bg-accent/90 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-accent/20 dark:shadow-none"
-                onClick={() => setInvoiceOpen(true)}
-              >
-                <Receipt className="w-4 h-4 mr-2" /> View Invoice
-              </Button>
+              {order.status === "delivered" && (
+                <Button
+                  className="w-full mt-5 rounded-xl bg-accent hover:bg-accent/90 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-accent/20 dark:shadow-none"
+                  onClick={() => setInvoiceOpen(true)}
+                >
+                  <Receipt className="w-4 h-4 mr-2" /> View Invoice
+                </Button>
+              )}
             </div>
 
             {/* Audit Log */}
@@ -843,7 +888,10 @@ export function SalesOrderDetail() {
         open={confirmCancel}
         onOpenChange={setConfirmCancel}
         title="Cancel this order?"
-        description="This will cancel the order. Stock will not be automatically returned — adjust inventory manually if needed."
+        description={hasInventory
+          ? "This will cancel the order. Stock will not be automatically returned — adjust inventory manually if needed."
+          : "This will cancel the order. This action cannot be undone."
+        }
         confirmLabel="Cancel Order"
         confirmClassName="bg-rose-600 hover:bg-rose-700 text-white"
         onConfirm={handleCancel}

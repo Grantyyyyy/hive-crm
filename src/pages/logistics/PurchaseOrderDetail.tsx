@@ -256,8 +256,8 @@ export function PurchaseOrderDetail() {
 
   const toggleReturnable = async (row: any) => {
     try {
-      await updateRow<PurchaseReceiptItem>(ctx, "purchase_receipt_items", row.id, { 
-        isReturnable: !row.isReturnable 
+      await updateRow<PurchaseReceiptItem>(ctx, "purchase_receipt_items", row.id, {
+        isReturnable: !row.isReturnable
       })
       toast.success(`Line is now ${!row.isReturnable ? 'returnable' : 'locked'}`)
     } catch (e) {
@@ -746,7 +746,7 @@ export function PurchaseOrderDetail() {
                                 onClick={(e) => { e.stopPropagation(); toggleReturnable(row) }}
                                 className={cn(
                                   "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tighter transition-all w-[100px] justify-center",
-                                  row.isReturnable 
+                                  row.isReturnable
                                     ? "bg-accent-dim text-accent border border-accent/20 shadow-sm"
                                     : "bg-slate-50 text-slate-400 dark:bg-slate-800/40 dark:text-slate-600 border border-slate-100 dark:border-slate-800"
                                 )}

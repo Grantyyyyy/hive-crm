@@ -3,7 +3,6 @@ import {
   FileText,
   Search,
   PlusCircle,
-  Filter,
   Download,
   FileDown,
   Mail,
@@ -24,12 +23,15 @@ import { ListSkeleton } from "@/components/ui/skeletons"
 import { toast } from "sonner"
 import { sendQuoteEmail, acceptQuote, reserveStockForQuote } from "@/services/quoteService"
 import { useUser } from "@/lib/AuthContext"
+import { usePlan } from "@/lib/usePlan"
 import { StatCard } from "@/components/reusables/StatCard"
 import { InitialsAvatar } from "@/components/reusables/InitialsAvatar"
 import { StatusTabs } from "@/components/reusables/StatusTabs"
 import type { StatusTab } from "@/components/reusables/StatusTabs"
 import { SalesTable, type SalesColumn } from "@/components/reusables/SalesTable"
 import { logger } from "@/lib/logger"
+import { PageHeader } from "@/components/reusables/PageHeader"
+import { UpgradeBanner } from "@/components/reusables/UpgradeBanner"
 
 const fmtCurrency = (v: number) =>
   v.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 })
@@ -42,6 +44,8 @@ export function Quotes() {
     isLoaded
   } = useCRMResource<Quote>('quotes')
   const { data: contacts } = useCRMResource<Contact>('contacts')
+  const { canAccess } = usePlan()
+  const hasInventory = canAccess('inventory')
 
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<QuoteStatus | 'all'>('all')
@@ -86,10 +90,21 @@ export function Quotes() {
 
   const handleMarkSent = async (quote: Quote) => {
     try {
-      await reserveStockForQuote(quote, ctx, user?.id || 'system', user?.user_metadata?.full_name || 'Unknown User')
-      sendQuoteEmail(quote)
-      refresh()
-      toast.success("Quote Sent", { description: "Stock reserved and email dispatched." })
+      if (hasInventory) {
+        await reserveStockForQuote(quote, ctx, user?.id || 'system', user?.user_metadata?.full_name || 'Unknown User')
+        sendQuoteEmail(quote)
+        refresh()
+        toast.success("Quote Sent", { description: "Stock reserved and email dispatched." })
+      } else {
+        await ctx.runAtomicUpdate([{
+          resource: 'quotes',
+          id: quote.id,
+          patch: { status: 'sent' }
+        }])
+        sendQuoteEmail(quote)
+        refresh()
+        toast.success("Quote Sent", { description: "Upgrade to Pro to enable stock reservation." })
+      }
     } catch (e: unknown) {
       toast.error("Failed to send quote", { description: (e as Error).message })
     }
@@ -230,27 +245,35 @@ export function Quotes() {
 
   return (
     <div className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen font-sans">
-      <div className="mx-auto p-4 md:p-8 max-w-full animate-fade-in space-y-8">
+      <div className="mx-auto px-4 pt-2 pb-4 md:px-8 md:pt-4 md:pb-8 max-w-full animate-fade-in space-y-6">
 
-        {/* Header Region */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-2">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-1">Sales & Revenue</p>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Quotations</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Manage and track customer price estimates and validities.</p>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <Button variant="outlineNeutral">
-              <Download className="w-4 h-4" /> Export
-            </Button>
-            <Button
-              variant="brand"
-              onClick={() => setIsAddModalOpen(true)}
-            >
-              <PlusCircle className="w-4 h-4" /> Create Quote
-            </Button>
-          </div>
-        </div>
+        <PageHeader 
+          category="Sales & Revenue"
+          title="Quotations"
+          description="Manage and track customer price estimates and validities."
+          className="px-0 bg-transparent border-none pb-2"
+          actions={
+            <div className="flex items-center gap-3 shrink-0">
+              <Button variant="outlineNeutral">
+                <Download className="w-4 h-4 mr-2" /> Export
+              </Button>
+              <Button
+                variant="brand"
+                onClick={() => setIsAddModalOpen(true)}
+              >
+                <PlusCircle className="w-4 h-4 mr-2" /> Create Quote
+              </Button>
+            </div>
+          }
+        />
+
+        {!hasInventory && (
+          <UpgradeBanner 
+            feature="Inventory Integration" 
+            description="Stock reservation and automatic order creation from quotes require the Pro plan. You can still create and manage quotes with manual line items."
+            storageKey="banner-quotes-dismissed"
+          />
+        )}
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -298,12 +321,6 @@ export function Quotes() {
             onChange={setStatusFilter}
             allLabel="All Quotes"
           />
-
-          <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
-
-          <Button variant="outlineNeutral" className="h-10 px-4 rounded-md font-bold text-xs uppercase tracking-widest">
-            <Filter className="w-4 h-4" /> More Filters
-          </Button>
         </div>
 
         <SalesTable<Quote>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react"
+import { useEffect, useRef, useCallback, useMemo } from "react"
 import { useLocation } from "wouter"
 import { useCRMResource } from "@/lib/hooks"
 import type { InventoryItem, Notification } from "@/lib/types"
@@ -134,9 +134,15 @@ export function useInventoryAlerts() {
     }
   }, [])
 
+  // Stable inventory signature — only changes when actual stock values change,
+  // not when the CRMContext store reference updates from unrelated mutations.
+  const inventorySignature = useMemo(() => {
+    return inventory.map(i => `${i.id}:${i.stockQuantity}:${i.status}`).join('|');
+  }, [inventory]);
+
   // Only re-run when inventory data actually changes
   useEffect(() => {
     if (!inventoryLoaded || !notificationsLoaded) return
     processAlerts(inventory)
-  }, [inventory, inventoryLoaded, notificationsLoaded, processAlerts])
+  }, [inventorySignature, inventoryLoaded, notificationsLoaded, processAlerts])
 }

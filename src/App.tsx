@@ -2,49 +2,9 @@ import { useAuth } from "@/lib/AuthContext";
 import { Router, Route, Switch, useLocation, Redirect } from "wouter";
 import { ThemeProvider } from "@/lib/ThemeProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { LandingPage } from "@/pages/LandingPage";
-import { SignInPage } from "@/pages/SignInPage";
-import { SignUpPage } from "@/pages/SignUpPage";
-import OnboardingPage from "@/pages/OnboardingPage";
-import AcceptInvitePage from "@/pages/AcceptInvitePage";
-import { Dashboard } from "@/pages/core/Dashboard";
-import { Contacts } from "@/pages/core/Contacts";
-import { ContactDetail } from "@/pages/core/ContactDetail";
-import { Deals } from "@/pages/core/Deals";
-import { DealDetail } from "@/pages/core/DealDetail";
-import { Activities } from "@/pages/core/Activities";
-import { Leads } from "@/pages/core/Leads";
-import { LeadDetail } from "@/pages/LeadDetail";
-import { Tasks } from "@/pages/core/Tasks";
-import { Projects } from "@/pages/core/Projects";
-import { ProjectDetail } from "@/pages/core/ProjectDetail";
-import { Workload } from "@/pages/core/Workload";
-import { SalesOrders } from "@/pages/sales/SalesOrders";
-import { SalesOrderDetail } from "@/pages/sales/SalesOrderDetail";
-import { Quotes } from "@/pages/sales/Quotes";
-import { QuoteDetail } from "@/pages/sales/QuoteDetail";
-import { PurchaseOrders } from "@/pages/logistics/PurchaseOrders";
-import { PurchaseOrderDetail } from "@/pages/logistics/PurchaseOrderDetail";
-import { PurchaseRequests } from "@/pages/logistics/PurchaseRequests";
-import { PurchaseRequestDetail } from "@/pages/logistics/PurchaseRequestDetail";
-import { Vendors } from "@/pages/logistics/Vendors";
-import { VendorDetail } from "@/pages/logistics/VendorDetail";
-import { Users } from "@/pages/settings/Users";
-import { Roles } from "@/pages/settings/Roles";
-import { OrganizationsPage } from "./pages/settings/OrganizationsPage";
-import { ProfilePage } from "@/pages/settings/ProfilePage";
-import { AuditLogs } from "@/pages/settings/AuditLogs";
-import { Notifications } from "@/pages/settings/Notifications";
-import { BrandingSettings } from "@/pages/settings/BrandingSettings";
-import { Discounts } from "@/pages/settings/Discounts";
-import { Billing } from "@/pages/settings/Billing";
-import { Navbar } from "@/components/Navbar";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SettingsLayout } from "@/components/layout/SettingsLayout";
-import { Inventory } from "@/pages/logistics/Inventory";
-import { InventoryDetail } from "@/pages/logistics/InventoryDetail";
-import { Reports } from "@/pages/logistics/Reports";
 import { Toaster } from "sonner";
 import { CRMProvider, useCRMContext } from "@/lib/CRMContext";
 import { useInventoryAlerts } from "@/lib/hooks/useInventoryAlerts";
@@ -53,8 +13,56 @@ import { RequirePermission } from "@/components/RequirePermission";
 import type { Organization } from "@/lib/types";
 import { setAuthToken, subscribeAuth } from "@/lib/api";
 import { logger } from "@/lib/logger";
-import React, { useEffect, useRef, useState } from "react";
+import React, { Suspense, useEffect, useRef, useState } from "react";
 import { FontProvider } from "@/components/FontProvider";
+
+const LandingPage = React.lazy(() => import("@/pages/LandingPage").then(module => ({ default: module.LandingPage })));
+const SignInPage = React.lazy(() => import("@/pages/SignInPage").then(module => ({ default: module.SignInPage })));
+const SignUpPage = React.lazy(() => import("@/pages/SignUpPage").then(module => ({ default: module.SignUpPage })));
+const OnboardingPage = React.lazy(() => import("@/pages/OnboardingPage"));
+const AcceptInvitePage = React.lazy(() => import("@/pages/AcceptInvitePage"));
+const Dashboard = React.lazy(() => import("@/pages/core/Dashboard").then(module => ({ default: module.Dashboard })));
+const Contacts = React.lazy(() => import("@/pages/core/Contacts").then(module => ({ default: module.Contacts })));
+const ContactDetail = React.lazy(() => import("@/pages/core/ContactDetail").then(module => ({ default: module.ContactDetail })));
+const Deals = React.lazy(() => import("@/pages/core/Deals").then(module => ({ default: module.Deals })));
+const DealDetail = React.lazy(() => import("@/pages/core/DealDetail").then(module => ({ default: module.DealDetail })));
+const Activities = React.lazy(() => import("@/pages/core/Activities").then(module => ({ default: module.Activities })));
+const Leads = React.lazy(() => import("@/pages/core/Leads").then(module => ({ default: module.Leads })));
+const LeadDetail = React.lazy(() => import("@/pages/LeadDetail").then(module => ({ default: module.LeadDetail })));
+const Tasks = React.lazy(() => import("@/pages/core/Tasks").then(module => ({ default: module.Tasks })));
+const Projects = React.lazy(() => import("@/pages/core/Projects").then(module => ({ default: module.Projects })));
+const ProjectDetail = React.lazy(() => import("@/pages/core/ProjectDetail").then(module => ({ default: module.ProjectDetail })));
+const Workload = React.lazy(() => import("@/pages/core/Workload").then(module => ({ default: module.Workload })));
+const SalesOrders = React.lazy(() => import("@/pages/sales/SalesOrders").then(module => ({ default: module.SalesOrders })));
+const SalesOrderDetail = React.lazy(() => import("@/pages/sales/SalesOrderDetail").then(module => ({ default: module.SalesOrderDetail })));
+const Quotes = React.lazy(() => import("@/pages/sales/Quotes").then(module => ({ default: module.Quotes })));
+const QuoteDetail = React.lazy(() => import("@/pages/sales/QuoteDetail").then(module => ({ default: module.QuoteDetail })));
+const PurchaseOrders = React.lazy(() => import("@/pages/logistics/PurchaseOrders").then(module => ({ default: module.PurchaseOrders })));
+const PurchaseOrderDetail = React.lazy(() => import("@/pages/logistics/PurchaseOrderDetail").then(module => ({ default: module.PurchaseOrderDetail })));
+const PurchaseRequests = React.lazy(() => import("@/pages/logistics/PurchaseRequests").then(module => ({ default: module.PurchaseRequests })));
+const PurchaseRequestDetail = React.lazy(() => import("@/pages/logistics/PurchaseRequestDetail").then(module => ({ default: module.PurchaseRequestDetail })));
+const Vendors = React.lazy(() => import("@/pages/logistics/Vendors").then(module => ({ default: module.Vendors })));
+const VendorDetail = React.lazy(() => import("@/pages/logistics/VendorDetail").then(module => ({ default: module.VendorDetail })));
+const Inventory = React.lazy(() => import("@/pages/logistics/Inventory").then(module => ({ default: module.Inventory })));
+const InventoryDetail = React.lazy(() => import("@/pages/logistics/InventoryDetail").then(module => ({ default: module.InventoryDetail })));
+const Reports = React.lazy(() => import("@/pages/logistics/Reports").then(module => ({ default: module.Reports })));
+const Users = React.lazy(() => import("@/pages/settings/Users").then(module => ({ default: module.Users })));
+const Roles = React.lazy(() => import("@/pages/settings/Roles").then(module => ({ default: module.Roles })));
+const OrganizationsPage = React.lazy(() => import("@/pages/settings/OrganizationsPage").then(module => ({ default: module.OrganizationsPage })));
+const ProfilePage = React.lazy(() => import("@/pages/settings/ProfilePage").then(module => ({ default: module.ProfilePage })));
+const AuditLogs = React.lazy(() => import("@/pages/settings/AuditLogs").then(module => ({ default: module.AuditLogs })));
+const Notifications = React.lazy(() => import("@/pages/settings/Notifications").then(module => ({ default: module.Notifications })));
+const BrandingSettings = React.lazy(() => import("@/pages/settings/BrandingSettings").then(module => ({ default: module.BrandingSettings })));
+const Discounts = React.lazy(() => import("@/pages/settings/Discounts").then(module => ({ default: module.Discounts })));
+const Billing = React.lazy(() => import("@/pages/settings/Billing").then(module => ({ default: module.Billing })));
+
+function RouteFallback() {
+  return (
+    <div className="flex min-h-[240px] items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-r-transparent" />
+    </div>
+  );
+}
 
 function Protected({ component: Component }: { component: React.ComponentType }) {
   return <ProtectedRoute component={Component} />;
@@ -171,6 +179,7 @@ function AppContent() {
           />
           <main className="flex-[1_0_auto] flex flex-col">
             <InventoryAlertRunner />
+            <Suspense fallback={<RouteFallback />}>
             <Switch>
               {/* Public routes — no AppLayout */}
               <Route path="/" component={LandingPage} />
@@ -234,6 +243,7 @@ function AppContent() {
                 )}
               </Route>
             </Switch>
+            </Suspense>
           </main>
         </div>
       </Router>

@@ -1,13 +1,27 @@
-import type { Request, Response } from 'express';
 import { createClient } from '@supabase/supabase-js';
 
-export default async function handler(req: Request, res: Response) {
+type ApiRequest = {
+  method?: string;
+  body?: {
+    email?: string;
+    name?: string;
+    role?: string;
+  };
+};
+
+type ApiResponse = {
+  status(code: number): {
+    json(body: unknown): void;
+  };
+};
+
+export default async function handler(req: ApiRequest, res: ApiResponse) {
   // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { email, name, role } = req.body;
+  const { email, name, role } = req.body ?? {};
 
   if (!email || !name) {
     return res.status(400).json({ error: 'Email and name are required' });

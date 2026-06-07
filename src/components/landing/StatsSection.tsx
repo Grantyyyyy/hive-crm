@@ -1,73 +1,50 @@
-import { useEffect, useRef, useState } from "react";
 import type { LandingTheme } from "./types";
 
 interface StatsSectionProps {
   theme: LandingTheme;
 }
 
-interface CounterProps {
-  value: number;
-  duration?: number;
-  suffix?: string;
-  prefix?: string;
-}
-
-function AnimatedCounter({ value, duration = 2000, suffix = "", prefix = "" }: CounterProps) {
-  const [count, setCount] = useState(0);
-  const countRef = useRef<HTMLSpanElement>(null);
-  const [hasAnimated, setHasAnimated] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !hasAnimated) {
-          setHasAnimated(true);
-          let startTime: number | null = null;
-          const step = (timestamp: number) => {
-            if (!startTime) startTime = timestamp;
-            const progress = Math.min((timestamp - startTime) / duration, 1);
-            setCount(Math.floor(progress * value));
-            if (progress < 1) requestAnimationFrame(step);
-          };
-          requestAnimationFrame(step);
-        }
-      },
-      { threshold: 0.1 },
-    );
-
-    if (countRef.current) observer.observe(countRef.current);
-    return () => observer.disconnect();
-  }, [duration, hasAnimated, value]);
-
-  return (
-    <span ref={countRef} className="tabular-nums">
-      {prefix}
-      {count.toLocaleString()}
-      {suffix}
-    </span>
-  );
-}
+const steps = [
+  {
+    num: "1",
+    title: "Sign up free",
+    desc: "Create your account in under a minute. No credit card and no setup fees to get going.",
+  },
+  {
+    num: "2",
+    title: "Add your info",
+    desc: "Pop in your customers and products — or import them straight from a spreadsheet in a few clicks.",
+  },
+  {
+    num: "3",
+    title: "You're organized",
+    desc: "That's it. Run your whole day from one simple screen that everyone on your team understands.",
+  },
+];
 
 export function StatsSection({ theme }: StatsSectionProps) {
   const isDark = theme === "dark";
+  const textColor = isDark ? "text-white" : "text-slate-900";
+  const subColor = isDark ? "text-slate-400" : "text-slate-600";
 
   return (
-    <section className={`py-10 border-b ${isDark ? "bg-slate-950 border-slate-800" : "bg-white border-slate-200"}`}>
-      <div className="max-w-[1600px] mx-auto px-4 lg:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-10 lg:gap-6">
-          {[
-            { value: 12400, label: "Active Users", suffix: "+" },
-            { value: 1.2, label: "Revenue Managed", prefix: "$", suffix: "B" },
-            { value: 500, label: "Enterprise Orgs", suffix: "+" },
-            { value: 99.99, label: "System Uptime", suffix: "%" },
-          ].map((stat, i) => (
-            <div key={i} className="space-y-4">
-              <p className={`text-[10px] font-black uppercase tracking-[0.5em] ${isDark ? "text-slate-500" : "text-slate-400"}`}>
-                {stat.label}
-              </p>
-              <p className={`text-4xl lg:text-6xl font-black tracking-tight uppercase ${isDark ? "text-slate-100" : "text-slate-900"}`}>
-                <AnimatedCounter value={stat.value} prefix={stat.prefix} suffix={stat.suffix} />
-              </p>
+    <section className={`py-16 lg:py-24 border-t ${isDark ? "bg-slate-950 border-slate-800" : "bg-white border-slate-200"}`}>
+      <div className="max-w-6xl mx-auto px-4 lg:px-6">
+        <div className="max-w-2xl mx-auto text-center mb-12 space-y-4">
+          <p className="text-sm font-bold uppercase tracking-wide text-accent">Up and running fast</p>
+          <h2 className={`text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight ${textColor}`}>
+            Get started in 3 easy steps
+          </h2>
+        </div>
+
+        <div className="grid sm:grid-cols-3 gap-8">
+          {steps.map((step) => (
+            <div key={step.num} className="text-center space-y-4">
+              <div className="mx-auto w-14 h-14 rounded-full bg-accent text-white flex items-center justify-center text-xl font-extrabold">
+                {step.num}
+              </div>
+              <h3 className={`text-xl font-bold ${textColor}`}>{step.title}</h3>
+              <p className={`text-base leading-relaxed max-w-xs mx-auto ${subColor}`}>{step.desc}</p>
             </div>
           ))}
         </div>

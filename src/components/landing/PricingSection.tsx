@@ -10,54 +10,54 @@ const plans = [
   {
     icon: Sprout,
     name: "Free",
-    tagline: "Try before you commit",
+    tagline: "Perfect for trying it out",
     price: null,
     features: [
-      "Up to 5 users",
-      "100 leads & contacts",
-      "50 deals tracking",
+      "Up to 5 team members",
+      "100 customers & contacts",
+      "Track up to 50 deals",
       "3 active projects",
-      "Task management",
-      "Community support",
+      "To-do lists & reminders",
+      "Help from our community",
     ],
     highlight: false,
-    cta: "Start for Free",
+    cta: "Start for free",
     ctaHref: "/sign-up",
-    priceNote: "No credit card required",
+    priceNote: "No credit card needed",
   },
   {
     icon: Zap,
     name: "Pro",
-    tagline: "For fast-moving teams",
+    tagline: "Great for growing teams",
     price: "29",
     features: [
-      "Up to 10 users",
-      "Unlimited leads & contacts",
-      "Unlimited deals & pipeline",
-      "Inventory & stock tracking",
-      "Procurement management",
-      "Custom branding",
+      "Up to 10 team members",
+      "Unlimited customers & contacts",
+      "Unlimited deals",
+      "Stock & inventory tracking",
+      "Buying from suppliers",
+      "Add your own logo & colors",
     ],
     highlight: true,
-    cta: "Get Started",
+    cta: "Get started",
     ctaHref: "/sign-up",
     priceNote: "per month, billed monthly",
   },
   {
     icon: Crown,
-    name: "Enterprise",
-    tagline: "For scaling enterprises",
+    name: "Business",
+    tagline: "For bigger or multi-site teams",
     price: "129",
     features: [
-      "Unlimited users",
-      "Full procurement workflow",
+      "Unlimited team members",
+      "Full supplier purchasing",
       "Advanced quotes & orders",
-      "Custom roles & RBAC",
-      "Multi-org management",
-      "Priority support & SLA",
+      "Custom team permissions",
+      "Manage multiple locations",
+      "Priority support",
     ],
     highlight: false,
-    cta: "Contact Sales",
+    cta: "Talk to us",
     ctaHref: "/sign-up",
     priceNote: "per month, billed monthly",
   },
@@ -82,7 +82,7 @@ export function PricingSection({ theme }: PricingSectionProps) {
             Simple, transparent pricing
           </h2>
           <p className={`text-sm font-medium max-w-md mx-auto leading-relaxed ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-            Start free, scale when you're ready. No hidden fees, no per-seat surprises.
+            Start free and upgrade only when you're ready. No hidden fees and no surprises.
           </p>
         </div>
 
@@ -95,8 +95,8 @@ export function PricingSection({ theme }: PricingSectionProps) {
                 key={plan.name}
                 className={`group relative flex flex-col rounded-3xl border transition-all duration-300 hover:translate-y-[-4px] ${plan.highlight
                   ? isDark
-                    ? "bg-slate-900 border-accent/30 shadow-2xl shadow-accent/10"
-                    : "bg-white border-accent/20 shadow-2xl shadow-accent/10"
+                    ? "bg-slate-900 border-accent/30 shadow-xl shadow-black/5"
+                    : "bg-white border-accent/20 shadow-xl shadow-black/5"
                   : isDark
                     ? "bg-slate-900/40 border-slate-800 hover:border-slate-700"
                     : "bg-white border-slate-200 shadow-sm hover:shadow-md"
@@ -105,7 +105,7 @@ export function PricingSection({ theme }: PricingSectionProps) {
                 {/* Most Popular badge — Absolute for alignment consistency */}
                 {plan.highlight && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
-                    <span className="px-4 py-1.5 bg-accent text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full shadow-lg shadow-accent/20">
+                    <span className="px-4 py-1.5 bg-accent text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full shadow-sm">
                       Most Popular
                     </span>
                   </div>
@@ -115,7 +115,7 @@ export function PricingSection({ theme }: PricingSectionProps) {
                   {/* Header Section with Icon */}
                   <div className="mb-8">
                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110 duration-300 ${plan.highlight
-                      ? "bg-accent text-white shadow-lg shadow-accent/20"
+                      ? "bg-accent text-white shadow-sm"
                       : isDark ? "bg-slate-800 text-slate-300" : "bg-slate-100 text-slate-600"
                       }`}>
                       <Icon className="w-6 h-6" />
@@ -179,7 +179,7 @@ export function PricingSection({ theme }: PricingSectionProps) {
                   <Link href={plan.ctaHref}>
                     <button
                       className={`w-full py-4 text-xs font-bold uppercase tracking-widest rounded-2xl transition-all duration-300 active:scale-95 ${plan.highlight
-                        ? "bg-accent hover:opacity-90 text-white shadow-lg shadow-accent/20"
+                        ? "bg-accent hover:opacity-90 text-white shadow-sm"
                         : isDark
                           ? "bg-slate-800 text-slate-100 hover:bg-slate-700"
                           : "bg-slate-100 text-slate-900 hover:bg-slate-200"

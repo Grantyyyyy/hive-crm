@@ -12,33 +12,46 @@ export function CtaSection({ theme, email, onEmailChange }: CtaSectionProps) {
   const isDark = theme === "dark";
 
   return (
-    <section className={`py-6 lg:py-8 relative overflow-hidden ${isDark ? "bg-slate-900 text-white" : "bg-white text-slate-900 border-t border-slate-200"}`}>
-      <div className={`absolute inset-0 bg-size-[50px_50px] ${isDark ? "bg-grid-white/[0.05]" : "bg-grid-slate-900/[0.03]"}`} />
-      <div className="max-w-[1600px] mx-auto px-4 lg:px-6 text-center space-y-8 relative z-10">
-        <h2 className="text-5xl lg:text-8xl font-sans font-black tracking-tight uppercase leading-[0.8] mb-4">
-          Ready to <br />
-          <span className="text-accent">Get Started?</span>
-        </h2>
+    <section className={`py-16 lg:py-24 ${isDark ? "bg-slate-950" : "bg-white"}`}>
+      <div className="max-w-4xl mx-auto px-4 lg:px-6">
+        <div
+          className={`relative overflow-hidden rounded-3xl px-6 py-12 sm:px-12 sm:py-16 text-center ${isDark ? "bg-slate-900 border border-slate-800" : "bg-accent-dim border border-accent/15"
+            }`}
+        >
+          <div className="relative space-y-6 max-w-xl mx-auto">
+            <h2 className={`text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight ${isDark ? "text-white" : "text-slate-900"}`}>
+              Ready to get organized?
+            </h2>
+            <p className={`text-lg ${isDark ? "text-slate-400" : "text-slate-600"}`}>
+              Join the small teams using Hive to run their day with a lot less stress.
+              It's free to start — see for yourself.
+            </p>
 
-        <div className="max-w-2xl mx-auto space-y-6">
-          <div className={`flex flex-col sm:flex-row gap-0 group border-2 border-accent rounded-3xl overflow-hidden ${isDark ? "shadow-2xl" : "shadow-lg"}`}>
-            <input
-              type="email"
-              placeholder="ENTER YOUR EMAIL"
-              value={email}
-              onChange={(e) => onEmailChange(e.target.value)}
-              className={`flex-1 px-8 py-5 text-sm font-black border-none focus:outline-none uppercase ${isDark ? "bg-white text-slate-900" : "bg-slate-50 text-slate-900"}`}
-            />
-            <Link
-              href={`/sign-up?email=${encodeURIComponent(email)}`}
-              className="bg-accent px-8 py-5 text-[11px] font-black uppercase tracking-[0.3em] hover:bg-teal-700 transition-all flex items-center justify-center gap-4 text-white"
+            <form
+              className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto pt-2"
+              onSubmit={(e) => e.preventDefault()}
             >
-              Start Free Trial <ArrowRight className="w-5 h-5" />
-            </Link>
+              <input
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => onEmailChange(e.target.value)}
+                className={`flex-1 px-5 py-3.5 rounded-2xl text-base border focus:outline-none focus:ring-2 focus:ring-accent/40 ${isDark ? "bg-slate-950 border-slate-700 text-white placeholder:text-slate-500" : "bg-white border-slate-200 text-slate-900 placeholder:text-slate-400"
+                  }`}
+              />
+              <Link
+                href={`/sign-up?email=${encodeURIComponent(email)}`}
+                className="inline-flex items-center justify-center gap-2 bg-accent text-white px-6 py-3.5 rounded-2xl text-base font-bold shadow-sm hover:opacity-90 active:scale-95 transition-all whitespace-nowrap"
+              >
+                Start for free
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+            </form>
+
+            <p className={`text-sm ${isDark ? "text-slate-500" : "text-slate-500"}`}>
+              No credit card needed. Cancel any time.
+            </p>
           </div>
-          <p className={`text-[10px] font-black uppercase tracking-[0.5em] ${isDark ? "opacity-40" : "text-slate-500"}`}>
-            No credit card required. Secure and Private Deployment.
-          </p>
         </div>
       </div>
     </section>

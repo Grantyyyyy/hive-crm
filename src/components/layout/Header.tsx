@@ -25,7 +25,8 @@ export const Header = React.memo(function Header({ onSearchClick }: HeaderProps)
     () => notifications.filter(n => !n.isRead).length,
     [notifications]
   );
-  const initials = (user?.email ?? "U").slice(0, 2).toUpperCase();
+  const displayName = user?.user_metadata?.full_name || user?.email || "User";
+  const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
     <header className="h-16 shrink-0 flex items-center justify-between px-8 bg-bg-surface/80 backdrop-blur-md border-b border-border sticky top-0 z-30">
@@ -83,8 +84,8 @@ export const Header = React.memo(function Header({ onSearchClick }: HeaderProps)
           </PopoverTrigger>
           <PopoverContent className="w-64 p-2" align="end">
             <div className="px-3 py-2 border-b border-border mb-2">
-              <p className="text-sm font-bold text-text-primary truncate">{user?.user_metadata?.full_name ?? "User"}</p>
-              <p className="text-xs text-text-muted truncate">{user?.email}</p>
+              <p className="text-sm font-bold text-text-primary truncate">{displayName}</p>
+              <p className="text-xs text-text-muted truncate">{user?.email || "Demo account"}</p>
             </div>
             <div className="space-y-1">
               <button

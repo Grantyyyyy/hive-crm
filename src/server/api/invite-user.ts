@@ -69,6 +69,11 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
+    // Demo users are anonymous — never let them trigger real invite emails.
+    if (caller.user.is_anonymous) {
+      return res.status(403).json({ error: 'Inviting users is disabled in demo mode.' });
+    }
+
     // 1. Already registered? Attach them without sending an email.
     const { data: existingId, error: lookupError } = await admin.rpc('find_auth_user_id_by_email', {
       p_email: email,

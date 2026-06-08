@@ -1,6 +1,7 @@
 import { ArrowRight, Check } from "lucide-react";
 import { Link } from "wouter";
 import type { LandingTheme } from "./types";
+import { DemoButton } from "./DemoButton";
 
 interface HeroSectionProps {
   theme: LandingTheme;
@@ -36,19 +37,25 @@ export function HeroSection({ theme }: HeroSectionProps) {
             </p>
 
             {/* Buttons */}
-            <div className="flex flex-col sm:flex-row items-center gap-4 pt-1 justify-center lg:justify-start">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 pt-1 justify-center lg:justify-start">
               <Link
                 href="/sign-up"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-accent text-white px-7 py-4 rounded-2xl text-base font-bold shadow-sm hover:opacity-90 hover:scale-[1.02] active:scale-95 transition-all"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 whitespace-nowrap bg-accent text-white px-7 py-4 rounded-2xl text-base font-bold shadow-sm hover:opacity-90 hover:scale-[1.02] active:scale-95 transition-all"
               >
                 Start for free
                 <ArrowRight className="w-5 h-5" />
               </Link>
-              <a
-                href="#modules"
-                className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl text-base font-bold border-2 transition-all ${isDark
+              <DemoButton
+                className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 whitespace-nowrap px-7 py-4 rounded-2xl text-base font-bold border-2 transition-all disabled:opacity-70 ${isDark
                   ? "border-slate-700 text-slate-200 hover:border-slate-500"
                   : "border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                  }`}
+              />
+              <a
+                href="#modules"
+                className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 whitespace-nowrap px-5 py-4 rounded-2xl text-base font-bold transition-all ${isDark
+                  ? "text-slate-300 hover:text-white"
+                  : "text-slate-600 hover:text-slate-900"
                   }`}
               >
                 See how it works

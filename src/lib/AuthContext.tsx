@@ -47,6 +47,7 @@ interface AuthContextValue {
   userId: string
   organizationId: string | null
   orgName: string | null
+  isDemo: boolean
   memberships: Membership[]
   switchOrg: (organizationId: string) => Promise<void>
   brandColor: BrandColorId
@@ -129,10 +130,10 @@ async function resolveOrganizationId(session: Session | null): Promise<string | 
   }
 }
 
-async function resolveAuthProfile(session: Session | null): Promise<{ organizationId: string | null; orgName: string | null; brandColor: BrandColorId; plan: string | null; seatsLimit: number | null; trialEndsAt: string | null }> {
+async function resolveAuthProfile(session: Session | null): Promise<{ organizationId: string | null; orgName: string | null; brandColor: BrandColorId; plan: string | null; seatsLimit: number | null; trialEndsAt: string | null; isDemo: boolean }> {
   const authUserId = session?.user?.id
   if (!authUserId) {
-    return { organizationId: null, orgName: null, brandColor: DEFAULT_BRAND_COLOR, plan: null, seatsLimit: null, trialEndsAt: null }
+    return { organizationId: null, orgName: null, brandColor: DEFAULT_BRAND_COLOR, plan: null, seatsLimit: null, trialEndsAt: null, isDemo: false }
   }
 
   let organizationId = extractOrgId(session)
@@ -141,11 +142,12 @@ async function resolveAuthProfile(session: Session | null): Promise<{ organizati
   let plan: string | null = null
   let seatsLimit: number | null = null
   let trialEndsAt: string | null = null
+  let isDemo = false
 
   try {
     const { data, error } = await supabase
       .from("app_users")
-      .select('organization_id, brand_color, organizations(name, plan, seats_limit, trial_ends_at)')
+      .select('organization_id, brand_color, organizations(name, plan, seats_limit, trial_ends_at, is_demo)')
       .eq("auth_user_id", authUserId)
       .maybeSingle()
 
@@ -163,6 +165,7 @@ async function resolveAuthProfile(session: Session | null): Promise<{ organizati
     plan = orgRow?.plan ?? 'free'
     seatsLimit = orgRow?.seats_limit ?? 5
     trialEndsAt = orgRow?.trial_ends_at ?? null
+    isDemo = orgRow?.is_demo ?? false
   } catch (error) {
     logger.warn("[AuthContext] app_users profile lookup failed:", error)
   }
@@ -171,7 +174,7 @@ async function resolveAuthProfile(session: Session | null): Promise<{ organizati
     organizationId = await resolveOrganizationId(session)
   }
 
-  return { organizationId, orgName, brandColor, plan, seatsLimit, trialEndsAt }
+  return { organizationId, orgName, brandColor, plan, seatsLimit, trialEndsAt, isDemo }
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -179,6 +182,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [organizationId, setOrganizationId] = useState<string | null>(null)
   const [orgName, setOrgName] = useState<string | null>(null)
+  const [isDemo, setIsDemo] = useState(false)
   const [memberships, setMemberships] = useState<Membership[]>([])
   const [brandColor, setBrandColor] = useState<BrandColorId>(DEFAULT_BRAND_COLOR)
   const [plan, setPlan] = useState<string | null>(null)
@@ -197,7 +201,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const syncSessionState = async (nextSession: Session | null, seedRefs = false) => {
       const syncVersion = ++syncVersionRef.current
       const nextUser = nextSession?.user ?? null
-      const { organizationId: nextOrganizationId, orgName: nextOrgName, brandColor: nextBrandColor, plan: nextPlan, seatsLimit: nextSeatsLimit, trialEndsAt: nextTrialEndsAt } = await resolveAuthProfile(nextSession)
+      const { organizationId: nextOrganizationId, orgName: nextOrgName, brandColor: nextBrandColor, plan: nextPlan, seatsLimit: nextSeatsLimit, trialEndsAt: nextTrialEndsAt, isDemo: nextIsDemo } = await resolveAuthProfile(nextSession)
 
       if (cancelled || syncVersion !== syncVersionRef.current) return
 
@@ -205,6 +209,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(nextUser)
       setOrganizationId(nextOrganizationId)
       setOrgName(nextOrgName)
+      setIsDemo(nextIsDemo)
       setBrandColor(nextBrandColor)
       setPlan(nextPlan)
       setSeatsLimit(nextSeatsLimit)
@@ -307,6 +312,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null)
     setOrganizationId(null)
     setOrgName(null)
+    setIsDemo(false)
     setBrandColor(DEFAULT_BRAND_COLOR)
     setIsLoaded(true)
   }, [organizationId])
@@ -317,11 +323,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error
 
       if (data.session) {
-        const { organizationId: nextOrganizationId, orgName: nextOrgName, brandColor: nextBrandColor, plan: nextPlan, seatsLimit: nextSeatsLimit, trialEndsAt: nextTrialEndsAt } = await resolveAuthProfile(data.session)
+        const { organizationId: nextOrganizationId, orgName: nextOrgName, brandColor: nextBrandColor, plan: nextPlan, seatsLimit: nextSeatsLimit, trialEndsAt: nextTrialEndsAt, isDemo: nextIsDemo } = await resolveAuthProfile(data.session)
         setSession(data.session)
         setUser(data.session.user)
         setOrganizationId(nextOrganizationId)
         setOrgName(nextOrgName)
+        setIsDemo(nextIsDemo)
         setBrandColor(nextBrandColor)
         setPlan(nextPlan)
         setSeatsLimit(nextSeatsLimit)
@@ -352,6 +359,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       userId,
       organizationId,
       orgName,
+      isDemo,
       memberships,
       switchOrg,
       brandColor,
@@ -363,13 +371,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       getToken,
       refreshSession,
     }),
-    [user, session, isLoaded, isSignedIn, userId, organizationId, orgName, memberships, switchOrg, brandColor, setBrandColor, plan, seatsLimit, trialEndsAt, signOut, getToken, refreshSession],
+    [user, session, isLoaded, isSignedIn, userId, organizationId, orgName, isDemo, memberships, switchOrg, brandColor, setBrandColor, plan, seatsLimit, trialEndsAt, signOut, getToken, refreshSession],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-export function useAuth(): Pick<AuthContextValue, "user" | "isLoaded" | "isSignedIn" | "userId" | "organizationId" | "orgName" | "memberships" | "switchOrg" | "brandColor" | "setBrandColor" | "plan" | "seatsLimit" | "trialEndsAt" | "signOut" | "getToken" | "refreshSession"> {
+export function useAuth(): Pick<AuthContextValue, "user" | "isLoaded" | "isSignedIn" | "userId" | "organizationId" | "orgName" | "isDemo" | "memberships" | "switchOrg" | "brandColor" | "setBrandColor" | "plan" | "seatsLimit" | "trialEndsAt" | "signOut" | "getToken" | "refreshSession"> {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error("useAuth must be used within an AuthProvider")
 
@@ -380,6 +388,7 @@ export function useAuth(): Pick<AuthContextValue, "user" | "isLoaded" | "isSigne
     userId: ctx.userId,
     organizationId: ctx.organizationId,
     orgName: ctx.orgName,
+    isDemo: ctx.isDemo,
     memberships: ctx.memberships,
     switchOrg: ctx.switchOrg,
     brandColor: ctx.brandColor,

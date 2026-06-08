@@ -1,4 +1,5 @@
 import type { Quote, SalesOrder } from "@/lib/types";
+import { supabase } from "@/lib/supabaseClient";
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -23,6 +24,12 @@ interface SendEmailPayload {
 export async function sendEmailWithPdf(
   payload: SendEmailPayload
 ): Promise<{ success: boolean; emailId?: string }> {
+  // Demo users are anonymous — never let them send real emails.
+  const { data: { session } } = await (supabase.auth as any).getSession();
+  if (session?.user?.is_anonymous) {
+    throw new Error("Sending email is disabled in demo mode.");
+  }
+
   const response = await fetch(`${API_BASE}/api/email/send`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

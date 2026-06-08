@@ -178,14 +178,20 @@ export function Users() {
       if (!organizationId) throw new Error('Organization ID not available');
       return inviteUser(client, data, userId, organizationId);
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['app-users'] });
       queryClient.invalidateQueries({ queryKey: ['roles'] });
       setUserSheetOpen(false);
       setSelectedUser(null);
-      toast.success('Invitation sent!', {
-        description: 'The user will receive an email to set up their account.',
-      });
+      if (result?.isExisting) {
+        toast.success('User added to organization!', {
+          description: 'They already had an account and now have access to this workspace.',
+        });
+      } else {
+        toast.success('Invitation sent!', {
+          description: 'The user will receive an email to set up their account.',
+        });
+      }
     },
     onError: (error) => {
       toast.error('Failed to send invitation', {

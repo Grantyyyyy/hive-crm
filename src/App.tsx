@@ -103,8 +103,11 @@ function AppContent() {
           navigate("/onboarding");
         }
 
-        // Redirect to dashboard if they are already onboarded but trying to access onboarding
-        if (organizationId && organizationId !== "null" && location === "/onboarding") {
+        // Redirect to dashboard if they are already onboarded but trying to access onboarding,
+        // UNLESS they are intentionally creating an additional organization (?new=1).
+        const creatingNewOrg =
+          typeof window !== "undefined" && window.location.search.includes("new=1");
+        if (organizationId && organizationId !== "null" && location === "/onboarding" && !creatingNewOrg) {
           logger.debug("Redirecting to /dashboard");
           navigate("/dashboard");
         }

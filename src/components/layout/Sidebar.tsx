@@ -23,13 +23,13 @@ import {
   PanelLeftOpen,
   Building2,
   FolderOpen,
-  LogOut,
   History as HistoryIcon,
   Settings as SettingsIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { OrgSwitcher } from "@/components/layout/OrgSwitcher";
 import type { Organization } from "@/lib/types";
 
 
@@ -56,7 +56,7 @@ interface SidebarProps {
 export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: SidebarProps) {
   const [location] = useLocation();
   const { user } = useUser();
-  const { userId, signOut, isLoaded, orgName } = useAuth();
+  const { userId, isLoaded, orgName } = useAuth();
   const { can, hasFullAccess, isLoaded: permLoaded, roleName } = usePermission();
   const { canAccess } = usePlan();
   const ctx = useCRMContext();
@@ -291,18 +291,8 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
                       </div>
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-56 p-2" align="start" side="top">
-                    <div className="px-3 py-2 border-b border-border mb-2">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-text-muted mb-1">Organization</p>
-                      <p className="text-sm font-bold text-text-primary truncate">{orgName ?? '—'}</p>
-                    </div>
-                    <button
-                      onClick={() => signOut()}
-                      className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-rose-500 hover:bg-rose-500/10 transition-all text-left"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Sign Out
-                    </button>
+                  <PopoverContent className="w-64 p-2" align="start" side="top">
+                    <OrgSwitcher />
                   </PopoverContent>
                 </Popover>
               </div>
@@ -330,18 +320,8 @@ export function Sidebar({ mobileOpen, setMobileOpen, collapsed, setCollapsed }: 
                     )}
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-56 p-2" align="start" side="right">
-                  <div className="px-3 py-2 border-b border-border mb-2">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-text-muted mb-1">Organization</p>
-                    <p className="text-sm font-bold text-text-primary truncate">{orgName ?? '—'}</p>
-                  </div>
-                  <button
-                    onClick={() => signOut()}
-                    className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-rose-500 hover:bg-rose-500/10 transition-all text-left"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Sign Out
-                  </button>
+                <PopoverContent className="w-64 p-2" align="start" side="right">
+                  <OrgSwitcher />
                 </PopoverContent>
               </Popover>
               <Button

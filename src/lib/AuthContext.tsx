@@ -30,6 +30,15 @@ function logAuthEvent(action: string, userId: string, session: Session | null) {
   })
 }
 
+export interface Membership {
+  organizationId: string
+  organizationName: string
+  roleId: string | null
+  roleName: string | null
+  isSuperadmin: boolean
+  isActive: boolean
+}
+
 interface AuthContextValue {
   user: User | null
   session: Session | null
@@ -38,6 +47,8 @@ interface AuthContextValue {
   userId: string
   organizationId: string | null
   orgName: string | null
+  memberships: Membership[]
+  switchOrg: (organizationId: string) => Promise<void>
   brandColor: BrandColorId
   setBrandColor: (brandColor: BrandColorId) => void
   plan: string | null
@@ -49,6 +60,25 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
+
+async function loadMemberships(authUserId: string | undefined): Promise<Membership[]> {
+  if (!authUserId) return []
+  try {
+    const { data, error } = await supabase.rpc("get_my_memberships")
+    if (error) throw error
+    return (data ?? []).map((m: any) => ({
+      organizationId: m.organization_id,
+      organizationName: m.organization_name,
+      roleId: m.role_id,
+      roleName: m.role_name,
+      isSuperadmin: m.is_superadmin,
+      isActive: m.is_active,
+    }))
+  } catch (error) {
+    logger.warn("[AuthContext] get_my_memberships() failed:", error)
+    return []
+  }
+}
 
 function extractOrgId(session: Session | null): string | null {
   if (!session?.access_token) return null
@@ -149,6 +179,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [organizationId, setOrganizationId] = useState<string | null>(null)
   const [orgName, setOrgName] = useState<string | null>(null)
+  const [memberships, setMemberships] = useState<Membership[]>([])
   const [brandColor, setBrandColor] = useState<BrandColorId>(DEFAULT_BRAND_COLOR)
   const [plan, setPlan] = useState<string | null>(null)
   const [seatsLimit, setSeatsLimit] = useState<number | null>(null)
@@ -222,6 +253,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  // Load the orgs this user belongs to (for the org switcher).
+  useEffect(() => {
+    let cancelled = false
+    if (!user?.id) {
+      setMemberships([])
+      return
+    }
+    loadMemberships(user.id).then((m) => {
+      if (!cancelled) setMemberships(m)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [user?.id])
+
+  const switchOrg = useCallback(async (nextOrgId: string) => {
+    const { error } = await supabase.rpc("set_active_org", { p_org_id: nextOrgId })
+    if (error) throw error
+    // Mint a fresh token carrying the new org_id claim, then hard-reload so all
+    // org-scoped queries refetch cleanly under the new organization.
+    try {
+      await (supabase.auth as any).refreshSession()
+    } catch (refreshError) {
+      logger.warn("[AuthContext] refreshSession after org switch failed:", refreshError)
+    }
+    window.location.assign("/dashboard")
+  }, [])
+
   const signOut = useCallback(async () => {
     if (prevUserIdRef.current) {
       try {
@@ -293,6 +352,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       userId,
       organizationId,
       orgName,
+      memberships,
+      switchOrg,
       brandColor,
       setBrandColor,
       plan,
@@ -302,13 +363,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       getToken,
       refreshSession,
     }),
-    [user, session, isLoaded, isSignedIn, userId, organizationId, orgName, brandColor, setBrandColor, plan, seatsLimit, trialEndsAt, signOut, getToken, refreshSession],
+    [user, session, isLoaded, isSignedIn, userId, organizationId, orgName, memberships, switchOrg, brandColor, setBrandColor, plan, seatsLimit, trialEndsAt, signOut, getToken, refreshSession],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-export function useAuth(): Pick<AuthContextValue, "user" | "isLoaded" | "isSignedIn" | "userId" | "organizationId" | "orgName" | "brandColor" | "setBrandColor" | "plan" | "seatsLimit" | "trialEndsAt" | "signOut" | "getToken" | "refreshSession"> {
+export function useAuth(): Pick<AuthContextValue, "user" | "isLoaded" | "isSignedIn" | "userId" | "organizationId" | "orgName" | "memberships" | "switchOrg" | "brandColor" | "setBrandColor" | "plan" | "seatsLimit" | "trialEndsAt" | "signOut" | "getToken" | "refreshSession"> {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error("useAuth must be used within an AuthProvider")
 
@@ -319,6 +380,8 @@ export function useAuth(): Pick<AuthContextValue, "user" | "isLoaded" | "isSigne
     userId: ctx.userId,
     organizationId: ctx.organizationId,
     orgName: ctx.orgName,
+    memberships: ctx.memberships,
+    switchOrg: ctx.switchOrg,
     brandColor: ctx.brandColor,
     setBrandColor: ctx.setBrandColor,
     plan: ctx.plan,

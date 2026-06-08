@@ -329,15 +329,22 @@ export async function fetchPermissions(client: SupabaseClient): Promise<Record<s
 // ── Users Service ────────────────────────────────────────────────────────────
 
 export async function fetchAppUsers(client: SupabaseClient, organizationId: string | null, isSuperAdmin: boolean = false): Promise<AppUser[]> {
-  // 1. Fetch app_users
-  let query = client.from('app_users').select('*').order('created_at', { ascending: false })
-  
-  if (!isSuperAdmin) {
-    query = query.eq('organization_id', organizationId)
+  // 1. Fetch app_users. Platform Super Admins list every user across all orgs
+  //    via a SECURITY DEFINER RPC (app_users SELECT is scoped to the active org).
+  let users: any[] | null
+  if (isSuperAdmin) {
+    const { data, error } = await client.rpc('list_all_app_users')
+    if (error) throw error
+    users = data as any[]
+  } else {
+    const { data, error } = await client
+      .from('app_users')
+      .select('*')
+      .eq('organization_id', organizationId)
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    users = data
   }
-
-  const { data: users, error } = await query
-  if (error) throw error
 
   // 2. Fetch all roles for joining
   const roles = await fetchRoles(client)
@@ -451,45 +458,53 @@ export interface InviteResponse {
 }
 
 /**
- * Invite a user via API and create local app_users record.
- * This sends an invitation email to the user with a link to set their password.
- * The app_users record is created with a placeholder auth_user_id that will be
- * updated to the real Supabase user ID when the user accepts the invitation and signs in.
+ * Invite a user into the current organization (multi-org aware).
+ *
+ * The server resolves the invitee's real auth identity:
+ *  - brand-new email  -> creates the auth account + sends a set-password email
+ *  - existing user    -> returns their existing auth id (no email); they're
+ *                        simply granted access to this organization too
+ *
+ * The membership row is then inserted here under the caller's RLS, so the
+ * database enforces who may invite and which roles may be assigned.
  */
 export async function inviteUser(
   client: SupabaseClient,
   data: { name: string; email: string; roleId?: string },
   ownerId: string,
   organizationId: string,
-): Promise<{ appUser: AppUser; authUserId: string }> {
+): Promise<{ appUser: AppUser; authUserId: string; isExisting: boolean; emailSent: boolean }> {
   await assertPermission(client, 'users', 'create')
   await assertRoleAssignmentPerms(client, data.roleId, ownerId)
 
-  // Call the invite-user edge function
-  const { data: result, error: inviteError } = await client.functions.invoke('invite-user', {
-    body: {
+  // Resolve (or create) the invitee's auth identity server-side.
+  const { data: sessionData } = await (client.auth as any).getSession()
+  const accessToken = sessionData?.session?.access_token
+
+  const response = await fetch('/api/invite-user', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    },
+    body: JSON.stringify({
       email: data.email,
+      name: data.name,
       roleId: data.roleId,
-      organizationId: organizationId
-    }
+      organizationId,
+    }),
   })
 
-  if (inviteError) {
-    throw new Error(inviteError.message || 'Failed to send invitation')
+  const result = await response.json()
+  if (!response.ok || !result?.success || !result?.authUserId) {
+    throw new Error(result?.error || 'Failed to send invitation')
   }
 
-  if (!result.success) {
-    throw new Error(result.error || 'Failed to send invitation')
-  }
-
-  // Create local app_users record with a placeholder auth_user_id
-  // This will be updated when the user accepts the invitation
-  const placeholderId = `pending_invite_${Date.now()}`
-
+  // Create the organization membership with the REAL auth id (RLS-enforced).
   const { data: created, error: insertError } = await client
     .from('app_users')
     .insert({
-      auth_user_id: placeholderId,
+      auth_user_id: result.authUserId,
       email: data.email,
       name: data.name,
       role_id: data.roleId || null,
@@ -497,14 +512,22 @@ export async function inviteUser(
       organization_id: organizationId,
     })
     .select()
-    .single();
+    .single()
 
-  if (insertError) throw insertError;
+  if (insertError) {
+    // 23505 = unique_violation on (auth_user_id, organization_id)
+    if ((insertError as any).code === '23505') {
+      throw new Error('This person is already a member of this organization.')
+    }
+    throw insertError
+  }
 
   return {
     appUser: toAppUser(created),
-    authUserId: placeholderId,
-  };
+    authUserId: result.authUserId,
+    isExisting: !!result.isExisting,
+    emailSent: !!result.emailSent,
+  }
 }
 
 export async function addUser(

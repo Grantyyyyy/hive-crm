@@ -10,18 +10,18 @@ export function Navbar() {
   const { isSignedIn, signOut } = useAuth();
   const { user } = useUser();
 
-  const initials = (user?.email ?? "U").slice(0, 2).toUpperCase();
+  const initials = (user?.user_metadata?.full_name || user?.email || "U").slice(0, 2).toUpperCase();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 w-full border-b glass border-border/50">
-      <div className="container mx-auto flex h-16 items-center justify-between px-6">
-        <Link href="/" className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center overflow-hidden">
+      <div className="container mx-auto flex h-16 items-center justify-between gap-2 px-4 sm:px-6">
+        <Link href="/" className="flex shrink-0 items-center space-x-2 sm:space-x-3">
+          <div className="w-8 h-8 shrink-0 bg-accent rounded-lg flex items-center justify-center overflow-hidden">
             <img src="/hub.svg" alt="Logo" className="w-full h-full object-contain p-1 invert" />
           </div>
-          <span className="font-bold text-xl tracking-tight text-text-primary">Hive CRM</span>
+          <span className="font-bold text-lg sm:text-xl tracking-tight text-text-primary whitespace-nowrap">Hive CRM</span>
         </Link>
-        <div className="flex items-center space-x-4">
+        <div className="flex shrink-0 items-center space-x-2 sm:space-x-4">
           <Button variant="ghost" size="icon" onClick={toggleTheme}>
             {theme === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
           </Button>
@@ -71,16 +71,16 @@ export function Navbar() {
               </Popover>
             </div>
           ) : (
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-3 sm:space-x-6">
               <Link
                 href="/sign-in"
-                className="text-sm font-semibold text-text-secondary transition-colors hover:text-accent"
+                className="whitespace-nowrap text-sm font-semibold text-text-secondary transition-colors hover:text-accent"
               >
                 Sign In
               </Link>
               <Link
                 href="/sign-up"
-                className="inline-flex h-10 items-center justify-center rounded-xl bg-accent px-5 py-2 text-sm font-bold text-white shadow-lg shadow-accent/20 transition-all hover:bg-accent/90 hover:scale-[1.02]"
+                className="inline-flex h-10 shrink-0 items-center justify-center whitespace-nowrap rounded-xl bg-accent px-4 sm:px-5 py-2 text-sm font-bold text-white shadow-lg shadow-accent/20 transition-all hover:bg-accent/90 hover:scale-[1.02]"
               >
                 Get Started
               </Link>

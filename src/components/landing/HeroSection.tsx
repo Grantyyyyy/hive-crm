@@ -12,7 +12,7 @@ export function HeroSection({ theme }: HeroSectionProps) {
 
   return (
     <header
-      className={`relative pt-12 pb-14 lg:pt-16 lg:pb-20 border-b ${isDark ? "border-slate-800 bg-slate-950" : "border-slate-200 bg-white"
+      className={`relative pt-8 pb-10 lg:pt-16 lg:pb-20 border-b ${isDark ? "border-slate-800 bg-slate-950" : "border-slate-200 bg-white"
         }`}
     >
       <div className="max-w-6xl mx-auto px-4 lg:px-6 relative">
@@ -73,8 +73,8 @@ export function HeroSection({ theme }: HeroSectionProps) {
             </ul>
           </div>
 
-          {/* Right: friendly product preview */}
-          <div className="animate-content-in" style={{ animationDelay: "0.15s" }}>
+          {/* Right: friendly product preview (decorative — hidden on small screens) */}
+          <div className="hidden lg:block animate-content-in" style={{ animationDelay: "0.15s" }}>
             <div
               className={`rounded-3xl border overflow-hidden ${isDark
                 ? "border-slate-800 bg-slate-900 shadow-2xl shadow-black/40"

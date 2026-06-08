@@ -2,6 +2,7 @@ import React from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { useLocation } from "wouter";
 import { cachedToken, subscribeAuth } from "@/lib/api";
+import { AppLoader } from "@/components/AppLoader";
 
 interface ProtectedRouteProps {
   component: React.ComponentType<any>;
@@ -27,11 +28,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }, [isLoaded, isSignedIn, navigate]);
 
   if (!isLoaded) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-r-transparent"></div>
-      </div>
-    );
+    return <AppLoader fullScreen />;
   }
 
   if (!isSignedIn) {
@@ -39,11 +36,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (!apiAuth.token) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-r-transparent"></div>
-      </div>
-    );
+    return <AppLoader fullScreen />;
   }
 
   return <Component {...rest} />;

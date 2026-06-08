@@ -15,10 +15,72 @@
   <link
     href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;600;700&family=Inter:wght@400;500;600;700&family=Lexend:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap"
     rel="stylesheet">
+
+  <!-- Apply the saved theme before first paint so the boot loader matches the app (no flash). -->
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem("theme");
+        var dark = saved ? saved === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+        document.documentElement.classList.add(dark ? "dark" : "light");
+      } catch (e) {
+        document.documentElement.classList.add("light");
+      }
+    })();
+  </script>
+
+  <!-- Branded boot loader shown until the React bundle mounts (mirrors AppLoader). -->
+  <style>
+    :root { --boot-bg: #F8FAFC; --boot-accent: #0D9488; }
+    html.dark { --boot-bg: #020617; --boot-accent: #14B8A6; }
+    #boot-loader {
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;
+      background: var(--boot-bg);
+    }
+    #boot-loader .boot-mark { position: relative; width: 44px; height: 50px; display: grid; place-items: center; }
+    #boot-loader .boot-label {
+      margin: 0; font-size: 0.8125rem; font-weight: 500; letter-spacing: 0.01em;
+      color: #94A3B8; font-family: "Inter", system-ui, sans-serif;
+      animation: boot-fade 1.8s ease-in-out infinite;
+    }
+    #boot-loader svg { width: 100%; height: 100%; overflow: visible; color: var(--boot-accent); }
+    #boot-loader .boot-ring {
+      fill: none; stroke: currentColor; stroke-width: 8;
+      stroke-linecap: round; stroke-linejoin: round;
+      transform-box: view-box; transform-origin: center;
+    }
+    #boot-loader .boot-ring--outer { opacity: 0.95; animation: boot-spin 2.4s linear infinite; }
+    #boot-loader .boot-ring--inner { opacity: 0.45; animation: boot-spin-rev 1.7s linear infinite; }
+    #boot-loader .boot-glow {
+      position: absolute; inset: -30%; border-radius: 9999px;
+      background: radial-gradient(circle, color-mix(in srgb, var(--boot-accent) 40%, transparent) 0%, transparent 62%);
+      animation: boot-pulse 2s ease-in-out infinite;
+    }
+    @keyframes boot-spin { to { transform: rotate(360deg); } }
+    @keyframes boot-spin-rev { to { transform: rotate(-360deg); } }
+    @keyframes boot-pulse { 0%, 100% { transform: scale(0.82); opacity: 0.35; } 50% { transform: scale(1.12); opacity: 0.8; } }
+    @keyframes boot-fade { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) {
+      #boot-loader .boot-ring--inner, #boot-loader .boot-glow { animation: none; }
+      #boot-loader .boot-ring--outer { animation: boot-spin 3s linear infinite; }
+    }
+  </style>
 </head>
 
 <body>
-  <div id="root"></div>
+  <div id="root">
+    <div id="boot-loader">
+      <div class="boot-mark">
+        <span class="boot-glow"></span>
+        <svg viewBox="0 0 93 105" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path class="boot-ring boot-ring--outer" d="M90.5908 27.4393L68.9146 14.9837L52.3073 5.35001C49.2043 3.54998 45.3748 3.54998 42.2718 5.35L25.6646 14.9837L9.01793 24.5491C5.90755 26.3364 3.99282 29.6528 4.00018 33.2401L4.03955 52.4393L4.00018 71.6384C3.99282 75.2257 5.90755 78.5421 9.01793 80.3294L25.6646 89.8949L42.2718 99.5285C45.3748 101.329 49.2043 101.329 52.3073 99.5285L68.9146 89.8949L90.5908 77.4393" />
+          <path class="boot-ring boot-ring--inner" d="M76.9883 34.9393L61.9705 26.2203L52.0448 20.4029C48.9222 18.5727 45.0544 18.5727 41.9318 20.4029L32.006 26.2203L21.9791 32.0417C18.8906 33.8348 16.9927 37.1389 17 40.7102L17.0238 52.4393L17 64.1683C16.9927 67.7396 18.8906 71.0437 21.9791 72.8368L32.006 78.6582L41.9318 84.4757C45.0544 86.3058 48.9222 86.3058 52.0448 84.4757L61.9705 78.6582L76.9883 69.9393" />
+        </svg>
+      </div>
+      <p class="boot-label">Warming up the hive…</p>
+    </div>
+  </div>
   <script type="module" src="/src/main.tsx"></script>
 </body>
 

@@ -15,6 +15,7 @@ import { setAuthToken, subscribeAuth } from "@/lib/api";
 import { logger } from "@/lib/logger";
 import React, { Suspense, useEffect, useRef, useState } from "react";
 import { FontProvider } from "@/components/FontProvider";
+import { AppLoader } from "@/components/AppLoader";
 
 const LandingPage = React.lazy(() => import("@/pages/LandingPage").then(module => ({ default: module.LandingPage })));
 const SignInPage = React.lazy(() => import("@/pages/SignInPage").then(module => ({ default: module.SignInPage })));
@@ -57,11 +58,7 @@ const Discounts = React.lazy(() => import("@/pages/settings/Discounts").then(mod
 const Billing = React.lazy(() => import("@/pages/settings/Billing").then(module => ({ default: module.Billing })));
 
 function RouteFallback() {
-  return (
-    <div className="flex min-h-[240px] items-center justify-center">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-r-transparent" />
-    </div>
-  );
+  return <AppLoader fullScreen />;
 }
 
 function Protected({ component: Component }: { component: React.ComponentType }) {
@@ -161,11 +158,7 @@ function AppContent() {
   }, [appName]);
 
   if (!authLoaded || !authReady) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-r-transparent"></div>
-      </div>
-    );
+    return <AppLoader fullScreen />;
   }
 
   return (
